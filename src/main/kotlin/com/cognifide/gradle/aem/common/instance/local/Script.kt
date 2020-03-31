@@ -13,6 +13,8 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
 
     val commandLine: List<String> get() = shellCommand + listOf(wrapper.absolutePath)
 
+    val commandString: String get() = commandLine.joinToString(" ")
+
     val command: String get() = commandLine.first()
 
     val args: List<String> get() = commandLine.subList(1, commandLine.size)
@@ -28,10 +30,10 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
                     .run()
         } catch (e: Exception) {
             throw when (e) {
-                is ExternalProcessFailureException -> InstanceException("Local instance command process failure!" +
-                        " Command: '${e.command}', error: '${e.stderr}', exit code: '${e.exitValue}'", e)
-                is TimeoutException -> InstanceException("Local instance command timeout! Error: '${e.message}'", e)
-                else -> InstanceException("Local instance command unknown failure. Error: '${e.message}'", e)
+                is ExternalProcessFailureException -> InstanceException("Local instance script failure: $this! " +
+                        "Error: '${e.stderr}', exit code: '${e.exitValue}'", e)
+                is TimeoutException -> InstanceException("Local instance script timeout: $this! Cause: '${e.message}'", e)
+                else -> InstanceException("Local instance script failure: $this! Cause: '${e.message}'", e)
             }
         }
     }
@@ -40,11 +42,9 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
         try {
             ProcessBuilder(commandLine).directory(instance.dir).start()
         } catch (e: IOException) {
-            throw InstanceException("Local instance script failed: $this", e)
+            throw InstanceException("Local instance script failure: $this", e)
         }
     }
 
-    override fun toString(): String {
-        return "Script(commandLine=$commandLine)"
-    }
+    override fun toString(): String = "Script(command=$commandString)"
 }

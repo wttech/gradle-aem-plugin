@@ -18,7 +18,7 @@ open class InstanceUp : LocalInstanceTask() {
 
     @TaskAction
     fun up() {
-        localInstanceManager.base.examineRunningOther(instances.get())
+        localInstanceManager.base.examinePrerequisites(instances.get())
 
         val upInstances = localInstanceManager.up(instances.get(), awaitOptions)
         if (upInstances.isNotEmpty()) {

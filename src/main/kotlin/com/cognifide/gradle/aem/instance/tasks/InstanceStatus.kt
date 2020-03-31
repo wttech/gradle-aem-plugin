@@ -61,6 +61,7 @@ open class InstanceStatus : InstanceTask() {
                             val packagesInstalled = if (available) {
                                 try {
                                     sync {
+                                        packageManager.listRetry.never()
                                         aem.packagesBuilt.sortedBy { it.path }.mapNotNull { task ->
                                             val pkg = packageManager.find(task.vaultDefinition)
                                             val path = task.path.removeSuffix(":${task.name}")

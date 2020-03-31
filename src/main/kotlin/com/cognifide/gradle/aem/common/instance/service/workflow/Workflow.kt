@@ -9,14 +9,14 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     private val logger = manager.aem.logger
 
     val launcher = repository.node(when {
-            manager.instance.frozen -> "/conf/global/settings/workflow/launcher/config/$id"
+            manager.instance.version.frozen -> "/conf/global/settings/workflow/launcher/config/$id"
             else -> "/etc/workflow/launcher/config/$id"
         })
 
     val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
 
     val exists: Boolean
-        get() = launcher.exists || (manager.instance.frozen && launcherFrozen.exists)
+        get() = launcher.exists || (manager.instance.version.frozen && launcherFrozen.exists)
 
     val enabled: Boolean
         get() = launcher.properties.boolean(ENABLED_PROP) ?: false
@@ -30,7 +30,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     }
 
     fun toggle(flag: Boolean) {
-        if (manager.instance.frozen && !launcher.exists) {
+        if (manager.instance.version.frozen && !launcher.exists) {
             logger.info("Copying workflow launcher from '${launcherFrozen.path}' to ${launcher.path} on $instance")
             launcher.copyFrom(launcherFrozen.path)
         }

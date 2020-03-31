@@ -7,7 +7,7 @@ plugins {
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "1.3.70"
     id("org.jetbrains.dokka") version "0.10.1"
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.11.0"
     id("io.gitlab.arturbosch.detekt") version "1.7.0"
     id("com.jfrog.bintray") version "1.8.4"
     id("net.researchgate.release") version "2.8.1"
@@ -35,7 +35,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.33")
+    implementation("com.cognifide.gradle:common-plugin:0.1.34")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")

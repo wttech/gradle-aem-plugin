@@ -15,7 +15,7 @@ open class InstanceDown : LocalInstanceTask() {
 
     @TaskAction
     fun down() {
-        localInstanceManager.base.examineRunningOther(instances.get())
+        localInstanceManager.base.examinePrerequisites(instances.get())
 
         val downInstances = localInstanceManager.down(instances.get(), awaitDownOptions)
         if (downInstances.isNotEmpty()) {

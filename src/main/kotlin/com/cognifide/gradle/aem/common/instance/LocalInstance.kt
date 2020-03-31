@@ -1,10 +1,13 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
@@ -86,23 +89,25 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val license get() = dir.resolve("license.properties")
 
-    @get:JsonIgnore
-    val versionFile get() = dir.resolve("version.txt")
-
-    override val version: String
+    override val version: AemVersion
         get() {
-            var result = super.version
-            if (result == Formats.versionUnknown().version && versionFile.exists()) {
-                result = versionFile.readText()
+            val remoteVersion = super.version
+            if (remoteVersion != AemVersion.UNKNOWN) {
+                return remoteVersion
             }
-            return result
+            val standaloneVersion = readStandaloneVersion()
+            if (standaloneVersion != AemVersion.UNKNOWN) {
+                return standaloneVersion
+            }
+            return AemVersion.UNKNOWN
         }
 
-    internal fun saveVersion() {
-        if (version != Formats.versionUnknown().version) {
-            versionFile.writeText(version)
-        }
-    }
+    private fun readStandaloneVersion(): AemVersion = ZipFile(jar).listDir("static/app")
+            .map { it.substringAfterLast("/") }
+            .firstOrNull { Patterns.wildcard(it, "cq-quickstart-*-standalone*.jar") }
+            ?.let { StringUtils.substringBetween(it, "cq-quickstart-", "-standalone") }
+            ?.let { AemVersion(it) }
+            ?: AemVersion.UNKNOWN
 
     private val startScript: Script get() = binScript("start")
 
@@ -339,7 +344,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != Formats.versionUnknown().version }?.run { ", version=$this" } ?: "") +
+            (version.takeIf { it != AemVersion.UNKNOWN }?.run { ", version=$this" } ?: "") +
             ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"

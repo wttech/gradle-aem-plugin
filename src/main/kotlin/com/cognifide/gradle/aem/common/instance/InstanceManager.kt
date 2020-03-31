@@ -13,6 +13,8 @@ open class InstanceManager(val aem: AemExtension) {
 
     private val project = aem.project
 
+    val local by lazy { aem.localInstanceManager }
+
     /**
      * Using remote AEM instances is acceptable in any project, so that lookup for project applying local instance plugin is required
      * Needed to determine common directory storing instance related resources (tailer incident filter, Groovy scripts etc).
@@ -170,27 +172,39 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun examine(instance: Instance) = examine(listOf(instance))
 
+    /**
+     * Checks as much as it can be despite type of instance before performing any other operations.
+     *
+     * Assumes that instances are already running.
+     */
     fun examine(instances: Collection<Instance> = aem.instances) {
+        examinePrerequisites(instances)
         examineAvailable(instances)
-        examineRunningOther(instances)
     }
 
+    /**
+     * Checks if local instances defined are meeting prerequisites before performing any other operations.
+     *
+     * Assumes that instances could not be running yet.
+     */
+    fun examinePrerequisites(instances: Collection<Instance> = aem.instances) {
+        val localInstances = instances.filterIsInstance<LocalInstance>()
+        if (localInstances.isNotEmpty()) {
+            local.examineJavaAvailable()
+            local.examineJavaCompatibility(localInstances)
+            local.examineRunningOther(localInstances)
+        }
+    }
+
+    /**
+     * Checks if instances are available before performing any other operations.
+     */
     fun examineAvailable(instances: Collection<Instance> = aem.instances) {
         val unavailable = instances.filter { !it.available }
         if (unavailable.isNotEmpty()) {
             throw InstanceException("Instances are unavailable (${unavailable.size}):\n" +
                     unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
                     "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
-            )
-        }
-    }
-
-    fun examineRunningOther(instances: Collection<Instance>) {
-        val running = instances.filterIsInstance<LocalInstance>().filter { it.runningOther }
-        if (running.isNotEmpty()) {
-            throw InstanceException("Other instances are running (${running.size}):\n" +
-                    running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
-                    "Ensure having these instances down."
             )
         }
     }
