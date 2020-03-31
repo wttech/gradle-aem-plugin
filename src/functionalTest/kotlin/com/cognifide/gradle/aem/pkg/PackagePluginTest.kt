@@ -70,8 +70,9 @@ class PackagePluginTest : AemBuildTest() {
             """)
         }
 
-        runBuild(projectDir, "packageCompose", "-Poffline") {
+        runBuild(projectDir, "packageValidate", "-Poffline") {
             assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":packageValidate")
         }
     }
 
@@ -93,6 +94,7 @@ class PackagePluginTest : AemBuildTest() {
             file("assembly/build.gradle.kts", """
                 plugins {
                     id("com.cognifide.aem.package")
+                    id("maven-publish")
                 }
                 
                 group = "com.company.example.aem"
@@ -101,6 +103,18 @@ class PackagePluginTest : AemBuildTest() {
                     packageCompose {
                         mergePackageProject(":ui.apps")
                         mergePackageProject(":ui.content")
+                    }
+                }
+
+                publishing {
+                    repositories {
+                        maven(rootProject.file("build/repository"))
+                    }
+                
+                    publications {
+                        create<MavenPublication>("maven") {
+                            from(components["aem"])
+                        }
                     }
                 }
             """)
@@ -176,8 +190,16 @@ class PackagePluginTest : AemBuildTest() {
             """)
         }
 
-        runBuild(projectDir, ":assembly:packageCompose", "-Poffline") {
+        runBuild(projectDir, ":assembly:packageValidate", "-Poffline") {
             assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":assembly:packageValidate")
+        }
+
+        runBuild(projectDir, ":assembly:publish", "-Poffline") {
+            val mavenDir = projectDir.resolve("build/repository/com/company/example/aem/assembly/1.0.0")
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.zip"))
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.pom"))
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.module"))
         }
     }
 
@@ -242,8 +264,9 @@ class PackagePluginTest : AemBuildTest() {
             """)
         }
 
-        runBuild(projectDir, "packageCompose", "-Poffline") {
+        runBuild(projectDir, "packageValidate", "-Poffline") {
             assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":packageValidate")
         }
     }
 
@@ -270,12 +293,13 @@ class PackagePluginTest : AemBuildTest() {
                 
                 repositories {
                     jcenter()
+                    maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 
                 tasks {
                     packageCompose {
-                        nestPackageBuilt(":ui.content:packageCompose")
-                        installBundleBuilt(":ui.apps:bundleCompose")
+                        nestPackageProject(":ui.content")
+                        installBundleProject(":ui.apps")
                     }
                 }
                 """)
@@ -288,6 +312,10 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
+            assertTask(":ui.apps:bundleCompose")
+            assertTask(":ui.apps:test")
+            assertTask(":ui.content:packageCompose")
+            assertTask(":ui.content:packageValidate")
 
             val pkg = file("build/packageCompose/example-1.0.0.zip")
 
@@ -318,11 +346,15 @@ class PackagePluginTest : AemBuildTest() {
             
             repositories {
                 jcenter()
+                maven("https://repo.adobe.com/nexus/content/groups/public")
             }
             
             dependencies {
                 compileOnly("org.slf4j:slf4j-api:1.5.10")
                 compileOnly("org.osgi:osgi.cmpn:6.0.0")
+                
+                testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
+                testImplementation("io.wcm:io.wcm.testing.aem-mock.junit5:2.5.2")
             }
             
             tasks {

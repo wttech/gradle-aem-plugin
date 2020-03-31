@@ -1,18 +1,22 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
+import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
+import org.buildobjects.process.ProcBuilder
+import org.gradle.api.JavaVersion
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
 
-class LocalInstanceManager(private val aem: AemExtension) : Serializable {
+class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private val project = aem.project
 
@@ -48,7 +52,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      * Path for storing local AEM instances related resources.
      */
     val configDir = aem.obj.dir {
-        convention(projectDir.dir("src/aem/localInstance"))
+        convention(projectDir.dir(aem.prop.string("localInstance.configPath") ?: "src/aem/localInstance"))
         aem.prop.file("localInstance.configDir")?.let { set(it) }
     }
 
@@ -81,9 +85,9 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Maximum time to wait for status script response.
      */
-    val scriptTimeout = aem.obj.long {
+    val statusTimeout = aem.obj.long {
         convention(TimeUnit.SECONDS.toMillis(5))
-        aem.prop.long("localInstance.scriptTimeout")?.let { set(it) }
+        aem.prop.long("localInstance.statusTimeout")?.let { set(it) }
     }
 
     /**
@@ -307,7 +311,6 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         common.progress(downInstances.size) {
             common.parallel.with(downInstances) {
                 increment("Initializing instance '$name'") {
-                    saveVersion()
                     if (!initialized) {
                         logger.info("Initializing: $this")
                         init(initOptions)
@@ -350,5 +353,80 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         base.awaitDown(upInstances, awaitDownOptions)
 
         return upInstances
+    }
+
+    /**
+     * Pre-conditionally check if 'java' is available in shell scripts.
+     *
+     * Gradle is intelligently looking by its own for installed Java, but AEM control scripts
+     * are just requiring 'java' command available in 'PATH' environment variable.
+     */
+    @Suppress("TooGenericExceptionCaught", "MagicNumber")
+    fun examineJavaAvailable() {
+        try {
+            logger.debug("Examining Java properly installed")
+            val result = ProcBuilder("java", "-version")
+                    .withWorkingDirectory(rootDir.get().asFile)
+                    .withTimeoutMillis(5000)
+                    .withExpectedExitStatuses(0)
+                    .run()
+            logger.debug("Installed Java:\n${result.outputString.ifBlank { result.errorString }}")
+        } catch (e: Exception) {
+            throw LocalInstanceException("Local instances support requires Java properly installed! Cause: '${e.message}'\n" +
+                    "Ensure having directory with 'java' executable listed in 'PATH' environment variable.", e)
+        }
+    }
+
+    /**
+     * Defines compatibility related to AEM versions and Java versions.
+     *
+     * AEM version is definable as range inclusive at a start, exclusive at an end.
+     * Java Version is definable as list of supported versions pipe delimited.
+     */
+    val javaCompatibility = aem.obj.map<String, String> {
+        convention(mapOf(
+                "6.0.0-6.5.0" to "1.7|1.8",
+                "6.5.0-6.6.0" to "1.8|11"
+        ))
+        aem.prop.map("localInstance.javaCompatibility")?.let { set(it) }
+    }
+
+    fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
+        if (javaCompatibility.get().isEmpty()) {
+            logger.debug("Examining Java compatibility skipped as configuration not provided!")
+            return
+        }
+
+        logger.debug("Examining Java compatibility for configuration: ${javaCompatibility.get()}")
+
+        val versionCurrent = JavaVersion.current()
+        val errors = instances.fold(mutableListOf<String>()) { result, instance ->
+            val aemVersion = instance.version
+            javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
+                if (aemVersion in AemVersion.unclosedRange(aemVersionRange, "-")) {
+                    val versions = versionList.javaVersions("|")
+                    if (versionCurrent !in versions) {
+                        result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion" +
+                                " and requires Java ${versions.joinToString("|")}!")
+                    }
+                }
+            }
+            result
+        }
+        if (errors.isNotEmpty()) {
+            throw LocalInstanceException("Some instances (${errors.size}) require different Java version than current $versionCurrent:\n" +
+                    errors.joinToString("\n")
+            )
+        }
+    }
+
+    fun examineRunningOther(instances: Collection<LocalInstance> = aem.localInstances) {
+        val running = instances.filter { it.runningOther }
+        if (running.isNotEmpty()) {
+            throw LocalInstanceException("Other instances (${running.size}) are running:\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    "Ensure having these instances down."
+            )
+        }
     }
 }

@@ -1,50 +1,62 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 import java.io.File
-import java.io.IOException
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import org.buildobjects.process.ProcResult
 import org.buildobjects.process.TimeoutException
+import org.gradle.process.internal.streams.SafeStreams
 
+@Suppress("SpreadOperator", "TooGenericExceptionCaught")
 class Script(val instance: LocalInstance, val shellCommand: List<String>, val wrapper: File, val bin: File) {
 
+    private val logger = instance.localManager.aem.logger
+
     val commandLine: List<String> get() = shellCommand + listOf(wrapper.absolutePath)
+
+    val commandString: String get() = commandLine.joinToString(" ")
 
     val command: String get() = commandLine.first()
 
     val args: List<String> get() = commandLine.subList(1, commandLine.size)
 
-    @Suppress("SpreadOperator", "TooGenericExceptionCaught")
-    fun executeSync(options: ProcBuilder.() -> Unit = {}): ProcResult {
-        return try {
-            ProcBuilder(command, *args.toTypedArray())
-                    .withWorkingDirectory(instance.dir)
-                    .withTimeoutMillis(instance.localManager.scriptTimeout.get())
-                    .ignoreExitStatus()
-                    .apply(options)
-                    .run()
-        } catch (e: Exception) {
-            throw when (e) {
-                is ExternalProcessFailureException -> InstanceException("Local instance command process failure!" +
-                        " Command: '${e.command}', error: '${e.stderr}', exit code: '${e.exitValue}'", e)
-                is TimeoutException -> InstanceException("Local instance command timeout! Error: '${e.message}'", e)
-                else -> InstanceException("Local instance command unknown failure. Error: '${e.message}'", e)
-            }
+    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}): ProcResult = try {
+        logger.info("Executing script '$commandString' at directory '${instance.dir}'")
+
+        ProcBuilder(command, *args.toTypedArray())
+                .withWorkingDirectory(instance.dir)
+                .withExpectedExitStatuses(0)
+                .withInputStream(SafeStreams.emptyInput())
+                .withOutputStream(SafeStreams.systemOut())
+                .withErrorStream(SafeStreams.systemOut())
+                .apply(options)
+                .run()
+    } catch (e: Exception) {
+        throw handleException(e)
+    }
+
+    fun executeQuietly(options: ProcBuilder.() -> Unit = {}): ProcResult = try {
+        logger.debug("Executing script '$commandString' at directory '${instance.dir}'")
+
+        ProcBuilder(command, *args.toTypedArray())
+                .withWorkingDirectory(instance.dir)
+                .ignoreExitStatus()
+                .apply(options)
+                .run()
+    } catch (e: Exception) {
+        throw handleException(e)
+    }
+
+    private fun handleException(e: Exception): LocalInstanceException {
+        return when (e) {
+            is ExternalProcessFailureException -> LocalInstanceException("Local instance script failure: $this! " +
+                    "Error: '${e.stderr}', exit code: '${e.exitValue}'", e)
+            is TimeoutException -> LocalInstanceException("Local instance script timeout: $this! Cause: '${e.message}'", e)
+            else -> LocalInstanceException("Local instance script failure: $this! Cause: '${e.message}'", e)
         }
     }
 
-    fun executeAsync() {
-        try {
-            ProcessBuilder(commandLine).directory(instance.dir).start()
-        } catch (e: IOException) {
-            throw InstanceException("Local instance script failed: $this", e)
-        }
-    }
-
-    override fun toString(): String {
-        return "Script(commandLine=$commandLine)"
-    }
+    override fun toString(): String = "Script(command=$commandString)"
 }

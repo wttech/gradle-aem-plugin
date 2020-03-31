@@ -69,8 +69,8 @@ Illustrative configuration:
 
 ```kotlin
 aem {
-    tasks {
-        instanceSatisfy {
+    instance {
+        satisfier {
             packages {
                 "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
                 // is shorthand syntax for (effectively same as)
@@ -115,8 +115,8 @@ In other words, for instance, there is ability to run groovy console script befo
 
 ```kotlin
 aem {
-    tasks {
-        instanceSatisfy {
+    instance {
+        satisfier {
             packages {
                 group("tool.groovy-console") { 
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
@@ -159,7 +159,7 @@ gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital
 As of task inherits from task `packageDeploy` it is also possible to temporary enable or disable workflows during CRX package deployment:
 
 ```bash
-gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
+gradlew :instanceSatisfy -Ppackage.manager.workflowToggle=[dam_asset=false]
 ```
 
 ## Task `instanceProvision`
@@ -173,13 +173,13 @@ Sample configuration:
 
 ```kotlin
 aem {
-    tasks {
-        instanceProvision {
+    instance {
+        provisioner {
             step("enable-crxde") {
                 description = "Enables CRX DE"
                 condition { once() && instance.environment != "prod" }
-`               sync {
-                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                sync {
+                    osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                             "alias" to "/crx/server"
                     ))
                 }
@@ -201,8 +201,8 @@ aem {
             step("disable-unsecure-bundles") {
                 condition { once() && instance.environment == "prod" }
                 sync {
-                    osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
-                    osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+                    osgi.stopBundle("org.apache.sling.jcr.webdav")
+                    osgi.stopBundle("com.adobe.granite.crxde-lite")
 
                     instance.awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                 }
@@ -214,7 +214,7 @@ aem {
 
 By running task `instanceProvision`, provisioner will perform all steps for which conditions are met.
 Specifying condition could be even omitted, then by default each step will be performed only `once()` 
-which means that configured `action {}` will be executed only once on each AEM instance.
+which means that configured `action {}` (or action set via shorthand `sync {}`) will be executed only once on each AEM instance.
 
 Conditions could be more complex and use helpful methods basing on: 
 
@@ -255,26 +255,46 @@ aem {
         instanceAwait {
             awaitUp {
                 timeout {
-                    stateTime = prop.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
-                    constantTime = prop.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
+                    stateTime.apply {
+                        convention(TimeUnit.MINUTES.toMillis(2))
+                        set(prop.long("instance.awaitUp.timeout.stateTime"))
+                    }
+                    constantTime.apply {
+                        convention(TimeUnit.MINUTES.toMillis(10))
+                        set(prop.long("instance.awaitUp.timeout.constantTime"))
+                    }
                 }
                 bundles {
-                    symbolicNamesIgnored = prop.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
+                    symbolicNamesIgnored.apply {
+                        convention(listOf())
+                        set(prop.list("instance.awaitUp.bundles.symbolicNamesIgnored"))
+                    }
                 }
                 components {
-                    platformComponents = prop.list("instance.awaitUp.components.platform") ?: listOf(
-                        "com.day.crx.packaging.*", 
-                        "org.apache.sling.installer.*"
-                    )
-                    specificComponents = prop.list("instance.awaitUp.components.specific") ?: javaPackages.map { "$it.*" }
+                    platformComponents.apply {
+                        convention(listOf(
+                            "com.day.crx.packaging.*", 
+                            "org.apache.sling.installer.*"
+                        ))
+                        set(prop.list("instance.awaitUp.components.platform"))
+                    }
+                    specificComponents.apply {
+                        convention(obj.provider { javaPackages.map { "$it.*" } })
+                        set(prop.list("instance.awaitUp.components.specific"))
+                    }
                 }
                 events {
-                    unstableTopics = prop.list("instance.awaitUp.event.unstableTopics") ?: listOf(
-                        "org/osgi/framework/ServiceEvent/*",
-                        "org/osgi/framework/FrameworkEvent/*",
-                        "org/osgi/framework/BundleEvent/*"
-                    )
-                    unstableAgeMillis = prop.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
+                    unstableTopics.apply {
+                        convention(listOf(
+                            "org/osgi/framework/ServiceEvent/*",
+                            "org/osgi/framework/FrameworkEvent/*",
+                            "org/osgi/framework/BundleEvent/*"
+                        ))
+                    }   set(prop.list("instance.awaitUp.event.unstableTopics"))
+                    unstableAgeMillis.apply {
+                        convention(TimeUnit.SECONDS.toMillis(5))
+                        set(prop.long("instance.awaitUp.event.unstableAgeMillis"))
+                    }
                 }
             }
         }
@@ -307,24 +327,22 @@ Instead, tailer is continuously polling log files using HTTP endpoint provided b
 New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
 By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
 
-To customize tailer behavior, see [InstanceTailer](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/InstanceTailer.kt).
+To customize tailer behavior, see [Tailer](src/main/kotlin/com/cognifide/gradle/aem/common/instance/tail/Tailer.kt).
 
 ```kotlin
 aem {
-    tasks {
-        instanceTail {
-            tailer {
-                logFilePath = prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
-                logListener = { instance -> /* ... */ }
-                incidentFilter = prop.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
-                incidentDelay = prop.long("instance.tail.incidentDelay") ?: 5000L
-            }
+    instance {
+        tailer {
+            logFilePath.set(prop.string("instance.tail.logFilePath") ?: "/logs/error.log")
+            logListener { instance -> /* ... */ }
+            incidentFilter.set(file(prop.string("instance.tail.incidentFilter") ?: "src/aem/instance/tail/incidentFilter.txt"))
+            incidentDelay.set(prop.long("instance.tail.incidentDelay") ?: 5000L)
         }
     }
 }
 ```
 
-Log files are stored under directory: *build/aem/instanceTail/${instance.name}/error.log*.
+Log files are stored under directory: *build/instance/tail/${instance.name}/error.log*.
 
 ### Tailing incidents
 
@@ -334,7 +352,7 @@ Clicking on that notification will browse to incident log file created containin
 Which type of log entries are treated as a part of incident is determined by:
 
 * property `-Pinstance.tail.incidentLevels=[ERROR,WARN]`
-* wildcard exclusion rules defined in file which location is controlled by property `-Pinstance.tail.incidentFilter=aem/gradle/instanceTail/incidentFilter.txt`
+* wildcard exclusion rules defined in file which location is controlled by property `-Pinstance.tail.incidentFilter=src/aem/instance/tail/incidentFilter.txt`
 
 Sample content of  *incidentFilter.txt* file, which holds a fragments of log entries that will be treated as known issues (notifications will be no longer shown):
 
@@ -453,8 +471,8 @@ By default, script outputs, results and exceptions are hidden. To see them, simp
 Output:
 
 ```
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.520' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.520' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' output:
 Cleaning content at root '/content/example/demo'
 Cleaning page '/content/example/demo/en-gb/jcr:content'
 Cleaning page '/content/example/demo/jcr:content'
@@ -464,8 +482,8 @@ Cleaning content at root '/content/example/live'
 Cleaning page '/content/example/live/jcr:content'
 Cleaning page '/content/example/live/en-us/jcr:content'
 Cleaned content at root '/content/example/live'
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.527' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.527' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' output:
 Cleaning content at root '/content/example/demo'
 Cleaning page '/content/example/demo/en-gb/jcr:content'
 Cleaning page '/content/example/demo/jcr:content'

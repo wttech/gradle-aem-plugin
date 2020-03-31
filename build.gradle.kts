@@ -1,13 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.gradle.DokkaTask
+import io.gitlab.arturbosch.detekt.Detekt
 
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "1.3.70"
     id("org.jetbrains.dokka") version "0.10.1"
-    id("com.gradle.plugin-publish") version "0.10.1"
-    id("io.gitlab.arturbosch.detekt") version "1.6.0"
+    id("com.gradle.plugin-publish") version "0.11.0"
+    id("io.gitlab.arturbosch.detekt") version "1.7.0"
     id("com.jfrog.bintray") version "1.8.4"
     id("net.researchgate.release") version "2.8.1"
     id("com.github.breadmoirai.github-release") version "2.2.10"
@@ -34,7 +35,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.28")
+    implementation("com.cognifide.gradle:common-plugin:0.1.34")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
@@ -52,7 +53,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.6.0")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.7.0")
 }
 
 tasks {
@@ -93,12 +94,16 @@ tasks {
         }
     }
 
+    withType<Detekt>().configureEach {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
     withType<Test>().configureEach {
         testLogging.showStandardStreams = true
         useJUnitPlatform()
     }
 
-    named<Test>("test") {
+    test {
         dependsOn("detektTest")
     }
 

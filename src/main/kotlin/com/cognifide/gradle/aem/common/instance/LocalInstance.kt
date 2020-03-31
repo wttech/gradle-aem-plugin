@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
@@ -87,46 +89,46 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val license get() = dir.resolve("license.properties")
 
     @get:JsonIgnore
-    val versionFile get() = dir.resolve("version.txt")
+    val pid: Int get() = quickstartDir.resolve("conf/cq.pid")
+            .takeIf { it.exists() }?.readText()?.trim()?.toInt() ?: 0
 
-    override val version: String
+    override val version: AemVersion
         get() {
-            var result = super.version
-            if (result == Formats.versionUnknown().version && versionFile.exists()) {
-                result = versionFile.readText()
+            val remoteVersion = super.version
+            if (remoteVersion != AemVersion.UNKNOWN) {
+                return remoteVersion
             }
-            return result
+            val standaloneVersion = readStandaloneVersion()
+            if (standaloneVersion != AemVersion.UNKNOWN) {
+                return standaloneVersion
+            }
+            return AemVersion.UNKNOWN
         }
 
-    internal fun saveVersion() {
-        if (version != Formats.versionUnknown().version) {
-            versionFile.writeText(version)
-        }
-    }
+    private fun readStandaloneVersion(): AemVersion = ZipFile(jar).listDir("static/app")
+            .map { it.substringAfterLast("/") }
+            .firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
+            ?.let { AemVersion(it.removePrefix("cq-quickstart-").substringBefore("-")) }
+            ?: AemVersion.UNKNOWN
 
     private val startScript: Script get() = binScript("start")
 
-    internal fun executeStartScript() = try {
-        logger.info("Executing start script: $startScript")
-        startScript.executeAsync()
-    } catch (e: InstanceException) {
-        throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+    internal fun executeStartScript() {
+        try {
+            startScript.executeVerbosely()
+        } catch (e: InstanceException) {
+            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+        }
     }
 
     private val stopScript: Script get() = binScript("stop")
 
     internal fun executeStopScript() {
+        val pidOrigin = pid
         try {
-            logger.info("Executing stop script: $stopScript")
-            stopScript.executeAsync()
+            stopScript.executeVerbosely()
         } catch (e: InstanceException) {
-            throw InstanceException("Instance stop script failed!", e)
-        }
-
-        try {
-            sync.osgiFramework.stop()
-        } catch (e: InstanceException) {
-            // ignore, fallback for sure
+            throw InstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin", e)
         }
     }
 
@@ -304,7 +306,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         }
 
         return try {
-            val procResult = statusScript.executeSync()
+            val procResult = statusScript.executeQuietly { withTimeoutMillis(localManager.statusTimeout.get()) }
             Status.byExitCode(procResult.exitValue).also { status ->
                 logger.debug("Instance status of $this is: $status")
             }
@@ -339,7 +341,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != Formats.versionUnknown().version }?.run { ", version=$this" } ?: "") +
+            (version.takeIf { it != AemVersion.UNKNOWN }?.run { ", version=$this" } ?: "") +
             ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"

@@ -16,7 +16,7 @@ open class PackagePrepare : AemDefaultTask() {
     @Input
     val metaDefaults = aem.obj.boolean { convention(true) }
 
-    @OutputDirectory
+    @Internal
     val metaDir = aem.obj.buildDir("$name/${Package.META_PATH}")
 
     @Internal
@@ -29,10 +29,13 @@ open class PackagePrepare : AemDefaultTask() {
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
 
     @InputFiles
-    val metaDirs = aem.obj.files {
+    val metaDirSources = aem.obj.files {
         from(aem.packageOptions.metaCommonDir)
         from(contentDir.dir(Package.META_PATH))
     }
+
+    @OutputDirectory
+    val metaDirTarget = aem.obj.dir { set(metaDir) }
 
     @TaskAction
     fun prepare() {
@@ -47,7 +50,7 @@ open class PackagePrepare : AemDefaultTask() {
             }
         }
 
-        val sourceDirs = metaDirs.filter { it.exists() }
+        val sourceDirs = metaDirSources.filter { it.exists() }
         if (sourceDirs.isEmpty) {
             logger.info("None of package metadata directories exist: $sourceDirs. Only generated defaults will be used.")
         } else {

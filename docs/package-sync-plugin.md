@@ -16,6 +16,9 @@
      * [Copying or cleaning content only](#copying-or-cleaning-content-only)
      * [Filter file at custom path](#filter-file-at-custom-path)
      * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
+  * [Task packageConfig](#task-packageconfig)
+     * [Synchronizing configuration for built code](#synchronizing-configuration-for-built-code)
+     * [Synchronizing configuration for specified PID](#synchronizing-configuration-for-specified-pid)
   * [Task packageVlt](#task-packagevlt)
   * [Known issues](#known-issues)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
@@ -199,6 +202,50 @@ gradlew :site.demo:packageSync -Pfilter.path=C:/aem/custom-filter.xml
    
 ```bash
 gradlew :site.demo:packageSync -Pfilter.roots=[/etc/tags/example,/content/dam/example]
+```
+
+## Task `packageConfig`
+
+Synchronizes OSGi configuration as XML files put into JCR content.
+
+First of all, changing OSGi configuration by hand using GUI dialog when accessing */system/console/configMgr* is not recommended.
+Instead, configuration changes should be applied by providing OSGi config node in built CRX package under path _/apps/${appName}/config_.
+Such file could be created from scratch, but this is generally speaking error-prone process, because of escaping forbidden characters and delimiters, type casts etc.
+
+To simplify that process, task `packageConfig` could be used. 
+It will download actual OSGi configuration values as XML file and put it at desired path to be later deployed within built CRX package.
+
+Alternatively, customized values could be set on OSGi configuration GUI dialog then task `packageConfig` could be run to synchronize changes and save them in VCS in a proper format.
+However that approach has a little disadvantage. After changing anything by hand on OSGi configuration dialog, changes done in XML files for appropriate OSGi configuration might be longer reflected on dialog after installing CRX package.
+Then, as a workaround, try with deleting configuration using button on dialog then update values in XML and deploy package again to restore binding.
+
+### Synchronizing configuration for built code
+
+```bash
+gradlew :app:aem:ui.apps:packageConfig
+```
+
+Output:
+
+```
+Synchronized OSGi configuration XML file(s) (1) matching PID 'com.company.example.aem.core.*':
+/Users/krystian.panek/Projects/gradle-aem-multi/app/aem/ui.apps/src/main/content/jcr_root/apps/example/config/com.company.example.aem.core.schedulers.SimpleScheduledTask.xml
+```
+
+### Synchronizing configuration for specified PID
+
+```bash
+gradlew :app:aem:ui.apps:packageConfig -Ppackage.config.pid=org.apache.sling.jcr.*
+```
+
+Output:
+
+```
+Synchronized OSGi configuration XML file(s) (20) matching PID 'org.apache.sling.jcr.*':
+/Users/krystian.panek/Projects/gradle-aem-multi/app/aem/ui.apps/src/main/content/jcr_root/apps/example/config/org.apache.sling.jcr.base.internal.LoginAdminWhitelist.xml
+/Users/krystian.panek/Projects/gradle-aem-multi/app/aem/ui.apps/src/main/content/jcr_root/apps/example/config/org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-cq-assets.xml
+...
+/Users/krystian.panek/Projects/gradle-aem-multi/app/aem/ui.apps/src/main/content/jcr_root/apps/example/config/org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet.xml
 ```
 
 ## Task `packageVlt`

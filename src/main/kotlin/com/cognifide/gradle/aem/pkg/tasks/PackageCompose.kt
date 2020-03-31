@@ -2,11 +2,10 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
+import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
-import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
@@ -16,6 +15,7 @@ import com.cognifide.gradle.common.utils.using
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
@@ -52,19 +52,37 @@ open class PackageCompose : ZipTask(), AemTask {
     val bundlePath = aem.obj.string { convention(aem.packageOptions.installPath) }
 
     /**
-     * Content path for CRX sub-packages being placed in CRX package being built.
+     * Controls running tests for built bundles before placing them at [bundlePath].
      */
-    @Internal
-    val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
-
-    @Nested
-    val validator = PackageValidator(aem).apply {
-        workDir.convention(destinationDirectory.dir(Package.OAKPAL_OPEAR_PATH))
-        planName.convention("plan-compose.json")
+    @Input
+    val bundleTest = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.bundleTest")?.let { set(it) }
     }
 
-    fun validator(options: PackageValidator.() -> Unit) {
-        validator.apply(options)
+    /**
+     * Allows to customize install path or run mode of built bundle to be installed.
+     * Affects only project having both package and bundle plugins applied.
+     */
+    fun bundleBuilt(options: BundleInstalledBuilt.() -> Unit) {
+        this.bundleBuiltOptions = options
+    }
+
+    private var bundleBuiltOptions: BundleInstalledBuilt.() -> Unit = {}
+
+    /**
+     * Content path for CRX sub-packages being placed in CRX package being built.
+     */
+    @Input
+    val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
+
+    /**
+     * Controls validating built packages before placing them at [nestedPath].
+     */
+    @Input
+    val nestedValidation = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.nestedValidation")?.let { set(it) }
     }
 
     /**
@@ -108,13 +126,8 @@ open class PackageCompose : ZipTask(), AemTask {
         (definitions + definition).forEach { it() }
     }
 
-    @TaskAction
-    override fun copy() {
-        super.copy()
-        validator.perform(composedFile)
-    }
-
     fun fromDefaults() {
+        withBundleBuilt()
         withVaultFilters(vaultFilterOriginFile)
 
         fromMeta(metaDir)
@@ -151,7 +164,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
 
         if (archive.vaultFilter.get()) {
-            vaultDefinition.filter(aem.obj.provider { "${dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+            vaultDefinition.filter(dirPath.map { "$it/${archive.fileName.get()}" }) { type = FilterType.FILE }
         }
 
         into("${Package.JCR_ROOT}/${dirPath.get()}") { spec ->
@@ -164,6 +177,20 @@ open class PackageCompose : ZipTask(), AemTask {
         into(Package.VLT_HOOKS_PATH) { spec ->
             spec.from(dir)
             fileFilterDelegate(spec)
+        }
+    }
+
+    fun withBundleBuilt() {
+        if (!project.plugins.hasPlugin(BundlePlugin::class.java)) {
+            return
+        }
+
+        val compose = project.tasks.named(BundleCompose.NAME, BundleCompose::class.java)
+        dependsOn(compose)
+        bundlesInstalled.add(BundleInstalledBuilt(this, compose).apply(bundleBuiltOptions))
+
+        if (bundleTest.get()) {
+            dependsOn(project.tasks.named(JavaPlugin.TEST_TASK_NAME))
         }
     }
 
@@ -194,6 +221,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
+        dependsOn(task)
         definitions.add { task.get().merging(this) }
     }
 
@@ -203,6 +231,9 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
         nestPackageBuilt("$projectPath:$NAME", options)
+        if (nestedValidation.get()) {
+            dependsOn("$projectPath:${PackageValidate.NAME}")
+        }
     }
 
     fun nestPackageBuilt(taskPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
@@ -210,10 +241,8 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
-        definitions.add {
-            dependsOn(task)
-            packagesNested.add(PackageNestedBuilt(this, task).apply(options))
-        }
+        dependsOn(task)
+        definitions.add { packagesNested.add(PackageNestedBuilt(this, task).apply(options)) }
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
@@ -222,6 +251,9 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
         installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
+        if (bundleTest.get()) {
+            dependsOn("$projectPath:${JavaPlugin.TEST_TASK_NAME}")
+        }
     }
 
     fun installBundleBuilt(taskPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
@@ -229,10 +261,8 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
-        definitions.add {
-            dependsOn(task)
-            bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
-        }
+        dependsOn(task)
+        definitions.add { bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options)) }
     }
 
     private var definition: () -> Unit = {
@@ -253,12 +283,6 @@ open class PackageCompose : ZipTask(), AemTask {
     fun noDefaults() = definition {}
 
     private var merging: (PackageCompose) -> Unit = { other ->
-        if (this == other) {
-            throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
-        }
-
-        other.dependsOn(dependsOn)
-
         other.withVaultFilters(vaultFilterFile)
         other.withVaultNodeTypes(vaultNodeTypesFile)
         other.withVaultDefinition(vaultDefinition)

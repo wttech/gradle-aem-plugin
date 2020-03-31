@@ -103,6 +103,10 @@ open class PackageSync : AemDefaultTask() {
 
     @TaskAction
     fun sync() {
+        if (mode.get() != Mode.CLEAN_ONLY) {
+            instance.get().examine()
+        }
+
         try {
             if (mode.get() != Mode.COPY_ONLY) {
                 prepareContent()
