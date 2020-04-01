@@ -1,57 +1,41 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
-import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.AemTask
+import aQute.bnd.gradle.BundleTaskConvention as BndConvention
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.utils.normalizeSeparators
-import com.cognifide.gradle.common.tasks.JarTask
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
+import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 
 @Suppress("LargeClass", "TooManyFunctions")
-open class BundleCompose : JarTask(), AemTask {
+open class BundleJar(private val jar: Jar) {
 
-    @Internal
-    final override val aem = project.aem
+    private val project = jar.project
 
-    @Internal
-    val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
+    private val aem = project.aem
 
-    @Internal
-    val bundleConvention = BundleTaskConvention(this).also { convention.plugins["bundle"] = it }
-
-    /**
-     * Shorthand for built OSGi bundle file.
-     */
-    @get:Internal
-    val composedFile: File get() = archiveFile.get().asFile
-
-    /**
-     * Shorthand for directory of built OSGi bundle file.
-     */
-    @get:Internal
-    val composedDir: File get() = composedFile.parentFile
+    @Nested
+    val bndConvention = BndConvention(jar)
 
     /**
      * Allows to configure BND tool specific options.
      *
      * @see <https://bnd.bndtools.org>
      */
-    fun bndTool(options: BundleTaskConvention.() -> Unit) {
-        bundleConvention.apply(options)
+    fun bndTool(options: BndConvention.() -> Unit) {
+        bndConvention.apply(options)
     }
 
     /**
      * Add instructions to the BND property from a list of multi-line strings.
      */
     @Suppress("SpreadOperator")
-    fun bnd(vararg lines: CharSequence) = bundleConvention.bnd(*lines)
+    fun bnd(vararg lines: CharSequence) = bndConvention.bnd(*lines)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -138,28 +122,43 @@ open class BundleCompose : JarTask(), AemTask {
     @Internal
     val privatePackages = aem.obj.strings { convention(listOf()) }
 
+    fun applyDefaults() {
+        applyArchiveDefaults()
+        applyBndToolDefaults()
+    }
+
     private fun applyArchiveDefaults() {
-        destinationDirectory.set(common.temporaryFile(name))
-        archiveBaseName.set(aem.commonOptions.baseName)
-        from(javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output)
+        jar.archiveBaseName.set(aem.commonOptions.baseName)
     }
 
     private fun applyBndToolDefaults() {
         val instructionFile = File("${aem.project.file("bnd.bnd")}")
         if (instructionFile.isFile) {
-            bundleConvention.setBndfile(instructionFile)
+            bndConvention.setBndfile(instructionFile)
         }
 
-        bundleConvention.bnd(mapOf(
+        bndConvention.bnd(mapOf(
                 "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
         ))
     }
 
-    override fun projectEvaluated() {
-        super.projectEvaluated()
-
+    fun applyEvaluated() {
         applyAttributesConvention()
         combinePackageAttributes()
+    }
+
+    /**
+     * Customize JAR being built to be valid OSGi bundle.
+     */
+    @Suppress("TooGenericExceptionCaught")
+    @TaskAction
+    fun runBndTool() {
+        try {
+            bndConvention.buildBundle()
+        } catch (e: Exception) {
+            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            throw BundleException("OSGi bundle cannot be built properly.", e)
+        }
     }
 
     private fun combinePackageAttribute(name: String, pkgs: Iterable<String>) {
@@ -253,14 +252,14 @@ open class BundleCompose : JarTask(), AemTask {
 
     @get:Input
     var attributes: MutableMap<String, Any?>
-        get() = mutableMapOf<String, Any?>().apply { putAll(manifest.attributes) }
+        get() = mutableMapOf<String, Any?>().apply { putAll(jar.manifest.attributes) }
         set(value) {
-            manifest.attributes(value)
+            jar.manifest.attributes(value)
         }
 
-    fun attribute(name: String, value: String?) = manifest.attributes(mapOf(name to value))
+    fun attribute(name: String, value: String?) = jar.manifest.attributes(mapOf(name to value))
 
-    fun attribute(name: String): String? = manifest.attributes[name] as String?
+    fun attribute(name: String): String? = jar.manifest.attributes[name] as String?
 
     fun hasAttribute(name: String) = attributes.containsKey(name)
 
@@ -391,41 +390,11 @@ open class BundleCompose : JarTask(), AemTask {
         }
     }
 
-    fun wildcardPackage(pkgs: Iterable<String>): List<String> {
-        return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
-    }
+    fun wildcardPackage(pkgs: Iterable<String>): List<String> = pkgs.map { StringUtils.appendIfMissing(it, ".*") }
 
-    fun wildcardPackage(vararg pkgs: String): List<String> {
-        return wildcardPackage(pkgs.toList())
-    }
-
-    @TaskAction
-    override fun copy() {
-        super.copy()
-        runBndTool()
-    }
-
-    /**
-     * Customize JAR being built to be valid OSGi bundle.
-     */
-    @Suppress("TooGenericExceptionCaught")
-    private fun runBndTool() {
-        try {
-            bundleConvention.buildBundle()
-        } catch (e: Exception) {
-            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
-            throw BundleException("OSGi bundle cannot be built properly.", e)
-        }
-    }
-
-    init {
-        group = AemTask.GROUP
-        description = "Composes OSGi bundle from compiled and embed classes with BND tool processing."
-        applyArchiveDefaults()
-        applyBndToolDefaults()
-    }
-
-    companion object {
-        const val NAME = "bundleCompose"
-    }
+    fun wildcardPackage(vararg pkgs: String): List<String> = wildcardPackage(pkgs.toList())
 }
+
+val Jar.bundle: BundleJar get() = convention.getPlugin(BundleJar::class.java)
+
+fun Jar.bundle(action: BundleJar.() -> Unit) = this.bundle.apply(action)

@@ -105,9 +105,10 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             return AemVersion.UNKNOWN
         }
 
-    private fun readStandaloneVersion(): AemVersion = ZipFile(jar).listDir("static/app")
-            .map { it.substringAfterLast("/") }
-            .firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
+    private fun readStandaloneVersion(): AemVersion = jar.takeIf { it.exists() }
+            ?.let { ZipFile(it).listDir("static/app") }
+            ?.map { it.substringAfterLast("/") }
+            ?.firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
             ?.let { AemVersion(it.removePrefix("cq-quickstart-").substringBefore("-")) }
             ?: AemVersion.UNKNOWN
 
@@ -369,7 +370,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
                 this.password = instanceUrl.password
                 this.id = instanceUrl.id
                 this.debugPort = instanceUrl.debugPort
-                this.environment = aem.commonOptions.env.get()
+                this.env = aem.commonOptions.env.get()
 
                 configurer()
                 validate()

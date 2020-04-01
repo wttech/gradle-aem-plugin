@@ -112,7 +112,7 @@ class Cleaner(private val aem: AemExtension) {
      */
     val parentsBackupSuffix = aem.obj.string { convention(".bak") }
 
-    private val parentsBackupDirIndicator get() = "${parentsBackupSuffix.get()}dir"
+    private val parentsBackupDirIndicator = parentsBackupSuffix.map { "${it}dir" }
 
     /**
      * Hook for customizing particular line processing for '.content.xml' files.
@@ -343,8 +343,8 @@ class Cleaner(private val aem: AemExtension) {
 
     private fun deleteBackupFiles(root: File) = eachFiles(root, {
         include(listOf(
-                "**/$parentsBackupDirIndicator",
-                "**/*$parentsBackupSuffix"
+                "**/${parentsBackupDirIndicator.get()}",
+                "**/*${parentsBackupSuffix.get()}"
         ))
     }) { deleteFile(it) }
 
@@ -374,10 +374,10 @@ class Cleaner(private val aem: AemExtension) {
         root.parentFile.mkdirs()
         eachParentFiles(root) { parent, siblingFiles ->
             parent.mkdirs()
-            if (File(parent, parentsBackupDirIndicator).createNewFile()) {
+            if (File(parent, parentsBackupDirIndicator.get()).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }
                         .forEach { origin ->
-                            val backup = File(parent, origin.name + parentsBackupSuffix)
+                            val backup = File(parent, origin.name + parentsBackupSuffix.get())
                             aem.logger.info("Doing backup of parent file: $origin")
                             origin.copyTo(backup, true)
                         }
@@ -387,13 +387,13 @@ class Cleaner(private val aem: AemExtension) {
 
     private fun doRootBackup(root: File) {
         if (root.isFile) {
-            val backup = File(root.parentFile, root.name + parentsBackupSuffix)
+            val backup = File(root.parentFile, root.name + parentsBackupSuffix.get())
             aem.logger.info("Doing backup of root file: $root")
             root.copyTo(backup, true)
         }
 
         eachFiles(root, filesFlattened) { file ->
-            val backup = File(file.parentFile.path + ".xml" + parentsBackupSuffix)
+            val backup = File(file.parentFile.path + ".xml" + parentsBackupSuffix.get())
             aem.logger.info("Doing backup of file: $file")
             file.copyTo(backup, true)
         }
@@ -401,7 +401,7 @@ class Cleaner(private val aem: AemExtension) {
 
     private fun undoParentsBackup(root: File) {
         eachParentFiles(root) { _, siblingFiles ->
-            if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
+            if (siblingFiles.any { it.name == parentsBackupDirIndicator.get() }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix.get()) }.forEach { backup ->
                     val origin = File(backup.path.removeSuffix(parentsBackupSuffix.get()))

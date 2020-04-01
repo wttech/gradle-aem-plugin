@@ -113,7 +113,7 @@ class PackagePluginTest : AemBuildTest() {
                 
                     publications {
                         create<MavenPublication>("maven") {
-                            from(components["aem"])
+                            artifact(common.publicationArtifact("packageCompose"))
                         }
                     }
                 }
@@ -131,8 +131,8 @@ class PackagePluginTest : AemBuildTest() {
             assertPackage(pkg)
 
             // Check if bundle was build in sub-project
-            assertBundle("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar")
-            assertZipEntryEquals("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
+            assertBundle("ui.apps/build/libs/example-ui.apps-1.0.0.jar")
+            assertZipEntryEquals("ui.apps/build/libs/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
@@ -199,7 +199,6 @@ class PackagePluginTest : AemBuildTest() {
             val mavenDir = projectDir.resolve("build/repository/com/company/example/aem/assembly/1.0.0")
             assertFileExists(mavenDir.resolve("assembly-1.0.0.zip"))
             assertFileExists(mavenDir.resolve("assembly-1.0.0.pom"))
-            assertFileExists(mavenDir.resolve("assembly-1.0.0.module"))
         }
     }
 
@@ -312,7 +311,7 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
-            assertTask(":ui.apps:bundleCompose")
+            assertTask(":ui.apps:jar")
             assertTask(":ui.apps:test")
             assertTask(":ui.content:packageCompose")
             assertTask(":ui.content:packageValidate")

@@ -99,7 +99,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
                 
-                localInstance.backup.uploadUrl=build/instance/backup/upload
+                localInstance.backup.uploadUrl=build/localInstance/backup/upload
                 """)
 
             settingsGradle("")
@@ -125,7 +125,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                         provisioner {
                             step("enable-crxde") {
                                 description = "Enables CRX DE"
-                                condition { once() && instance.environment != "prod" }
+                                condition { once() && instance.env != "prod" }
                                 action {
                                     sync {
                                         osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
@@ -160,10 +160,18 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertTask(":instanceResolve")
         }
 
+        runBuild(projectDir, "instanceStatus") {
+            assertTask(":instanceStatus")
+        }
+
         runBuild(projectDir, "instanceSetup") {
             assertTask(":instanceSetup")
             assertFileExists(file(".instance/author"))
             assertFileExists(file(".instance/publish"))
+        }
+
+        runBuild(projectDir, "instanceStatus") {
+            assertTask(":instanceStatus")
         }
 
         runBuild(projectDir, "instanceDown") {
@@ -173,13 +181,13 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceBackup") {
             assertTask(":instanceBackup")
 
-            val localBackupDir = "build/instance/backup/local"
+            val localBackupDir = "build/localInstance/backup/local"
             assertFileExists(localBackupDir)
             val localBackups = files(localBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
-            val remoteBackupDir = "build/instance/backup/upload"
+            val remoteBackupDir = "build/localInstance/backup/upload"
             assertFileExists(remoteBackupDir)
             val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",

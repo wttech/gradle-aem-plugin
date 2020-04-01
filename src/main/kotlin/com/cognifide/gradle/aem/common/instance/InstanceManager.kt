@@ -70,7 +70,7 @@ open class InstanceManager(val aem: AemExtension) {
     val defined = aem.obj.list<Instance> {
         convention(aem.obj.provider {
             val fromCmd = aem.prop.string("instance.list")?.let {
-                Instance.parse(aem, it) { environment = Instance.ENVIRONMENT_CMD }
+                Instance.parse(aem, it) { env = Instance.ENV_CMD }
             } ?: listOf()
             val fromProperties = Instance.properties(aem)
             (fromCmd + fromProperties).ifEmpty { Instance.defaultPair(aem) }
@@ -190,9 +190,7 @@ open class InstanceManager(val aem: AemExtension) {
     fun examinePrerequisites(instances: Collection<Instance> = aem.instances) {
         val localInstances = instances.filterIsInstance<LocalInstance>()
         if (localInstances.isNotEmpty()) {
-            local.examineJavaAvailable()
-            local.examineJavaCompatibility(localInstances)
-            local.examineRunningOther(localInstances)
+            local.examinePrerequisites(localInstances)
         }
     }
 

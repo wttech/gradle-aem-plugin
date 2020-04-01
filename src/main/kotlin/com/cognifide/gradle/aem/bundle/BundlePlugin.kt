@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
+import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.common.CommonPlugin
@@ -9,29 +9,16 @@ import com.cognifide.gradle.aem.common.tasks.BundleTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.tasks.configureApply
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition
-import org.gradle.api.attributes.Bundling
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.LibraryElements
-import org.gradle.api.attributes.Usage
-import org.gradle.api.component.AdhocComponentWithVariants
-import org.gradle.api.internal.artifacts.ArtifactAttributes
-import org.gradle.api.internal.artifacts.JavaEcosystemSupport
-import org.gradle.api.internal.artifacts.dsl.LazyPublishArtifact
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
-import org.gradle.internal.component.external.descriptor.MavenScope
-import org.gradle.language.base.plugins.LifecycleBasePlugin
-import javax.inject.Inject
 
-class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory) : CommonDefaultPlugin() {
+class BundlePlugin : CommonDefaultPlugin() {
 
     override fun Project.configureProject() {
         setupDependentPlugins()
@@ -65,47 +52,22 @@ class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory)
     }
 
     private fun Project.setupTasks() {
-        val configuration = configurations.create(CONFIGURATION) { c ->
-            c.attributes.apply {
-                attribute(Usage.USAGE_ATTRIBUTE, objectFactory.named(Usage::class.java, Usage.JAVA_API))
-                attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objectFactory.named(LibraryElements::class.java, LibraryElements.JAR))
-                attribute(Bundling.BUNDLING_ATTRIBUTE, objectFactory.named(Bundling::class.java, Bundling.EXTERNAL))
-                attribute(Category.CATEGORY_ATTRIBUTE, objectFactory.named(Category::class.java, Category.LIBRARY))
-            }
-            c.outgoing.attributes.attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE)
-            afterEvaluate {
-                JavaEcosystemSupport.configureDefaultTargetPlatform(c, convention.getPlugin(JavaPluginConvention::class.java).targetCompatibility)
-            }
-        }
-
-        configurations.named(Dependency.ARCHIVES_CONFIGURATION) { it.extendsFrom(configuration) }
-        configurations.named(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME) { it.extendsFrom(configuration) }
-        configurations.named(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME) { it.extendsFrom(configuration) }
-        configurations.named(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME) { it.extendsFrom(configuration) }
-
-        components.named(CommonPlugin.COMPONENT).configure { component ->
-            if (component is AdhocComponentWithVariants) {
-                component.addVariantsFromConfiguration(configuration) { it.mapToMavenScope(MavenScope.Compile.lowerName) }
-            }
-        }
-
         tasks {
-            val compose = register<BundleCompose>(BundleCompose.NAME) {
-                dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+            val jar = named<Jar>(JavaPlugin.JAR_TASK_NAME) {
+                val bundle = BundleJar(this).also { convention.plugins[CONVENTION_PLUGIN] = it }
+                bundle.applyDefaults()
+                doLast { bundle.runBndTool() }
             }.apply {
-                configuration.outgoing.artifacts.add(LazyPublishArtifact(this))
+                afterEvaluate { configureApply { convention.getPlugin(BundleJar::class.java).applyEvaluated() } }
             }
             register<BundleInstall>(BundleInstall.NAME) {
-                dependsOn(compose)
+                dependsOn(jar)
             }
             register<BundleUninstall>(BundleUninstall.NAME) {
-                dependsOn(compose)
+                dependsOn(jar)
             }
             typed<BundleTask> {
-                files.from(compose.map { it.archiveFile })
-            }
-            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-                dependsOn(compose)
+                files.from(jar)
             }
         }
     }
@@ -121,9 +83,9 @@ class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory)
 
                 testImplConfig.extendsFrom(compileOnlyConfig)
 
-                val bundle = common.tasks.get<BundleCompose>(BundleCompose.NAME)
+                val bundle = common.tasks.get<Jar>(JavaPlugin.JAR_TASK_NAME)
                 dependsOn(bundle)
-                classpath += files(bundle.composedFile)
+                classpath += files(bundle)
             }
         }
     }
@@ -131,6 +93,6 @@ class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory)
     companion object {
         const val ID = "com.cognifide.aem.bundle"
 
-        const val CONFIGURATION = "aemBundle"
+        const val CONVENTION_PLUGIN = "bundle"
     }
 }

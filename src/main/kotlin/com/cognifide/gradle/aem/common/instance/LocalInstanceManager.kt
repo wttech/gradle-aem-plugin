@@ -355,6 +355,23 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         return upInstances
     }
 
+    fun examine(instances: Collection<LocalInstance> = aem.localInstances) = base.examine(instances)
+
+    fun examinePrerequisites(instances: Collection<LocalInstance> = aem.localInstances) {
+        examinePaths()
+        examineJavaAvailable()
+        examineJavaCompatibility(instances)
+        examineRunningOther(instances)
+    }
+
+    fun examinePaths() {
+        val rootDir = rootDir.get().asFile
+        if (rootDir.path.contains(" ")) {
+            throw LocalInstanceException("Local instances root path must not contain spaces: '$rootDir'!\n" +
+                    "AEM control scripts could run improperly with such paths.")
+        }
+    }
+
     /**
      * Pre-conditionally check if 'java' is available in shell scripts.
      *
@@ -365,9 +382,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun examineJavaAvailable() {
         try {
             logger.debug("Examining Java properly installed")
+
             val result = ProcBuilder("java", "-version")
-                    .withWorkingDirectory(rootDir.get().asFile)
-                    .withTimeoutMillis(5000)
+                    .withWorkingDirectory(rootDir.get().asFile.apply { mkdirs() })
+                    .withTimeoutMillis(statusTimeout.get())
                     .withExpectedExitStatuses(0)
                     .run()
             logger.debug("Installed Java:\n${result.outputString.ifBlank { result.errorString }}")
