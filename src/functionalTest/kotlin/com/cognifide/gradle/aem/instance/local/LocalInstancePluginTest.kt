@@ -99,7 +99,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
                 
-                localInstance.backup.uploadUrl=build/instance/backup/upload
+                localInstance.backup.uploadUrl=build/localInstance/backup/upload
                 """)
 
             settingsGradle("")
