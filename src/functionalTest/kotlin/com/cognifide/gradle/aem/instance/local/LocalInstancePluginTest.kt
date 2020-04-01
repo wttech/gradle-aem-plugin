@@ -160,10 +160,18 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertTask(":instanceResolve")
         }
 
+        runBuild(projectDir, "instanceStatus") {
+            assertTask(":instanceStatus")
+        }
+
         runBuild(projectDir, "instanceSetup") {
             assertTask(":instanceSetup")
             assertFileExists(file(".instance/author"))
             assertFileExists(file(".instance/publish"))
+        }
+
+        runBuild(projectDir, "instanceStatus") {
+            assertTask(":instanceStatus")
         }
 
         runBuild(projectDir, "instanceDown") {
@@ -173,13 +181,13 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceBackup") {
             assertTask(":instanceBackup")
 
-            val localBackupDir = "build/instance/backup/local"
+            val localBackupDir = "build/localInstance/backup/local"
             assertFileExists(localBackupDir)
             val localBackups = files(localBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
-            val remoteBackupDir = "build/instance/backup/upload"
+            val remoteBackupDir = "build/localInstance/backup/upload"
             assertFileExists(remoteBackupDir)
             val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
