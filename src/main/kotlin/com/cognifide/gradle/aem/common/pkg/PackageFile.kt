@@ -22,13 +22,12 @@ class PackageFile(val file: File) : Serializable {
 
     init {
         if (!file.exists()) {
-            throw PackageException("File does not exist: $file!")
+            throw PackageException("Package does not exist: $file!")
         }
 
         val zip = ZipFile(file)
-
         if (!zip.contains(Package.VLT_PROPERTIES)) {
-            throw PackageException("File is not a valid CRX package: $file!")
+            throw PackageException("Package is not a valid CRX package: $file!")
         }
 
         this.properties = zip.readFileAsText(Package.VLT_PROPERTIES).run {

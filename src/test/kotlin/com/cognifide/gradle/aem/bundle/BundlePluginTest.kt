@@ -1,12 +1,13 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.test.AemTest
 import org.gradle.api.internal.plugins.PluginApplicationException
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.bundling.Jar
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -19,8 +20,8 @@ class BundlePluginTest : AemTest() {
 
         extensions.getByName(AemExtension.NAME)
 
-        tasks.named(BundleCompose.NAME, BundleCompose::class.java).get().apply {
-            assertEquals("test.jar", composedFile.name)
+        tasks.named(JavaPlugin.JAR_TASK_NAME, Jar::class.java).get().apply {
+            assertEquals("test.jar", archiveFile.get().asFile.name)
         }
 
         tasks.getByName(BundleInstall.NAME)

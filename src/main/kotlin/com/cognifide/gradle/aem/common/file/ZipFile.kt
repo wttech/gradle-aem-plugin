@@ -15,11 +15,24 @@ class ZipFile(val baseFile: File) {
 
     private val base = Base(baseFile)
 
-    fun contains(fileName: String) = base.getFileHeader(fileName) != null
+    private fun ensureExists() {
+        if (!baseFile.exists()) {
+            throw ZipException("ZIP file '$baseFile' does not exist!")
+        }
+    }
 
-    fun containsDir(dirName: String) = base.getFileHeader(StringUtils.appendIfMissing(dirName, "/")) != null
+    fun contains(fileName: String): Boolean {
+        ensureExists()
+        return base.getFileHeader(fileName) != null
+    }
+
+    fun containsDir(dirName: String): Boolean {
+        ensureExists()
+        return base.getFileHeader(StringUtils.appendIfMissing(dirName, "/")) != null
+    }
 
     fun unpackAll(targetDir: File) {
+        ensureExists()
         base.extractAll(targetDir.absolutePath)
     }
 
@@ -34,6 +47,8 @@ class ZipFile(val baseFile: File) {
     }
 
     private fun dirFileHeaders(dirName: String): Sequence<FileHeader> {
+        ensureExists()
+
         val dirFileName = "$dirName/"
         if (!contains(dirFileName)) {
             throw ZipException("ZIP file '$baseFile' does not contain directory '$dirName'!")
@@ -68,8 +83,12 @@ class ZipFile(val baseFile: File) {
         base.addFolder(sourceDir, options(options))
     }
 
-    fun readFile(fileName: String): ZipInputStream = base.getFileHeader(fileName)?.let { base.getInputStream(it) }
-            ?: throw ZipException("ZIP file '$baseFile' does not contain file '$fileName'!")
+    fun readFile(fileName: String): ZipInputStream {
+        ensureExists()
+
+        return base.getFileHeader(fileName)?.let { base.getInputStream(it) }
+                ?: throw ZipException("ZIP file '$baseFile' does not contain file '$fileName'!")
+    }
 
     fun readFileAsText(fileName: String) = readFile(fileName).use { it.bufferedReader().readText() }
 

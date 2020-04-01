@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
+import com.cognifide.gradle.aem.bundle.tasks.BundleJar
+import com.cognifide.gradle.aem.bundle.tasks.bundle
 import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.instance.*
@@ -26,6 +27,7 @@ import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Core of library, facade for implementing tasks.
@@ -99,15 +101,15 @@ class AemExtension(val project: Project) : Serializable {
      *
      * Use with caution as of this property is eagerly configuring all tasks building bundles.
      */
-    val bundlesBuilt: List<BundleCompose>
+    val bundlesBuilt: List<Jar>
         get() = project.rootProject.allprojects
                 .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll<BundleCompose>() }
+                .flatMap { p -> p.common.tasks.getAll<Jar>() }
 
     /**
      * Collection of all java packages from all projects applying bundle plugin.
      */
-    val javaPackages: List<String> get() = bundlesBuilt.mapNotNull { it.javaPackage.orNull }
+    val javaPackages: List<String> get() = bundlesBuilt.mapNotNull { it.bundle.javaPackage.orNull }
 
     /**
      * Collection of Vault definitions from all packages from all projects applying package plugin.
@@ -260,42 +262,44 @@ class AemExtension(val project: Project) : Serializable {
      * Get CRX package defined to be built (could not yet exist).
      */
     @Suppress("VariableNaming")
-    val `package`: File get() = common.tasks.get<PackageCompose>(PackageCompose.NAME).composedFile
+    val `package`: File get() = common.tasks.get<PackageCompose>(PackageCompose.NAME).archiveFile.get().asFile
 
     val pkg: File get() = `package`
 
     /**
      * Get all CRX packages defined to be built.
      */
-    val packages: List<File> get() = common.tasks.getAll<PackageCompose>().map { it.composedFile }
+    val packages: List<File> get() = common.tasks.getAll<PackageCompose>().map { it.archiveFile.get().asFile }
 
     /**
      * Get OSGi bundle defined to be built (could not yet exist).
      */
-    val bundle: File get() = common.tasks.get<BundleCompose>(BundleCompose.NAME).composedFile
+    val bundle: File get() = common.tasks.get<Jar>(JavaPlugin.JAR_TASK_NAME).archiveFile.get().asFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
-    val bundles: List<File> get() = common.tasks.getAll<BundleCompose>().map { it.composedFile }
+    val bundles: List<File> get() = common.tasks.getAll<Jar>().map { it.archiveFile.get().asFile }
 
     /**
      * Shorthand for embedding code inside OSGi bundle being composed when configuration on demand is enabled.
-     * When this feature is not enabled, it is preferred to use [BundleCompose.embedPackage].
+     * When this feature is not enabled, it is preferred to use [BundleJar.embedPackage].
      */
     fun bundleEmbed(dependencyNotation: Any, pkgs: Iterable<String>, export: Boolean = false) {
         project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
-        common.tasks.named<BundleCompose>(BundleCompose.NAME) {
-            when {
-                export -> exportPackage(pkgs)
-                else -> privatePackage(pkgs)
+        common.tasks.named<Jar>(JavaPlugin.JAR_TASK_NAME) {
+            bundle {
+                when {
+                    export -> exportPackage(pkgs)
+                    else -> privatePackage(pkgs)
+                }
             }
         }
     }
 
     /**
      * Shorthand for embedding code inside OSGi bundle being composed when configuration on demand is enabled.
-     * When this feature is not enabled, it is preferred to use [BundleCompose.embedPackage].
+     * When this feature is not enabled, it is preferred to use [BundleJar.embedPackage].
      */
     fun bundleEmbed(dependencyNotation: Any, vararg pkgs: String, export: Boolean = false) = bundleEmbed(dependencyNotation, pkgs.asIterable(), export)
 

@@ -27,8 +27,8 @@ open class InstanceStatus : InstanceTask() {
     @Internal
     val packages = aem.obj.files()
 
+    @Suppress("MagicNumber")
     @TaskAction
-    @Suppress("MagicNumber", "LongMethod", "TooGenericExceptionCaught")
     fun status() {
         val table = common.progress(instances.get().size) {
             AsciiTable().apply {
@@ -78,6 +78,7 @@ open class InstanceStatus : InstanceTask() {
         }
     }.joinToString("<br>")
 
+    @Suppress("TooGenericExceptionCaught")
     private fun Instance.packagesInstalled() = if (available) {
         try {
             sync {

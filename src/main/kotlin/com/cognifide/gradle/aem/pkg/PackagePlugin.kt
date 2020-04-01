@@ -10,18 +10,9 @@ import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.tasks.configureApply
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition
-import org.gradle.api.attributes.Category
-import org.gradle.api.component.AdhocComponentWithVariants
-import org.gradle.api.internal.artifacts.ArtifactAttributes
-import org.gradle.api.internal.artifacts.dsl.LazyPublishArtifact
-import org.gradle.api.model.ObjectFactory
-import org.gradle.internal.component.external.descriptor.MavenScope
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import javax.inject.Inject
 
-class PackagePlugin @Inject constructor(private val objectFactory: ObjectFactory) : CommonDefaultPlugin() {
+class PackagePlugin : CommonDefaultPlugin() {
 
     override fun Project.configureProject() {
         setupDependentPlugins()
@@ -44,17 +35,6 @@ class PackagePlugin @Inject constructor(private val objectFactory: ObjectFactory
 
     @Suppress("LongMethod")
     private fun Project.setupTasks() {
-        val configuration = configurations.create(CONFIGURATION) { c ->
-            c.attributes.attribute(Category.CATEGORY_ATTRIBUTE, objectFactory.named(Category::class.java, Category.LIBRARY))
-            c.outgoing.attributes.attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.ZIP_TYPE)
-        }
-        configurations.named(Dependency.ARCHIVES_CONFIGURATION) { it.extendsFrom(configuration) }
-        components.named(CommonPlugin.COMPONENT).configure { component ->
-            if (component is AdhocComponentWithVariants) {
-                component.addVariantsFromConfiguration(configuration) { it.mapToMavenScope(MavenScope.Runtime.lowerName) }
-            }
-        }
-
         tasks {
             val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
             val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
@@ -64,8 +44,6 @@ class PackagePlugin @Inject constructor(private val objectFactory: ObjectFactory
                 dependsOn(prepare)
                 mustRunAfter(clean)
                 metaDir.convention(prepare.flatMap { it.metaDir })
-            }.apply {
-                configuration.outgoing.artifacts.add(LazyPublishArtifact(this))
             }
             val validate = register<PackageValidate>(PackageValidate.NAME) {
                 dependsOn(compose)

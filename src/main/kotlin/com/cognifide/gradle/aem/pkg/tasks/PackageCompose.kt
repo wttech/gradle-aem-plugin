@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
@@ -18,23 +17,12 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
+import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
-
-    /**
-     * Shorthand for built CRX package file.
-     */
-    @get:Internal
-    val composedFile get() = archiveFile.get().asFile
-
-    /**
-     * Shorthand for directory of built CRX package file.
-     */
-    @get:Internal
-    val composedDir get() = composedFile.parentFile
 
     @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
@@ -185,9 +173,9 @@ open class PackageCompose : ZipTask(), AemTask {
             return
         }
 
-        val compose = project.tasks.named(BundleCompose.NAME, BundleCompose::class.java)
-        dependsOn(compose)
-        bundlesInstalled.add(BundleInstalledBuilt(this, compose).apply(bundleBuiltOptions))
+        val jar = project.tasks.named(JavaPlugin.JAR_TASK_NAME, Jar::class.java)
+        dependsOn(jar)
+        bundlesInstalled.add(BundleInstalledBuilt(this, jar).apply(bundleBuiltOptions))
 
         if (bundleTest.get()) {
             dependsOn(project.tasks.named(JavaPlugin.TEST_TASK_NAME))
@@ -250,7 +238,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
-        installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
+        installBundleBuilt("$projectPath:${JavaPlugin.JAR_TASK_NAME}", options)
         if (bundleTest.get()) {
             dependsOn("$projectPath:${JavaPlugin.TEST_TASK_NAME}")
         }
@@ -260,7 +248,7 @@ open class PackageCompose : ZipTask(), AemTask {
         installBundleBuilt(common.tasks.pathed(taskPath), options)
     }
 
-    fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
+    fun installBundleBuilt(task: TaskProvider<Jar>, options: BundleInstalledBuilt.() -> Unit = {}) {
         dependsOn(task)
         definitions.add { bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options)) }
     }

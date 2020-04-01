@@ -32,10 +32,10 @@ class BundlePluginTest : AemBuildTest() {
             helloServiceJava()
         }
 
-        runBuild(projectDir, "bundleCompose", "-Poffline") {
-            assertTask(":bundleCompose")
-            assertBundle("build/bundleCompose/bundle-minimal.jar")
-            assertZipEntryEquals("build/bundleCompose/bundle-minimal.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
+        runBuild(projectDir, "jar", "-Poffline") {
+            assertTask(":jar")
+            assertBundle("build/libs/bundle-minimal.jar")
+            assertZipEntryEquals("build/libs/bundle-minimal.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
@@ -67,6 +67,8 @@ class BundlePluginTest : AemBuildTest() {
             """)
 
             buildGradle("""
+                import com.cognifide.gradle.aem.bundle.tasks.bundle
+                
                 plugins {
                     id("com.cognifide.aem.bundle")
                     id("maven-publish")
@@ -90,9 +92,11 @@ class BundlePluginTest : AemBuildTest() {
                 }
 
                 tasks {
-                    bundleCompose {
-                        category = "example"
-                        vendor = "Company"
+                    jar {
+                        bundle {
+                            category = "example"
+                            vendor = "Company"
+                        }
                     }
                 }
                 
@@ -103,7 +107,7 @@ class BundlePluginTest : AemBuildTest() {
                 
                     publications {
                         create<MavenPublication>("maven") {
-                            from(components["aem"])
+                            from(components["java"])
                         }
                     }
                 }
@@ -112,13 +116,13 @@ class BundlePluginTest : AemBuildTest() {
             helloServiceJava()
         }
 
-        runBuild(projectDir, "bundleCompose", "-Poffline") {
-            assertTask(":bundleCompose")
-            assertBundle("build/bundleCompose/bundle-extended-1.0.0.jar")
+        runBuild(projectDir, "jar", "-Poffline") {
+            assertTask(":jar")
+            assertBundle("build/libs/bundle-extended-1.0.0.jar")
         }
 
         runBuild(projectDir, "publish", "-Poffline") {
-            assertTask(":bundleCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":jar", TaskOutcome.UP_TO_DATE)
 
             val mavenDir = projectDir.resolve("build/repository/com/company/example/bundle-extended/1.0.0")
             assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.jar"))
@@ -133,6 +137,8 @@ class BundlePluginTest : AemBuildTest() {
             settingsGradle("")
 
             buildGradle("""
+                import com.cognifide.gradle.aem.bundle.tasks.bundle
+                
                 plugins {
                     id("com.cognifide.aem.bundle")
                 }
@@ -148,9 +154,9 @@ class BundlePluginTest : AemBuildTest() {
                     compileOnly("org.osgi:osgi.cmpn:6.0.0")
                 }
                 
-                aem {
-                    tasks {
-                        bundleCompose {
+                tasks {
+                    jar {
+                        bundle {
                             embedPackage("org.hashids:hashids:1.0.1", "org.hashids")
                         }
                     }
@@ -160,10 +166,10 @@ class BundlePluginTest : AemBuildTest() {
             helloServiceJava()
         }
 
-        runBuild(projectDir, "bundleCompose", "-Poffline") {
-            assertTask(":bundleCompose")
+        runBuild(projectDir, "jar", "-Poffline") {
+            assertTask(":jar")
 
-            val jar = file("build/bundleCompose/bundle-embed.jar")
+            val jar = file("build/libs/bundle-embed.jar")
 
             assertBundle(jar)
 
