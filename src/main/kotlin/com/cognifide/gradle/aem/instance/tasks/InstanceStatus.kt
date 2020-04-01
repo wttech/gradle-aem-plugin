@@ -83,7 +83,9 @@ open class InstanceStatus : InstanceTask() {
         try {
             sync {
                 packageManager.listRetry.never()
-                packagesBuilt.get().sortedBy { it.path }.mapNotNull { task ->
+
+                val result = mutableListOf<String>()
+                result.addAll(packagesBuilt.get().sortedBy { it.path }.mapNotNull { task ->
                     val pkg = packageManager.find(task.vaultDefinition)
                     val path = task.path.removeSuffix(":${task.name}")
 
@@ -92,8 +94,8 @@ open class InstanceStatus : InstanceTask() {
                     } else {
                         "$path (not yet)"
                     }
-                }.joinToString("<br>")
-                packages.files.sortedBy { it.name }.mapNotNull { file ->
+                })
+                result.addAll(packages.files.sortedBy { it.name }.mapNotNull { file ->
                     val pkg = packageManager.find(file)
                     val name = file.name
 
@@ -102,7 +104,9 @@ open class InstanceStatus : InstanceTask() {
                     } else {
                         "$name (not yet)"
                     }
-                }.joinToString("<br>")
+                })
+
+                result.joinToString("<br>")
             }.ifBlank { "none" }
         } catch (e: Exception) {
             "unknown"
