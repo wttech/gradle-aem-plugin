@@ -59,11 +59,13 @@ Then below section is absolutely redundant:
 
 *aem/sites/build.gradle.kts*
 ```kotlin
-aem {
-    tasks {
-        bundleCompose {
+import com.cognifide.gradle.aem.bundle.tasks.bundle
+
+tasks {
+    jar {
+        bundle {
             javaPackage.set("${project.group}.${project.name}") // "com.company.example.aem.sites"
-        }
+        }   
     }
 }
 ```
@@ -75,9 +77,11 @@ These methods are above `bundleCompose` section as of dependency management is t
 are configuring `compileOnly` dependency and setting correct OSGi manifest entry at once (simplification).
 
 ```kotlin
-aem {
-    tasks {
-        bundleCompose {
+import com.cognifide.gradle.aem.bundle.tasks.bundle
+
+tasks {
+    jar {
+        bundle {
             embedPackage("group:name:version", "com.group.name.*") // package will be a part of 'Private-Package'
             embedPackage("group:name:version", "com.group.name.*", export = true) // for 'Export-Package'
         }
@@ -101,9 +105,11 @@ This values population behavior could be optionally disabled by bundle parameter
 Regardless if this behavior is enabled or disabled, all of values are overiddable e.g:
 
 ```kotlin
-aem {
-    tasks {
-        bundleCompose {
+import com.cognifide.gradle.aem.bundle.tasks.bundle
+
+tasks {
+    jar {
+        bundle {
             displayName = 'My Bundle"
             symbolicName = "com.company.aem.example.common"
             slingModelPackages = "com.company.aem.example.common.models"
@@ -122,9 +128,11 @@ To prevent that we could generate own manifest entry that will prevent importing
 For instance: 
 
 ```kotlin
-aem {
-    tasks {
-        bundleCompose {
+import com.cognifide.gradle.aem.bundle.tasks.bundle
+
+tasks {
+    jar {
+        bundle {
             excludePackage("org.junit", "org.mockito")
         } 
     }
