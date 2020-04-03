@@ -47,13 +47,14 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 ### Screenshot
 
 <p align="center">
-  <img src="docs/gradle-aem-multi-build.gif" alt="Gradle AEM Multi Build"/>
+  <img src="docs/all-package-deploy.gif" alt="Gradle AEM Multi Build"/>
 </p>
 
-What is being done above by simply running super easy command `sh gradlew`?
+What is being done above by simply running super easy command `sh gradlew` <=> `gw` ?
 
-* `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
-* `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
+* `:env:instanceProvision` - configuring AEM instances / performing provisioning steps like configuring replication agents (AEM platform wide changes).
+* `:env:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+* `:app:aem:all:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
 
 **Build is incremental** which guarantees optimized time every time regardless of build command used.
 Only changed parts of application are processed again:
