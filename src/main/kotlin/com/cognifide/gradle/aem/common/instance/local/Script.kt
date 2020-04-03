@@ -23,7 +23,7 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
 
     val args: List<String> get() = commandLine.subList(1, commandLine.size)
 
-    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows): Any? {
+    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows) {
         try {
             logger.info("Executing script '$commandString' at directory '${instance.dir}'")
 
