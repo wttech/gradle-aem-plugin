@@ -90,7 +90,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     val pid: Int get() = quickstartDir.resolve("conf/cq.pid")
-            .takeIf { it.exists() }?.readText()?.trim()?.toInt() ?: 0
+            .takeIf { it.exists() }?.readText()?.trim()?.ifBlank { null }?.toInt() ?: 0
 
     override val version: AemVersion
         get() {
