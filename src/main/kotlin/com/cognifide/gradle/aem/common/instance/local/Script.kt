@@ -23,25 +23,27 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
 
     val args: List<String> get() = commandLine.subList(1, commandLine.size)
 
-    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows) = try {
-        logger.info("Executing script '$commandString' at directory '${instance.dir}'")
+    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows): Any? {
+        try {
+            logger.info("Executing script '$commandString' at directory '${instance.dir}'")
 
-        if (async) { // TODO use timeout and find out why Windows e.g 'start.bat' script is failing sometimes
-            ProcessBuilder(commandLine)
-                    .directory(instance.dir)
-                    .start()
-        } else {
-            ProcBuilder(command, *args.toTypedArray())
-                    .withWorkingDirectory(instance.dir)
-                    .withExpectedExitStatuses(0)
-                    .withInputStream(SafeStreams.emptyInput())
-                    .withOutputStream(SafeStreams.systemOut())
-                    .withErrorStream(SafeStreams.systemOut())
-                    .apply(options)
-                    .run()
+            if (async) { // TODO use timeout and find out why Windows e.g 'start.bat' script is failing sometimes
+                ProcessBuilder(commandLine)
+                        .directory(instance.dir)
+                        .start()
+            } else {
+                ProcBuilder(command, *args.toTypedArray())
+                        .withWorkingDirectory(instance.dir)
+                        .withExpectedExitStatuses(0)
+                        .withInputStream(SafeStreams.emptyInput())
+                        .withOutputStream(SafeStreams.systemOut())
+                        .withErrorStream(SafeStreams.systemOut())
+                        .apply(options)
+                        .run()
+            }
+        } catch (e: Exception) {
+            throw handleException(e)
         }
-    } catch (e: Exception) {
-        throw handleException(e)
     }
 
     fun executeQuietly(options: ProcBuilder.() -> Unit = {}): ProcResult = try {
