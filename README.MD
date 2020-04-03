@@ -7,7 +7,7 @@
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 
 <p>
-  <img src="docs/logo.png" alt="Gradle AEM Plugin"/>
+  <img src="docs/all-package-deploy.gif" alt="Gradle AEM Plugin - All - Package Deploy task"/>
 </p>
 
 ## Table of contents

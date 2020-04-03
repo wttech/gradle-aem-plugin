@@ -46,7 +46,7 @@ This plugin implicitly applies [Instance Plugin](instance-plugin.md).
 By default, instance file are stored directly in project, under so called main AEM module usually named *aem*.
 Ensure having directory *aem/.instance* ignored in VCS and excluded from indexing by IDE.
 
-![Instance file structure](docs/instance-file-structure.png)
+![Instance file structure](instance-file-structure.png)
 
 ## Task `instanceSetup`
 
@@ -60,7 +60,7 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 
 ## Task `instanceCreate`
  
-Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#defining-instances-via-properties-file). 
+Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](common-plugin.md#defining-instances-via-properties-file). 
 
 ### Configuration of AEM instance source (JAR file or backup file)
 
@@ -126,7 +126,7 @@ aem {
 }
 ```
 
-Files section works in a same way as in [instance satisfy task](#task-instancesatisfy).
+Files section works in a same way as in [instance satisfy task](instance-plugin.md#task-instancesatisfy).
 For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
 
 ### Customization of extracted instance files (optional)
