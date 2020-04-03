@@ -216,7 +216,7 @@ To simplify that process, task `packageConfig` could be used.
 It will download actual OSGi configuration values as XML file and put it at desired path to be later deployed within built CRX package.
 
 Alternatively, customized values could be set on OSGi configuration GUI dialog then task `packageConfig` could be run to synchronize changes and save them in VCS in a proper format.
-However that approach has a little disadvantage. After changing anything by hand on OSGi configuration dialog, changes done in XML files for appropriate OSGi configuration might be longer reflected on dialog after installing CRX package.
+However that approach has a little disadvantage. After changing anything by hand on OSGi configuration dialog, changes done in XML files for appropriate OSGi configuration might be no longer reflected on dialog after installing CRX package.
 Then, as a workaround, try with deleting configuration using button on dialog then update values in XML and deploy package again to restore binding.
 
 ### Synchronizing configuration for built code
