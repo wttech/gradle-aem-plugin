@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.common.utils
 
-import org.apache.jackrabbit.util.ISO8601
 import java.util.*
 import java.util.regex.Pattern
 
 object JcrUtil {
 
     fun date(date: Date = Date()): String {
-        return ISO8601.format(Calendar.getInstance().apply { time = date })
+        return "" // TODO handle ISO8601 convertion without jackrabbit dependency
+        // return ISO8601.format(Calendar.getInstance().apply { time = date })
     }
     fun dateToCalendar(date: Date): Calendar {
         return Calendar.getInstance().apply { time = date }

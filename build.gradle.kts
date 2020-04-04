@@ -44,11 +44,11 @@ dependencies {
     implementation("org.reflections:reflections:0.9.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.apache.commons:commons-lang3:3.9")
-    implementation("org.apache.jackrabbit.vault:vault-cli:3.4.0")
+    implementation("commons-io:commons-io:2.6")
+    implementation("org.apache.httpcomponents:httpclient:4.5.10")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.0")
     implementation("net.lingala.zip4j:zip4j:2.3.2")
     implementation("org.osgi:org.osgi.core:6.0.0")
-    implementation("net.adamcin.oakpal:oakpal-core:1.5.1")
     implementation("de.vandermeer:asciitable:0.3.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")

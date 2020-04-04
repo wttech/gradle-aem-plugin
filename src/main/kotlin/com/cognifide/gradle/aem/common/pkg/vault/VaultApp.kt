@@ -1,19 +1,13 @@
 package com.cognifide.gradle.aem.common.pkg.vault
 
 import java.io.File
-import org.apache.jackrabbit.vault.cli.VaultFsApp
-import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
 import org.gradle.api.Project
 
-class VaultApp(val project: Project) : VaultFsApp() {
+class VaultApp(val project: Project) {
 
     companion object {
         const val CURRENT_WORKING_DIR = "user.dir"
     }
-
-    private val executionContext by lazy { VaultExecutionContext(this).apply { installCommand(CmdConsole()) } }
-
-    override fun getDefaultContext() = executionContext
 
     fun execute(command: String, workingPath: String) = execute(command.split(" "), workingPath)
 
@@ -29,7 +23,7 @@ class VaultApp(val project: Project) : VaultFsApp() {
         val cwd = System.getProperty(CURRENT_WORKING_DIR)
         try {
             System.setProperty(CURRENT_WORKING_DIR, workingPath)
-            run(args.toTypedArray())
+            // TODO pass through VLT-CLI jar // run(args.toTypedArray())
         } finally {
             System.setProperty(CURRENT_WORKING_DIR, cwd)
         }

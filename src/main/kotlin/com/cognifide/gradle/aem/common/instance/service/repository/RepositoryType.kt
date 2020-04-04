@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 import com.cognifide.gradle.aem.common.utils.JcrUtil
 import java.text.SimpleDateFormat
 import java.util.*
-import org.apache.jackrabbit.util.ISO8601
 
 object RepositoryType {
 
@@ -33,8 +32,10 @@ object RepositoryType {
     }
 
     fun normalizeSimpleType(value: Any?) = when (value) {
+        /* TODO handle ISO8601 convertion without dependency to jackrabbit
         is Date -> ISO8601.format(JcrUtil.dateToCalendar(value))
         is Calendar -> ISO8601.format(value)
+        */
         else -> value
     }
 

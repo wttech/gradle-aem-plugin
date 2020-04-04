@@ -5,15 +5,9 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
-import com.cognifide.gradle.common.build.CollectingLogger
-import net.adamcin.oakpal.core.*
 import org.apache.commons.io.FileUtils
-import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.*
 import java.io.File
-import java.io.IOException
-import java.net.URL
 
 class PackageValidator(@Internal val aem: AemExtension) {
 
@@ -30,6 +24,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         aem.prop.boolean("package.validator.enabled")?.let { set(it) }
     }
 
+    /*
     /**
      * Determines which level of validation message is indicating failed validation.
      */
@@ -42,6 +37,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     fun severity(name: String) {
         severity.set(severityByName(name))
     }
+     */
 
     /**
      * Controls if failed validation should also fail current build.
@@ -109,6 +105,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
+    /*
     fun oakMachine(options: OakMachine.Builder.() -> Unit) {
         this.oakMachineOptions = options
     }
@@ -122,6 +119,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             withPrivileges(jcrPrivileges.get())
         }.build())
     }
+    */
 
     fun planClassLoader(provider: () -> ClassLoader) {
         this.planClassLoaderProvider = provider
@@ -154,7 +152,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
             cndSync.sync()
             prepareOpearDir()
-            runOakPal(packages)
+            // TODO runOakPal(packages)
         }
     }
 
@@ -179,6 +177,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
+    /* TODO delegate to OAKPAL CLI
     private fun runOakPal(packages: Iterable<File>) {
         val opearFile = OpearFile.fromDirectory(workDir.get().asFile).getOrElse {
             throw PackageException("OakPAL Opear directory cannot be read properly!")
@@ -281,6 +280,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         return Violation.Severity.values().firstOrNull { it.name.equals(name, true) }
                 ?: throw PackageException("Unsupported package violation severity specified '$name'!")
     }
+    */
 
     init {
         aem.packageOptions.validatorOptions(this)
