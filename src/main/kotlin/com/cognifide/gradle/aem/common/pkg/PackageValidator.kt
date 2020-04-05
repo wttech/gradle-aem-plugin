@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
+import com.cognifide.gradle.aem.common.cli.CliApp
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.*
 import java.io.File
@@ -14,6 +15,13 @@ class PackageValidator(@Internal val aem: AemExtension) {
     private val common = aem.common
 
     private val logger = aem.logger
+
+    private val app = CliApp(aem).apply {
+        dependencyNotation.apply {
+            convention(aem.commonOptions.archiveExtension.map { "net.adamcin.oakpal:oakpal-core:1.5.1:dist@$it" })
+            aem.prop.string(("oakpal.cli"))?.let { set(it) }
+        }
+    }
 
     /**
      * Allows to disable package validation at all.

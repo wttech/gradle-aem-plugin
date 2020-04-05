@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
-import com.cognifide.gradle.aem.common.utils.JcrUtil
 import java.text.SimpleDateFormat
 import java.util.*
 

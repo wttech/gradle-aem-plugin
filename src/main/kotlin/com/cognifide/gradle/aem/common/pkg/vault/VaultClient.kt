@@ -2,12 +2,20 @@ package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.cli.CliApp
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 
 class VaultClient(val aem: AemExtension) {
 
-    private val app = VaultApp(aem.project)
+    private val app = CliApp(aem).apply {
+        dependencyDir.convention(aem.project.layout.buildDirectory.dir("vault/cli"))
+        dependencyNotation.apply {
+            convention(aem.commonOptions.archiveExtension.map { "org.apache.jackrabbit.vault:vault-cli:3.4.0:bin@$it" })
+            aem.prop.string(("vault.cli"))?.let { set(it) }
+        }
+        executable.set(aem.commonOptions.scriptExtension.map { "vault-cli-3.4.0/bin/vlt$it" })
+    }
 
     val command = aem.obj.string()
 
@@ -38,7 +46,7 @@ class VaultClient(val aem: AemExtension) {
         aem.logger.lifecycle("Executing command: vlt $commandEffective")
 
         val stopWatch = StopWatch().apply { start() }
-        app.execute(commandEffective, contentDirEffective)
+        app.exec(contentDirEffective, commandEffective)
         stopWatch.stop()
 
         return VaultSummary(commandEffective, contentDirEffective, stopWatch.time)
