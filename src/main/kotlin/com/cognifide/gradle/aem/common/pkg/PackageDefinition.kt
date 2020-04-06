@@ -58,26 +58,14 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
 
     val jcrDir: File get() = pkgDir.resolve(Package.JCR_ROOT)
 
-    private var process: PackageDefinition.() -> Unit = {
-        copyMetaFiles()
-        expandMetaFiles()
-    }
-
-    /**
-     * Hook for customizing how package will be processed before zipping.
-     */
-    fun process(options: PackageDefinition.() -> Unit) {
-        this.process = options
-    }
-
-    private var content: PackageDefinition.() -> Unit = {}
-
     /**
      * Hook for adding files to package being composed.
      */
     fun content(options: PackageDefinition.() -> Unit) {
         this.content = options
     }
+
+    private var content: PackageDefinition.() -> Unit = {}
 
     // 'content' & 'process' methods DSL
 
@@ -112,8 +100,9 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         metaDir.mkdirs()
         jcrDir.mkdirs()
 
+        copyMetaFiles()
         content()
-        process()
+        expandMetaFiles()
 
         ZipFile(archivePath.get().asFile).packAll(pkgDir)
         pkgDir.deleteRecursively()
