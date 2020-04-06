@@ -161,8 +161,9 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private fun runOakPal(packages: Iterable<File>) {
         app.exec {
+            environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath) // TODO not used by oakpal runtime / to be fixed
             workingDir(opearDir.get().asFile)
-            args(listOf(initialPkg.get()) + packages)
+            args(listOf("-j", "-o", reportFile.get().asFile) + listOf(initialPkg.get()) + packages)
         }
     }
 
