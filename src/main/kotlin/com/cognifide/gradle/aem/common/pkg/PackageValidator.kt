@@ -77,13 +77,13 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     // TODO https://github.com/gradle/gradle/issues/2016
     @Internal
-    val configDir = aem.obj.relativeDir(aem.packageOptions.commonDir, Package.OAKPAL_OPEAR_PATH)
+    val configDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/${Package.OAKPAL_OPEAR_PATH}")
 
     @InputFiles
     val configFiles = aem.obj.files { from(configDir) }
 
-    @Internal
-    val initialDir = aem.obj.dir { convention(configDir.dir("initial")) }
+    @InputFiles
+    val initialDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/initial")
 
     @Internal
     val initialPkg = aem.obj.file { convention(workDir.file("initial.zip"))}
@@ -92,7 +92,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val cndSync = CndSync(aem).apply {
         aem.prop.string("package.validator.cndSync.type")?.let { type(it) }
         file.apply {
-            convention(configDir.file("nodetypes.cnd"))
+            convention(initialDir.file("META-INF/vault/nodetypes.cnd"))
             aem.prop.file("package.validator.cndSync.file")?.let { set(it) }
         }
     }
