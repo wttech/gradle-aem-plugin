@@ -47,23 +47,18 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val workDir = aem.obj.buildDir("package/validator")
 
     @Internal
-    val opearDir = aem.obj.dir { convention(workDir.dir("OAKPAL_OPEAR")) }
+    val opearDir = aem.obj.dir { convention(workDir.dir(Package.OAKPAL_OPEAR_PATH)) }
 
+    // TODO ensure having plan files listed in manifest under OAKPAL_OPEAR/META-INF/MANIFEST.MF ("Oakpal-Plan: plan-compose.json,...")
+    // TODO maybe dedicated directory for storing plans?
     @Input
     val planName = aem.obj.string {
-        convention("plan.json")
+        convention("plan-compose.json")
         aem.prop.string("package.validator.plan")?.let { set(it) }
     }
 
     @Internal
-    val planFile = aem.obj.file {
-        convention(opearDir.map { dir ->
-            dir.file(planName).get().takeIf { it.asFile.exists() } ?: dir.file("plan.json")
-        })
-    }
-
-    @Internal
-    val reportFile = aem.obj.file { convention(opearDir.file("report.json")) }
+    val reportFile = aem.obj.file { convention(workDir.file("report.json")) }
 
     @InputFile
     @Optional
@@ -161,9 +156,9 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private fun runOakPal(packages: Iterable<File>) {
         app.exec {
-            environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath) // TODO not used by oakpal runtime / to be fixed
-            workingDir(opearDir.get().asFile)
-            args(listOf("-j", "-o", reportFile.get().asFile) + listOf(initialPkg.get()) + packages)
+            environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
+            workingDir(workDir.get().asFile)
+            args(listOf("-p", planName.get(), "-j", "-o", reportFile.get().asFile) + listOf(initialPkg.get()) + packages)
         }
     }
 
