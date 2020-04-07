@@ -121,13 +121,17 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
 
         common.progress {
-            message = when (packages.size) {
-                1 -> "Validating package '${packages.first().name}'"
-                else -> "Validating packages (${packages.count()})"
-            }
-
+            step = "Synchronizing node types"
             cndSync.sync()
+
+            step = "Preparing resources"
             prepareWorkDir()
+
+            step = "Validating"
+            message = when (packages.size) {
+                1 -> "Package '${packages.first().name}'"
+                else -> "Packages (${packages.count()})"
+            }
             runOakPal(packages)
         }
     }
