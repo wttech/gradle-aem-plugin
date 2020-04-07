@@ -20,23 +20,28 @@ open class CliApp(protected val aem: AemExtension) {
         args(command.split(" "))
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun exec(options: ExecSpec.() -> Unit = {}): ExecResult {
         extractArchive()
 
         val executableFile = dependencyDir.get().asFile.resolve(executable.get())
         if (!executableFile.exists()) {
-            throw CliException("Executable file '${executable.get()}' of CLI application '${dependencyNotation.get()}'" +
+            throw CliException("CLI application '${dependencyNotation.get()}' executable file '${executable.get()}'" +
                     " cannot be found at path '$executableFile' after extracting archive!")
         }
 
-        return aem.project.exec {
-            it.apply {
-                standardInput = SafeStreams.emptyInput()
-                standardOutput = SafeStreams.systemOut()
-                errorOutput = SafeStreams.systemErr()
-                options()
-                setExecutable(executableFile)
+        return try {
+            aem.project.exec {
+                it.apply {
+                    standardInput = SafeStreams.emptyInput()
+                    standardOutput = SafeStreams.systemOut()
+                    errorOutput = SafeStreams.systemErr()
+                    options()
+                    setExecutable(executableFile)
+                }
             }
+        } catch (e: Exception) {
+            throw CliException("CLI application '${dependencyNotation.get()}' cannot be executed properly! Cause: ${e.message}", e)
         }
     }
 

@@ -6,9 +6,12 @@ import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.aem.common.cli.CliApp
+import com.cognifide.gradle.aem.common.pkg.validator.OakpalResult
+import com.cognifide.gradle.aem.common.pkg.validator.OakpalSeverity
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.*
 import java.io.File
+import java.util.jar.Manifest
 
 class PackageValidator(@Internal val aem: AemExtension) {
 
@@ -49,12 +52,20 @@ class PackageValidator(@Internal val aem: AemExtension) {
     @Internal
     val opearDir = aem.obj.dir { convention(workDir.dir(Package.OAKPAL_OPEAR_PATH)) }
 
-    // TODO ensure having plan files listed in manifest under OAKPAL_OPEAR/META-INF/MANIFEST.MF ("Oakpal-Plan: plan-compose.json,...")
-    // TODO maybe dedicated directory for storing plans?
     @Input
     val planName = aem.obj.string {
-        convention("plan-compose.json")
+        convention("plan.json")
         aem.prop.string("package.validator.plan")?.let { set(it) }
+    }
+
+    @Input
+    val severity = aem.obj.typed<OakpalSeverity> {
+        convention(OakpalSeverity.MAJOR)
+        aem.prop.string("package.validator.severity")?.let { set(OakpalSeverity.of(it)) }
+    }
+
+    fun severity(name: String) {
+        severity.set(OakpalSeverity.of(name))
     }
 
     @Internal
@@ -81,7 +92,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val initialDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/initial")
 
     @Internal
-    val initialPkg = aem.obj.file { convention(workDir.file("initial.zip"))}
+    val initialPkg = aem.obj.file { convention(workDir.file("initial.zip")) }
 
     @Internal
     val cndSync = CndSync(aem).apply {
@@ -131,6 +142,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
         aem.composePackage {
             archivePath.set(initialPkg)
+            filter("/var/gap/package/validator") // anything
             content { FileUtils.copyDirectory(initialDir.get().asFile, pkgDir) }
         }
 
@@ -152,13 +164,32 @@ class PackageValidator(@Internal val aem: AemExtension) {
             logger.info("Using project-specific OakPAL Opear configuration files from directory '$dir' to '$tmpDir'")
             FileUtils.copyDirectory(dir, tmpDir)
         }
+
+        val manifestFile = opearDir.file(Package.MANIFEST_PATH).get().asFile
+        if (manifestFile.exists()) {
+            Manifest(manifestFile.readBytes().inputStream()).apply {
+                mainAttributes.putValue("Oakpal-Plan", planName.get())
+                manifestFile.outputStream().use { write(it) }
+            }
+        }
     }
 
-    private fun runOakPal(packages: Iterable<File>) {
-        app.exec {
+    @Suppress("SpreadOperator")
+    private fun runOakPal(packages: Collection<File>) {
+        val result = OakpalResult.byExitCode(app.exec {
+            isIgnoreExitValue = true
             environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
             workingDir(workDir.get().asFile)
-            args(listOf("-p", planName.get(), "-j", "-o", reportFile.get().asFile) + listOf(initialPkg.get()) + packages)
+            args("-p", planName.get(), "-s", severity.get(), "-j", "-o", reportFile.get().asFile, initialPkg.get(), *packages.toTypedArray())
+        }.exitValue)
+        if (result != OakpalResult.SUCCESS) {
+            val message = "OakPAL validation failed due to ${result.cause}!\nSee report file: '${reportFile.get()}' for package(s):\n" +
+                    packages.joinToString("\n")
+            if (verbose.get()) {
+                throw PackageException(message)
+            } else {
+                logger.error(message)
+            }
         }
     }
 
