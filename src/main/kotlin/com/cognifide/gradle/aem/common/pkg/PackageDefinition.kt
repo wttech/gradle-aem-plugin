@@ -52,7 +52,8 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     /**
      * Temporary directory being zipped to produce CRX package.
      */
-    val pkgDir: File get() = archivePath.get().asFile.parentFile.resolve(archivePath.get().asFile.nameWithoutExtension)
+    val pkgDir: File get() = archivePath.get().asFile.parentFile
+            .resolve("${archivePath.get().asFile.nameWithoutExtension}.pkg")
 
     val metaDir: File get() = pkgDir.resolve(Package.META_PATH)
 

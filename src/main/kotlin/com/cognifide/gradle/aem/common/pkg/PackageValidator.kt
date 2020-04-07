@@ -120,10 +120,13 @@ class PackageValidator(@Internal val aem: AemExtension) {
             step = "Synchronizing node types"
             cndSync.sync()
 
-            step = "Preparing resources"
-            prepareWorkDir()
+            step = "Preparing initial package"
+            prepareInitialPackage()
 
-            step = "Validating"
+            step = "Preparing Opear directory"
+            prepareOpearDir()
+
+            step = "Running OakPAL"
             message = when (packages.size) {
                 1 -> "Package '${packages.first().name}'"
                 else -> "Packages (${packages.count()})"
@@ -132,21 +135,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
-    private fun prepareWorkDir() {
-        workDir.get().asFile.apply {
-            deleteRecursively()
-            mkdirs()
-        }
-
-        if (initialDir.get().asFile.exists()) {
-            logger.info("Preparing OakPAL initial package '${initialPkg.get()}'")
-            aem.composePackage {
-                archivePath.set(initialPkg)
-                filter("/var/gap/package/validator") // anything
-                content { FileUtils.copyDirectory(initialDir.get().asFile, pkgDir) }
-            }
-        }
-
+    private fun prepareOpearDir() {
         logger.info("Preparing OakPAL Opear directory '${opearDir.get()}'")
 
         val tmpDir = opearDir.get().asFile.apply {
@@ -175,15 +164,35 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
+    private fun prepareInitialPackage() {
+        logger.info("Preparing OakPAL initial package '${initialPkg.get()}'")
+
+        val tmpDir = workDir.dir("initial").get().asFile.apply {
+            deleteRecursively()
+            mkdirs()
+        }
+
+        FileOperations.copyResources(Package.OAKPAL_INITIAL, tmpDir)
+
+        if (initialDir.get().asFile.exists()) {
+            FileUtils.copyDirectory(initialDir.get().asFile, tmpDir)
+        }
+
+        aem.composePackage {
+            archivePath.set(initialPkg)
+            filter("/var/gap/package/validator") // anything
+            content { FileUtils.copyDirectory(tmpDir, pkgDir) }
+        }
+
+        tmpDir.deleteRecursively()
+    }
+
     @Suppress("SpreadOperator")
     private fun runOakPal(packages: Collection<File>) {
         val allPackages = mutableListOf<File>().apply {
-            if (initialPkg.get().asFile.exists()) {
-                add(initialPkg.get().asFile)
-            }
+            add(initialPkg.get().asFile)
             addAll(packages)
         }
-
         val result = OakpalResult.byExitCode(app.exec {
             isIgnoreExitValue = true
             environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)

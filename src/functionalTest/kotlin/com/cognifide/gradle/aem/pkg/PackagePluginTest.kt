@@ -215,10 +215,6 @@ class PackagePluginTest : AemBuildTest() {
                 group = "com.company.example"
                 version = "1.0.0"
                 
-                repositories {
-                    jcenter()
-                }
-                
                 tasks {
                     packageCompose {
                         installBundle("org.jsoup:jsoup:1.10.2")
@@ -291,7 +287,6 @@ class PackagePluginTest : AemBuildTest() {
                 group = "com.company.example"
                 
                 repositories {
-                    jcenter()
                     maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 
@@ -344,7 +339,6 @@ class PackagePluginTest : AemBuildTest() {
             group = "com.company.example.aem"
             
             repositories {
-                jcenter()
                 maven("https://repo.adobe.com/nexus/content/groups/public")
             }
             

@@ -43,10 +43,6 @@ class LocalInstancePluginTest : AemBuildTest() {
                     id("com.cognifide.aem.instance.local")
                 }
                 
-                repositories {
-                    jcenter()
-                }
-                
                 aem {
                     instance {
                         satisfier {
@@ -110,7 +106,6 @@ class LocalInstancePluginTest : AemBuildTest() {
                 }
                 
                 repositories {
-                    jcenter()
                     maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 

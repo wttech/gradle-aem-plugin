@@ -16,7 +16,6 @@ class CommonPlugin : CommonDefaultPlugin() {
 
         plugins.apply(BasePlugin::class.java)
         extensions.add(AemExtension.NAME, AemExtension(this))
-        repositories.jcenter() // needed by CLI apps
     }
 
     companion object {
