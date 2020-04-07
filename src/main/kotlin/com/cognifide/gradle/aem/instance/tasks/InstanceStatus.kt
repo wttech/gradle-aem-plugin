@@ -5,19 +5,12 @@ import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.common.utils.onEachApply
-import de.vandermeer.asciitable.AsciiTable
-import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.PrintWriter
+import java.io.StringWriter
 
 open class InstanceStatus : InstanceTask() {
-
-    @Internal
-    val detailed = aem.obj.boolean {
-        convention(logger.isInfoEnabled)
-        aem.prop.boolean("instance.status.detailed")?.let { set(it) }
-    }
 
     @Internal
     val packagesBuilt = aem.obj.list<PackageCompose> {
@@ -30,39 +23,35 @@ open class InstanceStatus : InstanceTask() {
     @Suppress("MagicNumber")
     @TaskAction
     fun status() {
-        val table = common.progress(instances.get().size) {
-            AsciiTable().apply {
-                context.width = 160
-
-                addRule()
-                addRow("Instance", "Packages installed")
-                addRule()
-
-                if (instances.get().isEmpty()) {
-                    addRow("none, none")
-                    addRule()
-                } else {
-                    instances.get().onEachApply {
-                        increment("Checking status of instance '$name'") {
-                            addRow(instanceDetails(), packagesInstalled())
-                            addRule()
-                        }
-                    }
-                }
-
-                setTextAlignment(TextAlignment.LEFT)
-            }
+        if (instances.get().isEmpty()) {
+            println("No instances defined!")
+            return
         }
 
-        println(table.render())
+        common.progress(instances.get().size) {
+            common.parallel.each(instances.get()) { instance ->
+                increment("Checking status of instance '${instance.name}'") {
+                    val writer = StringWriter()
+                    PrintWriter(writer).apply {
+                        println("Instance '${instance.name}'")
+
+                        println(instance.instanceDetails().prependIndent("  "))
+                        println("  Packages installed:")
+                        println(instance.packagesInstalled().prependIndent("    "))
+                    }
+                    println(writer.toString())
+                }
+            }
+        }
     }
 
     private fun Instance.instanceDetails() = mutableListOf<String>().apply {
-        add("URL: $httpUrl | Available: $available")
-        add("Name: $name | Version: $version")
+        add("URL: $httpUrl (${if (available) "available" else "unavailable"})")
+        add("Version: $version")
 
         if (this@instanceDetails is LocalInstance) {
-            add("Status: ${status.displayName} | Debug port: $debugPort")
+            add("Status: ${status.displayName}")
+            add("Debug port: $debugPort")
         }
 
         if (available) {
@@ -70,13 +59,11 @@ open class InstanceStatus : InstanceTask() {
             add("Run path: $runningPath")
             add("Run modes: ${runningModes.joinToString(",")}")
 
-            if (detailed.get()) {
-                add("Time zone: ${zoneId.id} (GMT${zoneOffset.id})")
-                add("Operating system: $osInfo")
-                add("Java: $javaInfo")
-            }
+            add("Time zone: ${zoneId.id} (GMT${zoneOffset.id})")
+            add("Operating system: $osInfo")
+            add("Java: $javaInfo")
         }
-    }.joinToString("<br>")
+    }.joinToString("\n")
 
     @Suppress("TooGenericExceptionCaught")
     private fun Instance.packagesInstalled() = if (available) {
@@ -106,7 +93,7 @@ open class InstanceStatus : InstanceTask() {
                     }
                 })
 
-                result.joinToString("<br>")
+                result.joinToString("\n")
             }.ifBlank { "none" }
         } catch (e: Exception) {
             "unknown"
