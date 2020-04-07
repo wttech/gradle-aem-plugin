@@ -138,12 +138,13 @@ class PackageValidator(@Internal val aem: AemExtension) {
             mkdirs()
         }
 
-        logger.info("Preparing OakPAL initial package '${initialPkg.get()}'")
-
-        aem.composePackage {
-            archivePath.set(initialPkg)
-            filter("/var/gap/package/validator") // anything
-            content { FileUtils.copyDirectory(initialDir.get().asFile, pkgDir) }
+        if (initialDir.get().asFile.exists()) {
+            logger.info("Preparing OakPAL initial package '${initialPkg.get()}'")
+            aem.composePackage {
+                archivePath.set(initialPkg)
+                filter("/var/gap/package/validator") // anything
+                content { FileUtils.copyDirectory(initialDir.get().asFile, pkgDir) }
+            }
         }
 
         logger.info("Preparing OakPAL Opear directory '${opearDir.get()}'")
@@ -176,11 +177,18 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     @Suppress("SpreadOperator")
     private fun runOakPal(packages: Collection<File>) {
+        val allPackages = mutableListOf<File>().apply {
+            if (initialPkg.get().asFile.exists()) {
+                add(initialPkg.get().asFile)
+            }
+            addAll(packages)
+        }
+
         val result = OakpalResult.byExitCode(app.exec {
             isIgnoreExitValue = true
             environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
             workingDir(workDir.get().asFile)
-            args("-p", planName.get(), "-s", severity.get(), "-j", "-o", reportFile.get().asFile, initialPkg.get(), *packages.toTypedArray())
+            args("-p", planName.get(), "-s", severity.get(), "-j", "-o", reportFile.get().asFile, *allPackages.toTypedArray())
         }.exitValue)
         if (result != OakpalResult.SUCCESS) {
             val message = "OakPAL validation failed due to ${result.cause}!\nSee report file: '${reportFile.get()}' for package(s):\n" +
