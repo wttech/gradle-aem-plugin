@@ -81,14 +81,10 @@ class PackageValidator(@Internal val aem: AemExtension) {
         baseFile.fileProvider(aem.obj.provider(provider))
     }
 
-    // TODO https://github.com/gradle/gradle/issues/2016
     @Internal
     val configDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/${Package.OAKPAL_OPEAR_PATH}")
 
-    @InputFiles
-    val configFiles = aem.obj.files { from(configDir) }
-
-    @InputFiles
+    @Internal
     val initialDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/initial")
 
     @Internal
@@ -195,6 +191,13 @@ class PackageValidator(@Internal val aem: AemExtension) {
                 logger.error(message)
             }
         }
+    }
+
+    // TODO https://github.com/gradle/gradle/issues/2016
+    @InputFiles
+    val inputFiles = aem.obj.files {
+        from(configDir)
+        from(initialDir)
     }
 
     init {
