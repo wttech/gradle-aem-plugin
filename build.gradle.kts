@@ -1,3 +1,4 @@
+import org.gradle.api.internal.artifacts.dsl.LazyPublishArtifact
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.gradle.DokkaTask
 import io.gitlab.arturbosch.detekt.Detekt
@@ -35,7 +36,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.41")
+    implementation("com.cognifide.gradle:common-plugin:0.1.42")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
@@ -254,7 +255,7 @@ githubRelease {
     token((project.findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(tasks["jar"], tasks["sourcesJar"], tasks["javadocJar"])
+    releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { LazyPublishArtifact(tasks.named(it)) })
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
     overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())

@@ -67,7 +67,7 @@ open class PackagePrepare : AemDefaultTask() {
 
         if (metaDefaults.get()) {
             logger.info("Providing package metadata files in directory: '$targetDir")
-            aem.assetManager.copyDir(AssetManager.META_RESOURCES_PATH, targetDir, false)
+            aem.assetManager.copyDir(AssetManager.META_PATH, targetDir, false)
         }
     }
 

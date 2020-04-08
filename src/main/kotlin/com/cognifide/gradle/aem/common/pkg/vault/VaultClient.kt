@@ -9,7 +9,6 @@ import java.io.File
 class VaultClient(val aem: AemExtension) {
 
     private val app = CliApp(aem).apply {
-        dependencyDir.convention(aem.project.layout.buildDirectory.dir("vault/cli"))
         dependencyNotation.apply {
             convention(aem.commonOptions.archiveExtension.map { "org.apache.jackrabbit.vault:vault-cli:3.4.0:bin@$it" })
             aem.prop.string(("vault.cli"))?.let { set(it) }

@@ -1,49 +1,57 @@
 package com.cognifide.gradle.aem.common.asset
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import org.apache.commons.io.FileUtils
-import org.gradle.api.provider.Provider
 import java.io.File
 
 class AssetManager(private val aem: AemExtension) {
 
-    val rootDir = aem.obj.dir { convention(aem.project.rootProject.layout.buildDirectory.dir("aem/asset")) }
+    val rootDir = aem.obj.dir { convention(aem.project.rootProject.layout.buildDirectory.dir("aem")) }
 
-    fun file(path: String): Provider<File> {
-        extractAll()
-        return rootDir.file(path).map { it.asFile }
+    private val assets get() = ZipFile(rootDir.file(ZIP_PATH).get().asFile.also { assetsFromResources(it) })
+
+    private fun assetsFromResources(zip: File) = zip.apply {
+        if (exists()) {
+            return@apply
+        }
+        parentFile.mkdirs()
+        outputStream().use { output ->
+            this@AssetManager.javaClass.getResourceAsStream("/$ZIP_PATH").use {
+                input -> input.copyTo(output)
+            }
+        }
     }
 
-    fun copyDir(path: String, targetDir: File, override: Boolean = true) {
-        val sourceDir = file(path).get()
+    fun readFile(path: String) = assets.readFile(path)
+
+    fun copyFile(path: String, targetFile: File, override: Boolean = true) = copyFileInternal(path, targetFile, override)
+
+    fun copyDir(path: String, targetDir: File, override: Boolean = true) = assets.walkDir(path) { fileHeader ->
+        if (!fileHeader.isDirectory) {
+            val targetRelativePath = fileHeader.fileName.removePrefix(path).removePrefix("/")
+            copyFileInternal(fileHeader.fileName, targetDir.resolve(targetRelativePath), override)
+        }
+    }
+
+    private fun copyFileInternal(path: String, targetFile: File, override: Boolean) {
         if (override) {
-            FileUtils.copyDirectory(sourceDir, targetDir)
-        } else {
-            sourceDir.copyRecursively(targetDir, false) { _, _ -> OnErrorAction.SKIP }
+            if (targetFile.exists()) targetFile.delete()
+            targetFile.parentFile.mkdirs()
+            assets.unpackFile(path, targetFile)
+        } else if (!targetFile.exists()) {
+            targetFile.parentFile.mkdirs()
+            assets.unpackFile(path, targetFile)
         }
-    }
-
-    @Synchronized // TODO global lock via BuildScope / singleton
-    private fun extractAll() {
-        val dir = rootDir.get().asFile
-        if (dir.exists()) {
-            return
-        }
-
-        dir.mkdirs()
-        val file = dir.resolve("assets.zip")
-        file.outputStream().use { output -> javaClass.getResourceAsStream("/assets.zip").use { input -> input.copyTo(output) } }
-
-        aem.project.zipTree(file).visit { it.copyTo(it.relativePath.getFile(dir)) } // TODO lingala unpackAll is broken here, report it
-        file.deleteRecursively()
     }
 
     companion object {
-        const val META_RESOURCES_PATH = "package/defaults/${Package.META_PATH}"
+        const val ZIP_PATH = "assets.zip"
+
+        const val META_PATH = "package/defaults/${Package.META_PATH}"
 
         const val OAKPAL_INITIAL = "package/validator/initial"
 
-        const val OAKPAL_OPEAR_RESOURCES_PATH = "package/validator/${Package.OAKPAL_OPEAR_PATH}"
+        const val OAKPAL_OPEAR_PATH = "package/validator/${Package.OAKPAL_OPEAR_PATH}"
     }
 }

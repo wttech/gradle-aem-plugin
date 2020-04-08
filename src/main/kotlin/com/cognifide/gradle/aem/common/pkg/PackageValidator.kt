@@ -20,7 +20,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
     private val logger = aem.logger
 
     private val app = CliApp(aem).apply {
-        dependencyDir.convention(aem.project.layout.buildDirectory.dir("oakpal/cli"))
         dependencyNotation.apply {
             convention(aem.commonOptions.archiveExtension.map { "net.adamcin.oakpal:oakpal-cli:1.5.1:dist@$it" })
             aem.prop.string(("oakpal.cli"))?.let { set(it) }
@@ -143,7 +142,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             mkdirs()
         }
 
-        aem.assetManager.copyDir(AssetManager.OAKPAL_OPEAR_RESOURCES_PATH, tmpDir)
+        aem.assetManager.copyDir(AssetManager.OAKPAL_OPEAR_PATH, tmpDir)
 
         baseFile.orNull?.asFile?.let { file ->
             logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$tmpDir'")

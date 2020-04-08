@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.cli
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.common.utils.Formats
 import org.gradle.api.provider.Provider
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
@@ -11,7 +12,11 @@ open class CliApp(protected val aem: AemExtension) {
 
     val dependencyNotation = aem.obj.string()
 
-    val dependencyDir = aem.obj.dir()
+    val dependencyDir = aem.obj.dir {
+        convention(aem.project.rootProject.layout.buildDirectory.dir(dependencyNotation.map {
+            "aem/cli/${Formats.toHashCodeHex(it)}"
+        }))
+    }
 
     val executable = aem.obj.string()
 
@@ -52,13 +57,15 @@ open class CliApp(protected val aem: AemExtension) {
     }
 
     private fun extractArchive() {
-        if (!dependencyDir.get().asFile.exists()) {
-            val file = downloadArchive(dependencyNotation)
-            val fileTree = when (file.get().extension) {
-                "zip" -> aem.project.zipTree(file)
-                else -> aem.project.tarTree(file)
-            }
-            fileTree.visit { it.copyTo(it.relativePath.getFile(dependencyDir.get().asFile)) }
+        if (dependencyDir.get().asFile.exists()) {
+            return
         }
+
+        val file = downloadArchive(dependencyNotation)
+        val fileTree = when (file.get().extension) {
+            "zip" -> aem.project.zipTree(file)
+            else -> aem.project.tarTree(file)
+        }
+        fileTree.visit { it.copyTo(it.relativePath.getFile(dependencyDir.get().asFile)) }
     }
 }

@@ -78,7 +78,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     }
 
     fun copyMetaFiles(skipExisting: Boolean = true) {
-        aem.assetManager.copyDir(AssetManager.META_RESOURCES_PATH, metaDir, !skipExisting)
+        aem.assetManager.copyDir(AssetManager.META_PATH, metaDir, !skipExisting)
     }
 
     fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
