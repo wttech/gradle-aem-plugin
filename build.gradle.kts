@@ -35,19 +35,18 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.40")
+    implementation("com.cognifide.gradle:common-plugin:0.1.41")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.2.3")
-    implementation("org.reflections:reflections:0.9.9") // TODO to be removed
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.apache.commons:commons-lang3:3.9")
     implementation("commons-io:commons-io:2.6")
     implementation("org.apache.httpcomponents:httpclient:4.5.10")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.0")
-    implementation("net.lingala.zip4j:zip4j:2.3.2")
+    implementation("net.lingala.zip4j:zip4j:2.5.1")
     implementation("org.osgi:org.osgi.core:6.0.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
@@ -63,7 +62,11 @@ tasks {
         archiveFileName.set("gradle-aem-tailer.zip")
         destinationDirectory.set(file("dists"))
     }
-
+    register<Zip>("assetsZip") {
+        from("src/asset")
+        archiveFileName.set("assets.zip")
+        destinationDirectory.set(file("$buildDir/resources/main"))
+    }
     register<Jar>("sourcesJar") {
         archiveClassifier.set("sources")
         dependsOn("classes")
@@ -140,6 +143,7 @@ tasks {
 
         inputs.property("buildJson", json)
         outputs.file(file)
+        dependsOn("assetsZip")
 
         doLast {
             file.writeText(json)

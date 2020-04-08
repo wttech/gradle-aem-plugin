@@ -97,7 +97,7 @@ class FilterFile(@InputFile val file: File, private val temporary: Boolean = fal
         }
 
         fun temporary(aem: AemExtension, paths: List<String>): FilterFile {
-            val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!.bufferedReader().use { it.readText() }
+            val template = aem.assetManager.file("vlt/$TEMPORARY_NAME").get().bufferedReader().use { it.readText() }
             val content = aem.prop.expand(template, mapOf("paths" to paths))
             val file = aem.common.temporaryFile("${PackageVlt.NAME}/$TEMPORARY_NAME")
 

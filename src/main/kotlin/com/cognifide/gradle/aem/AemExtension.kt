@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.bundle
 import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
@@ -48,6 +49,8 @@ class AemExtension(val project: Project) : Serializable {
     // ===
 
     val commonOptions by lazy { CommonOptions(this) }
+
+    val assetManager by lazy { AssetManager(this) }
 
     /**
      * Defines common settings like environment name, line endings when generating files etc

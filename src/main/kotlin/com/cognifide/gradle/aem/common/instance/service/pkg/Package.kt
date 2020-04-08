@@ -74,14 +74,6 @@ class Package private constructor() {
 
         const val VLT_NODETYPES_FILE = "nodetypes.cnd"
 
-        // Resources
-
-        const val META_RESOURCES_PATH = "package/defaults/$META_PATH"
-
-        const val OAKPAL_INITIAL = "package/validator/initial"
-
-        const val OAKPAL_OPEAR_RESOURCES_PATH = "package/validator/$OAKPAL_OPEAR_PATH"
-
         fun coordinates(group: String, name: String, version: String) = "[group=$group][name=$name][version=$version]"
 
         fun bundlePath(path: String, runMode: String?): String {

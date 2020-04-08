@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
@@ -143,7 +143,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             mkdirs()
         }
 
-        FileOperations.copyResources(Package.OAKPAL_OPEAR_RESOURCES_PATH, tmpDir)
+        aem.assetManager.copyDir(AssetManager.OAKPAL_OPEAR_RESOURCES_PATH, tmpDir)
 
         baseFile.orNull?.asFile?.let { file ->
             logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$tmpDir'")
@@ -172,7 +172,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             mkdirs()
         }
 
-        FileOperations.copyResources(Package.OAKPAL_INITIAL, tmpDir)
+        aem.assetManager.copyDir(AssetManager.OAKPAL_INITIAL, tmpDir)
 
         if (initialDir.get().asFile.exists()) {
             FileUtils.copyDirectory(initialDir.get().asFile, tmpDir)

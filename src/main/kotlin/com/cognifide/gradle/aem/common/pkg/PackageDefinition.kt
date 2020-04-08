@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
@@ -77,7 +78,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     }
 
     fun copyMetaFiles(skipExisting: Boolean = true) {
-        FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, skipExisting)
+        aem.assetManager.copyDir(AssetManager.META_RESOURCES_PATH, metaDir, !skipExisting)
     }
 
     fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {

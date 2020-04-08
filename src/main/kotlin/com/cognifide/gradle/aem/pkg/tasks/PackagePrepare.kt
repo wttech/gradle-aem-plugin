@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import org.apache.commons.io.FileUtils
@@ -67,7 +67,7 @@ open class PackagePrepare : AemDefaultTask() {
 
         if (metaDefaults.get()) {
             logger.info("Providing package metadata files in directory: '$targetDir")
-            FileOperations.copyResources(Package.META_RESOURCES_PATH, targetDir, true)
+            aem.assetManager.copyDir(AssetManager.META_RESOURCES_PATH, targetDir, false)
         }
     }
 
