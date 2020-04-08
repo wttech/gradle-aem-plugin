@@ -15,10 +15,13 @@ class AssetManager(private val aem: AemExtension) {
         return rootDir.file(path).map { it.asFile }
     }
 
-    // TODO handle override false
     fun copyDir(path: String, targetDir: File, override: Boolean = true) {
         val sourceDir = file(path).get()
-        FileUtils.copyDirectory(sourceDir, targetDir)
+        if (override) {
+            FileUtils.copyDirectory(sourceDir, targetDir)
+        } else {
+            sourceDir.copyRecursively(targetDir, false) { _, _ -> OnErrorAction.SKIP }
+        }
     }
 
     @Synchronized // TODO global lock via BuildScope / singleton
