@@ -36,7 +36,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.42")
+    implementation("com.cognifide.gradle:common-plugin:0.1.43")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
