@@ -14,6 +14,8 @@
 <'vlt'='http://www.day.com/jcr/vault/1.0'>
 <'slingevent'='http://sling.apache.org/jcr/event/1.0'>
 <'fd'='http://www.adobe.com/aemfd/fd/1.0'>
+{% for lib in definition.nodeTypeLibs %}{{ lib | raw }}
+{% endfor %}
 
 [sling:OrderedFolder] > sling:Folder
   orderable
@@ -1086,3 +1088,5 @@
   - * (undefined) protected
   - * (undefined) protected multiple
 
+{% for line in definition.nodeTypeLines %}{{ line | raw }}
+{% endfor %}

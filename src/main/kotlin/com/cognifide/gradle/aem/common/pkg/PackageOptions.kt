@@ -30,7 +30,7 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    val metaCommonDir = aem.obj.relativeDir(commonDir, Package.META_PATH)
+    val metaCommonDir = aem.obj.relativeDir(commonDir, "defaults/${Package.META_PATH}")
 
     /**
      * Content path for AEM application placed in CRX package.

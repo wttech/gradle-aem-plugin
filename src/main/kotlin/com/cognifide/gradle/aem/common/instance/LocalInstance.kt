@@ -254,7 +254,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     internal fun customize() {
-        FileOperations.copyResources(FILES_PATH, dir, false)
+        aem.assetManager.copyDir(FILES_PATH, dir)
 
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)

@@ -12,7 +12,6 @@ open class PackageValidate : AemDefaultTask() {
     @Nested
     val validator = PackageValidator(aem).apply {
         workDir.convention(aem.obj.buildDir(name))
-        planName.convention("plan-compose.json")
     }
 
     fun validator(options: PackageValidator.() -> Unit) {

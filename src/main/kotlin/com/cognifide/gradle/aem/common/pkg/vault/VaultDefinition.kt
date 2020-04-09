@@ -6,7 +6,10 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.util.jar.Manifest
 import java.util.regex.Pattern
 
 /**
@@ -166,12 +169,33 @@ open class VaultDefinition(private val aem: AemExtension) {
                 }
     }
 
+    @Input
+    val manifestProperties = aem.obj.map<String, String> {
+        convention(aem.obj.provider {
+            mapOf(
+                    "Content-Package-Type" to "mixed",
+                    "Content-Package-Id" to "${group.get()}:${name.get()}:${version.get()}",
+                    "Content-Package-Roots" to filterRoots.joinToString(",")
+            )
+        })
+    }
+
+    private val manifest: String get() {
+        val output = ByteArrayOutputStream()
+        Manifest().apply {
+            manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
+            write(output)
+        }
+        return output.toString(StandardCharsets.UTF_8.displayName())
+    }
+
     /**
      * Any properties that could be used in any text file being a part of composed package.
      */
     @get:Internal
     val fileProperties get() = mapOf(
             "definition" to Delegate(this),
+            "manifest" to manifest,
             "aem" to aem
     )
 

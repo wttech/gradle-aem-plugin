@@ -58,15 +58,11 @@ class Package private constructor() {
 
         const val META_PATH = "META-INF"
 
-        const val META_RESOURCES_PATH = "package/$META_PATH"
+        const val MANIFEST_FILE = "MANIFEST.MF"
+
+        const val MANIFEST_PATH = "$META_PATH/$MANIFEST_FILE"
 
         const val OAKPAL_OPEAR_PATH = "OAKPAL_OPEAR"
-
-        const val OAKPAL_OPEAR_RESOURCES_PATH = "package/$OAKPAL_OPEAR_PATH"
-
-        const val NODE_TYPES_SYNC_FILE = "nodetypes.sync.cnd"
-
-        const val NODE_TYPES_SYNC_PATH = "package/$NODE_TYPES_SYNC_FILE"
 
         const val VLT_DIR = "vault"
 

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
@@ -52,25 +53,12 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     /**
      * Temporary directory being zipped to produce CRX package.
      */
-    val pkgDir: File get() = archivePath.get().asFile.parentFile.resolve(archivePath.get().asFile.nameWithoutExtension)
+    val pkgDir: File get() = archivePath.get().asFile.parentFile
+            .resolve("${archivePath.get().asFile.nameWithoutExtension}.pkg")
 
     val metaDir: File get() = pkgDir.resolve(Package.META_PATH)
 
     val jcrDir: File get() = pkgDir.resolve(Package.JCR_ROOT)
-
-    private var process: PackageDefinition.() -> Unit = {
-        copyMetaFiles()
-        expandMetaFiles()
-    }
-
-    /**
-     * Hook for customizing how package will be processed before zipping.
-     */
-    fun process(options: PackageDefinition.() -> Unit) {
-        this.process = options
-    }
-
-    private var content: PackageDefinition.() -> Unit = {}
 
     /**
      * Hook for adding files to package being composed.
@@ -78,6 +66,8 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     fun content(options: PackageDefinition.() -> Unit) {
         this.content = options
     }
+
+    private var content: PackageDefinition.() -> Unit = {}
 
     // 'content' & 'process' methods DSL
 
@@ -88,7 +78,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     }
 
     fun copyMetaFiles(skipExisting: Boolean = true) {
-        FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, skipExisting)
+        aem.assetManager.copyDir(AssetManager.META_PATH, metaDir, !skipExisting)
     }
 
     fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
@@ -112,8 +102,9 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         metaDir.mkdirs()
         jcrDir.mkdirs()
 
+        copyMetaFiles()
         content()
-        process()
+        expandMetaFiles()
 
         ZipFile(archivePath.get().asFile).packAll(pkgDir)
         pkgDir.deleteRecursively()

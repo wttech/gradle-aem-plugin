@@ -19,10 +19,6 @@ class BundlePluginTest : AemBuildTest() {
                 
                 group = "com.company.example"
                 
-                repositories {
-                    jcenter()
-                }
-                
                 dependencies {
                     compileOnly("org.slf4j:slf4j-api:1.5.10")
                     compileOnly("org.osgi:osgi.cmpn:6.0.0")
@@ -54,17 +50,7 @@ class BundlePluginTest : AemBuildTest() {
              * This is not required here but it proves that there is some issue with Gradle TestKit;
              * This generated project works when running using Gradle Wrapper.
              */
-            settingsGradle("""
-                pluginManagement {
-                    plugins {
-                        repositories {
-                            mavenLocal()
-                            jcenter()
-                            gradlePluginPortal()
-                        }
-                    } 
-                } 
-            """)
+            settingsGradle("")
 
             buildGradle("""
                 import com.cognifide.gradle.aem.bundle.tasks.bundle
@@ -78,7 +64,6 @@ class BundlePluginTest : AemBuildTest() {
                 version = "1.0.0"
                 
                 repositories {
-                    jcenter()
                     maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 
@@ -144,10 +129,6 @@ class BundlePluginTest : AemBuildTest() {
                 }
                 
                 group = "com.company.example"
-                
-                repositories {
-                    jcenter()
-                }
                 
                 dependencies {
                     compileOnly("org.slf4j:slf4j-api:1.5.10")

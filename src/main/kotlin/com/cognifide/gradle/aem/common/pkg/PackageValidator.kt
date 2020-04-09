@@ -1,25 +1,31 @@
 package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
-import com.cognifide.gradle.common.build.CollectingLogger
-import net.adamcin.oakpal.core.*
+import com.cognifide.gradle.aem.common.cli.CliApp
+import com.cognifide.gradle.aem.common.pkg.validator.OakpalResult
+import com.cognifide.gradle.aem.common.pkg.validator.OakpalSeverity
 import org.apache.commons.io.FileUtils
-import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.*
 import java.io.File
-import java.io.IOException
-import java.net.URL
+import java.util.jar.Manifest
 
 class PackageValidator(@Internal val aem: AemExtension) {
 
     private val common = aem.common
 
     private val logger = aem.logger
+
+    private val app = CliApp(aem).apply {
+        dependencyNotation.apply {
+            convention(aem.commonOptions.archiveExtension.map { "net.adamcin.oakpal:oakpal-cli:1.5.1:dist@$it" })
+            aem.prop.string(("oakpal.cli"))?.let { set(it) }
+        }
+        executable.set("oakpal-cli-1.5.1/bin/oakpal.sh")
+    }
 
     /**
      * Allows to disable package validation at all.
@@ -28,19 +34,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val enabled = aem.obj.boolean {
         convention(true)
         aem.prop.boolean("package.validator.enabled")?.let { set(it) }
-    }
-
-    /**
-     * Determines which level of validation message is indicating failed validation.
-     */
-    @Input
-    val severity = aem.obj.typed<Violation.Severity> {
-        convention(Violation.Severity.MAJOR)
-        aem.prop.string("package.validator.severity")?.let { set(severityByName(it)) }
-    }
-
-    fun severity(name: String) {
-        severity.set(severityByName(name))
     }
 
     /**
@@ -55,17 +48,23 @@ class PackageValidator(@Internal val aem: AemExtension) {
     @OutputDirectory
     val workDir = aem.obj.buildDir("package/validator")
 
+    @Internal
+    val opearDir = aem.obj.dir { convention(workDir.dir(Package.OAKPAL_OPEAR_PATH)) }
+
     @Input
     val planName = aem.obj.string {
         convention("plan.json")
         aem.prop.string("package.validator.plan")?.let { set(it) }
     }
 
-    @Internal
-    val planFile = aem.obj.file {
-        convention(workDir.map { dir ->
-            dir.file(planName).get().takeIf { it.asFile.exists() } ?: dir.file("plan.json")
-        })
+    @Input
+    val severity = aem.obj.typed<OakpalSeverity> {
+        convention(OakpalSeverity.MAJOR)
+        aem.prop.string("package.validator.severity")?.let { set(OakpalSeverity.of(it)) }
+    }
+
+    fun severity(name: String) {
+        severity.set(OakpalSeverity.of(name))
     }
 
     @Internal
@@ -81,53 +80,23 @@ class PackageValidator(@Internal val aem: AemExtension) {
         baseFile.fileProvider(aem.obj.provider(provider))
     }
 
-    // TODO https://github.com/gradle/gradle/issues/2016
     @Internal
-    val configDir = aem.obj.relativeDir(aem.packageOptions.commonDir, Package.OAKPAL_OPEAR_PATH)
-
-    @InputFiles
-    val configFiles = aem.obj.files { from(configDir) }
-
-    @Input
-    val jcrNamespaces = aem.obj.map<String, String> { convention(mapOf("crx" to "http://www.day.com/crx/1.0")) }
-
-    @Input
-    val jcrPrivileges = aem.obj.strings { convention(listOf("crx:replicate")) }
+    val configDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/${Package.OAKPAL_OPEAR_PATH}")
 
     @Internal
-    val cndFile = aem.obj.file { convention(workDir.file("nodetypes.cnd")) }
+    val initialDir = aem.obj.relativeDir(aem.packageOptions.commonDir, "validator/initial")
 
     @Internal
-    val cndFiles = aem.obj.files { from(cndFile) }
+    val initialPkg = aem.obj.file { convention(workDir.file("initial.zip")) }
 
     @Internal
     val cndSync = CndSync(aem).apply {
         aem.prop.string("package.validator.cndSync.type")?.let { type(it) }
         file.apply {
-            convention(configDir.file("nodetypes.cnd"))
+            convention(initialDir.file("META-INF/vault/nodetypes.cnd"))
             aem.prop.file("package.validator.cndSync.file")?.let { set(it) }
         }
     }
-
-    fun oakMachine(options: OakMachine.Builder.() -> Unit) {
-        this.oakMachineOptions = options
-    }
-
-    private var oakMachineOptions: OakMachine.Builder.() -> Unit = { defaultOptions() }
-
-    private fun OakMachine.Builder.defaultOptions() {
-        withInitStage(InitStage.Builder().apply {
-            cndFiles.filter { it.exists() }.forEach { withOrderedCndUrl(it.toURI().toURL()) }
-            jcrNamespaces.get().forEach { (prefix, uri) -> withNs(prefix, uri) }
-            withPrivileges(jcrPrivileges.get())
-        }.build())
-    }
-
-    fun planClassLoader(provider: () -> ClassLoader) {
-        this.planClassLoaderProvider = provider
-    }
-
-    private var planClassLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 
     fun perform(vararg packages: File) = perform(packages.toList())
 
@@ -147,139 +116,104 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
 
         common.progress {
-            message = when (packages.size) {
-                1 -> "Validating package '${packages.first().name}'"
-                else -> "Validating packages (${packages.count()})"
-            }
-
+            step = "Synchronizing node types"
             cndSync.sync()
+
+            step = "Preparing initial package"
+            prepareInitialPackage()
+
+            step = "Preparing Opear directory"
             prepareOpearDir()
+
+            step = "Running OakPAL"
+            message = when (packages.size) {
+                1 -> "Package '${packages.first().name}'"
+                else -> "Packages (${packages.count()})"
+            }
             runOakPal(packages)
         }
     }
 
     private fun prepareOpearDir() {
-        logger.info("Preparing OakPAL Opear directory '${workDir.get()}'")
+        logger.info("Preparing OakPAL Opear directory '${opearDir.get()}'")
 
-        val workDir = workDir.get().asFile.apply {
+        val tmpDir = opearDir.get().asFile.apply {
             deleteRecursively()
             mkdirs()
         }
 
-        FileOperations.copyResources(Package.OAKPAL_OPEAR_RESOURCES_PATH, workDir)
+        aem.assetManager.copyDir(AssetManager.OAKPAL_OPEAR_PATH, tmpDir)
 
         baseFile.orNull?.asFile?.let { file ->
-            logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$workDir'")
-            ZipFile(file).unpackAll(workDir)
+            logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$tmpDir'")
+            ZipFile(file).unpackAll(tmpDir)
         }
 
         configDir.get().asFile.takeIf { it.exists() }?.let { dir ->
-            logger.info("Using project-specific OakPAL Opear configuration files from directory '$dir' to '$workDir'")
-            FileUtils.copyDirectory(dir, workDir)
-        }
-    }
-
-    private fun runOakPal(packages: Iterable<File>) {
-        val opearFile = OpearFile.fromDirectory(workDir.get().asFile).getOrElse {
-            throw PackageException("OakPAL Opear directory cannot be read properly!")
+            logger.info("Using project-specific OakPAL Opear configuration files from directory '$dir' to '$tmpDir'")
+            FileUtils.copyDirectory(dir, tmpDir)
         }
 
-        val plan = determinePlan(opearFile)
-
-        logger.info("Validating packages using OakPAL plan '$plan'")
-
-        val scanResult = OakpalPlan.fromJson(plan)
-                .map { p ->
-                    p.toOakMachineBuilder(DefaultErrorListener(), opearFile.getPlanClassLoader(planClassLoaderProvider())).apply {
-                        withNodeStoreSupplier { MemoryNodeStore() }
-                        oakMachineOptions()
-                    }.build()
-                }
-                .map { oak -> oak.scanPackages(packages.toList()) }
-
-        if (scanResult.isFailure) {
-            val e = scanResult.error.get()
-            throw PackageException("Validating packages aborted due to OAKPal failure! Cause: '${e.message}'", e)
-        } else {
-            val reports = scanResult.getOrDefault(emptyList<CheckReport>())
-            saveReports(packages, reports)
-            analyzeReports(packages, reports)
-        }
-    }
-
-    private fun determinePlan(opearFile: OpearFile): URL {
-        val planFile = planFile.get().asFile
-        if (planFile.exists()) {
-            return planFile.toURI().toURL()
-        }
-
-        return opearFile.getSpecificPlan(planName.get()).getOrDefault(opearFile.defaultPlan)
-    }
-
-    private fun saveReports(packages: Iterable<File>, reports: List<CheckReport>?) {
-        logger.info("Saving OAKPal reports to file '${reportFile.get().asFile}' for package(s):\n${packages.joinToString("\n")}")
-
-        try {
-            ReportMapper.writeReportsToFile(reports, reportFile.get().asFile)
-        } catch (e: IOException) {
-            throw PackageException("Cannot save OAKPal reports to '${reportFile.get().asFile}'! Cause: '${e.message}'", e)
-        }
-    }
-
-    @Suppress("ComplexMethod", "NestedBlockDepth")
-    private fun analyzeReports(packages: Iterable<File>, reports: List<CheckReport>) {
-        val violatedReports = reports.filter { it.violations.isNotEmpty() }
-        val shouldFail = violatedReports.any { !it.getViolations(severity.get()).isEmpty() }
-
-        val violationLogger = CollectingLogger()
-        var violationSeverityReached = 0
-
-        if (violatedReports.isNotEmpty()) {
-            violationLogger.info("OakPAL check violations for package(s):\n${packages.joinToString("\n")}")
-
-            violatedReports.forEach { report ->
-                violationLogger.info("  ${report.checkName}")
-
-                for (violation in report.violations) {
-                    val packageIds = violation.packages.map { it.downloadName }
-                    val violationLog = when {
-                        packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
-                        else -> "    <${violation.severity}> ${violation.description}"
-                    }
-                    if (violation.severity.isLessSevereThan(severity.get())) {
-                        violationLogger.info(violationLog)
-                    } else {
-                        violationSeverityReached++
-                        violationLogger.error(violationLog)
-                    }
-                }
+        val manifestFile = opearDir.file(Package.MANIFEST_PATH).get().asFile
+        if (manifestFile.exists()) {
+            Manifest(manifestFile.readBytes().inputStream()).apply {
+                mainAttributes.putValue("Oakpal-Plan", planName.get())
+                manifestFile.outputStream().use { write(it) }
             }
         }
+    }
 
-        if (shouldFail) {
-            violationLogger.logTo(logger) { level ->
-                when (level) {
-                    LogLevel.INFO -> LogLevel.LIFECYCLE
-                    else -> level
-                }
-            }
+    private fun prepareInitialPackage() {
+        logger.info("Preparing OakPAL initial package '${initialPkg.get()}'")
 
-            val failMessage = "OakPAL check violations ($violationSeverityReached) were reported at or above" +
-                    " severity '${severity.get()}' for CRX package(s):\n${packages.joinToString("\n")}!"
+        val tmpDir = workDir.dir("initial").get().asFile.apply {
+            deleteRecursively()
+            mkdirs()
+        }
 
+        aem.assetManager.copyDir(AssetManager.OAKPAL_INITIAL, tmpDir)
+
+        if (initialDir.get().asFile.exists()) {
+            FileUtils.copyDirectory(initialDir.get().asFile, tmpDir)
+        }
+
+        aem.composePackage {
+            archivePath.set(initialPkg)
+            filter("/var/gap/package/validator") // anything
+            content { FileUtils.copyDirectory(tmpDir, pkgDir) }
+        }
+
+        tmpDir.deleteRecursively()
+    }
+
+    @Suppress("SpreadOperator")
+    private fun runOakPal(packages: Collection<File>) {
+        val allPackages = mutableListOf<File>().apply {
+            add(initialPkg.get().asFile)
+            addAll(packages)
+        }
+        val result = OakpalResult.byExitCode(app.exec {
+            isIgnoreExitValue = true
+            environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
+            workingDir(workDir.get().asFile)
+            args("-p", planName.get(), "-s", severity.get(), "-j", "-o", reportFile.get().asFile, *allPackages.toTypedArray())
+        }.exitValue)
+        if (result != OakpalResult.SUCCESS) {
+            val message = "OakPAL validation failed due to ${result.cause}!\nSee report file: '${reportFile.get()}' for package(s):\n" +
+                    packages.joinToString("\n")
             if (verbose.get()) {
-                throw PackageException(failMessage)
+                throw PackageException(message)
             } else {
-                logger.error(failMessage)
+                logger.error(message)
             }
-        } else {
-            violationLogger.logTo(logger)
         }
     }
 
-    private fun severityByName(name: String): Violation.Severity {
-        return Violation.Severity.values().firstOrNull { it.name.equals(name, true) }
-                ?: throw PackageException("Unsupported package violation severity specified '$name'!")
+    // TODO https://github.com/gradle/gradle/issues/2016
+    @InputFiles
+    val inputFiles = aem.obj.files {
+        from(configDir)
+        from(initialDir)
     }
 
     init {

@@ -9,7 +9,6 @@ import com.jayway.jsonpath.PathNotFoundException
 import net.minidev.json.JSONArray
 import org.apache.commons.io.FilenameUtils
 import org.apache.http.HttpStatus
-import org.apache.jackrabbit.vault.util.JcrConstants
 import java.io.File
 import java.io.InputStream
 import java.io.Serializable
@@ -68,7 +67,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
      * JCR primary type of node.
      */
     @get:JsonIgnore
-    val type: String get() = properties.string(JcrConstants.JCR_PRIMARYTYPE)!!
+    val type: String get() = properties.string("jcr:primaryType")!!
 
     /**
      * Parent node.
@@ -525,7 +524,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     }
 
     companion object {
-        val TYPE_UNSTRUCTURED = JcrConstants.JCR_PRIMARYTYPE to JcrConstants.NT_UNSTRUCTURED
+        val TYPE_UNSTRUCTURED = "jcr:primaryType" to "nt:unstructured"
 
         const val DAM_PATH = "/content/dam"
 
