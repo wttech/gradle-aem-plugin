@@ -7,16 +7,25 @@ import java.util.concurrent.TimeUnit
 class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
 
     /**
-     * Prevents too long inactivity time.
+     * Prevents too long unavailability time (instance never responds anything).
+     */
+    val unavailableTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(1)) }
+
+    /**
+     * Prevents too long inactivity time (instance state is no longer changing).
      */
     val stateTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(10)) }
 
     /**
-     * Prevents circular restarting of OSGi bundles & components.
+     * Prevents circular restarting of OSGi bundles & components (e.g installing SP/CFP takes too much time).
      */
     val constantTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(30)) }
 
     override fun check() {
+        if (!instance.available && progress.stateTime >= unavailableTime.get()) {
+            throw InstanceException("Instance unavailable timeout reached '${Formats.duration(progress.stateTime)}' for $instance!")
+        }
+
         if (progress.stateTime >= stateTime.get()) {
             throw InstanceException("Instance state timeout reached '${Formats.duration(progress.stateTime)}' for $instance!")
         }

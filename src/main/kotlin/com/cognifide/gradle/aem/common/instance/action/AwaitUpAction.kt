@@ -12,6 +12,10 @@ import java.util.concurrent.TimeUnit
 class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
+        unavailableTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(1))
+            aem.prop.long("instance.awaitUp.timeout.unavailableTime")?.let { set(it) }
+        }
         stateTime.apply {
             convention(TimeUnit.MINUTES.toMillis(10))
             aem.prop.long("instance.awaitUp.timeout.stateTime")?.let { set(it) }
