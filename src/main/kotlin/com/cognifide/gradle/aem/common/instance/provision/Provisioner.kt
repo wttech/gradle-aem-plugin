@@ -18,6 +18,14 @@ class Provisioner(val manager: InstanceManager) {
     private val logger = aem.logger
 
     /**
+     * Allows to disable service at all.
+     */
+    val enabled = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.provision.enabled")?.let { set(it) }
+    }
+
+    /**
      * Forces to perform steps that supports greediness regardless their state on instances (already performed).
      */
     val greedy = aem.obj.boolean {
@@ -59,6 +67,11 @@ class Provisioner(val manager: InstanceManager) {
      * Perform all provision steps for all instances in parallel.
      */
     fun provision(instances: Collection<Instance>): List<Action> {
+        if (!enabled.get()) {
+            logger.lifecycle("No steps performed / instance provisioner is disabled.")
+            return listOf()
+        }
+
         steps.forEach { it.validate() }
 
         val actions = mutableListOf<Action>()
