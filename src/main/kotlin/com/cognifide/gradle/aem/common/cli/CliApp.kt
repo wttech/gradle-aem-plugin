@@ -12,6 +12,8 @@ open class CliApp(protected val aem: AemExtension) {
 
     val dependencyNotation = aem.obj.string()
 
+    val dependencyExtension = aem.obj.boolean { convention(true) }
+
     val dependencyDir = aem.obj.dir {
         convention(aem.project.rootProject.layout.buildDirectory.dir(dependencyNotation.map {
             "aem/cli/${Formats.toHashCodeHex(it)}"
@@ -19,6 +21,8 @@ open class CliApp(protected val aem: AemExtension) {
     }
 
     val executable = aem.obj.string()
+
+    val executableExtension = aem.obj.boolean { convention(true) }
 
     fun exec(workingDir: File, command: String) = exec {
         workingDir(workingDir)
@@ -29,9 +33,10 @@ open class CliApp(protected val aem: AemExtension) {
     fun exec(options: ExecSpec.() -> Unit = {}): ExecResult {
         extractArchive()
 
-        val executableFile = dependencyDir.get().asFile.resolve(executable.get())
+        val executablePath = executable.map { if (executableExtension.get()) "$it${aem.commonOptions.executableExtension.get()}" else it }
+        val executableFile = dependencyDir.get().asFile.resolve(executablePath.get())
         if (!executableFile.exists()) {
-            throw CliException("CLI application '${dependencyNotation.get()}' executable file '${executable.get()}'" +
+            throw CliException("CLI application '${dependencyNotation.get()}' executable file '${executablePath.get()}'" +
                     " cannot be found at path '$executableFile' after extracting archive!")
         }
 
@@ -61,7 +66,9 @@ open class CliApp(protected val aem: AemExtension) {
             return
         }
 
-        val file = downloadArchive(dependencyNotation)
+        val file = downloadArchive(dependencyNotation.map {
+            if (dependencyExtension.get()) "$it@${aem.commonOptions.archiveExtension.get()}" else it
+        })
         val fileTree = when (file.get().extension) {
             "zip" -> aem.project.zipTree(file)
             else -> aem.project.tarTree(file)

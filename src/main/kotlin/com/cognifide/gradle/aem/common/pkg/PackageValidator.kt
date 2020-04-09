@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.aem.common.cli.CliApp
 import com.cognifide.gradle.aem.common.pkg.validator.OakpalResult
 import com.cognifide.gradle.aem.common.pkg.validator.OakpalSeverity
+import com.cognifide.gradle.common.utils.using
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.*
 import java.io.File
@@ -19,13 +20,19 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private val logger = aem.logger
 
-    private val app = CliApp(aem).apply {
+    private val cli = CliApp(aem).apply {
         dependencyNotation.apply {
-            convention(aem.commonOptions.archiveExtension.map { "net.adamcin.oakpal:oakpal-cli:1.5.1:dist@$it" })
-            aem.prop.string(("oakpal.cli"))?.let { set(it) }
+            convention("net.adamcin.oakpal:oakpal-cli:1.5.1:dist")
+            aem.prop.string("oakpal.cli.dependency")?.let { set(it) }
         }
-        executable.set("oakpal-cli-1.5.1/bin/oakpal.sh")
+        executable.apply {
+            convention("oakpal-cli-1.5.1/bin/oakpal.sh")
+            aem.prop.string("oakpal.cli.executable")?.let { set(it) }
+        }
+        executableExtension.set(false) // TODO removing needs https://github.com/adamcin/oakpal/issues/50
     }
+
+    fun cli(options: CliApp.() -> Unit) = cli.using(options)
 
     /**
      * Allows to disable package validation at all.
@@ -192,7 +199,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             add(initialPkg.get().asFile)
             addAll(packages)
         }
-        val result = OakpalResult.byExitCode(app.exec {
+        val result = OakpalResult.byExitCode(cli.exec {
             isIgnoreExitValue = true
             environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
             workingDir(workDir.get().asFile)
