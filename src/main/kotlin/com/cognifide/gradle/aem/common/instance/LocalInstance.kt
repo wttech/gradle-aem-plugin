@@ -225,6 +225,15 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             result
         }
 
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
+            var result = origin
+
+            // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
+            result = StringUtils.replace(result, "timeout /T 1 /NOBREAK >nul", "ping 127.0.0.1 -n 3 > nul")
+
+            result
+        }
+
         // Ensure that 'logs' directory exists
         quickstartDir.resolve("logs").mkdirs()
     }

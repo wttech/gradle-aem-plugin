@@ -23,11 +23,14 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
 
     val args: List<String> get() = commandLine.subList(1, commandLine.size)
 
+    /**
+     * @see <https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background>
+     */
     fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows) {
         try {
             logger.info("Executing script '$commandString' at directory '${instance.dir}'")
 
-            if (async) { // TODO use timeout and find out why Windows e.g 'start.bat' script is failing sometimes
+            if (async) { // TODO async because it is not trivial to run AEM in background from Windows *.bat script
                 ProcessBuilder(commandLine)
                         .directory(instance.dir)
                         .start()
