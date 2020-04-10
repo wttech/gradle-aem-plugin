@@ -194,6 +194,12 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
             var result = origin
 
+            // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
+            result = result.replace(
+                    "timeout /T 1 /NOBREAK >nul",
+                    "ping 127.0.0.1 -n 3 > nul"
+            )
+
             // Force AEM to be launched in background
             result = result.replace(
                     "start \"CQ\" cmd.exe /K",
@@ -221,15 +227,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
                     "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
                     "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
             )
-
-            result
-        }
-
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
-            var result = origin
-
-            // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
-            result = StringUtils.replace(result, "timeout /T 1 /NOBREAK >nul", "ping 127.0.0.1 -n 3 > nul")
 
             result
         }

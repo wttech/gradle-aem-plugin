@@ -26,24 +26,18 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
     /**
      * @see <https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background>
      */
-    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows) {
+    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}) {
         try {
             logger.info("Executing script '$commandString' at directory '${instance.dir}'")
 
-            if (async) { // TODO async because it is not trivial to run AEM in background from Windows *.bat script
-                ProcessBuilder(commandLine)
-                        .directory(instance.dir)
-                        .start()
-            } else {
-                ProcBuilder(command, *args.toTypedArray())
-                        .withWorkingDirectory(instance.dir)
-                        .withExpectedExitStatuses(0)
-                        .withInputStream(SafeStreams.emptyInput())
-                        .withOutputStream(SafeStreams.systemOut())
-                        .withErrorStream(SafeStreams.systemOut())
-                        .apply(options)
-                        .run()
-            }
+            ProcBuilder(command, *args.toTypedArray())
+                    .withWorkingDirectory(instance.dir)
+                    .withExpectedExitStatuses(0)
+                    .withInputStream(SafeStreams.emptyInput())
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemOut())
+                    .apply(options)
+                    .run()
         } catch (e: Exception) {
             throw handleException(e)
         }
