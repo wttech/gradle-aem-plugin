@@ -194,14 +194,14 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
             var result = origin
 
-            // Force CMD to be launched in closable window mode.
+            // Force AEM to be launched in background
             result = result.replace(
                     "start \"CQ\" cmd.exe /K",
-                    "start /min \"CQ\" cmd.exe /C"
+                    "chp.exe"
             ) // AEM <= 6.2
             result = result.replace(
                     "start \"CQ\" cmd.exe /C",
-                    "start /min \"CQ\" cmd.exe /C"
+                    "chp.exe"
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
@@ -275,21 +275,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             aem.prop.expand(source, propertiesAll, file.absolutePath)
         }
 
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
-            var result = origin
-
-            // Update window title
-            val previousWindowTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
-            if (previousWindowTitle != null) {
-                result = StringUtils.replace(result,
-                        "start /min \"$previousWindowTitle\" cmd.exe ",
-                        "start /min \"$windowTitle\" cmd.exe "
-                )
-            }
-
-            result
-        }
-
         val installFiles = localManager.install.files
         if (installFiles.isNotEmpty()) {
             installDir.mkdirs()
@@ -348,11 +333,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     private fun lock(name: String) = FileOperations.lock(lockFile(name))
 
     private fun locked(name: String): Boolean = lockFile(name).exists()
-
-    @get:JsonIgnore
-    val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != AemVersion.UNKNOWN }?.run { ", version=$this" } ?: "") +
-            ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"
 
