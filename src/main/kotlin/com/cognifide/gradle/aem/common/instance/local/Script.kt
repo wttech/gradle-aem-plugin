@@ -7,7 +7,6 @@ import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import org.buildobjects.process.ProcResult
 import org.buildobjects.process.TimeoutException
-import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.internal.streams.SafeStreams
 
 @Suppress("SpreadOperator", "TooGenericExceptionCaught")
