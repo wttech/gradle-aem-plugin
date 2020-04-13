@@ -203,11 +203,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             // Force AEM to be launched in background
             result = result.replace(
                     "start \"CQ\" cmd.exe /K",
-                    "chp.exe"
+                    "cbp.exe"
             ) // AEM <= 6.2
             result = result.replace(
                     "start \"CQ\" cmd.exe /C",
-                    "chp.exe"
+                    "cbp.exe"
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
