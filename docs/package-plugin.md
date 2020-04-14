@@ -152,7 +152,7 @@ aem {
 ```
 
 To use custom checks, only left thing is to choose them in custom plan.
-Simply create files *plan-compose.json* *plan-satisfy.json* or only *plan.json* under path [src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/aem/common/package/OAKPAL_OPEAR)
+Simply create file *plan.json* under path [src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/aem/common/package/OAKPAL_OPEAR)
 
 Sample plan content:
 
