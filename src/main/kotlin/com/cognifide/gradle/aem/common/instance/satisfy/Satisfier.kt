@@ -72,9 +72,7 @@ class Satisfier(private val manager: InstanceManager) {
         this.validatorOptions = options
     }
 
-    private var validatorOptions: PackageValidator.() -> Unit = {
-        planName.convention("plan-satisfy.json")
-    }
+    private var validatorOptions: PackageValidator.() -> Unit = {}
 
     /**
      * Provides a packages from local and remote sources.
