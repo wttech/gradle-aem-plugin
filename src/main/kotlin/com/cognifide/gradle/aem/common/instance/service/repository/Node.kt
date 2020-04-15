@@ -5,8 +5,6 @@ import com.cognifide.gradle.aem.common.utils.JcrUtil
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.jayway.jsonpath.PathNotFoundException
-import net.minidev.json.JSONArray
 import org.apache.commons.io.FilenameUtils
 import org.apache.http.HttpStatus
 import java.io.File
@@ -15,12 +13,10 @@ import java.io.Serializable
 import java.util.*
 
 /**
- * Represents node stored in JCR content repository.
+ * Represents a node stored in JCR content repository.
  */
 @Suppress("TooManyFunctions")
 class Node(val repository: Repository, val path: String, props: Map<String, Any>? = null) : Serializable {
-
-    private val logger = repository.aem.logger
 
     private val instance = repository.instance
 
@@ -98,6 +94,11 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     fun child(name: String) = Node(repository, "$path/$name")
 
     /**
+     * Check if child node exists.
+     */
+    fun hasChild(name: String) = child(name).exists
+
+    /**
      * Get all child nodes.
      *
      * Because of performance issues, using method is more preferred.
@@ -115,13 +116,10 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         return try {
             http.get("$path.harray.1.json") { asJson(it) }
                 .run {
-                    try {
-                        read<JSONArray>(Property.CHILDREN.value)
-                    } catch (e: PathNotFoundException) {
-                        JSONArray() // no children
-                    }
+                    if (has(Property.CHILDREN.value)) get(Property.CHILDREN.value).asIterable()
+                    else listOf()
                 }
-                .map { child -> child as Map<String, Any> }
+                .map { child -> Formats.toMapFromJson(child) }
                 .map { props -> Node(repository, "$path/${props[Property.NAME.value]}", props) }
                 .asSequence()
         } catch (e: CommonException) {
@@ -370,7 +368,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
 
         return try {
             http.get("$path.json") { response ->
-                val props = asJson(response).json<LinkedHashMap<String, Any>>()
+                val props = asMapFromJson(response)
                 Properties(this@Node, props).apply { propertiesLoaded = this }
             }
         } catch (e: CommonException) {

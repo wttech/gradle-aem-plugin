@@ -22,12 +22,9 @@ class AemPlugin : Serializable {
 
         const val NAME = "Gradle AEM Plugin"
 
-        val NAME_WITH_VERSION: String
-            get() = "$NAME ${BUILD.pluginVersion}"
+        val NAME_WITH_VERSION: String get() = "$NAME ${BUILD.pluginVersion}"
 
-        private fun fromJson(json: String): AemPlugin {
-            return Formats.fromJson(json, AemPlugin::class.java)
-        }
+        private fun fromJson(json: String): AemPlugin = Formats.toObjectFromJson(json)
 
         private var once = false
 

@@ -36,10 +36,9 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.43")
+    implementation("com.cognifide.gradle:common-plugin:0.1.44")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
-    implementation("com.jayway.jsonpath:json-path:2.4.0")
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.2.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
@@ -52,7 +51,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.7.0")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.7.0")
 }
 
 tasks {
