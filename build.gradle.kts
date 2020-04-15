@@ -36,16 +36,16 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.44")
+    implementation("com.cognifide.gradle:common-plugin:0.1.45")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
-    implementation("org.jsoup:jsoup:1.12.1")
-    implementation("org.buildobjects:jproc:2.2.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
+    implementation("org.jsoup:jsoup:1.13.1")
+    implementation("org.buildobjects:jproc:2.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
     implementation("org.apache.commons:commons-lang3:3.9")
     implementation("commons-io:commons-io:2.6")
-    implementation("org.apache.httpcomponents:httpclient:4.5.10")
-    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.3")
+    implementation("org.apache.httpcomponents:httpclient:4.5.12")
+    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.1")
     implementation("net.lingala.zip4j:zip4j:2.5.1")
     implementation("org.osgi:org.osgi.core:6.0.0")
 
