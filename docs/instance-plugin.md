@@ -234,7 +234,7 @@ Then each step may be additionally configured with:
 To perform some step(s) selectively, use step name property (values comma delimited, wildcards supported):
 
 ```bash
-gradlew instanceProvision -Pinstance.provision.stepName=enable-crxde,...
+gradlew instanceProvision -Pinstance.provision.step=enable-crxde,...
 ```
 
 To perform step(s) regardless conditions, use greedy property (may be combined with previous one):

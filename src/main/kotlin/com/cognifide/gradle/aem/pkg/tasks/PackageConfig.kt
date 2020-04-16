@@ -45,7 +45,7 @@ open class PackageConfig : AemDefaultTask() {
             common.progress {
                 step = "Preparing"
 
-                val configPidPattern = pid.orNull ?: aem.javaPackages.joinToString(",") { "$it.*" }
+                val configPidPattern = pid.orNull ?: listOfNotNull(aem.javaPackage).ifEmpty { aem.javaPackages }.joinToString(",") { "$it.*" }
                 val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, configPidPattern) }
 
                 if (configPids.isEmpty()) {
