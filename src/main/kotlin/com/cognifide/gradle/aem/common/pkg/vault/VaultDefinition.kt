@@ -9,6 +9,7 @@ import org.gradle.api.tasks.Optional
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.util.regex.Pattern
 
@@ -183,6 +184,7 @@ open class VaultDefinition(private val aem: AemExtension) {
     private val manifest: String get() {
         val output = ByteArrayOutputStream()
         Manifest().apply {
+            mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
             manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
             write(output)
         }

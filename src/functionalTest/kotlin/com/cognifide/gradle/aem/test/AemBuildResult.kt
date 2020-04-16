@@ -90,7 +90,7 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     fun assertPackage(pkg: File) {
         assertTrue({ pkg.exists() }, "Package does not exist: $pkg")
-        assertPackageVaultFiles(pkg)
+        assertPackageMetaFiles(pkg)
     }
 
     fun assertPackageBundle(pkgPath: String, entry: String, tests: Jar.() -> Unit = {}) = assertPackageBundle(file(pkgPath), entry, tests)
@@ -108,8 +108,8 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     fun isBundle(attributes: Attributes) = attributes.getValue("Bundle-SymbolicName").isNullOrBlank()
 
-    fun assertPackageVaultFiles(pkg: File) {
-        VAULT_FILES.onEach { assertZipEntry(pkg, it) }
+    fun assertPackageMetaFiles(pkg: File) {
+        PACKAGE_META_FILES.onEach { assertZipEntry(pkg, it) }
     }
 
     private fun readyZipEntry(zip: File, entry: String) = ZipFile(zip).run {
@@ -117,8 +117,9 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     } ?: ByteArray(0)
 
     companion object {
-        val VAULT_FILES = listOf(
+        val PACKAGE_META_FILES = listOf(
                 // Essentials
+                "META-INF/MANIFEST.MF",
                 "META-INF/vault/config.xml",
                 "META-INF/vault/filter.xml",
                 "META-INF/vault/properties.xml",
