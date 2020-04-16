@@ -96,7 +96,8 @@ open class InstanceStatus : InstanceTask() {
                 result.joinToString("\n")
             }.ifBlank { "none" }
         } catch (e: Exception) {
-            "unknown"
+            logger.debug("Installed packages error", e)
+            "error - ${e.message}"
         }
     } else {
         "unknown"
