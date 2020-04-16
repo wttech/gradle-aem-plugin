@@ -68,6 +68,13 @@ class PackagePluginTest : AemBuildTest() {
                     
                 </properties>
             """)
+
+            assertZipEntryEquals(pkg, "META-INF/MANIFEST.MF", """
+                Manifest-Version: 1.0
+                Content-Package-Roots: TODO
+                Content-Package-Type: mixed
+                Content-Package-Id: com.company.example:package-minimal:1.0.0
+            """)
         }
 
         runBuild(projectDir, "packageValidate", "-Poffline") {
