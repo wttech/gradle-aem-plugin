@@ -184,7 +184,7 @@ open class VaultDefinition(private val aem: AemExtension) {
     private val manifest: String get() {
         val output = ByteArrayOutputStream()
         Manifest().apply {
-            mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
+            mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0")
             manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
             write(output)
         }
