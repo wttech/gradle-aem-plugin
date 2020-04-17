@@ -305,7 +305,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
 
     @Internal
-    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
+    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it) }
 
     init {
         group = AemTask.GROUP

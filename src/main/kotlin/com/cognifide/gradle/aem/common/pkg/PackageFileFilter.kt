@@ -62,12 +62,10 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
         aem.prop.string("package.fileFilter.bundlePath")?.let { set(it) }
     }
 
-    fun filter(spec: CopySpec, expandProperties: Map<String, Any> = mapOf()) {
+    fun filter(spec: CopySpec) {
         if (excluding.get()) {
             spec.exclude(excludeFiles.get())
         }
-
-        val expandPropertiesAll = expandProperties + this.expandProperties.get() + mapOf("aem" to aem)
 
         spec.eachFile { fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
@@ -99,6 +97,8 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
             }
         }
     }
+
+    private val expandPropertiesAll by lazy { task.vaultDefinition.fileProperties + expandProperties.get() }
 
     @Suppress("TooGenericExceptionCaught")
     private fun isBundle(bundle: File): Boolean = try {

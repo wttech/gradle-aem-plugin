@@ -50,17 +50,21 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun assertZipEntryEquals(zipPath: String, entry: String, expectedContent: String) = assertZipEntryEquals(file(zipPath), entry, expectedContent)
 
     fun assertZipEntryEquals(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
-        assertEquals(expectedContent.trimIndent().trim(), actual,
-                "Content of entry '$entry' included in ZIP '$zip' differs from expected one.")
+        val expectedNormalized = normalizeString(expectedContent)
+        val actualNormalized = normalizeString(actual)
+
+        assertEquals(expectedNormalized, actualNormalized, "Content of entry '$entry' included in ZIP '$zip' differs from expected one.")
     }
 
     fun assertZipEntryMatching(zipPath: String, entry: String, expectedContent: String) = assertZipEntryMatching(file(zipPath), entry, expectedContent)
 
     fun assertZipEntryMatching(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
-        val expectedContentTrimmed = expectedContent.trimIndent().trim()
-        assertTrue(FilenameUtils.wildcardMatch(actual, expectedContentTrimmed),
+        val expectedNormalized = normalizeString(expectedContent)
+        val actualNormalized = normalizeString(actual)
+
+        assertTrue(FilenameUtils.wildcardMatch(actual, expectedNormalized),
                 "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
-                        "==> expected content pattern:\n\n$expectedContentTrimmed\n\n==> actual content:\n\n$actual\n\n")
+                        "==> expected content pattern:\n\n$expectedNormalized\n\n==> actual content:\n\n$actualNormalized\n\n")
     }
 
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
@@ -115,6 +119,8 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     private fun readyZipEntry(zip: File, entry: String) = ZipFile(zip).run {
         getFileHeader(entry)?.let { h -> getInputStream(h).use { it.readBytes() } }
     } ?: ByteArray(0)
+
+    private fun normalizeString(string: String) = string.trimIndent().replace("\r\n", "\n").trim()
 
     companion object {
         val PACKAGE_META_FILES = listOf(
