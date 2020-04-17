@@ -77,6 +77,26 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         source.set(Source.of(name))
     }
 
+    /**
+     * Automatically open a web browser when instances are up.
+     */
+    val openMode = aem.obj.typed<OpenMode> {
+        convention(OpenMode.NEVER)
+        aem.prop.string("localInstance.openMode")?.let { set(OpenMode.of(it)) }
+    }
+
+    /**
+     * Maximum time to wait for browser open command response.
+     */
+    val openTimeout = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(30))
+        aem.prop.long("localInstance.openTimeout")?.let { set(it) }
+    }
+
+    fun openMode(name: String) {
+        openMode.set(OpenMode.of(name))
+    }
+
     fun resolveFiles() {
         logger.info("Resolving local instance files")
         logger.info("Resolved local instance files:\n${sourceFiles.joinToString("\n")}")
@@ -308,15 +328,19 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
         base.awaitUp(downInstances, awaitUpOptions)
 
-        common.progress(downInstances.size) {
-            common.parallel.with(downInstances) {
+        val uninitializedInstances = downInstances.filter { !it.initialized }
+        common.progress(uninitializedInstances.size) {
+            common.parallel.with(uninitializedInstances) {
                 increment("Initializing instance '$name'") {
-                    if (!initialized) {
-                        logger.info("Initializing: $this")
-                        init(initOptions)
-                    }
+                    logger.info("Initializing: $this")
+                    init(initOptions)
                 }
             }
+        }
+
+        when {
+            openMode.get() == OpenMode.ALWAYS -> open(downInstances)
+            openMode.get() == OpenMode.ONCE -> open(uninitializedInstances)
         }
 
         return downInstances
@@ -353,6 +377,37 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         base.awaitDown(upInstances, awaitDownOptions)
 
         return upInstances
+    }
+
+    fun open(instance: LocalInstance) = open(listOf(instance))
+
+    fun open(instances: Collection<LocalInstance> = aem.localInstances): List<LocalInstance> {
+        val upInstances = instances.filter { it.running }
+        if (upInstances.isEmpty()) {
+            logger.lifecycle("No instances to open.")
+            return listOf()
+        }
+
+        val openedInstances = mutableListOf<LocalInstance>()
+        common.progress(upInstances.size) {
+            common.parallel.with(upInstances) {
+                increment("Opening instance '$name'") {
+                    try {
+                        executeOpenScript()
+                        openedInstances += this@with
+                    } catch (e: LocalInstanceException) {
+                        logger.debug("Instance '$name' open error", e)
+                        logger.warn("Cannot open instance '$name'! Cause: ${e.message}")
+                    }
+                }
+            }
+        }
+        if (openedInstances.isNotEmpty()) {
+            logger.lifecycle("Opened instances (${openedInstances.size}) in web browser (tabs):\n" +
+                    openedInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpOpenUrl}'" })
+        }
+
+        return openedInstances
     }
 
     fun examine(instances: Collection<LocalInstance> = aem.localInstances) = base.examine(instances)

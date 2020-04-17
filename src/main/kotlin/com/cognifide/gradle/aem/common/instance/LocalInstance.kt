@@ -12,7 +12,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
+import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.process.internal.streams.SafeStreams
 
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
@@ -21,6 +23,13 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     var debugPort: Int = 5005
 
     var debugAddress: String = ""
+
+    var openPath: String = "/"
+
+    val httpOpenUrl get() = when (openPath) {
+        "/" -> httpUrl
+        else -> "${httpUrl}$openPath"
+    }
 
     private val debugSocketAddress: String
         get() = when (debugAddress) {
@@ -116,8 +125,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     internal fun executeStartScript() {
         try {
             startScript.executeVerbosely()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+        } catch (e: LocalInstanceException) {
+            throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
         }
     }
 
@@ -127,12 +136,35 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         val pidOrigin = pid
         try {
             stopScript.executeVerbosely()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin", e)
+        } catch (e: LocalInstanceException) {
+            throw LocalInstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin.", e)
         }
     }
 
     private val statusScript: Script get() = binScript("status")
+
+    @Suppress("TooGenericExceptionCaught")
+    internal fun executeOpenScript() {
+        try {
+            val os = OperatingSystem.current()
+            val command = when {
+                os.isWindows -> "explorer"
+                os.isMacOsX -> "open"
+                else -> "sensible-browser"
+            }
+
+            ProcBuilder(command, httpOpenUrl)
+                    .withWorkingDirectory(dir)
+                    .withTimeoutMillis(localManager.openTimeout.get())
+                    .withExpectedExitStatuses(0)
+                    .withInputStream(SafeStreams.emptyInput())
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemOut())
+                    .run()
+        } catch (e: Exception) {
+            throw LocalInstanceException("Instance opening command failed! Cause: ${e.message}", e)
+        }
+    }
 
     @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
@@ -287,6 +319,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     fun up() = localManager.up(this)
 
     fun down() = localManager.down(this)
+
+    fun open() = localManager.open(this)
 
     @get:JsonIgnore
     val status: Status get() = checkStatus()
