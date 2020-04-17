@@ -25,7 +25,7 @@ open class CliApp(protected val aem: AemExtension) {
     val executableExtension = aem.obj.boolean { convention(true) }
 
     fun exec(workingDir: File, command: String) = exec {
-        workingDir(workingDir)
+        workingDir(workingDir):
         args(command.split(" "))
     }
 

@@ -53,6 +53,6 @@ open class CommonOptions(private val aem: AemExtension) {
 
     val executableExtension = aem.obj.string {
         convention(aem.project.provider { if (OperatingSystem.current().isWindows) ".bat" else "" })
-        aem.prop.string("scriptExtension")?.let { set(it) }
+        aem.prop.string("executableExtension")?.let { set(it) }
     }
 }
