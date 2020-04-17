@@ -24,6 +24,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     var debugAddress: String = ""
 
+    var openPath: String = "/system/console"
+
     private val debugSocketAddress: String
         get() = when (debugAddress) {
             "*" -> "0.0.0.0:$debugPort"
@@ -146,7 +148,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
                 else -> "sensible-browser"
             }
 
-            ProcBuilder(command, httpUrl)
+            ProcBuilder(command, "${httpUrl}$openPath")
                     .withWorkingDirectory(dir)
                     .withExpectedExitStatuses(0)
                     .withInputStream(SafeStreams.emptyInput())
