@@ -73,6 +73,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         aem.prop.string("localInstance.source")?.let { set(Source.of(it)) }
     }
 
+    /**
+     * Automatically open a web browser after turning on instances.
+     */
+    val autoOpen = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.up.autoOpen")?.let { set(it) }
+    }
+
     fun source(name: String) {
         source.set(Source.of(name))
     }
@@ -319,6 +327,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             }
         }
 
+        if (autoOpen.get()) {
+            open(downInstances)
+        }
+
         return downInstances
     }
 
@@ -353,6 +365,33 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         base.awaitDown(upInstances, awaitDownOptions)
 
         return upInstances
+    }
+
+    fun open(instance: LocalInstance) = open(listOf(instance))
+
+    fun open(instances: Collection<LocalInstance> = aem.localInstances): List<LocalInstance> {
+        val upInstances = instances.filter { it.running }
+        if (upInstances.isEmpty()) {
+            logger.lifecycle("No instances to open.")
+            return listOf()
+        }
+
+        val openedInstances = mutableListOf<LocalInstance>()
+        common.progress(upInstances.size) {
+            common.parallel.with(upInstances) {
+                increment("Opening instance '$name'") {
+                    try {
+                        executeOpenScript()
+                        openedInstances += this@with
+                    } catch (e: LocalInstanceException) {
+                        logger.debug("Instance '$name' open error", e)
+                        logger.warn("Cannot open instance '$name'! Cause: ${e.message}")
+                    }
+                }
+            }
+        }
+
+        return openedInstances
     }
 
     fun examine(instances: Collection<LocalInstance> = aem.localInstances) = base.examine(instances)
