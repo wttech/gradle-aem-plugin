@@ -29,6 +29,7 @@
   * [Task packageActivate](#task-packageactivate)
   * [Known issues](#known-issues)
      * [Caching task packageCompose](#caching-task-packagecompose)
+     * [Memory tuning for package validation](#memory-tuning-for-package-validation)
 
 ## About
 
@@ -464,3 +465,12 @@ Replicate installed CRX package to other AEM instance(s).
 
 Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
 because such usages will effectively forbid caching `packageCompose` task and it will be never `UP-TO-DATE`.
+
+## Memory tuning for package validation
+
+While using OakPAL package validation, especially when validating bigger packages, memory size allowed to be used by Gradle and in-memory Oak database (set up by OakPAL) might need to be tuned.
+To do that, add following line to file _gradle.properties_ and optionally correct numeric values:
+
+```ini
+org.gradle.jvmargs=-Xmx3072m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8
+```
