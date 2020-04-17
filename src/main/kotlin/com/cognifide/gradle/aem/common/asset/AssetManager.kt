@@ -1,13 +1,14 @@
 package com.cognifide.gradle.aem.common.asset
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import java.io.File
 
 class AssetManager(private val aem: AemExtension) {
 
-    val rootDir = aem.obj.dir { convention(aem.project.rootProject.layout.buildDirectory.dir("aem")) }
+    val rootDir = aem.obj.dir { convention(aem.project.rootProject.layout.buildDirectory.dir("aem/plugin/${AemPlugin.BUILD.pluginVersion}")) }
 
     private val assets get() = ZipFile(rootDir.file(ZIP_PATH).get().asFile.also { assetsFromResources(it) })
 
