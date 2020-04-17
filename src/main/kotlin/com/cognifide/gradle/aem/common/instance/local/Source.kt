@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 
 enum class Source {
 
@@ -34,7 +34,7 @@ enum class Source {
     companion object {
         fun of(name: String): Source {
             return values().find { it.name.equals(name, true) }
-                    ?: throw AemException("Unsupported local instance source: $name")
+                    ?: throw LocalInstanceException("Unsupported local instance source named: $name")
         }
     }
 }

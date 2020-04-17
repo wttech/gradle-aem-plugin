@@ -73,16 +73,28 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         aem.prop.string("localInstance.source")?.let { set(Source.of(it)) }
     }
 
-    /**
-     * Automatically open a web browser after turning on instances.
-     */
-    val autoOpen = aem.obj.boolean {
-        convention(false)
-        aem.prop.boolean("instance.up.autoOpen")?.let { set(it) }
-    }
-
     fun source(name: String) {
         source.set(Source.of(name))
+    }
+
+    /**
+     * Automatically open a web browser when instances are up.
+     */
+    val openMode = aem.obj.typed<OpenMode> {
+        convention(OpenMode.NEVER)
+        aem.prop.string("localInstance.openMode")?.let { set(OpenMode.of(it)) }
+    }
+
+    /**
+     * Maximum time to wait for browser open command response.
+     */
+    val openTimeout = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(30))
+        aem.prop.long("localInstance.openTimeout")?.let { set(it) }
+    }
+
+    fun openMode(name: String) {
+        openMode.set(OpenMode.of(name))
     }
 
     fun resolveFiles() {
@@ -316,19 +328,19 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
         base.awaitUp(downInstances, awaitUpOptions)
 
-        common.progress(downInstances.size) {
-            common.parallel.with(downInstances) {
+        val uninitializedInstances = downInstances.filter { !it.initialized }
+        common.progress(uninitializedInstances.size) {
+            common.parallel.with(uninitializedInstances) {
                 increment("Initializing instance '$name'") {
-                    if (!initialized) {
-                        logger.info("Initializing: $this")
-                        init(initOptions)
-                    }
+                    logger.info("Initializing: $this")
+                    init(initOptions)
                 }
             }
         }
 
-        if (autoOpen.get()) {
-            open(downInstances)
+        when {
+            openMode.get() == OpenMode.ALWAYS -> open(downInstances)
+            openMode.get() == OpenMode.ONCE -> open(uninitializedInstances)
         }
 
         return downInstances
@@ -389,6 +401,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     }
                 }
             }
+        }
+        if (openedInstances.isNotEmpty()) {
+            logger.lifecycle("Opened instances (${openedInstances.size}) in web browser (tabs):\n" +
+                    openedInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpOpenUrl}'" })
         }
 
         return openedInstances
