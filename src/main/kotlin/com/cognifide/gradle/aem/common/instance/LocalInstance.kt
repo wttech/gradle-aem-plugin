@@ -201,12 +201,12 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
             // Force AEM to be launched in background
             result = result.replace(
-                    "start \"CQ\" cmd.exe /K",
-                    "cbp.exe"
+                    "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM <= 6.2
             result = result.replace(
-                    "start \"CQ\" cmd.exe /C",
-                    "cbp.exe"
+                    "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
