@@ -15,7 +15,7 @@ class StatusReporter(private val aem: AemExtension) {
         from(aem.obj.provider { aem.packagesBuilt.map { it.archiveFile.get().asFile } })
     }
 
-    private val packageFiles by lazy { packages.files.toList()  }
+    private val packageFiles by lazy { packages.files.toList() }
 
     fun init() {
         logger.info("Packages considered in instance status checking (${packageFiles.size}):\n" +
