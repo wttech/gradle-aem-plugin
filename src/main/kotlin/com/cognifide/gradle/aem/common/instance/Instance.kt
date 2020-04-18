@@ -122,6 +122,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     val osInfo: String get() = mutableListOf<String>().apply {
         systemProperties["os.name"]?.let { add(it) }
         systemProperties["os.arch"]?.let { add(it) }
+        systemProperties["os.version"]?.let { add("($it)") }
     }.joinToString(" ")
 
     @get:JsonIgnore
