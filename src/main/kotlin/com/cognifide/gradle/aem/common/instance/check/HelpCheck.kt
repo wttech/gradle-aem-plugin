@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
+import org.osgi.framework.Bundle
 import java.util.concurrent.TimeUnit
 
 class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
@@ -19,8 +19,17 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
         }
     }
 
-    private fun help() {
-        throw InstanceException("Trying to help instance!")
+    // TODO start bundles in rounds, re-check after each round
+    private fun help() = sync {
+        val resolvedBundles = osgi.bundles.filter { !it.fragment && it.stateRaw == Bundle.RESOLVED }
+
+        aem.common.progress(resolvedBundles.size) {
+            aem.common.parallel.poolEach(resolvedBundles) { bundle ->
+                increment("Starting bundle '${bundle.symbolicName}'") {
+                    osgi.startBundle(bundle.symbolicName)
+                }
+            }
+        }
     }
 
     companion object {

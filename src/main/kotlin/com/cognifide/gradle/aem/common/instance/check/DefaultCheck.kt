@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.common.utils.using
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
@@ -24,6 +25,8 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
         applyInstanceInitialized()
     }
+
+    fun sync(callback: InstanceSync.() -> Unit) = sync.using(callback)
 
     override val status: String get() = statusLogger.entries.firstOrNull()?.summary ?: "Check passed"
 
