@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.LocalInstance
-import com.cognifide.gradle.common.build.BuildScope
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
@@ -45,10 +44,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
             return
         }
 
-        val cache = BuildScope.of(aem.project)
-        val cacheKey = "instance.${instance.name}.authInit"
-
-        val authInit = cache.get(cacheKey) ?: false
+        val authInit: Boolean = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: false
         if (authInit) {
             http.basicUser.set(Instance.USER_DEFAULT)
             http.basicPassword.set(Instance.PASSWORD_DEFAULT)
@@ -56,7 +52,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
         http.responseHandler { response ->
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                val authInitCurrent = cache.get(cacheKey) ?: false
+                val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: false
                 if (!authInitCurrent) {
                     aem.logger.info("Switching instance '${instance.name}' credentials from customized to defaults.")
                     http.basicUser.set(Instance.USER_DEFAULT)
@@ -66,12 +62,14 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
                     http.basicUser.set(instance.user)
                     http.basicPassword.set(instance.password)
                 }
-                cache.put(cacheKey, !authInitCurrent)
+                progress.stateData[STATE_AUTH_INIT] = !authInitCurrent
             }
         }
     }
 
     companion object {
         const val LOG_VALUES_COUNT = 10
+
+        private const val STATE_AUTH_INIT = "authInit"
     }
 }

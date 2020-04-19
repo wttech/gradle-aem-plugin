@@ -23,6 +23,8 @@ class CheckProgress(val instance: Instance) {
 
     val stateTime: Long get() = stateWatch.time
 
+    val stateData = mutableMapOf<String, Any>()
+
     val summary: String get() = "${instance.name}: ${currentCheck?.summary ?: "In progress"}"
 
     val shortSummary: String get() = "${instance.name}: ${currentCheck?.status ?: "In progress"}"

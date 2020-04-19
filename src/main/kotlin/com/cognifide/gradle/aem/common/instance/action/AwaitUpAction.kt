@@ -30,6 +30,17 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         timeoutOptions = options
     }
 
+    private var helpOptions: HelpCheck.() -> Unit = {
+        stateTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(8))
+            aem.prop.long("instance.awaitUp.help.stateTime")?.let { set(it) }
+        }
+    }
+
+    fun help(options: HelpCheck.() -> Unit) {
+        helpOptions = options
+    }
+
     private var bundlesOptions: BundlesCheck.() -> Unit = {
         symbolicNamesIgnored.apply {
             aem.prop.list("instance.awaitUp.bundles.symbolicNamesIgnored")?.let { set(it) }
@@ -92,6 +103,7 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         checks {
             listOf(
                     timeout(timeoutOptions),
+                    help(helpOptions),
                     bundles(bundlesOptions),
                     events(eventsOptions),
                     components(componentsOptions),
