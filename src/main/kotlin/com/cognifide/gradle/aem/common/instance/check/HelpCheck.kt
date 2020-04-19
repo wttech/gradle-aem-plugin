@@ -8,7 +8,7 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
     /**
      * After longer inactivity time, try helping instance going back to healthy state.
      */
-    val stateTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(8)) }
+    val stateTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(5)) }
 
     override fun check() {
         if (progress.stateTime >= stateTime.get()) {

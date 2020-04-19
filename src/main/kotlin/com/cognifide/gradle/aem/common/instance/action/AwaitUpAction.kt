@@ -32,7 +32,7 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var helpOptions: HelpCheck.() -> Unit = {
         stateTime.apply {
-            convention(TimeUnit.MINUTES.toMillis(8))
+            convention(TimeUnit.MINUTES.toMillis(5))
             aem.prop.long("instance.awaitUp.help.stateTime")?.let { set(it) }
         }
     }
