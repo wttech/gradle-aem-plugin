@@ -31,6 +31,9 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var helpOptions: HelpCheck.() -> Unit = {
+        enabled.apply {
+            aem.prop.boolean(("instance.awaitUp.help.enabled"))?.let { set(it) }
+        }
         stateTime.apply {
             aem.prop.long("instance.awaitUp.help.stateTime")?.let { set(it) }
         }

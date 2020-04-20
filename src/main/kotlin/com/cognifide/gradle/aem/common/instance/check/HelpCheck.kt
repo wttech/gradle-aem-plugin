@@ -8,6 +8,11 @@ import java.util.concurrent.TimeUnit
 class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
 
     /**
+     * Controls automatic instance healing.
+     */
+    val enabled = aem.obj.boolean { convention(true) }
+
+    /**
      * After longer inactivity time, try helping instance going back to healthy state.
      */
     val stateTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(8)) }
