@@ -155,7 +155,7 @@ tasks {
     }
 
     named("githubRelease") {
-        dependsOn("release")
+        mustRunAfter("release")
     }
 
     register("fullRelease") {
@@ -254,7 +254,7 @@ githubRelease {
     token((project.findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { LazyPublishArtifact(tasks.named(it)) })
+    releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { tasks.named(it) })
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
     overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())
