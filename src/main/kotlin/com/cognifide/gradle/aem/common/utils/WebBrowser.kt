@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class WebBrowser(private val aem: AemExtension) {
 
+    @Suppress("TooGenericExceptionCaught", "MagicNumber")
     fun open(url: String, options: ProcBuilder.() -> Unit = {}) {
         try {
             val os = OperatingSystem.current()

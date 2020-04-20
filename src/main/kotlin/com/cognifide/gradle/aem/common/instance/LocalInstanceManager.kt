@@ -10,7 +10,6 @@ import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
-import kotlinx.coroutines.withTimeout
 import org.buildobjects.process.ProcBuilder
 import org.gradle.api.JavaVersion
 import java.io.File

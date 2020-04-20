@@ -9,7 +9,6 @@ import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import kotlinx.coroutines.withTimeout
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
