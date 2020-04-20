@@ -9,12 +9,11 @@ import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.coroutines.withTimeout
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
-import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
-import org.gradle.process.internal.streams.SafeStreams
 
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
@@ -142,29 +141,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     private val statusScript: Script get() = binScript("status")
-
-    @Suppress("TooGenericExceptionCaught")
-    internal fun executeOpenScript() {
-        try {
-            val os = OperatingSystem.current()
-            val command = when {
-                os.isWindows -> "explorer"
-                os.isMacOsX -> "open"
-                else -> "sensible-browser"
-            }
-
-            ProcBuilder(command, httpOpenUrl)
-                    .withWorkingDirectory(dir)
-                    .withTimeoutMillis(localManager.openTimeout.get())
-                    .withExpectedExitStatuses(0)
-                    .withInputStream(SafeStreams.emptyInput())
-                    .withOutputStream(SafeStreams.systemOut())
-                    .withErrorStream(SafeStreams.systemOut())
-                    .run()
-        } catch (e: Exception) {
-            throw LocalInstanceException("Instance opening command failed! Cause: ${e.message}", e)
-        }
-    }
 
     @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
