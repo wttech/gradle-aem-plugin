@@ -25,7 +25,7 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
     }
 
     override fun check() {
-        aem.logger.info("Checking OSGi events on $instance")
+        logger.info("Checking OSGi events on $instance")
 
         val state = state(sync.osgiFramework.determineEventState())
 

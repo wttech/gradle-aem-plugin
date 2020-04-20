@@ -33,7 +33,7 @@ class CheckGroup(
 
     fun log() {
         statusLogger.entries.forEach {
-            runner.aem.logger.log(it.level, it.details)
+            runner.logger.log(it.level, it.details)
         }
     }
 

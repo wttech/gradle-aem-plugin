@@ -10,6 +10,8 @@ import org.apache.commons.lang3.time.StopWatch
 
 class CheckRunner(internal val aem: AemExtension) {
 
+    internal val logger = aem.logger
+
     private val common = aem.common
 
     private var checks: CheckFactory.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
@@ -63,7 +65,7 @@ class CheckRunner(internal val aem: AemExtension) {
      *
      * By default it just keeps clean console if info logging level is not enabled.
      */
-    var logInstantly = aem.logger.isInfoEnabled
+    var logInstantly = logger.isInfoEnabled
 
     fun check(instances: Collection<Instance>) {
         common.progressIndicator {
@@ -91,7 +93,7 @@ class CheckRunner(internal val aem: AemExtension) {
 
             do {
                 if (aborted) {
-                    aem.logger.info("Checking aborted for $instance")
+                    logger.info("Checking aborted for $instance")
                     break
                 }
 
@@ -106,7 +108,7 @@ class CheckRunner(internal val aem: AemExtension) {
                 progress.previousCheck = progress.currentCheck
 
                 if (checks.done) {
-                    aem.logger.info("Checking done for $instance")
+                    logger.info("Checking done for $instance")
                     break
                 }
 
@@ -135,7 +137,7 @@ class CheckRunner(internal val aem: AemExtension) {
             if (verbose.get()) {
                 abortCause?.let { throw it }
             } else {
-                aem.logger.error("Checking error", abortCause)
+                logger.error("Checking error", abortCause)
             }
         }
     }
