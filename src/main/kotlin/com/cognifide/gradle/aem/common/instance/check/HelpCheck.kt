@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import org.osgi.framework.Bundle
+import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
+import com.cognifide.gradle.common.CommonException
 import java.util.concurrent.TimeUnit
 
 class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
@@ -8,7 +10,27 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
     /**
      * After longer inactivity time, try helping instance going back to healthy state.
      */
-    val stateTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(5)) }
+    val stateTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(8)) }
+
+    /**
+     * Bundle with these states are considered for forcing start.
+     */
+    val bundleStartStates = aem.obj.strings {
+        convention(listOf(
+                Bundle.STATE_RESOLVED,
+                Bundle.STATE_INSTALLED
+        ))
+    }
+
+    /**
+     * Repeat bundle starting few times (brute-forcing).
+     */
+    var bundleStartRetry = common.retry { afterSquaredSecond(3) }
+
+    /**
+     * Time to wait after starting bundles.
+     */
+    val bundleStartDelay = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(3)) }
 
     override fun check() {
         if (progress.stateTime >= stateTime.get()) {
@@ -19,17 +41,44 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
         }
     }
 
-    // TODO start bundles in rounds, re-check after each round
     private fun help() = sync {
-        val resolvedBundles = osgi.bundles.filter { !it.fragment && it.stateRaw == Bundle.RESOLVED }
+        startBundles()
+    }
 
-        aem.common.progress(resolvedBundles.size) {
-            aem.common.parallel.poolEach(resolvedBundles) { bundle ->
-                increment("Starting bundle '${bundle.symbolicName}'") {
-                    osgi.startBundle(bundle.symbolicName)
+    private fun InstanceSync.startBundles() {
+        logger.info("Trying to start OSGi bundles on $instance")
+        var startable = listOf<Bundle>()
+
+        try {
+            bundleStartRetry.withCountdown<Unit, CommonException>("start bundles on '${instance.name}'") {
+                startable = startableBundles()
+                if (startable.isNotEmpty()) {
+                    startBundles(startable)
+                    startable = startableBundles()
+                    if (startable.isNotEmpty()) {
+                        throw HelpException("Starting bundles to be repeated on $instance!")
+                    }
                 }
             }
+        } catch (e: HelpException) {
+            logger.warn("Bundles (${startable.size}) cannot be started automatically on $instance:\n" +
+                    startable.joinToString("\n"))
         }
+    }
+
+    private fun InstanceSync.startableBundles(): List<Bundle> = osgi.bundles.filter {
+        !it.fragment && bundleStartStates.get().contains(it.state)
+    }
+
+    private fun InstanceSync.startBundles(bundles: List<Bundle>) {
+        common.parallel.poolEach(bundles) { startBundle(it) }
+        Thread.sleep(bundleStartDelay.get())
+    }
+
+    private fun InstanceSync.startBundle(it: Bundle) = try {
+        osgi.startBundle(it.symbolicName)
+    } catch (e: CommonException) {
+        logger.debug("Cannot start bundle on $instance!", e)
     }
 
     companion object {

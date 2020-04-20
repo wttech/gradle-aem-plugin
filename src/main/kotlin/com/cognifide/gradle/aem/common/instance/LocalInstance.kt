@@ -213,11 +213,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun validateFiles() {
         if (!jar.exists()) {
-            throw InstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
+            throw LocalInstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
         }
 
         if (!license.exists()) {
-            throw InstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
+            throw LocalInstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
         }
     }
 
@@ -335,7 +335,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             Status.byExitCode(procResult.exitValue).also { status ->
                 logger.debug("Instance status of $this is: $status")
             }
-        } catch (e: InstanceException) {
+        } catch (e: LocalInstanceException) {
             logger.info("Instance status not available: $this")
             logger.debug("Instance status error", e)
             Status.UNKNOWN
@@ -382,7 +382,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != USER) {
-                    throw InstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
+                    throw LocalInstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
                 }
 
                 this.httpUrl = instanceUrl.httpUrl

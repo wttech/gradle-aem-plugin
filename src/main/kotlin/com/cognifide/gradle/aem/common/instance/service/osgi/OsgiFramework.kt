@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.cognifide.gradle.aem.common.bundle.BundleFile
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.common.CommonException
@@ -24,8 +23,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Get all OSGi bundles.
      */
-    val bundles: List<Bundle>
-        get() = determineBundleState().bundles
+    val bundles: List<Bundle> get() = determineBundleState().bundles
 
     /**
      * Determine all OSGi bundle states.
@@ -55,7 +53,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun getBundle(symbolicName: String): Bundle {
         return findBundle(symbolicName)
-                ?: throw InstanceException("OSGi bundle '$symbolicName' cannot be found on $instance.")
+                ?: throw OsgiException("OSGi bundle '$symbolicName' cannot be found on $instance.")
     }
 
     /**
@@ -124,7 +122,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     ) {
         logger.info("Installing OSGi $bundle on $instance.")
 
-        retry.withCountdown<Unit, InstanceException>("install bundle '${bundle.name}' on '${instance.name}'") {
+        retry.withCountdown<Unit, CommonException>("install bundle '${bundle.name}' on '${instance.name}'") {
             sync.http.postMultipart(BUNDLES_PATH, mapOf(
                     "action" to "install",
                     "bundlefile" to bundle,
@@ -191,7 +189,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Get OSGi component by PID. Fail if not found.
      */
     fun getComponent(pid: String): Component {
-        return findComponent(pid) ?: throw InstanceException("OSGi component '$pid' cannot be found on $instance.")
+        return findComponent(pid) ?: throw OsgiException("OSGi component '$pid' cannot be found on $instance.")
     }
 
     /**
@@ -273,7 +271,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 asObjectFromJson(response, Configuration::class.java).takeIf { !metatypeChecking || !it.metatypeAbsence }
             }
         } catch (e: CommonException) {
-            throw InstanceException("Cannot read OSGi configuration for PID '$pid' on $instance. Cause: ${e.message}", e)
+            throw OsgiException("Cannot read OSGi configuration for PID '$pid' on $instance. Cause: ${e.message}", e)
         }
     }
 
@@ -282,7 +280,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun getConfiguration(pid: String): Configuration {
         return findConfiguration(pid)
-                ?: throw InstanceException("OSGi configuration for PID '$pid' cannot be found on $instance")
+                ?: throw OsgiException("OSGi configuration for PID '$pid' cannot be found on $instance")
     }
 
     /**
@@ -306,7 +304,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
             sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
         } catch (e: CommonException) {
-            throw InstanceException("OSGi configuration for PID '$pid' cannot be updated on $instance. Cause: ${e.message}", e)
+            throw OsgiException("OSGi configuration for PID '$pid' cannot be updated on $instance. Cause: ${e.message}", e)
         }
     }
 
@@ -327,7 +325,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
             sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
         } catch (e: CommonException) {
-            throw InstanceException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
+            throw OsgiException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
         }
     }
 
@@ -360,7 +358,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
             sync.http.post("$CONFIGURATION_PATH/$pid", properties)
         } catch (e: CommonException) {
-            throw InstanceException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
+            throw OsgiException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
         }
     }
 
@@ -374,8 +372,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Get OSGi events for current moment.
      */
-    val events: List<Event>
-        get() = determineEventState().events
+    val events: List<Event> get() = determineEventState().events
 
     /**
      * Determine OSGi events for current moment.
@@ -405,13 +402,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun stop() = shutdown("Stop")
 
-    private fun shutdown(type: String) {
-        try {
-            logger.info("Triggering OSGi framework shutdown on $instance.")
-            sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
-        } catch (e: CommonException) {
-            throw InstanceException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)
-        }
+    private fun shutdown(type: String) = try {
+        logger.info("Triggering OSGi framework shutdown on $instance.")
+        sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
+    } catch (e: CommonException) {
+        throw OsgiException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)
     }
 
     companion object {

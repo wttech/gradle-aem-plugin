@@ -32,8 +32,16 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var helpOptions: HelpCheck.() -> Unit = {
         stateTime.apply {
-            convention(TimeUnit.MINUTES.toMillis(5))
             aem.prop.long("instance.awaitUp.help.stateTime")?.let { set(it) }
+        }
+        bundleStartStates.apply {
+            aem.prop.list("instance.awaitUp.help.bundleStartStates")?.let { set(it) }
+        }
+        bundleStartRetry.apply {
+            aem.prop.long("instance.awaitUp.help.bundleStartRetry")?.let { afterSquaredSecond(it) }
+        }
+        bundleStartDelay.apply {
+            aem.prop.long("instance.awaitUp.help.bundleStartDelay")?.let { set(it) }
         }
     }
 

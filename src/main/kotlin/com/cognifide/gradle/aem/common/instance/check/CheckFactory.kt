@@ -17,5 +17,4 @@ class CheckFactory(val group: CheckGroup) {
     fun unchanged(options: UnchangedCheck.() -> Unit = {}) = UnchangedCheck(group).apply(options)
 
     fun help(options: HelpCheck.() -> Unit = {}) = HelpCheck(group).apply(options)
-
 }

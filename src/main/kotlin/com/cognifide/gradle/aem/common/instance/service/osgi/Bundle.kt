@@ -21,21 +21,20 @@ class Bundle {
     var fragment: Boolean = false
 
     val stable: Boolean
-        get() = if (fragment) {
-            stateRaw == Base.RESOLVED
-        } else {
-            stateRaw == Base.ACTIVE
+        get() = when {
+            fragment -> stateRaw == Base.RESOLVED
+            else -> stateRaw == Base.ACTIVE
         }
 
     val state: String
         get() = when (stateRaw) {
-            Base.UNINSTALLED -> "uninstalled"
-            Base.INSTALLED -> "installed"
-            Base.RESOLVED -> "resolved"
-            Base.STARTING -> "starting"
-            Base.STOPPING -> "stopping"
-            Base.ACTIVE -> "active"
-            else -> "unknown"
+            Base.UNINSTALLED -> STATE_UNINSTALLED
+            Base.INSTALLED -> STATE_INSTALLED
+            Base.RESOLVED -> STATE_RESOLVED
+            Base.STARTING -> STATE_STARTING
+            Base.STOPPING -> STATE_STOPPING
+            Base.ACTIVE -> STATE_ACTIVE
+            else -> STATE_UNKNOWN
         }
 
     override fun equals(other: Any?): Boolean {
@@ -53,21 +52,31 @@ class Bundle {
                 .isEquals
     }
 
-    override fun hashCode(): Int {
-        return HashCodeBuilder()
-                .append(id)
-                .append(name)
-                .append(stateRaw)
-                .append(symbolicName)
-                .append(version)
-                .toHashCode()
-    }
+    override fun hashCode(): Int = HashCodeBuilder()
+            .append(id)
+            .append(name)
+            .append(stateRaw)
+            .append(symbolicName)
+            .append(version)
+            .toHashCode()
 
-    override fun toString(): String {
-        return "Bundle(symbolicName='$symbolicName', state='$state', id='$id')"
-    }
+    override fun toString(): String = "Bundle(symbolicName='$symbolicName', state='$state', id='$id')"
 
     companion object {
+
+        const val STATE_UNINSTALLED = "uninstalled"
+
+        const val STATE_INSTALLED = "installed"
+
+        const val STATE_RESOLVED = "resolved"
+
+        const val STATE_STARTING = "starting"
+
+        const val STATE_STOPPING = "stopping"
+
+        const val STATE_ACTIVE = "active"
+
+        const val STATE_UNKNOWN = "unknown"
 
         const val ATTRIBUTE_NAME = "Bundle-Name"
 

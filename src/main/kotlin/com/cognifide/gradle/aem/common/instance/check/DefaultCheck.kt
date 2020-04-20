@@ -13,6 +13,10 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     protected val aem = runner.aem
 
+    protected val common = aem.common
+
+    protected val logger = aem.logger
+
     val instance = group.instance
 
     val progress: CheckProgress get() = runner.progress(instance)
@@ -57,11 +61,11 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: false
                 if (!authInitCurrent) {
-                    aem.logger.info("Switching instance '${instance.name}' credentials from customized to defaults.")
+                    logger.info("Switching instance '${instance.name}' credentials from customized to defaults.")
                     http.basicUser.set(Instance.USER_DEFAULT)
                     http.basicPassword.set(Instance.PASSWORD_DEFAULT)
                 } else {
-                    aem.logger.info("Switching instance '${instance.name}' credentials from defaults to customized.")
+                    logger.info("Switching instance '${instance.name}' credentials from defaults to customized.")
                     http.basicUser.set(instance.user)
                     http.basicPassword.set(instance.password)
                 }
