@@ -66,17 +66,22 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
         }
     }
 
-    private fun InstanceSync.startableBundles(): List<Bundle> = osgi.bundles.filter {
-        !it.fragment && bundleStartStates.get().contains(it.state)
-    }
+    private fun ignoredBundles() = group.checks.filterIsInstance<BundlesCheck>()
+            .firstOrNull()?.symbolicNamesIgnored?.get()
+            ?: listOf<String>()
+
+    private fun InstanceSync.startableBundles(): List<Bundle> = osgi.bundles.asSequence()
+            .filter { !ignoredBundles().contains(it.symbolicName) }
+            .filter { !it.fragment && bundleStartStates.get().contains(it.state) }
+            .toList()
 
     private fun InstanceSync.startBundles(bundles: List<Bundle>) {
         common.parallel.poolEach(bundles) { startBundle(it) }
         Thread.sleep(bundleStartDelay.get())
     }
 
-    private fun InstanceSync.startBundle(it: Bundle) = try {
-        osgi.startBundle(it.symbolicName)
+    private fun InstanceSync.startBundle(bundle: Bundle) = try {
+        osgi.startBundle(bundle.symbolicName)
     } catch (e: CommonException) {
         logger.debug("Cannot start bundle on $instance!", e)
     }
