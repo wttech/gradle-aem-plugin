@@ -26,10 +26,12 @@ class StatusReporter(private val aem: AemExtension) {
         val writer = StringWriter()
         PrintWriter(writer).apply {
             println("Instance '${instance.name}'")
-
             println(instance.details().prependIndent("  "))
-            println("  Packages installed:")
-            println(instance.packagesInstalled(packageFiles).prependIndent("    "))
+
+            if (instance.available) {
+                println("  Packages installed:")
+                println(instance.packagesInstalled(packageFiles).prependIndent("    "))
+            }
         }
 
         return writer.toString()
