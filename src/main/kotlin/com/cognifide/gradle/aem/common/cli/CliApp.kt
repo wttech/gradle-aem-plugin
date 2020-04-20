@@ -61,9 +61,9 @@ open class CliApp(protected val aem: AemExtension) {
         }.singleFile
     }
 
-    private fun extractArchive() {
+    private fun extractArchive() = aem.common.buildScope.doOnce("extracting archive '${dependencyNotation.get()}'") {
         if (dependencyDir.get().asFile.exists()) {
-            return
+            return@doOnce
         }
 
         val file = downloadArchive(dependencyNotation.map {
