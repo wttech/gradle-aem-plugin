@@ -7,7 +7,6 @@ import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import org.buildobjects.process.ProcResult
 import org.buildobjects.process.TimeoutException
-import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.internal.streams.SafeStreams
 
 @Suppress("SpreadOperator", "TooGenericExceptionCaught")
@@ -23,24 +22,21 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
 
     val args: List<String> get() = commandLine.subList(1, commandLine.size)
 
-    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}, async: Boolean = OperatingSystem.current().isWindows) {
+    /**
+     * @see <https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background>
+     */
+    fun executeVerbosely(options: ProcBuilder.() -> Unit = {}) {
         try {
             logger.info("Executing script '$commandString' at directory '${instance.dir}'")
 
-            if (async) { // TODO use timeout and find out why Windows e.g 'start.bat' script is failing sometimes
-                ProcessBuilder(commandLine)
-                        .directory(instance.dir)
-                        .start()
-            } else {
-                ProcBuilder(command, *args.toTypedArray())
-                        .withWorkingDirectory(instance.dir)
-                        .withExpectedExitStatuses(0)
-                        .withInputStream(SafeStreams.emptyInput())
-                        .withOutputStream(SafeStreams.systemOut())
-                        .withErrorStream(SafeStreams.systemOut())
-                        .apply(options)
-                        .run()
-            }
+            ProcBuilder(command, *args.toTypedArray())
+                    .withWorkingDirectory(instance.dir)
+                    .withExpectedExitStatuses(0)
+                    .withInputStream(SafeStreams.emptyInput())
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemOut())
+                    .apply(options)
+                    .run()
         } catch (e: Exception) {
             throw handleException(e)
         }

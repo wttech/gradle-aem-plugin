@@ -122,6 +122,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     val osInfo: String get() = mutableListOf<String>().apply {
         systemProperties["os.name"]?.let { add(it) }
         systemProperties["os.arch"]?.let { add(it) }
+        systemProperties["os.version"]?.let { add("($it)") }
     }.joinToString(" ")
 
     @get:JsonIgnore
@@ -252,7 +253,8 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
         const val PASSWORD_DEFAULT = "admin"
 
-        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort", "debugAddress")
+        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes",
+                "debugPort", "debugAddress", "openPath")
 
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
 
@@ -306,6 +308,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
                         props["runModes"]?.let { this.runModes = it.split(",") }
                         props["debugPort"]?.let { this.debugPort = it.toInt() }
                         props["debugAddress"]?.let { this.debugAddress = it }
+                        props["openPath"]?.let { this.openPath = it }
 
                         this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
                     }

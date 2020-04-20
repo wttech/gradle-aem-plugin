@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.bundle
 import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
@@ -22,6 +23,7 @@ import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.pluginProjects
 import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.Serializable
@@ -48,6 +50,8 @@ class AemExtension(val project: Project) : Serializable {
     // ===
 
     val commonOptions by lazy { CommonOptions(this) }
+
+    val assetManager by lazy { AssetManager(this) }
 
     /**
      * Defines common settings like environment name, line endings when generating files etc
@@ -101,25 +105,29 @@ class AemExtension(val project: Project) : Serializable {
      *
      * Use with caution as of this property is eagerly configuring all tasks building bundles.
      */
-    val bundlesBuilt: List<Jar>
-        get() = project.rootProject.allprojects
-                .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll<Jar>() }
-
-    /**
-     * Collection of all java packages from all projects applying bundle plugin.
-     */
-    val javaPackages: List<String> get() = bundlesBuilt.mapNotNull { it.bundle.javaPackage.orNull }
+    val bundlesBuilt: List<Jar> get() = project.pluginProjects(BundlePlugin.ID)
+            .flatMap { p -> p.common.tasks.getAll<Jar>() }
 
     /**
      * Collection of Vault definitions from all packages from all projects applying package plugin.
      *
      * Use with caution as of this property is eagerly configuring all tasks building packages.
      */
-    val packagesBuilt: List<PackageCompose>
-        get() = project.rootProject.allprojects
-                .filter { it.plugins.hasPlugin(PackagePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll<PackageCompose>() }
+    val packagesBuilt: List<PackageCompose> get() = project.pluginProjects(PackagePlugin.ID)
+            .flatMap { p -> p.common.tasks.getAll<PackageCompose>() }
+
+    /**
+     * Java package of built bundle (if project is applying bundle plugin).
+     */
+    val javaPackage: String? get() = when {
+        project.plugins.hasPlugin(BundlePlugin.ID) -> common.tasks.get<Jar>(JavaPlugin.JAR_TASK_NAME).bundle.javaPackage.orNull
+        else -> null
+    }
+
+    /**
+     * Collection of all java packages from all projects applying bundle plugin.
+     */
+    val javaPackages: List<String> get() = bundlesBuilt.mapNotNull { it.bundle.javaPackage.orNull }
 
     /**
      * All instances matching default filtering.

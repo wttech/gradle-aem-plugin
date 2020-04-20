@@ -6,7 +6,11 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.util.jar.Attributes
+import java.util.jar.Manifest
 import java.util.regex.Pattern
 
 /**
@@ -16,6 +20,17 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     @Internal
     protected val common = aem.common
+
+    @Input
+    val manifestProperties = aem.obj.map<String, String> {
+        convention(aem.obj.provider {
+            mapOf(
+                    "Content-Package-Type" to "mixed",
+                    "Content-Package-Id" to "${group.get()}:${name.get()}:${version.get()}",
+                    "Content-Package-Roots" to filterRoots.joinToString(",")
+            )
+        })
+    }
 
     /**
      * Name visible in CRX package manager
@@ -168,12 +183,25 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     /**
      * Any properties that could be used in any text file being a part of composed package.
+     *
+     * Beware of reading this property earlier than in execution phase
+     * as of it is lazy property to optimize performance.
      */
     @get:Internal
-    val fileProperties get() = mapOf(
-            "definition" to Delegate(this),
-            "aem" to aem
-    )
+    val fileProperties by lazy {
+        mapOf(
+                "definition" to Delegate(this),
+                "manifest" to Manifest().run {
+                    mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0")
+                    manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
+
+                    val output = ByteArrayOutputStream()
+                    write(output)
+                    output.toString(StandardCharsets.UTF_8.displayName())
+                },
+                "aem" to aem
+        )
+    }
 
     /**
      * Provide nicer syntax for accessing Gradle lazy properties in Pebble template files.

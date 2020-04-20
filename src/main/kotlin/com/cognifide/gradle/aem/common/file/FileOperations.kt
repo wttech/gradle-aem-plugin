@@ -1,59 +1,16 @@
 package com.cognifide.gradle.aem.common.file
 
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
+import org.gradle.api.Project
 import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
-import org.apache.commons.io.filefilter.TrueFileFilter
-import org.gradle.api.Project
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
 
 object FileOperations {
-
-    fun readResource(path: String): InputStream? {
-        return javaClass.getResourceAsStream("/${AemPlugin.PKG.replace(".", "/")}/$path")
-    }
-
-    fun getResources(path: String): List<String> {
-        return Reflections(
-                "${AemPlugin.PKG}.$path".replace("/", "."),
-                ResourcesScanner()
-        ).getResources { true; }.toList()
-    }
-
-    fun eachResource(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {
-        for (resourcePath in getResources(resourceRoot)) {
-            val outputFile = File(targetDir, resourcePath.substringAfterLast("$resourceRoot/"))
-
-            callback(resourcePath, outputFile)
-        }
-    }
-
-    fun copyResources(resourceRoot: String, targetDir: File, skipExisting: Boolean = false) {
-        eachResource(resourceRoot, targetDir) { resourcePath, outputFile ->
-            if (!skipExisting || !outputFile.exists()) {
-                copy(resourcePath, outputFile)
-            }
-        }
-    }
-
-    private fun copy(resourcePath: String, outputFile: File) {
-        outputFile.parentFile.mkdirs()
-
-        javaClass.getResourceAsStream("/$resourcePath").use { input ->
-            FileOutputStream(outputFile).use { output ->
-                IOUtils.copy(input, output)
-            }
-        }
-    }
 
     fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
         val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)

@@ -234,19 +234,21 @@ aem {
     }
 
     tasks {
-        bundleCompose { 
-            // customizing OSGi bundle manifest
-            description = "Example application built by GAP"
-            docUrl = "https://github.com/Cognifide/gradle-aem-example"
-            exportPackage("com.company.example.aem.*") 
-            slingModelPackages = "com.company.example.aem"
+        jar { 
+            bundle {
+                // customizing OSGi bundle manifest
+                description = "Example application built by GAP"
+                docUrl = "https://github.com/Cognifide/gradle-aem-example"
+                exportPackage("com.company.example.aem.*") 
+                slingModelPackages = "com.company.example.aem"
+        
+                // for checking OSGi component health on runtime
+                javaPackage.set("com.company.example.aem")
     
-            // for checking OSGi component health on runtime
-            javaPackage.set("com.company.example.aem")
-
-            // other / more advanced options
-            importPackageWildcard.set(true)
-            // ...
+                // other / more advanced options
+                importPackageWildcard.set(true)
+                // ...
+            }
         }
         packageCompose { // customizing built CRX package
             nestPackageProject(":core")
@@ -308,9 +310,11 @@ allprojects {
   plugins.withId("com.cognifide.aem.bundle") {
     configure<AemExtension> {
         tasks {
-            bundleCompose {
-                category = "example"
-                vendor = "Company"
+            jar {
+                bundle {
+                    category = "example"
+                    vendor = "Company"
+                }
             }
         }
     }
@@ -327,8 +331,10 @@ For instance, subproject `:aem:core` specific configuration like OSGi bundle or 
 ```kotlin
 aem {
     tasks {
-        bundleCompose {
-            javaPackage.set("com.company.example.aem.core")
+        jar {
+            bundle {
+                javaPackage.set("com.company.example.aem.core")
+            }
         }
         packageCompose {
             nestPackageProject(':content')

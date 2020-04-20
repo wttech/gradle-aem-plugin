@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.LineSeparator
+import org.gradle.internal.os.OperatingSystem
 
 open class CommonOptions(private val aem: AemExtension) {
 
@@ -43,5 +44,15 @@ open class CommonOptions(private val aem: AemExtension) {
     val lineSeparator = aem.obj.typed<LineSeparator> {
         convention(LineSeparator.LF)
         aem.prop.string("lineSeparator")?.let { set(LineSeparator.of(it)) }
+    }
+
+    val archiveExtension = aem.obj.string {
+        convention(aem.project.provider { if (OperatingSystem.current().isUnix) "tar.gz" else "zip" })
+        aem.prop.string("archiveExtension")?.let { set(it) }
+    }
+
+    val executableExtension = aem.obj.string {
+        convention(aem.project.provider { if (OperatingSystem.current().isWindows) ".bat" else "" })
+        aem.prop.string("executableExtension")?.let { set(it) }
     }
 }

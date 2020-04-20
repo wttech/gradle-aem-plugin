@@ -43,10 +43,6 @@ class LocalInstancePluginTest : AemBuildTest() {
                     id("com.cognifide.aem.instance.local")
                 }
                 
-                repositories {
-                    jcenter()
-                }
-                
                 aem {
                     instance {
                         satisfier {
@@ -70,10 +66,10 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertFileExists("build/instance/quickstart/cq-quickstart-6.5.0.jar")
             assertFileExists("build/instance/quickstart/license.properties")
 
-            assertFileExists("build/instance/satisfy/packages/9554134f/aem-groovy-console-14.0.0.zip")
-            assertFileExists("build/instance/satisfy/packages/c40605f3/accesscontroltool-package-2.3.2.zip")
-            assertFileExists("build/instance/satisfy/packages/96d08261/accesscontroltool-oakindex-package-2.3.2.zip")
-            assertPackage("build/instance/satisfy/packages/a8bf0bdf/search-webconsole-plugin-1.3.0.zip")
+            assertFileExists("build/instance/satisfy/packages/4f135495/aem-groovy-console-14.0.0.zip")
+            assertFileExists("build/instance/satisfy/packages/f30506c4/accesscontroltool-package-2.3.2.zip")
+            assertFileExists("build/instance/satisfy/packages/6182d096/accesscontroltool-oakindex-package-2.3.2.zip")
+            assertPackage("build/instance/satisfy/packages/df0bbfa8/search-webconsole-plugin-1.3.0.zip")
         }
     }
 
@@ -110,7 +106,6 @@ class LocalInstancePluginTest : AemBuildTest() {
                 }
                 
                 repositories {
-                    jcenter()
                     maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 

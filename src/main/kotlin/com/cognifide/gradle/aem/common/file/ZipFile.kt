@@ -64,6 +64,8 @@ class ZipFile(val baseFile: File) {
         dirFileHeaders(dirName).forEach { base.extractFile(it, dir.absolutePath) }
     }
 
+    fun walkDir(dirName: String, callback: (FileHeader) -> Unit) = dirFileHeaders(dirName).forEach { callback(it) }
+
     fun listDir(dirName: String) = dirFileHeaders(dirName).map { it.fileName }
 
     fun unpackFile(fileName: String, targetFile: File) {

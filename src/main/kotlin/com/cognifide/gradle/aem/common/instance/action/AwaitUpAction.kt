@@ -12,6 +12,10 @@ import java.util.concurrent.TimeUnit
 class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
+        unavailableTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(1))
+            aem.prop.long("instance.awaitUp.timeout.unavailableTime")?.let { set(it) }
+        }
         stateTime.apply {
             convention(TimeUnit.MINUTES.toMillis(10))
             aem.prop.long("instance.awaitUp.timeout.stateTime")?.let { set(it) }
@@ -24,6 +28,28 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     fun timeout(options: TimeoutCheck.() -> Unit) {
         timeoutOptions = options
+    }
+
+    private var helpOptions: HelpCheck.() -> Unit = {
+        enabled.apply {
+            aem.prop.boolean(("instance.awaitUp.help.enabled"))?.let { set(it) }
+        }
+        stateTime.apply {
+            aem.prop.long("instance.awaitUp.help.stateTime")?.let { set(it) }
+        }
+        bundleStartStates.apply {
+            aem.prop.list("instance.awaitUp.help.bundleStartStates")?.let { set(it) }
+        }
+        bundleStartRetry.apply {
+            aem.prop.long("instance.awaitUp.help.bundleStartRetry")?.let { afterSquaredSecond(it) }
+        }
+        bundleStartDelay.apply {
+            aem.prop.long("instance.awaitUp.help.bundleStartDelay")?.let { set(it) }
+        }
+    }
+
+    fun help(options: HelpCheck.() -> Unit) {
+        helpOptions = options
     }
 
     private var bundlesOptions: BundlesCheck.() -> Unit = {
@@ -88,6 +114,7 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         checks {
             listOf(
                     timeout(timeoutOptions),
+                    help(helpOptions),
                     bundles(bundlesOptions),
                     events(eventsOptions),
                     components(componentsOptions),

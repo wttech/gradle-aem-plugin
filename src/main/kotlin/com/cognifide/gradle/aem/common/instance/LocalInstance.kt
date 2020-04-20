@@ -11,9 +11,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
-import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils
+import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.process.internal.streams.SafeStreams
 
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
@@ -22,6 +23,13 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     var debugPort: Int = 5005
 
     var debugAddress: String = ""
+
+    var openPath: String = "/"
+
+    val httpOpenUrl get() = when (openPath) {
+        "/" -> httpUrl
+        else -> "${httpUrl}$openPath"
+    }
 
     private val debugSocketAddress: String
         get() = when (debugAddress) {
@@ -117,8 +125,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     internal fun executeStartScript() {
         try {
             startScript.executeVerbosely()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+        } catch (e: LocalInstanceException) {
+            throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
         }
     }
 
@@ -128,12 +136,35 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         val pidOrigin = pid
         try {
             stopScript.executeVerbosely()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin", e)
+        } catch (e: LocalInstanceException) {
+            throw LocalInstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin.", e)
         }
     }
 
     private val statusScript: Script get() = binScript("status")
+
+    @Suppress("TooGenericExceptionCaught")
+    internal fun executeOpenScript() {
+        try {
+            val os = OperatingSystem.current()
+            val command = when {
+                os.isWindows -> "explorer"
+                os.isMacOsX -> "open"
+                else -> "sensible-browser"
+            }
+
+            ProcBuilder(command, httpOpenUrl)
+                    .withWorkingDirectory(dir)
+                    .withTimeoutMillis(localManager.openTimeout.get())
+                    .withExpectedExitStatuses(0)
+                    .withInputStream(SafeStreams.emptyInput())
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemOut())
+                    .run()
+        } catch (e: Exception) {
+            throw LocalInstanceException("Instance opening command failed! Cause: ${e.message}", e)
+        }
+    }
 
     @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
@@ -182,11 +213,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun validateFiles() {
         if (!jar.exists()) {
-            throw InstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
+            throw LocalInstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
         }
 
         if (!license.exists()) {
-            throw InstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
+            throw LocalInstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
         }
     }
 
@@ -194,14 +225,20 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
             var result = origin
 
-            // Force CMD to be launched in closable window mode.
+            // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
             result = result.replace(
-                    "start \"CQ\" cmd.exe /K",
-                    "start /min \"CQ\" cmd.exe /C"
+                    "timeout /T 1 /NOBREAK >nul",
+                    "ping 127.0.0.1 -n 3 > nul"
+            )
+
+            // Force AEM to be launched in background
+            result = result.replace(
+                    "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM <= 6.2
             result = result.replace(
-                    "start \"CQ\" cmd.exe /C",
-                    "start /min \"CQ\" cmd.exe /C"
+                    "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
@@ -254,7 +291,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     internal fun customize() {
-        FileOperations.copyResources(FILES_PATH, dir, false)
+        aem.assetManager.copyDir(FILES_PATH, dir)
 
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)
@@ -264,21 +301,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
         FileOperations.amendFiles(dir, localManager.expandFiles.get()) { file, source ->
             aem.prop.expand(source, propertiesAll, file.absolutePath)
-        }
-
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
-            var result = origin
-
-            // Update window title
-            val previousWindowTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
-            if (previousWindowTitle != null) {
-                result = StringUtils.replace(result,
-                        "start /min \"$previousWindowTitle\" cmd.exe ",
-                        "start /min \"$windowTitle\" cmd.exe "
-                )
-            }
-
-            result
         }
 
         val installFiles = localManager.install.files
@@ -298,6 +320,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     fun down() = localManager.down(this)
 
+    fun open() = localManager.open(this)
+
     @get:JsonIgnore
     val status: Status get() = checkStatus()
 
@@ -311,7 +335,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             Status.byExitCode(procResult.exitValue).also { status ->
                 logger.debug("Instance status of $this is: $status")
             }
-        } catch (e: InstanceException) {
+        } catch (e: LocalInstanceException) {
             logger.info("Instance status not available: $this")
             logger.debug("Instance status error", e)
             Status.UNKNOWN
@@ -340,11 +364,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun locked(name: String): Boolean = lockFile(name).exists()
 
-    @get:JsonIgnore
-    val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != AemVersion.UNKNOWN }?.run { ", version=$this" } ?: "") +
-            ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
-
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"
 
     companion object {
@@ -363,7 +382,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != USER) {
-                    throw InstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
+                    throw LocalInstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
                 }
 
                 this.httpUrl = instanceUrl.httpUrl

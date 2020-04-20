@@ -18,6 +18,14 @@ class Satisfier(private val manager: InstanceManager) {
     private val logger = aem.logger
 
     /**
+     * Allows to disable service at all.
+     */
+    val enabled = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.satisfy.enabled")?.let { set(it) }
+    }
+
+    /**
      * Enables deployment via package activation from author to publishers when e.g they are not accessible.
      */
     val distributed = aem.obj.boolean {
@@ -64,9 +72,7 @@ class Satisfier(private val manager: InstanceManager) {
         this.validatorOptions = options
     }
 
-    private var validatorOptions: PackageValidator.() -> Unit = {
-        planName.convention("plan-satisfy.json")
-    }
+    private var validatorOptions: PackageValidator.() -> Unit = {}
 
     /**
      * Provides a packages from local and remote sources.
@@ -89,6 +95,11 @@ class Satisfier(private val manager: InstanceManager) {
     fun satisfy(instance: Instance) = satisfy(listOf(instance))
 
     fun satisfy(instances: Collection<Instance>): List<PackageAction> {
+        if (!enabled.get()) {
+            logger.lifecycle("No actions performed / instance satisfier is disabled.")
+            return listOf()
+        }
+
         val groupsSatisfiable = groupsSatisfiable()
 
         if (validated.get()) {

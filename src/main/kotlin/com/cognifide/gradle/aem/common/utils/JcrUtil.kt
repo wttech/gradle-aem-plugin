@@ -1,17 +1,20 @@
 package com.cognifide.gradle.aem.common.utils
 
-import org.apache.jackrabbit.util.ISO8601
+import com.cognifide.gradle.common.utils.formats.ISO8601
 import java.util.*
 import java.util.regex.Pattern
 
 object JcrUtil {
 
-    fun date(date: Date = Date()): String {
-        return ISO8601.format(Calendar.getInstance().apply { time = date })
-    }
-    fun dateToCalendar(date: Date): Calendar {
-        return Calendar.getInstance().apply { time = date }
-    }
+    fun date(date: Date = Date()): String = dateFormat(date)
+
+    fun dateParse(value: String): Date = ISO8601.parse(value).time
+
+    fun dateFormat(date: Calendar): String = ISO8601.format(date)
+
+    fun dateFormat(date: Date): String = dateFormat(dateToCalendar(date))
+
+    fun dateToCalendar(date: Date): Calendar = Calendar.getInstance().apply { time = date }
 
     /**
      * Converts e.g ':jcr:content' to '_jcr_content' (part of JCR path to be valid OS path).

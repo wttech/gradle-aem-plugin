@@ -53,12 +53,19 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
         aem.prop.string("package.fileFilter.bundleChecking")?.let { set(BundleChecking.of(it)) }
     }
 
-    fun filter(spec: CopySpec, expandProperties: Map<String, Any> = mapOf()) {
+    /**
+     * Repository path pattern used in [bundleChecking].
+     */
+    @Input
+    val bundlePath = aem.obj.string {
+        convention("**/install/*.jar")
+        aem.prop.string("package.fileFilter.bundlePath")?.let { set(it) }
+    }
+
+    fun filter(spec: CopySpec) {
         if (excluding.get()) {
             spec.exclude(excludeFiles.get())
         }
-
-        val expandPropertiesAll = expandProperties + this.expandProperties.get() + mapOf("aem" to aem)
 
         spec.eachFile { fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
@@ -69,7 +76,7 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
                 }
             }
 
-            if (bundleChecking.get() != BundleChecking.NONE && Patterns.wildcard(path, "**/install/*.jar")) {
+            if (bundleChecking.get() != BundleChecking.NONE && Patterns.wildcard(path, bundlePath.get())) {
                 val bundle = fileDetail.file
                 if (!isBundle(bundle)) {
                     val errorMessage = "JAR file being added to CRX package '$pkg' is not a valid OSGi bundle '$bundle'!"
@@ -91,14 +98,14 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
         }
     }
 
+    private val expandPropertiesAll by lazy { task.vaultDefinition.fileProperties + expandProperties.get() }
+
     @Suppress("TooGenericExceptionCaught")
-    private fun isBundle(bundle: File): Boolean {
-        return try {
-            val manifest = Jar(bundle).manifest.mainAttributes
-            !manifest.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME).isNullOrBlank()
-        } catch (e: Exception) {
-            false
-        }
+    private fun isBundle(bundle: File): Boolean = try {
+        val manifest = Jar(bundle).manifest.mainAttributes
+        !manifest.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME).isNullOrBlank()
+    } catch (e: Exception) {
+        false
     }
 
     companion object {
@@ -118,6 +125,7 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
                 "**/.vlt",
                 "**/.vlt*.tmp",
                 "**/.vlt-sync-config.properties",
+                "**/aemsync/**",
                 "**/node_modules/**",
                 "**/vault/filter.*.xml"
         )
