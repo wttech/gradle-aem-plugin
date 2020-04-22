@@ -44,6 +44,7 @@ class StatusReporter(private val aem: AemExtension) {
         if (this@details is LocalInstance) {
             add("Status: ${status.displayName}")
             add("Debug port: $debugPort")
+            if (pid > 0) add("Process ID: $pid")
         }
 
         if (available) {
