@@ -57,6 +57,10 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun tailer(options: Tailer.() -> Unit) = tailer.using(options)
 
+    val statusReporter by lazy { StatusReporter(aem) }
+
+    fun statusReporter(options: StatusReporter.() -> Unit) = statusReporter.using(options)
+
     fun resolveFiles() {
         satisfier.resolve()
     }

@@ -173,6 +173,8 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     fun tail() = manager.tailer.tail(this)
 
+    fun reportStatus() = manager.statusReporter.report(this)
+
     fun examine() = manager.examine(this)
 
     fun <T> sync(action: InstanceSync.() -> T): T = sync.run(action)
