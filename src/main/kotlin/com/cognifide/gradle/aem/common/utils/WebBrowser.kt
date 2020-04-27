@@ -22,7 +22,6 @@ class WebBrowser(private val aem: AemExtension) {
             ProcBuilder(command, url)
                     .withWorkingDirectory(aem.project.projectDir)
                     .withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
-                    .withExpectedExitStatuses(0)
                     .withInputStream(SafeStreams.emptyInput())
                     .withOutputStream(SafeStreams.systemOut())
                     .withErrorStream(SafeStreams.systemOut())
