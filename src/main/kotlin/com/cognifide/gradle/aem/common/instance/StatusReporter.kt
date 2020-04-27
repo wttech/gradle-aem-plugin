@@ -63,17 +63,18 @@ class StatusReporter(private val aem: AemExtension) {
         try {
             sync {
                 packageManager.listRetry.never()
-                packageFiles.map { file -> PackageFile(file, packageManager.find(file)) }
+                packageFiles
+                        .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
                         .sortedWith(
                                 compareByDescending<PackageFile> {
                                     it.pkg?.lastUnpacked ?: 0L
                                 }.thenBy { it.file.name }
                         )
                         .joinToString("\n") { (file, pkg) ->
-                            if (pkg != null && pkg.installed) {
-                                "${file.name} (${Formats.date(date(pkg.lastUnpacked!!))})"
-                            } else {
-                                "${file.name} (not yet)"
+                            when {
+                                !file.exists() -> "${file.name} (not built)"
+                                pkg == null || !pkg.installed -> "${file.name} (not yet)"
+                                else -> "${file.name} (${Formats.date(date(pkg.lastUnpacked!!))})"
                             }
                         }
             }.ifBlank { "none" }
