@@ -3,10 +3,12 @@ package com.cognifide.gradle.aem.common.instance.service.pkg
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
+import com.cognifide.gradle.aem.common.utils.Checksum
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.utils.Formats
@@ -49,6 +51,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     val installRecursive = aem.obj.boolean {
         convention(true)
         aem.prop.boolean("package.manager.installRecursive")?.let { set(it) }
+    }
+
+    /**
+     * Deploys only if package is changed (comparing built package checksum with deployed package one).
+     */
+    val deployLazily = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("package.manager.deployLazily")?.let { set(it) }
     }
 
     /**
@@ -299,6 +309,41 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
 
     fun deploy(file: File, activate: Boolean = false) {
+        if (!deployLazily.get()) {
+            deployInternal(file, activate)
+            return
+        }
+
+        val pkg = find(file)
+        val checksumLocal = Checksum.md5(file)
+
+        if (pkg == null) {
+            val pkgPath = deployInternal(file, activate)
+            val pkgMeta = deployMetadata(pkgPath)
+            pkgMeta.save(mapOf(
+                    Node.TYPE_UNSTRUCTURED,
+                    METADATA_CHECKSUM_PROP to checksumLocal
+            ))
+        } else {
+            val pkgPath = pkg.path
+            val pkgMeta = deployMetadata(pkgPath)
+            val checksumRemote = if (pkgMeta.exists) pkgMeta.properties.string(METADATA_CHECKSUM_PROP) else null
+
+            if (checksumLocal != checksumRemote) {
+                deployInternal(file, activate)
+                pkgMeta.save(mapOf(
+                        Node.TYPE_UNSTRUCTURED,
+                        METADATA_CHECKSUM_PROP to checksumLocal
+                ))
+            } else {
+                logger.info("Skipping deployment of package $file on $instance (no changes detected)!")
+            }
+        }
+    }
+
+    private fun deployMetadata(pkgPath: String) = sync.repository.node("/var/gap/package/deploy/${pkgPath.removePrefix("/etc/packages")}")
+
+    private fun deployInternal(file: File, activate: Boolean = false): String {
         val uploadResponse = upload(file)
         val packagePath = uploadResponse.path
 
@@ -308,6 +353,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 activate(packagePath)
             }
         }
+
+        return packagePath
     }
 
     fun distribute(file: File) = deploy(file, true)
@@ -409,5 +456,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         const val HTML_PATH = "$PATH/.html"
 
         const val LIST_JSON = "/crx/packmgr/list.jsp"
+
+        const val METADATA_PATH = "gap"
+
+        const val METADATA_CHECKSUM_PROP = "checksumMd5"
     }
 }

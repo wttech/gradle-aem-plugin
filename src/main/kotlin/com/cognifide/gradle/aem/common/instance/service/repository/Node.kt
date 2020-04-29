@@ -506,12 +506,11 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         return true
     }
 
-    override fun hashCode(): Int {
-        return path.hashCode()
-    }
+    override fun hashCode(): Int = path.hashCode()
 
-    override fun toString(): String {
-        return "Node(path='$path', properties=$properties)"
+    override fun toString(): String = when {
+        exists -> "Node(path='$path', properties=$properties)"
+        else -> "Node(path='$path')"
     }
 
     enum class Property(val value: String) {
