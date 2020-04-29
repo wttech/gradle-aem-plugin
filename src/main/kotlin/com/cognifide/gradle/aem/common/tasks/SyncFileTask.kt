@@ -61,16 +61,19 @@ open class SyncFileTask : AemDefaultTask() {
     fun sync(action: InstanceSync.(File) -> Unit) {
         instanceManager.examine(instances.get())
 
-        common.progress(instances.get().size * files.files.size) {
-            aem.syncFiles(instances.get(), files.files) { file ->
-                increment("${file.name} -> ${instance.name}") {
-                    initializer()
-                    action(file)
-                    finalizer()
+        val actions = instances.get().size * files.files.size
+        if (actions > 0) {
+            common.progress(actions) {
+                aem.syncFiles(instances.get(), files.files) { file ->
+                    increment("${file.name} -> ${instance.name}") {
+                        initializer()
+                        action(file)
+                        finalizer()
+                    }
                 }
             }
-        }
 
-        completer()
+            completer()
+        }
     }
 }
