@@ -87,12 +87,12 @@ class LocalInstancePluginTest : AemBuildTest() {
                 
                 instance.awaitUp.timeout.stateTime=180000
                 
-                instance.local-author.httpUrl=http://localhost:9502
+                instance.local-author.httpUrl=http://localhost:8802
                 instance.local-author.type=local
                 instance.local-author.runModes=local,nosamplecontent
                 instance.local-author.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
 
-                instance.local-publish.httpUrl=http://localhost:9503
+                instance.local-publish.httpUrl=http://localhost:8803
                 instance.local-publish.type=local
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
