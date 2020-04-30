@@ -86,6 +86,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                 localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
                 
                 instance.awaitUp.timeout.stateTime=180000
+                instance.awaitUp.logInstantly=false
+                instance.awaitDown.logInstantly=false
                 
                 instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local
@@ -153,10 +155,6 @@ class LocalInstancePluginTest : AemBuildTest() {
                 """)
         }
 
-        runBuild(projectDir, "instanceResolve") {
-            assertTask(":instanceResolve")
-        }
-
         runBuild(projectDir, "instanceStatus") {
             assertTask(":instanceStatus")
         }
@@ -214,55 +212,6 @@ class LocalInstancePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "assertIfCrxDeEnabled") {
             assertTask(":assertIfCrxDeEnabled")
-        }
-
-        runBuild(projectDir, "instanceDestroy", "-Pforce") {
-            assertTask(":instanceDestroy")
-        }
-
-        runBuild(projectDir, "clean") {
-            assertTask(":clean")
-        }
-    }
-
-    @EnabledIfSystemProperty(named = "localInstance.quickstart.jarUrl", matches = ".+")
-    @Test
-    fun `should repeat setup of local aem author and publish instances`() {
-        val projectDir = prepareProject("local-instance-resetup") {
-            gradleProperties("""
-                fileTransfer.user=${System.getProperty("fileTransfer.user")}
-                fileTransfer.password=${System.getProperty("fileTransfer.password")}
-                fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
-                
-                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.quickstart.jarUrl")}
-                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
-                
-                instance.local-author.httpUrl=http://localhost:9502
-                instance.local-author.type=local
-                instance.local-author.runModes=local,nosamplecontent
-                instance.local-author.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
-                """)
-
-            settingsGradle("")
-
-            buildGradle("""
-                plugins {
-                    id("com.cognifide.aem.instance.local")
-                }
-                """)
-        }
-
-        runBuild(projectDir, "instanceResetup", "-Pforce") {
-            assertTask(":instanceDown")
-            assertTask(":instanceDestroy")
-            assertTask(":instanceCreate")
-            assertTask(":instanceUp")
-            assertTask(":instanceSatisfy")
-            assertTask(":instanceProvision")
-            assertTask(":instanceSetup")
-            assertTask(":instanceResetup")
-            assertFileExists(".instance/author")
-            assertFileNotExists(".instance/publish")
         }
 
         runBuild(projectDir, "instanceDestroy", "-Pforce") {

@@ -107,8 +107,10 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
             aem.prop.long("instance.awaitUp.delay")?.let { set(it) }
         }
         verbose.apply {
-            convention(true)
             aem.prop.boolean("instance.awaitUp.verbose")?.let { set(it) }
+        }
+        logInstantly.apply {
+            aem.prop.boolean("instance.awaitUp.logInstantly")?.let { set(it) }
         }
 
         checks {

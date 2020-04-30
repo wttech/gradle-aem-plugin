@@ -65,7 +65,7 @@ class CheckRunner(internal val aem: AemExtension) {
      *
      * By default it just keeps clean console if info logging level is not enabled.
      */
-    var logInstantly = logger.isInfoEnabled
+    val logInstantly = aem.obj.boolean { convention(logger.isInfoEnabled) }
 
     fun check(instances: Collection<Instance>) {
         common.progressIndicator {
@@ -121,7 +121,7 @@ class CheckRunner(internal val aem: AemExtension) {
 
     fun check(instance: Instance) = CheckGroup(this@CheckRunner, instance, this.checks).apply {
         check()
-        if (logInstantly) {
+        if (logInstantly.get()) {
             log()
         }
     }
@@ -130,7 +130,7 @@ class CheckRunner(internal val aem: AemExtension) {
         if (aborted) {
             step = "Aborting"
 
-            if (!logInstantly) {
+            if (!logInstantly.get()) {
                 progresses.forEach { it.currentCheck?.log() }
             }
 
