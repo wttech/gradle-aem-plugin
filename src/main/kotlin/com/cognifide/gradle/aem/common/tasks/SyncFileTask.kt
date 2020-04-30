@@ -38,12 +38,23 @@ open class SyncFileTask : AemDefaultTask() {
     var completer: () -> Unit = { awaitUp() }
 
     /**
-     * Check instance(s) condition after performing action related with package(s).
+     * Check instance(s) condition after performing action related with synced file(s).
      */
     @Internal
     val awaited = aem.obj.boolean { convention(true) }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
+
+    private var awaitOptionally = false
+
+    private var awaitRequired = false
+
+    fun awaitIf(callback: () -> Boolean) {
+        awaitOptionally = true
+        if (callback()) {
+            awaitRequired = true
+        }
+    }
 
     /**
      * Controls await up action.
@@ -53,7 +64,7 @@ open class SyncFileTask : AemDefaultTask() {
     }
 
     fun awaitUp() {
-        if (awaited.get()) {
+        if (awaited.get() && (!awaitOptionally || awaitRequired)) {
             aem.instanceManager.awaitUp(instances.get(), awaitUpOptions)
         }
     }
@@ -76,4 +87,6 @@ open class SyncFileTask : AemDefaultTask() {
             completer()
         }
     }
+
+    fun syncFile(action: InstanceSync.(File) -> Unit) = doLast { sync(action) }
 }

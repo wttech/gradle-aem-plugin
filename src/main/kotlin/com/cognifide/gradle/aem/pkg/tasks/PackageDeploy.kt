@@ -19,7 +19,7 @@ open class PackageDeploy : PackageTask() {
 
     @TaskAction
     open fun deploy() {
-        sync { packageManager.deploy(it, distributed.get()) }
+        sync { awaitIf { packageManager.deploy(it, distributed.get()) } }
         common.notifier.notify("Package deployed", "${files.files.fileNames} on ${instances.get().names}")
     }
 

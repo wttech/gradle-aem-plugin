@@ -308,22 +308,23 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
 
-    fun deploy(file: File, activate: Boolean = false) {
+    fun deploy(file: File, activate: Boolean = false): Boolean {
         if (!deployLazily.get()) {
             deployInternal(file, activate)
-            return
+            return true
         }
 
         val pkg = find(file)
         val checksumLocal = Checksum.md5(file)
 
-        if (pkg == null) {
+        if (pkg == null || !pkg.installed) {
             val pkgPath = deployInternal(file, activate)
             val pkgMeta = deployMetadata(pkgPath)
             pkgMeta.save(mapOf(
                     Node.TYPE_UNSTRUCTURED,
                     METADATA_CHECKSUM_PROP to checksumLocal
             ))
+            return true
         } else {
             val pkgPath = pkg.path
             val pkgMeta = deployMetadata(pkgPath)
@@ -335,8 +336,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                         Node.TYPE_UNSTRUCTURED,
                         METADATA_CHECKSUM_PROP to checksumLocal
                 ))
+                return true
             } else {
-                logger.info("Skipping deployment of package $file on $instance (no changes detected)!")
+                logger.info("Skipping deployment of package $file on $instance (no changes detected)")
+                return false
             }
         }
     }
