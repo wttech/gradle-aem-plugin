@@ -17,6 +17,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Input
+import java.util.*
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -54,11 +55,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Deploys only if package is changed (comparing built package checksum with deployed package one).
+     * Deploys only if package is changed (checksum based) or reinstalled on instance in the meantime.
      */
-    val deployLazily = aem.obj.boolean {
+    val deployAvoidance = aem.obj.boolean {
         convention(false)
-        aem.prop.boolean("package.manager.deployLazily")?.let { set(it) }
+        aem.prop.boolean("package.manager.deployAvoidance")?.let { set(it) }
     }
 
     /**
@@ -309,30 +310,33 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
 
     fun deploy(file: File, activate: Boolean = false): Boolean {
-        if (!deployLazily.get()) {
-            deployRegularly(file, activate)
-            return true
+        if (deployAvoidance.get()) {
+            return deployAvoiding(file, activate)
         }
 
+        deployRegularly(file, activate)
+        return true
+    }
+
+    private fun deployAvoiding(file: File, activate: Boolean): Boolean {
         val pkg = find(file)
         val checksumLocal = Checksum.md5(file)
 
         if (pkg == null || !pkg.installed) {
             val pkgPath = deployRegularly(file, activate)
-            val lastUnpacked = readLastUnpacked(pkgPath)
             val pkgMeta = getMetadataNode(pkgPath)
 
             pkgMeta.save(mapOf(
                     Node.TYPE_UNSTRUCTURED,
                     METADATA_CHECKSUM_PROP to checksumLocal,
-                    METADATA_LAST_UNPACKED_PROP to lastUnpacked
+                    METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
             ))
             return true
         } else {
             val pkgPath = pkg.path
             val pkgMeta = getMetadataNode(pkgPath)
             val checksumRemote = if (pkgMeta.exists) pkgMeta.properties.string(METADATA_CHECKSUM_PROP) else null
-            val lastUnpackedPrevious = if (pkgMeta.exists) pkgMeta.properties.long(METADATA_LAST_UNPACKED_PROP) else null
+            val lastUnpackedPrevious = if (pkgMeta.exists) pkgMeta.properties.date(METADATA_LAST_UNPACKED_PROP) else null
             val lastUnpackedCurrent = readLastUnpacked(pkgPath)
 
             val checksumChanged = checksumLocal != checksumRemote
@@ -340,26 +344,26 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             if (checksumChanged || manuallyUnpacked) {
                 if (manuallyUnpacked) {
-                    logger.warn("Cannot lazily avoid deploying package '$pkgPath' as it was manually reinstalled"
-                            + " at ${instance.date(lastUnpackedCurrent)} on $instance!")
+                    logger.warn("Cannot avoid deploying package '$pkgPath' as it was manually reinstalled"
+                            + " at $lastUnpackedCurrent on $instance!")
                 }
 
                 deployRegularly(file, activate)
                 pkgMeta.save(mapOf(
                         Node.TYPE_UNSTRUCTURED,
                         METADATA_CHECKSUM_PROP to checksumLocal,
-                        METADATA_LAST_UNPACKED_PROP to lastUnpackedCurrent
+                        METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
                 ))
                 return true
             } else {
-                logger.info("Lazily avoiding deploying again package '$pkgPath' on $instance (no changes detected)")
+                logger.info("Avoiding deploying again package '$pkgPath' on $instance (no changes detected)")
                 return false
             }
         }
     }
 
-    private fun readLastUnpacked(pkgPath: String): Long {
-        return sync.repository.node(pkgPath).child(DEFINITION_PATH).properties.long(METADATA_LAST_UNPACKED_PROP)
+    private fun readLastUnpacked(pkgPath: String): Date {
+        return sync.repository.node(pkgPath).child(DEFINITION_PATH).properties.date(METADATA_LAST_UNPACKED_PROP)
                 ?: throw PackageException("Cannot read package '$pkgPath' installation time on $instance!")
     }
 
