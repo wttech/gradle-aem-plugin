@@ -347,8 +347,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             if (checksumChanged || externallyUnpacked) {
                 if (externallyUnpacked) {
-                    logger.warn("Deploying package '$pkgPath' because it was externally installed" +
-                            " at '$lastUnpackedCurrent' on $instance!")
+                    logger.warn("Deploying package '$pkgPath' on $instance (changed externally at '$lastUnpackedCurrent')")
                 }
                 if (checksumChanged) {
                     logger.info("Deploying package '$pkgPath' on $instance (changed checksum)")
