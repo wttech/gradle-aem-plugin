@@ -130,17 +130,17 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun get(file: File): Package {
         if (!file.exists()) {
-            throw PackageException("Package $file does not exist so it cannot be resolved on $instance")
+            throw PackageException("Package '$file' does not exist so it cannot be resolved on $instance!")
         }
 
-        return find(file) ?: throw InstanceException("Package is not uploaded on $instance")
+        return find(file) ?: throw InstanceException("Package '$file' is not uploaded on $instance!")
     }
 
     fun get(definition: VaultDefinition) = get(definition.group.get(), definition.name.get(), definition.version.get())
 
     fun get(group: String, name: String, version: String): Package {
         return find(group, name, version)
-                ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance")
+                ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance!")
     }
 
     fun find(file: File): Package? = PackageFile(file).run { find(group, name, version) }
@@ -180,7 +180,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return uploadRetry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
             val url = "$JSON_PATH/?cmd=upload"
 
-            logger.info("Uploading package $file to $instance'")
+            logger.info("Uploading package '$file' to $instance'")
 
             val response = try {
                 http.postMultipart(url, mapOf(
@@ -188,15 +188,15 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                         "force" to (uploadForce.get() || isSnapshot(file))
                 )) { asObjectFromJson(it, UploadResponse::class.java) }
             } catch (e: FileNotFoundException) {
-                throw PackageException("Package file $file to be uploaded not found!", e)
+                throw PackageException("Package '$file' to be uploaded not found!", e)
             } catch (e: RequestException) {
-                throw InstanceException("Cannot upload package $file to $instance. Cause: ${e.message}", e)
+                throw InstanceException("Cannot upload package '$file' to $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
-                throw InstanceException("Malformed response after uploading package $file to $instance. Cause: ${e.message}", e)
+                throw InstanceException("Malformed response after uploading package '$file' to $instance. Cause: ${e.message}", e)
             }
 
             if (!response.isSuccess) {
-                throw InstanceException("Cannot upload package $file to $instance. Reason: ${interpretFail(response.msg)}.")
+                throw InstanceException("Cannot upload package '$file' to $instance. Reason: ${interpretFail(response.msg)}.")
             }
 
             return response
@@ -243,7 +243,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun download(remotePath: String, targetFile: File = common.temporaryFile(FilenameUtils.getName(remotePath))) {
         return downloadRetry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
-            logger.info("Downloading package from $remotePath to file $targetFile")
+            logger.info("Downloading package from '$remotePath' to file '$targetFile'")
 
             http.download(remotePath, targetFile)
 
@@ -256,18 +256,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun build(remotePath: String): BuildResponse {
         val url = "$JSON_PATH$remotePath/?cmd=build"
 
-        logger.info("Building package $remotePath on $instance")
+        logger.info("Building package '$remotePath' on $instance")
 
         val response = try {
             http.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot build package $remotePath on $instance. Cause: ${e.message}", e)
+            throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after building package $remotePath on $instance. Cause: ${e.message}", e)
+            throw InstanceException("Malformed response after building package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot build package $remotePath on $instance. Cause: ${interpretFail(response.msg)}")
+            throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
         return response
@@ -279,22 +279,22 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return installRetry.withCountdown<InstallResponse, InstanceException>("install package '$remotePath' on '${instance.name}'") {
             val url = "$HTML_PATH$remotePath/?cmd=install"
 
-            logger.info("Installing package $remotePath on $instance")
+            logger.info("Installing package '$remotePath' on $instance")
 
             val response = try {
                 http.postMultipart(url, mapOf("recursive" to installRecursive.get())) {
                     InstallResponse.from(asStream(it), responseBuffer.get())
                 }
             } catch (e: RequestException) {
-                throw InstanceException("Cannot install package $remotePath on $instance. Cause: ${e.message}", e)
+                throw InstanceException("Cannot install package '$remotePath' on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
-                throw InstanceException("Malformed response after installing package $remotePath on $instance. Cause: ${e.message}", e)
+                throw InstanceException("Malformed response after installing package '$remotePath' on $instance. Cause: ${e.message}", e)
             }
 
             if (response.hasPackageErrors(errors.get())) {
-                throw PackageException("Cannot install malformed package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
+                throw PackageException("Cannot install malformed package '$remotePath' on $instance. Status: ${response.status}. Errors: ${response.errors}")
             } else if (!response.success) {
-                throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
+                throw InstanceException("Cannot install package '$remotePath' on $instance. Status: ${response.status}. Errors: ${response.errors}")
             }
 
             return response
@@ -310,7 +310,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun deploy(file: File, activate: Boolean = false): Boolean {
         if (!deployLazily.get()) {
-            deployInternal(file, activate)
+            deployRegularly(file, activate)
             return true
         }
 
@@ -318,35 +318,54 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         val checksumLocal = Checksum.md5(file)
 
         if (pkg == null || !pkg.installed) {
-            val pkgPath = deployInternal(file, activate)
-            val pkgMeta = deployMetadata(pkgPath)
+            val pkgPath = deployRegularly(file, activate)
+            val lastUnpacked = readLastUnpacked(pkgPath)
+            val pkgMeta = getMetadataNode(pkgPath)
+
             pkgMeta.save(mapOf(
                     Node.TYPE_UNSTRUCTURED,
-                    METADATA_CHECKSUM_PROP to checksumLocal
+                    METADATA_CHECKSUM_PROP to checksumLocal,
+                    METADATA_LAST_UNPACKED_PROP to lastUnpacked
             ))
             return true
         } else {
             val pkgPath = pkg.path
-            val pkgMeta = deployMetadata(pkgPath)
+            val pkgMeta = getMetadataNode(pkgPath)
             val checksumRemote = if (pkgMeta.exists) pkgMeta.properties.string(METADATA_CHECKSUM_PROP) else null
+            val lastUnpackedPrevious = if (pkgMeta.exists) pkgMeta.properties.long(METADATA_LAST_UNPACKED_PROP) else null
+            val lastUnpackedCurrent = readLastUnpacked(pkgPath)
 
-            if (checksumLocal != checksumRemote) {
-                deployInternal(file, activate)
+            val checksumChanged = checksumLocal != checksumRemote
+            val manuallyUnpacked = lastUnpackedPrevious != lastUnpackedCurrent
+
+            if (checksumChanged || manuallyUnpacked) {
+                if (manuallyUnpacked) {
+                    logger.warn("Cannot lazily avoid deploying package '$pkgPath' as it was manually reinstalled"
+                            + " at ${instance.date(lastUnpackedCurrent)} on $instance!")
+                }
+
+                deployRegularly(file, activate)
                 pkgMeta.save(mapOf(
                         Node.TYPE_UNSTRUCTURED,
-                        METADATA_CHECKSUM_PROP to checksumLocal
+                        METADATA_CHECKSUM_PROP to checksumLocal,
+                        METADATA_LAST_UNPACKED_PROP to lastUnpackedCurrent
                 ))
                 return true
             } else {
-                logger.info("Skipping deployment of package $file on $instance (no changes detected)")
+                logger.info("Lazily avoiding deploying again package '$pkgPath' on $instance (no changes detected)")
                 return false
             }
         }
     }
 
-    private fun deployMetadata(pkgPath: String) = sync.repository.node("/var/gap/package/deploy/${pkgPath.removePrefix("/etc/packages")}")
+    private fun readLastUnpacked(pkgPath: String): Long {
+        return sync.repository.node(pkgPath).child(DEFINITION_PATH).properties.long(METADATA_LAST_UNPACKED_PROP)
+                ?: throw PackageException("Cannot read package '$pkgPath' installation time on $instance!")
+    }
 
-    private fun deployInternal(file: File, activate: Boolean = false): String {
+    private fun getMetadataNode(pkgPath: String) = sync.repository.node("$METADATA_PATH/${pkgPath.removePrefix(STORAGE_PATH)}")
+
+    private fun deployRegularly(file: File, activate: Boolean = false): String {
         val uploadResponse = upload(file)
         val packagePath = uploadResponse.path
 
@@ -367,18 +386,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun activate(remotePath: String): UploadResponse {
         val url = "$JSON_PATH$remotePath/?cmd=replicate"
 
-        logger.info("Activating package $remotePath on $instance")
+        logger.info("Activating package '$remotePath' on $instance")
 
         val response = try {
             http.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot activate package $remotePath on $instance. Cause: ${e.message}", e)
+            throw InstanceException("Cannot activate package '$remotePath' on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after activating package $remotePath on $instance. Cause: ${e.message}", e)
+            throw InstanceException("Malformed response after activating package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot activate package $remotePath on $instance. Cause: ${interpretFail(response.msg)}")
+            throw InstanceException("Cannot activate package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
         return response
@@ -389,18 +408,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun delete(remotePath: String): DeleteResponse {
         val url = "$HTML_PATH$remotePath/?cmd=delete"
 
-        logger.info("Deleting package $remotePath on $instance")
+        logger.info("Deleting package '$remotePath' on $instance")
 
         val response = try {
             http.postMultipart(url) { DeleteResponse.from(asStream(it), responseBuffer.get()) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot delete package $remotePath from $instance. Cause: ${e.message}", e)
+            throw InstanceException("Cannot delete package '$remotePath' from $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after deleting package $remotePath from $instance. Cause: ${e.message}", e)
+            throw InstanceException("Malformed response after deleting package '$remotePath' from $instance. Cause: ${e.message}", e)
         }
 
         if (!response.success) {
-            throw InstanceException("Cannot delete package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot delete package '$remotePath' from $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -411,18 +430,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun uninstall(remotePath: String): UninstallResponse {
         val url = "$HTML_PATH$remotePath/?cmd=uninstall"
 
-        logger.info("Uninstalling package using command: $url")
+        logger.info("Uninstalling package '$remotePath' on $instance")
 
         val response = try {
             http.postMultipart(url) { UninstallResponse.from(asStream(it), responseBuffer.get()) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot uninstall package $remotePath on $instance. Cause: ${e.message}", e)
+            throw InstanceException("Cannot uninstall package '$remotePath' on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after uninstalling package $remotePath from $instance. Cause ${e.message}", e)
+            throw InstanceException("Malformed response after uninstalling package '$remotePath' from $instance. Cause ${e.message}", e)
         }
 
         if (!response.success) {
-            throw InstanceException("Cannot uninstall package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot uninstall package '$remotePath' from $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -460,8 +479,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
         const val LIST_JSON = "/crx/packmgr/list.jsp"
 
-        const val METADATA_PATH = "gap"
+        const val STORAGE_PATH = "/etc/packages"
+
+        const val DEFINITION_PATH = "jcr:content/vlt:definition"
+
+        const val METADATA_PATH = "/var/gap/package/deploy"
 
         const val METADATA_CHECKSUM_PROP = "checksumMd5"
+
+        const val METADATA_LAST_UNPACKED_PROP = "lastUnpacked"
     }
 }

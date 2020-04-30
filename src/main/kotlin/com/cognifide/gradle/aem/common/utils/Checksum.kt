@@ -5,5 +5,5 @@ import java.io.File
 
 object Checksum {
 
-    fun md5(file: File) = file.inputStream().use { DigestUtils.md5Hex(it) }
+    fun md5(file: File): String = file.inputStream().use { DigestUtils.md5Hex(it) }
 }
