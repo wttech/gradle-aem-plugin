@@ -26,6 +26,7 @@ import kotlin.time.measureTimedValue
  *
  * @see <https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/package-manager.html>
  */
+@Suppress("TooManyFunctions")
 class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     private val http = sync.http
@@ -332,11 +333,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             val pkgPath = deployRegularly(file, activate)
             val pkgMeta = getMetadataNode(pkgPath)
 
-            pkgMeta.save(mapOf(
-                    Node.TYPE_UNSTRUCTURED,
-                    METADATA_CHECKSUM_PROP to checksumLocal,
-                    METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
-            ))
+            saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
             return true
         } else {
             val pkgPath = pkg.path
@@ -350,16 +347,15 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             if (checksumChanged || manuallyUnpacked) {
                 if (manuallyUnpacked) {
-                    logger.warn("Cannot avoid deploying package '$pkgPath' as it was manually reinstalled"
-                            + " at '$lastUnpackedCurrent' on $instance!")
+                    logger.warn("Cannot avoid deploying package '$pkgPath' as it was manually installed" +
+                            " at '$lastUnpackedCurrent' on $instance!")
+                }
+                if (checksumChanged) {
+                    logger.info("Deploying package '$pkgPath' on $instance (changed checksum)")
                 }
 
                 deployRegularly(file, activate)
-                pkgMeta.save(mapOf(
-                        Node.TYPE_UNSTRUCTURED,
-                        METADATA_CHECKSUM_PROP to checksumLocal,
-                        METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
-                ))
+                saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
                 return true
             } else {
                 logger.lifecycle("Avoiding deploying package '$pkgPath' on $instance (no changes)")
@@ -373,7 +369,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 ?: throw PackageException("Cannot read package '$pkgPath' installation time on $instance!")
     }
 
-    private fun getMetadataNode(pkgPath: String) = sync.repository.node("$METADATA_PATH/${pkgPath.removePrefix(STORAGE_PATH)}")
+    private fun getMetadataNode(pkgPath: String) = sync.repository.node("$METADATA_PATH/${Formats.toHashCodeHex(pkgPath)}")
+
+    private fun saveMetadataNode(node: Node, checksum: String, pkgPath: String) = node.save(mapOf(
+            Node.TYPE_UNSTRUCTURED,
+            METADATA_PATH_PROP to pkgPath,
+            METADATA_CHECKSUM_PROP to checksum,
+            METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
+    ))
 
     private fun deployRegularly(file: File, activate: Boolean = false): String {
         val uploadResponse = upload(file)
@@ -489,11 +492,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
         const val LIST_JSON = "/crx/packmgr/list.jsp"
 
-        const val STORAGE_PATH = "/etc/packages"
-
         const val DEFINITION_PATH = "jcr:content/vlt:definition"
 
         const val METADATA_PATH = "/var/gap/package/deploy"
+
+        const val METADATA_PATH_PROP = "path"
 
         const val METADATA_CHECKSUM_PROP = "checksumMd5"
 
