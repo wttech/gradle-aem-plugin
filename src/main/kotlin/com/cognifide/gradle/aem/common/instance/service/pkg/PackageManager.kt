@@ -343,11 +343,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             val lastUnpackedCurrent = readLastUnpacked(pkgPath)
 
             val checksumChanged = checksumLocal != checksumRemote
-            val manuallyUnpacked = lastUnpackedPrevious != lastUnpackedCurrent
+            val externallyUnpacked = lastUnpackedPrevious != lastUnpackedCurrent
 
-            if (checksumChanged || manuallyUnpacked) {
-                if (manuallyUnpacked) {
-                    logger.warn("Cannot avoid deploying package '$pkgPath' as it was manually installed" +
+            if (checksumChanged || externallyUnpacked) {
+                if (externallyUnpacked) {
+                    logger.warn("Cannot avoid deploying package '$pkgPath' as it was externally installed" +
                             " at '$lastUnpackedCurrent' on $instance!")
                 }
                 if (checksumChanged) {
