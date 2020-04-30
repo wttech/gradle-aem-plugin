@@ -347,7 +347,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             if (checksumChanged || externallyUnpacked) {
                 if (externallyUnpacked) {
-                    logger.warn("Cannot avoid deploying package '$pkgPath' as it was externally installed" +
+                    logger.warn("Deploying package '$pkgPath' because it was externally installed" +
                             " at '$lastUnpackedCurrent' on $instance!")
                 }
                 if (checksumChanged) {
@@ -358,7 +358,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
                 return true
             } else {
-                logger.lifecycle("Avoiding deploying package '$pkgPath' on $instance (no changes)")
+                logger.lifecycle("No need to deploy package '$pkgPath' on $instance (no changes)")
                 return false
             }
         }
