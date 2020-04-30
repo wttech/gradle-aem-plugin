@@ -52,6 +52,9 @@ class Package private constructor() {
 
     val installed: Boolean get() = lastUnpacked?.let { it > 0 } ?: false
 
+    @get:JsonIgnore
+    val installedTimestamp get() = lastUnpacked ?: 0L
+
     companion object {
 
         const val JCR_ROOT = "jcr_root"
