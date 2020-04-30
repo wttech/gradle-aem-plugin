@@ -18,6 +18,8 @@ import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Input
 import java.util.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -318,9 +320,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return true
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun deployAvoiding(file: File, activate: Boolean): Boolean {
         val pkg = find(file)
-        val checksumLocal = Checksum.md5(file)
+        val checksumTimed = measureTimedValue { Checksum.md5(file) }
+        val checksumLocal = checksumTimed.value
+
+        logger.info("Package '$file' checksum '$checksumLocal' calculation took '${checksumTimed.duration}'")
 
         if (pkg == null || !pkg.installed) {
             val pkgPath = deployRegularly(file, activate)
@@ -345,7 +351,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             if (checksumChanged || manuallyUnpacked) {
                 if (manuallyUnpacked) {
                     logger.warn("Cannot avoid deploying package '$pkgPath' as it was manually reinstalled"
-                            + " at $lastUnpackedCurrent on $instance!")
+                            + " at '$lastUnpackedCurrent' on $instance!")
                 }
 
                 deployRegularly(file, activate)
@@ -356,7 +362,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 ))
                 return true
             } else {
-                logger.info("Avoiding deploying again package '$pkgPath' on $instance (no changes detected)")
+                logger.lifecycle("Avoiding deploying package '$pkgPath' on $instance (no changes)")
                 return false
             }
         }
