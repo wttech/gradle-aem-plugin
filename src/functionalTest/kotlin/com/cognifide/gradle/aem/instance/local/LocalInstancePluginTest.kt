@@ -86,8 +86,6 @@ class LocalInstancePluginTest : AemBuildTest() {
                 localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
                 
                 instance.awaitUp.timeout.stateTime=180000
-                instance.awaitUp.logInstantly=false
-                instance.awaitDown.logInstantly=false
                 
                 instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local
