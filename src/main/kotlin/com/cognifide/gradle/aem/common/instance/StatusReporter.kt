@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.common.utils.Formats
 import java.io.File
@@ -39,7 +40,9 @@ class StatusReporter(private val aem: AemExtension) {
 
     private fun Instance.details() = mutableListOf<String>().apply {
         add("URL: $httpUrl (${if (available) "available" else "unavailable"})")
-        add("Version: $version")
+        if (version != AemVersion.UNKNOWN) {
+            add("Version: $version")
+        }
 
         if (this@details is LocalInstance) {
             add("Status: ${status.displayName}")
