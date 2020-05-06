@@ -393,7 +393,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             common.parallel.with(upInstances) {
                 increment("Opening instance '$name'") {
                     try {
-                        executeOpenScript()
+                        aem.webBrowser.open(httpOpenUrl) { withTimeoutMillis(openTimeout.get()) }
                         openedInstances += this@with
                     } catch (e: LocalInstanceException) {
                         logger.debug("Instance '$name' open error", e)

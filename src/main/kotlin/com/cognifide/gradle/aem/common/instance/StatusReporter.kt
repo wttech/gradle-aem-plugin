@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.common.utils.Formats
 import java.io.File
@@ -26,10 +27,12 @@ class StatusReporter(private val aem: AemExtension) {
         val writer = StringWriter()
         PrintWriter(writer).apply {
             println("Instance '${instance.name}'")
-
             println(instance.details().prependIndent("  "))
-            println("  Packages installed:")
-            println(instance.packagesInstalled(packageFiles).prependIndent("    "))
+
+            if (instance.available) {
+                println("  Packages installed:")
+                println(instance.packagesInstalled(packageFiles).prependIndent("    "))
+            }
         }
 
         return writer.toString()
@@ -37,11 +40,14 @@ class StatusReporter(private val aem: AemExtension) {
 
     private fun Instance.details() = mutableListOf<String>().apply {
         add("URL: $httpUrl (${if (available) "available" else "unavailable"})")
-        add("Version: $version")
+        if (version != AemVersion.UNKNOWN) {
+            add("Version: $version")
+        }
 
         if (this@details is LocalInstance) {
             add("Status: ${status.displayName}")
             add("Debug port: $debugPort")
+            if (pid > 0) add("Process ID: $pid")
         }
 
         if (available) {
@@ -60,17 +66,18 @@ class StatusReporter(private val aem: AemExtension) {
         try {
             sync {
                 packageManager.listRetry.never()
-                packageFiles.map { file -> PackageFile(file, packageManager.find(file)) }
+                packageFiles
+                        .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
                         .sortedWith(
                                 compareByDescending<PackageFile> {
                                     it.pkg?.lastUnpacked ?: 0L
                                 }.thenBy { it.file.name }
                         )
                         .joinToString("\n") { (file, pkg) ->
-                            if (pkg != null && pkg.installed) {
-                                "${file.name} (${Formats.date(date(pkg.lastUnpacked!!))})"
-                            } else {
-                                "${file.name} (not yet)"
+                            when {
+                                !file.exists() -> "${file.name} | not built"
+                                pkg == null || !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
+                                else -> "${file.name} | ${Formats.date(date(pkg.installedTimestamp))} | ${Formats.fileSize(file)}"
                             }
                         }
             }.ifBlank { "none" }

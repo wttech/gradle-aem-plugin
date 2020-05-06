@@ -114,7 +114,7 @@ open class BundleJar(private val jar: Jar) {
     val importPackages = aem.obj.strings { convention(listOf()) }
 
     @Input
-    val importPackageWildcard = aem.obj.boolean { convention(true) }
+    val importPackageSuffix = aem.obj.string { convention("*") }
 
     @Internal
     val exportPackages = aem.obj.strings { convention(listOf()) }
@@ -206,8 +206,8 @@ open class BundleJar(private val jar: Jar) {
      */
     private fun combinePackageAttributes() {
         combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages.get().toMutableList().apply {
-            if (importPackageWildcard.get()) {
-                add("*")
+            if (importPackageSuffix.get().isNotBlank()) {
+                add(importPackageSuffix.get())
             }
         })
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages.get())
@@ -359,17 +359,23 @@ open class BundleJar(private val jar: Jar) {
 
     fun privatePackage(vararg pkgs: String) = privatePackage(pkgs.toList())
 
+    fun importPackage(pkgs: Iterable<String>) {
+        importPackages.addAll(pkgs)
+    }
+
+    fun importPackage(vararg pkgs: String) = importPackage(pkgs.toList())
+
     fun excludePackage(pkgs: Iterable<String>) {
         importPackages.addAll(pkgs.map { "!$it" })
     }
 
     fun excludePackage(vararg pkgs: String) = excludePackage(pkgs.toList())
 
-    fun importPackage(pkgs: Iterable<String>) {
-        importPackages.addAll(pkgs)
+    fun optionalPackage(pkgs: Iterable<String>) {
+        importPackages.addAll(pkgs.map { "$it;resolution=optional" })
     }
 
-    fun importPackage(vararg pkgs: String) = importPackage(pkgs.toList())
+    fun optionalPackage(vararg pkgs: String) = optionalPackage(pkgs.toList())
 
     fun embedPackage(dependencyNotation: Any, vararg pkgs: String, export: Boolean = false) = embedPackage(dependencyNotation, pkgs.asIterable(), export)
 

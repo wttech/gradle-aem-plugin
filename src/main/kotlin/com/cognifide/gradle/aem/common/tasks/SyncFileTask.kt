@@ -38,12 +38,23 @@ open class SyncFileTask : AemDefaultTask() {
     var completer: () -> Unit = { awaitUp() }
 
     /**
-     * Check instance(s) condition after performing action related with package(s).
+     * Check instance(s) condition after performing action related with synced file(s).
      */
     @Internal
     val awaited = aem.obj.boolean { convention(true) }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
+
+    private var awaitOptionally = false
+
+    private var awaitRequired = false
+
+    fun awaitIf(callback: () -> Boolean) {
+        awaitOptionally = true
+        if (callback()) {
+            awaitRequired = true
+        }
+    }
 
     /**
      * Controls await up action.
@@ -53,7 +64,7 @@ open class SyncFileTask : AemDefaultTask() {
     }
 
     fun awaitUp() {
-        if (awaited.get()) {
+        if (awaited.get() && (!awaitOptionally || awaitRequired)) {
             aem.instanceManager.awaitUp(instances.get(), awaitUpOptions)
         }
     }
@@ -61,16 +72,21 @@ open class SyncFileTask : AemDefaultTask() {
     fun sync(action: InstanceSync.(File) -> Unit) {
         instanceManager.examine(instances.get())
 
-        common.progress(instances.get().size * files.files.size) {
-            aem.syncFiles(instances.get(), files.files) { file ->
-                increment("${file.name} -> ${instance.name}") {
-                    initializer()
-                    action(file)
-                    finalizer()
+        val actions = instances.get().size * files.files.size
+        if (actions > 0) {
+            common.progress(actions) {
+                aem.syncFiles(instances.get(), files.files) { file ->
+                    increment("${file.name} -> ${instance.name}") {
+                        initializer()
+                        action(file)
+                        finalizer()
+                    }
                 }
             }
-        }
 
-        completer()
+            completer()
+        }
     }
+
+    fun syncFile(action: InstanceSync.(File) -> Unit) = doLast { sync(action) }
 }

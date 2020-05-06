@@ -6,14 +6,14 @@ import io.gitlab.arturbosch.detekt.Detekt
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.3.70"
+    id("org.jetbrains.kotlin.jvm") version "1.3.72"
     id("org.jetbrains.dokka") version "0.10.1"
     id("com.gradle.plugin-publish") version "0.11.0"
     id("io.gitlab.arturbosch.detekt") version "1.7.0"
     id("com.jfrog.bintray") version "1.8.4"
     id("net.researchgate.release") version "2.8.1"
     id("com.github.breadmoirai.github-release") version "2.2.10"
-    id("com.neva.fork") version "4.2.2"
+    id("com.neva.fork") version "5.0.0"
 }
 
 group = "com.cognifide.gradle"
@@ -36,7 +36,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.47")
+    implementation("com.cognifide.gradle:common-plugin:0.1.50")
 
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.3.0")
@@ -155,7 +155,7 @@ tasks {
     }
 
     named("githubRelease") {
-        dependsOn("release")
+        mustRunAfter("release")
     }
 
     register("fullRelease") {
@@ -254,7 +254,7 @@ githubRelease {
     token((project.findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { LazyPublishArtifact(tasks.named(it)) })
+    releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { tasks.named(it) })
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
     overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())

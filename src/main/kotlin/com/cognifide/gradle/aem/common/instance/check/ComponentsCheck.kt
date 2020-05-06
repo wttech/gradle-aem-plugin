@@ -23,7 +23,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
     @Suppress("ComplexMethod")
     override fun check() {
-        aem.logger.info("Checking OSGi components on $instance")
+        logger.info("Checking OSGi components on $instance")
 
         val state = state(sync.osgiFramework.determineComponentState())
         if (state.unknown) {

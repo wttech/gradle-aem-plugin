@@ -12,9 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
-import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
-import org.gradle.process.internal.streams.SafeStreams
 
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
@@ -143,29 +141,6 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private val statusScript: Script get() = binScript("status")
 
-    @Suppress("TooGenericExceptionCaught")
-    internal fun executeOpenScript() {
-        try {
-            val os = OperatingSystem.current()
-            val command = when {
-                os.isWindows -> "explorer"
-                os.isMacOsX -> "open"
-                else -> "sensible-browser"
-            }
-
-            ProcBuilder(command, httpOpenUrl)
-                    .withWorkingDirectory(dir)
-                    .withTimeoutMillis(localManager.openTimeout.get())
-                    .withExpectedExitStatuses(0)
-                    .withInputStream(SafeStreams.emptyInput())
-                    .withOutputStream(SafeStreams.systemOut())
-                    .withErrorStream(SafeStreams.systemOut())
-                    .run()
-        } catch (e: Exception) {
-            throw LocalInstanceException("Instance opening command failed! Cause: ${e.message}", e)
-        }
-    }
-
     @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
 
@@ -213,11 +188,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun validateFiles() {
         if (!jar.exists()) {
-            throw InstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
+            throw LocalInstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
         }
 
         if (!license.exists()) {
-            throw InstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
+            throw LocalInstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
         }
     }
 
@@ -335,7 +310,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             Status.byExitCode(procResult.exitValue).also { status ->
                 logger.debug("Instance status of $this is: $status")
             }
-        } catch (e: InstanceException) {
+        } catch (e: LocalInstanceException) {
             logger.info("Instance status not available: $this")
             logger.debug("Instance status error", e)
             Status.UNKNOWN
@@ -382,7 +357,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != USER) {
-                    throw InstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
+                    throw LocalInstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
                 }
 
                 this.httpUrl = instanceUrl.httpUrl

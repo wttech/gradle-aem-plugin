@@ -61,6 +61,9 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
             convention(true)
             aem.prop.boolean("instance.awaitDown.verbose")?.let { set(it) }
         }
+        logInstantly.apply {
+            aem.prop.boolean("instance.awaitDown.logInstantly")?.let { set(it) }
+        }
 
         checks {
             listOf(

@@ -12,12 +12,12 @@ class AssetManager(private val aem: AemExtension) {
 
     private val assets get() = ZipFile(rootDir.file(ZIP_PATH).get().asFile.also { assetsFromResources(it) })
 
-    private fun assetsFromResources(zip: File) = zip.apply {
-        if (exists()) {
-            return@apply
+    private fun assetsFromResources(zip: File) = aem.common.buildScope.doOnce("extract assets to zip '$zip'") {
+        if (zip.exists()) {
+            return@doOnce
         }
-        parentFile.mkdirs()
-        outputStream().use { output ->
+        zip.parentFile.mkdirs()
+        zip.outputStream().use { output ->
             this@AssetManager.javaClass.getResourceAsStream("/$ZIP_PATH").use {
                 input -> input.copyTo(output)
             }
