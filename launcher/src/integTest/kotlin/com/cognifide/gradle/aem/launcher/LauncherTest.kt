@@ -6,7 +6,7 @@ import java.io.File
 
 class LauncherTest {
 
-    val jar = File("build/libs/launcher-13.0.0.jar")
+    val jar = File("build/libs/launcher-13.1.2.jar")
 
     @Test
     fun shouldDisplayHelloWorld() {
