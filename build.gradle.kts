@@ -1,4 +1,3 @@
-import org.gradle.api.internal.artifacts.dsl.LazyPublishArtifact
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.gradle.DokkaTask
 import io.gitlab.arturbosch.detekt.Detekt
@@ -18,7 +17,7 @@ plugins {
 
 group = "com.cognifide.gradle"
 description = "Gradle AEM Plugin"
-defaultTasks("build", "publishToMavenLocal")
+defaultTasks(":publishToMavenLocal", ":launcher:publishToMavenLocal")
 
 val functionalTestSourceSet = sourceSets.create("functionalTest")
 gradlePlugin.testSourceSets(functionalTestSourceSet)
@@ -125,15 +124,15 @@ tasks {
         outputs.dir("build/functionalTest")
     }
 
-    named<Task>("build") {
+    build {
         dependsOn("sourcesJar", "javadocJar")
     }
 
-    named<Task>("publishToMavenLocal") {
+    publishToMavenLocal {
         dependsOn("sourcesJar", "javadocJar")
     }
 
-    named<ProcessResources>("processResources") {
+    processResources {
         val json = """
         |{
         |    "pluginVersion": "${project.version}",
@@ -150,7 +149,7 @@ tasks {
         }
     }
 
-    named("afterReleaseBuild") {
+    afterReleaseBuild {
         dependsOn("bintrayUpload", "publishPlugins")
     }
 

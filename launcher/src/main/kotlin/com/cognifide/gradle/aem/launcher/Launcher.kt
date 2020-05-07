@@ -9,44 +9,36 @@ class Launcher {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
+            val gradleVersion = "6.4"
+            val gapVersion = "13.1.1"
+
             val currentDir = File(".")
             val workDir = currentDir.resolve("gap").apply {
                 mkdirs()
 
-                resolve("libs").apply {
-                    mkdirs()
-
-                    resolve("gap.jar").outputStream().use { output ->
-                        Launcher::class.java.getResourceAsStream("/gap.jar").let { input ->
-                            input.copyTo(output)
+                resolve("settings.gradle.kts").writeText("""
+                    pluginManagement {
+                        repositories {
+                            mavenLocal()
+                            jcenter()
+                            gradlePluginPortal()
                         }
                     }
-                }
-
-                resolve("buildSrc/build.gradle.kts").apply {
-                    parentFile.mkdirs()
-
-                    writeText("""
-                        dependencies {
-                            implementation(files("../libs/gap.jar"))
-                        }
-                    """.trimIndent())
-                }
-
-                resolve("settings.gradle.kts").writeText("""
+                    
                     rootProject.name = "gap"
                 """.trimIndent())
 
                 resolve("build.gradle.kts").writeText("""
                     plugins {
-                        id("com.cognifide.aem.instance.local")
-                        id("com.cognifide.aem.package.sync")
+                        id("com.cognifide.aem.instance.local") version "$gapVersion"
+                        id("com.cognifide.aem.package.sync") version "$gapVersion"
                     }
                 """.trimIndent())
             }
 
             try {
                 GradleConnector.newConnector()
+                        .useGradleVersion(gradleVersion)
                         .forProjectDirectory(workDir)
                         .connect().use { connection ->
                             connection.newBuild()

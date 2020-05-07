@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
+    `maven-publish`
 }
 
 group = "com.cognifide.gradle"
@@ -35,17 +36,13 @@ tasks {
         kotlinOptions.jvmTarget = "1.8"
     }
     jar {
+        dependsOn(":processResources", ":publishToMavenLocal")
+        from(rootProject.buildDir.resolve("resources/main/build.json"))
         manifest {
             attributes["Implementation-Title"] = project.description
             attributes["Main-Class"] = "com.cognifide.gradle.aem.launcher.Launcher"
         }
         from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) })
-        from(project.provider {
-            val dependency = project.dependencies.create(project.dependencies.project(":"))
-            configurations.detachedConfiguration(dependency).apply { isTransitive = false }
-        }) {
-            rename { "gap.jar" }
-        }
     }
     register<Test>("integTest") {
         testClassesDirs = integTestSourceSet.output.classesDirs
@@ -55,8 +52,5 @@ tasks {
         mustRunAfter("test")
         dependsOn(jar/*, "detektIntegTest"*/)
         outputs.dir("build/integTest")
-    }
-    named<Task>("build") {
-        dependsOn("standaloneJar")
     }
 }
