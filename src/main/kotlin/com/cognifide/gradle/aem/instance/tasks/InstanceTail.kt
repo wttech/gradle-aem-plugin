@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.gradle.api.tasks.TaskAction
@@ -10,7 +9,7 @@ open class InstanceTail : InstanceTask() {
 
     @TaskAction
     fun tail() {
-        logger.lifecycle("Tailing logs from instances: ${instances.get().names}")
+        logger.lifecycle("Tailing logs from:\n${instances.get().joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" }}")
         logger.lifecycle("Filter incidents using file: ${instanceManager.tailer.incidentFilter.get()}")
 
         instanceManager.tailer.tail(instances.get())
