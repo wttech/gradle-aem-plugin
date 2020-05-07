@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.launcher
 import org.buildobjects.process.ProcBuilder
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 class LauncherTest {
 
@@ -24,6 +25,7 @@ class LauncherTest {
             withWorkingDirectory(this@launch)
             withOutputStream(System.out)
             withErrorStream(System.err)
+            withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
             run()
         }
     }
