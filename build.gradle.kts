@@ -104,6 +104,10 @@ tasks {
         useJUnitPlatform()
     }
 
+    withType<DokkaTask>().configureEach {
+        onlyIf { project.gradle.taskGraph.hasTask(":release")}
+    }
+
     test {
         dependsOn("detektTest")
     }
@@ -128,11 +132,7 @@ tasks {
         dependsOn("sourcesJar", "javadocJar")
     }
 
-    publishToMavenLocal {
-        dependsOn("sourcesJar", "javadocJar")
-    }
-
-    processResources {
+    val buildProperties = register("buildProperties") {
         val json = """
         |{
         |    "pluginVersion": "${project.version}",
@@ -140,13 +140,18 @@ tasks {
         |}""".trimMargin()
         val file = file("$buildDir/resources/main/build.json")
 
+        dependsOn("assetsZip")
         inputs.property("buildJson", json)
         outputs.file(file)
-        dependsOn("assetsZip")
+        doLast { file.writeText(json) }
+    }
 
-        doLast {
-            file.writeText(json)
-        }
+    jar {
+        dependsOn(buildProperties)
+    }
+
+    publishToMavenLocal {
+        dependsOn(jar)
     }
 
     afterReleaseBuild {
