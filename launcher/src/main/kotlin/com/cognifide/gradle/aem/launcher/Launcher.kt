@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.launcher
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.gradle.tooling.GradleConnector
 import java.io.File
 import kotlin.system.exitProcess
@@ -9,8 +10,9 @@ class Launcher {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val gradleVersion = "6.4"
-            val gapVersion = "13.1.1"
+            val buildConfig = ObjectMapper().readTree(Launcher::class.java.getResourceAsStream("/build.json"))
+            val gradleVersion = buildConfig.get("gradleVersion").asText()
+            val pluginVersion = buildConfig.get("pluginVersion").asText()
 
             val currentDir = File(".")
             val workDir = currentDir.resolve("gap").apply {
@@ -30,8 +32,8 @@ class Launcher {
 
                 resolve("build.gradle.kts").writeText("""
                     plugins {
-                        id("com.cognifide.aem.instance.local") version "$gapVersion"
-                        id("com.cognifide.aem.package.sync") version "$gapVersion"
+                        id("com.cognifide.aem.instance.local") version "$pluginVersion"
+                        id("com.cognifide.aem.package.sync") version "$pluginVersion"
                     }
                 """.trimIndent())
             }
