@@ -15,8 +15,8 @@ repositories {
     maven("https://repo.gradle.org/gradle/libs-releases-local")
 }
 
-val integTestSourceSet = sourceSets.create("integTest")
-configurations.getByName("integTestImplementation").apply {
+val functionalTestSourceSet = sourceSets.create("functionalTest")
+configurations.getByName("functionalTestImplementation").apply {
     extendsFrom(configurations.getByName("testImplementation"))
 }
 
@@ -26,9 +26,9 @@ dependencies {
     implementation("org.gradle:gradle-tooling-api:6.3")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
 
-    "integTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.3.2")
-    "integTestImplementation"("org.junit.jupiter:junit-jupiter-api:5.3.2")
-    "integTestImplementation"("org.buildobjects:jproc:2.3.0")
+    "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.3.2")
+    "functionalTestImplementation"("org.junit.jupiter:junit-jupiter-api:5.3.2")
+    "functionalTestImplementation"("org.buildobjects:jproc:2.3.0")
 }
 
 tasks {
@@ -53,15 +53,16 @@ tasks {
             attributes["Main-Class"] = "com.cognifide.gradle.aem.launcher.Launcher"
         }
         from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) })
+        archiveFileName.set("gap.jar")
     }
-    register<Test>("integTest") {
-        testClassesDirs = integTestSourceSet.output.classesDirs
-        classpath = integTestSourceSet.runtimeClasspath
+    register<Test>("functionalTest") {
+        testClassesDirs = functionalTestSourceSet.output.classesDirs
+        classpath = functionalTestSourceSet.runtimeClasspath
 
         useJUnitPlatform()
         mustRunAfter("test")
-        dependsOn(jar/*, "detektIntegTest"*/)
-        outputs.dir("build/integTest")
+        dependsOn(jar)
+        outputs.dir("build/functionalTest")
     }
     publishToMavenLocal {
         dependsOn(jar)

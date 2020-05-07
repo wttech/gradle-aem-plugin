@@ -8,6 +8,7 @@ import kotlin.system.exitProcess
 class Launcher {
 
     companion object {
+
         @JvmStatic
         fun main(args: Array<String>) {
             val buildConfig = Properties().apply { load(Launcher::class.java.getResourceAsStream("/build.properties")) }
@@ -15,10 +16,13 @@ class Launcher {
             val pluginVersion = buildConfig["pluginVersion"]?.toString()
 
             val currentDir = File(".")
-            val workDir = currentDir.resolve("gap").apply {
-                mkdirs()
+            val workDir = currentDir.resolve("gap")
 
-                resolve("settings.gradle.kts").writeText("""
+            workDir.resolve("settings.gradle.kts").apply {
+                if (exists()) return@apply
+                parentFile.mkdirs()
+
+                writeText("""
                     pluginManagement {
                         repositories {
                             mavenLocal()
@@ -29,8 +33,13 @@ class Launcher {
                     
                     rootProject.name = "gap"
                 """.trimIndent())
+            }
 
-                resolve("build.gradle.kts").writeText("""
+            workDir.resolve("build.gradle.kts").apply {
+                if (exists()) return@apply
+                parentFile.mkdirs()
+
+                writeText("""
                     plugins {
                         id("com.cognifide.aem.instance.local") version "$pluginVersion"
                         id("com.cognifide.aem.package.sync") version "$pluginVersion"

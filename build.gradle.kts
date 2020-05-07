@@ -232,8 +232,8 @@ pluginBundle {
 }
 
 bintray {
-    user = (project.findProperty("bintray.user") ?: System.getenv("BINTRAY_USER"))?.toString()
-    key = (project.findProperty("bintray.key") ?: System.getenv("BINTRAY_KEY"))?.toString()
+    user = (findProperty("bintray.user") ?: System.getenv("BINTRAY_USER"))?.toString()
+    key = (findProperty("bintray.key") ?: System.getenv("BINTRAY_KEY"))?.toString()
     setPublications("mavenJava")
     with(pkg) {
         repo = "maven-public"
@@ -255,13 +255,17 @@ bintray {
 githubRelease {
     owner("Cognifide")
     repo("gradle-aem-plugin")
-    token((project.findProperty("github.token") ?: "").toString())
+    token((findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { tasks.named(it) })
-    draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
-    prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
-    overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())
+    draft((findProperty("github.draft") ?: "false").toString().toBoolean())
+    prerelease((findProperty("github.prerelease") ?: "false").toString().toBoolean())
+    overwrite((findProperty("github.override") ?: "true").toString().toBoolean())
+
+    gradle.projectsEvaluated {
+        releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { tasks.named(it) }
+                + project(":launcher").tasks.named("jar"))
+    }
 
     body { """
     |# What's new
