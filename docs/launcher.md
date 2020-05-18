@@ -14,15 +14,15 @@
 ## About
 
 Some of the GAP features could be useful even when not building AEM application.
-However to run GAP, it is needed to have a project which has at least Gradle Wrapper files and minimal Gradle configuration that applies Gradle AEM Plugin.
+Moreover, to run GAP, it is needed to have a project which has at least Gradle Wrapper files and minimal Gradle configuration that applies Gradle AEM Plugin.
 To eliminate such ceremony, GAP standalone launcher could be used to be able to use its features with minimal effort, anywhere.
 Simply, using e.g bash script - download the GAP launcher run it with regular GAP arguments - all tasks and properties are available to be used.
 
-Note that when it is needed to e.g specify GAP properties e.g related with source of AEM instance JAR & license files when running `instanceUp` task, 
+Note that when it is needed to e.g specify GAP properties e.g related with source of AEM instance JAR & license files when running `up` task, 
 consider adding argument `--save-props` when running GAP launcher. It will save all other command line properties to `gradle.properties` file.
-Thanks to that, when running `instanceDown` task next time, all properties related with instance definitions will be no longer needed to be passed as command line arguments.
+Thanks to that, when running `down` task next time, all properties related with instance definitions will be no longer needed to be passed as command line arguments.
 
-Alternatively, when credentials passed as command line parameters are considered as not enough safe, it is an option to create file `gap/gradle.properties` 
+Alternatively, when technique for credentials passed as command line parameters is considered as not enough safe, it is an option to create file `gap/gradle.properties` 
 and specify all required properties there before running the launcher.
 
 ## Setting up local instance
