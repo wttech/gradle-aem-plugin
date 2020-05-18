@@ -15,7 +15,7 @@
 
 Some of the GAP features could be useful even when not building AEM application.
 However to run GAP, it is needed to have a project which has at least Gradle Wrapper files and minimal Gradle configuration that applies Gradle AEM Plugin.
-To eliminate such ceremony, GAP standalone launcher could be used to be able to use its feature with minimal effort, anywhere.
+To eliminate such ceremony, GAP standalone launcher could be used to be able to use its features with minimal effort, anywhere.
 Simply, using e.g bash script - download the GAP launcher run it with regular GAP arguments - all tasks and properties are available to be used.
 
 Note that when it is needed to e.g specify GAP properties e.g related with source of AEM instance JAR & license files when running `instanceUp` task, 
