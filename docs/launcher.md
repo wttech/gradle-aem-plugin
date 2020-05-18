@@ -30,7 +30,7 @@ and specify all required properties there before running the launcher.
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
-wget https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
+curl -O https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
 && java -jar gap.jar --save-props up \
 -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
 -PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
@@ -51,7 +51,7 @@ java -jar gap.jar down
 To interactively monitor logs of any AEM instances using task [`instanceTail`](instance-plugin.md#task-instancetail), consider running command:
 
 ```bash
-wget https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
+curl -O https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
 && java -jar gap.jar --save-props instanceTail \
 -Pinstance.staging-author.httpUrl=http://10.11.12.1:4502 \
 -Pinstance.staging-publish.httpUrl=http://10.11.12.2:4503
@@ -62,7 +62,7 @@ wget https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap
 To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running command:
 
 ```bash
-wget https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
+curl -O https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
 && java -jar gap.jar instanceRcp \
 -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
