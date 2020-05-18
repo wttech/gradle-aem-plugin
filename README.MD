@@ -17,6 +17,7 @@
      * [Features](#features)
      * [Compatibility](#compatibility)
   * [Getting started](#getting-started)
+  * [Launcher](#launcher)
   * [Plugins](#plugins)
      * [Plugins setup](#plugins-setup)
         * [Minimal plugins setup](#minimal-plugins-setup)
@@ -104,6 +105,16 @@ The only software needed on your machine to start using plugin is Java 8 or newe
 Optionally, [Docker](https://www.docker.com/) is needed (when using automatic AEM dispatcher setup).
 
 As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
+
+## Launcher
+
+To use Gradle AEM Plugin it is not needed to have configured a regular Gradle project.
+By using a single bash command, to be able to:
+
+* set up local AEM instances and be able to share command to others even on team chat,
+* copy JCR content between instances using GAP run on continuous integration server,
+
+consider using [standalone launcher](docs/launcher.md) as it could be the easiest and fastest way to use GAP.
 
 ## Plugins 
 
