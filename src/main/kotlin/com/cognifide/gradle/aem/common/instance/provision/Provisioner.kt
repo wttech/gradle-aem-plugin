@@ -1,10 +1,10 @@
-
 package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
+import org.apache.commons.io.FilenameUtils
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
@@ -78,6 +78,7 @@ class Provisioner(val manager: InstanceManager) {
 
         val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
         if (stepsFiltered.isNotEmpty()) {
+            stepsFiltered.forEach { it.initCallback() }
             stepsFiltered.forEach { definition ->
                 var intro = "Provision step '${definition.id}'"
                 if (!definition.description.isNullOrBlank()) {
@@ -120,5 +121,36 @@ class Provisioner(val manager: InstanceManager) {
                 Action(this, Status.FAILED)
             }
         }
+    }
+
+    // Predefined steps
+
+    fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
+        description = "Enables CRX DE"
+        condition { once() && instance.env != "prod" }
+        sync {
+            osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                    "alias" to "/crx/server"
+            ))
+        }
+        options()
+    }
+
+    fun deployPackage(url: String, options: Step.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
+
+    fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage-${Formats.toHashCodeHex(url)}") {
+        description = "Deploys package '$name'"
+        version = name
+
+        val file by lazy { common.resolveFile(url) }
+
+        init {
+            logger.info("Resolved package '$name' to be deployed saved to file '$file'")
+        }
+        sync {
+            logger.info("Deploying resolved package '$name' to $instance")
+            packageManager.deploy(aem.packageOptions.wrapper.wrap(file))
+        }
+        options()
     }
 }

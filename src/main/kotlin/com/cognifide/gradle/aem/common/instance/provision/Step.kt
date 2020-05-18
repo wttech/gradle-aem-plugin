@@ -12,6 +12,8 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     internal lateinit var actionCallback: Instance.() -> Unit
 
+    internal var initCallback: () -> Unit = {}
+
     var conditionCallback: Condition.() -> Boolean = { once() }
 
     /**
@@ -20,9 +22,9 @@ class Step(val provisioner: Provisioner, val id: String) {
     var description: String? = null
 
     /**
-     * Implementation version number.
+     * Implementation version.
      */
-    var version: Long = 1L
+    var version: String = InstanceStep.VERSION_DEFAULT
 
     /**
      * Allows to redo step action after delay if exception is thrown.
@@ -51,6 +53,10 @@ class Step(val provisioner: Provisioner, val id: String) {
         }
     }
 
+    fun init(callback: () -> Unit) {
+        this.initCallback = callback
+    }
+
     fun action(callback: Instance.() -> Unit) {
         this.actionCallback = callback
     }
@@ -65,7 +71,5 @@ class Step(val provisioner: Provisioner, val id: String) {
         this.retry = common.retry(options)
     }
 
-    override fun toString(): String {
-        return "Step(id='$id', description=$description, continueOnFail=$continueOnFail, rerunOnFail=$rerunOnFail)"
-    }
+    override fun toString(): String = "Step(id='$id', description=$description, continueOnFail=$continueOnFail, rerunOnFail=$rerunOnFail)"
 }

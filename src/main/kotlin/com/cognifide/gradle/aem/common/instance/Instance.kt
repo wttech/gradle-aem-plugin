@@ -169,8 +169,6 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     fun provision() = manager.provisioner.provision(this)
 
-    fun satisfy() = manager.satisfier.satisfy(this)
-
     fun tail() = manager.tailer.tail(this)
 
     fun reportStatus() = manager.statusReporter.report(this)

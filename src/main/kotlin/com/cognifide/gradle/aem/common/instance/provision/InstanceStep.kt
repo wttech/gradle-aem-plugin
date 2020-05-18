@@ -16,24 +16,21 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
 
-    val startedAt: Date
-        get() = marker.properties.date(STARTED_AT_PROP)
+    val startedAt: Date get() = marker.properties.date(STARTED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet started on $instance!")
 
     val started: Boolean get() = marker.exists && marker.hasProperty(STARTED_AT_PROP)
 
     val ended: Boolean get() = marker.exists && marker.hasProperty(ENDED_AT_PROP)
 
-    val version: Long get() = marker.takeIf { it.exists }?.properties?.long(VERSION_PROP) ?: 1L
+    val version: String get() = marker.takeIf { it.exists }?.properties?.string(VERSION_PROP) ?: VERSION_DEFAULT
 
     val changed: Boolean get() = version != definition.version
 
-    val endedAt: Date
-        get() = marker.properties.date(ENDED_AT_PROP)
+    val endedAt: Date get() = marker.properties.date(ENDED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
 
-    val failed: Boolean
-        get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
+    val failed: Boolean get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
 
     val duration: Long get() = endedAt.time - startedAt.time
 
@@ -104,5 +101,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         const val COUNTER_PROP = "counter"
 
         const val VERSION_PROP = "version"
+
+        const val VERSION_DEFAULT = "default"
     }
 }

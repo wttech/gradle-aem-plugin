@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.action.*
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
-import com.cognifide.gradle.aem.common.instance.satisfy.Satisfier
 import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.common.pluginProject
@@ -45,10 +44,6 @@ open class InstanceManager(val aem: AemExtension) {
         aem.prop.file("instance.buildDir")?.let { set(it) }
     }
 
-    val satisfier by lazy { Satisfier(this) }
-
-    fun satisfier(options: Satisfier.() -> Unit) = satisfier.using(options)
-
     val provisioner by lazy { Provisioner(this) }
 
     fun provisioner(options: Provisioner.() -> Unit) = provisioner.using(options)
@@ -60,10 +55,6 @@ open class InstanceManager(val aem: AemExtension) {
     val statusReporter by lazy { StatusReporter(aem) }
 
     fun statusReporter(options: StatusReporter.() -> Unit) = statusReporter.using(options)
-
-    fun resolveFiles() {
-        satisfier.resolve()
-    }
 
     // ===== Definition API =====
 
