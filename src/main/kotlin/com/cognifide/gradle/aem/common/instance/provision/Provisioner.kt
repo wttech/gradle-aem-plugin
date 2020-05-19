@@ -78,14 +78,29 @@ class Provisioner(val manager: InstanceManager) {
 
         val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
         if (stepsFiltered.isNotEmpty()) {
-            stepsFiltered.forEach { it.initCallback() }
-            stepsFiltered.forEach { definition ->
-                var intro = "Provision step '${definition.id}'"
-                if (!definition.description.isNullOrBlank()) {
-                    intro += " / ${definition.description}"
+            common.progress {
+                total = stepsFiltered.size.toLong()
+                step = "Initializing"
+                stepsFiltered.forEach { definition ->
+                    increment("Step '${definition.label}'") {
+                        definition.initCallback()
+                    }
                 }
-                logger.info(intro)
-                common.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
+
+                count = 0
+                step = "Running"
+                stepsFiltered.forEach { definition ->
+                    increment("Step '${definition.label}'") {
+                        var intro = "Provision step '${definition.id}'"
+                        if (!definition.description.isNullOrBlank()) {
+                            intro += " / ${definition.description}"
+                        }
+                        logger.info(intro)
+                        common.parallel.each(instances) {
+                            actions.add(InstanceStep(it, definition).run { provisionStep() })
+                        }
+                    }
+                }
             }
         }
 
@@ -126,7 +141,7 @@ class Provisioner(val manager: InstanceManager) {
     // Predefined steps
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
-        description = "Enables CRX DE"
+        description = "Enabling CRX DE"
         condition { once() && instance.env != "prod" }
         sync {
             osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
@@ -138,8 +153,8 @@ class Provisioner(val manager: InstanceManager) {
 
     fun deployPackage(url: String, options: Step.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
 
-    fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage-${Formats.toHashCodeHex(url)}") {
-        description = "Deploys package '$name'"
+    fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage-${slug(name)}") {
+        description = "Deploying package '$name'"
         version = name
 
         val file by lazy { aem.packageOptions.wrapper.wrap(common.resolveFile(url)) }
@@ -149,8 +164,15 @@ class Provisioner(val manager: InstanceManager) {
         }
         sync {
             logger.info("Deploying package '$name' to $instance")
-            packageManager.deploy(file)
+            if (packageManager.deploy(file)) {
+                instance.awaitUp()
+            }
         }
         options()
     }
+
+    private fun slug(name: String) = name
+            .replace(".", "-")
+            .replace(":", "-")
+            .replace("@", "-")
 }

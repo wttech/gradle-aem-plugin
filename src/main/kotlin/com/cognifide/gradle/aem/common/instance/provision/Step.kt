@@ -21,6 +21,8 @@ class Step(val provisioner: Provisioner, val id: String) {
      */
     var description: String? = null
 
+    val label get() = description ?: id
+
     /**
      * Implementation version.
      */
