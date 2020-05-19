@@ -42,6 +42,14 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     /**
+     * Enables using step conditions based on counter e.g [Condition.repeatEvery].
+     */
+    val countable = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.provision.countable")?.let { set(it) }
+    }
+
+    /**
      * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
     val path = aem.obj.string {
@@ -153,7 +161,7 @@ class Provisioner(val manager: InstanceManager) {
 
     fun deployPackage(url: String, options: Step.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
 
-    fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage-${slug(name)}") {
+    fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage/${slug(name)}") {
         description = "Deploying package '$name'"
         version = name
 
@@ -171,8 +179,5 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    private fun slug(name: String) = name
-            .replace(".", "-")
-            .replace(":", "-")
-            .replace("@", "-")
+    private fun slug(name: String) = name.replace(".", "-").replace(":", "_")
 }

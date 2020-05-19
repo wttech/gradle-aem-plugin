@@ -47,10 +47,12 @@ class InstanceStep(val instance: Instance, val definition: Step) {
      * so that counting is needed even for step that is actually not performed.
      */
     fun update() {
-        marker.save(mapOf(
-                Node.TYPE_UNSTRUCTURED,
-                COUNTER_PROP to counter + 1
-        ))
+        if (provisioner.countable.get()) {
+            marker.save(mapOf(
+                    Node.TYPE_UNSTRUCTURED,
+                    COUNTER_PROP to counter + 1
+            ))
+        }
     }
 
     /**
