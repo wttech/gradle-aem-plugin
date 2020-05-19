@@ -142,14 +142,14 @@ class Provisioner(val manager: InstanceManager) {
         description = "Deploys package '$name'"
         version = name
 
-        val file by lazy { common.resolveFile(url) }
+        val file by lazy { aem.packageOptions.wrapper.wrap(common.resolveFile(url)) }
 
         init {
-            logger.info("Resolved package '$name' to be deployed saved to file '$file'")
+            logger.info("Deploying package '$name' - resolved file '$file'")
         }
         sync {
-            logger.info("Deploying resolved package '$name' to $instance")
-            packageManager.deploy(aem.packageOptions.wrapper.wrap(file))
+            logger.info("Deploying package '$name' to $instance")
+            packageManager.deploy(file)
         }
         options()
     }

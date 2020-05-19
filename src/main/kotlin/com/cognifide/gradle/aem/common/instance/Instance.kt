@@ -22,8 +22,12 @@ import java.time.ZoneOffset
 
 open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Serializable {
 
+    @Transient
+    @JsonIgnore
     protected val common = aem.common
 
+    @Transient
+    @JsonIgnore
     protected val logger = aem.logger
 
     lateinit var httpUrl: String

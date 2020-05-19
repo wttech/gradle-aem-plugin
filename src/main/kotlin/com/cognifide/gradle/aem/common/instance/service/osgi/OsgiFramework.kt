@@ -233,6 +233,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Set properties for existing OSGi configuration.
      */
+    fun configure(pid: String, propertyName: String, propertyValue: Any?) = configure(pid, mapOf(propertyName to propertyValue))
+
+    /**
+     * Set properties for existing OSGi configuration.
+     */
     fun configure(pid: String, properties: Map<String, Any?>) = updateConfiguration(pid, properties)
 
     /**
