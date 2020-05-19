@@ -82,36 +82,7 @@ class Provisioner(val manager: InstanceManager) {
 
         steps.forEach { it.validate() }
 
-        val actions = mutableListOf<Action>()
-
-        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
-        if (stepsFiltered.isNotEmpty()) {
-            common.progress {
-                total = stepsFiltered.size.toLong()
-                step = "Initializing"
-                stepsFiltered.forEach { definition ->
-                    increment("Step '${definition.label}'") {
-                        definition.initCallback()
-                    }
-                }
-
-                count = 0
-                step = "Running"
-                stepsFiltered.forEach { definition ->
-                    increment("Step '${definition.label}'") {
-                        var intro = "Provision step '${definition.id}'"
-                        if (!definition.description.isNullOrBlank()) {
-                            intro += " / ${definition.description}"
-                        }
-                        logger.info(intro)
-                        common.parallel.each(instances) {
-                            actions.add(InstanceStep(it, definition).run { provisionStep() })
-                        }
-                    }
-                }
-            }
-        }
-
+        val actions = provisionActions(instances)
         if (actions.none { it.status != Status.SKIPPED }) {
             logger.lifecycle("No steps to perform / all instances provisioned.")
         }
@@ -119,7 +90,42 @@ class Provisioner(val manager: InstanceManager) {
         return actions
     }
 
-    private fun InstanceStep.provisionStep(): Action {
+    private fun provisionActions(instances: Collection<Instance>): List<Action> {
+        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
+        if (stepsFiltered.isEmpty()) {
+            return listOf()
+        }
+
+        val actions = mutableListOf<Action>()
+        common.progress {
+            total = stepsFiltered.size.toLong()
+            step = "Initializing"
+            stepsFiltered.forEach { definition ->
+                increment("Step '${definition.label}'") {
+                    definition.initCallback()
+                }
+            }
+
+            count = 0
+            step = "Running"
+            stepsFiltered.forEach { definition ->
+                increment("Step '${definition.label}'") {
+                    var intro = "Provision step '${definition.id}'"
+                    if (!definition.description.isNullOrBlank()) {
+                        intro += " / ${definition.description}"
+                    }
+                    logger.info(intro)
+                    common.parallel.each(instances) {
+                        val instanceStep = InstanceStep(it, definition)
+                        actions.add(provisionAction(instanceStep))
+                    }
+                }
+            }
+        }
+        return actions
+    }
+
+    private fun provisionAction(step: InstanceStep): Action = step.run {
         if (!isPerformable()) {
             update()
             logger.info("Provision step '${definition.id}' skipped for $instance")
@@ -168,7 +174,7 @@ class Provisioner(val manager: InstanceManager) {
         val file by lazy { aem.packageOptions.wrapper.wrap(common.resolveFile(url)) }
 
         init {
-            logger.info("Deploying package '$name' - resolved file '$file'")
+            logger.info("Resolved package '$name' to be deployed is file '$file'")
         }
         sync {
             logger.info("Deploying package '$name' to $instance")
