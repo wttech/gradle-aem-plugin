@@ -8,6 +8,12 @@ class PackageWrapper(val aem: AemExtension) {
 
     val bundlePath = aem.obj.string { convention(aem.packageOptions.installPath) }
 
+    fun definition(definition: PackageDefinition.(BundleFile) -> Unit) {
+        this.definition = definition
+    }
+
+    private var definition: PackageDefinition.(BundleFile) -> Unit = {}
+
     fun wrap(file: File): File = when (file.extension) {
         "jar" -> wrapJar(file)
         "zip" -> file
@@ -36,6 +42,8 @@ class PackageWrapper(val aem: AemExtension) {
 
             filter(bundlePath)
             content { copyJcrFile(jar, bundlePath) }
+
+            definition(bundle)
         }
     }
 }
