@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FilenameUtils
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
@@ -74,7 +75,7 @@ class Provisioner(val manager: InstanceManager) {
     /**
      * Perform all provision steps for all instances in parallel.
      */
-    fun provision(instances: Collection<Instance>): List<Action> {
+    fun provision(instances: Collection<Instance>): Collection<Action> {
         if (!enabled.get()) {
             logger.lifecycle("No steps performed / instance provisioner is disabled.")
             return listOf()
@@ -90,13 +91,13 @@ class Provisioner(val manager: InstanceManager) {
         return actions
     }
 
-    private fun provisionActions(instances: Collection<Instance>): List<Action> {
+    private fun provisionActions(instances: Collection<Instance>): Collection<Action> {
         val stepsFiltered = stepsFiltered()
         if (stepsFiltered.isEmpty()) {
             return listOf()
         }
 
-        val actions = mutableListOf<Action>()
+        val actions = CopyOnWriteArrayList<Action>()
         val steps = stepsFiltered.map { step -> step to instances.map { InstanceStep(it, step) } }.toMap()
 
         common.progress {
@@ -119,9 +120,7 @@ class Provisioner(val manager: InstanceManager) {
                         intro += " / ${definition.description}"
                     }
                     logger.info(intro)
-                    common.parallel.each(instanceSteps) { instanceStep ->
-                        actions.add(instanceStep.perform())
-                    }
+                    common.parallel.each(instanceSteps) { actions.add(it.perform()) }
                 }
             }
         }
