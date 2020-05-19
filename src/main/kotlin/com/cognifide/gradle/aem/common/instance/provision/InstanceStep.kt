@@ -10,6 +10,8 @@ import java.util.*
  */
 class InstanceStep(val instance: Instance, val definition: Step) {
 
+    private val logger = instance.aem.logger
+
     private val provisioner = definition.provisioner
 
     private val marker get() = instance.sync.repository.node("${provisioner.path.get()}/step/${definition.id}")
@@ -38,7 +40,34 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     val counter: Long get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
 
-    fun isPerformable(): Boolean = definition.conditionCallback(Condition(this))
+    val performable by lazy { definition.conditionCallback(Condition(this)) }
+
+    fun perform(): Action {
+        if (!performable) {
+            update()
+            logger.info("Provision step '${definition.id}' skipped for $instance")
+            return Action(this, Status.SKIPPED)
+        }
+
+        val startTime = System.currentTimeMillis()
+        logger.info("Provision step '${definition.id}' started at $instance")
+
+        return try {
+            action()
+            logger.info("Provision step '${definition.id}' ended at $instance." +
+                    " Duration: ${Formats.durationSince(startTime)}")
+            Action(this, Status.ENDED)
+        } catch (e: ProvisionException) {
+            if (!definition.continueOnFail.get()) {
+                throw e
+            } else {
+                logger.error("Provision step '${definition.id} failed at $instance." +
+                        " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
+                logger.debug("Actual error", e)
+                Action(this, Status.FAILED)
+            }
+        }
+    }
 
     /**
      * Update provision step metadata on AEM instance.
@@ -46,7 +75,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
      * Condition 'every()' is basing on counter and allows to perform step every(n) times,
      * so that counting is needed even for step that is actually not performed.
      */
-    fun update() {
+    private fun update() {
         if (provisioner.countable.get()) {
             marker.save(mapOf(
                     Node.TYPE_UNSTRUCTURED,
@@ -59,7 +88,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
      * Perform provision step on AEM instance.
      */
     @Suppress("TooGenericExceptionCaught")
-    fun perform() {
+    private fun action() {
         marker.save(mapOf(
                 Node.TYPE_UNSTRUCTURED,
                 STARTED_AT_PROP to Date(),
@@ -89,9 +118,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         }
     }
 
-    override fun toString(): String {
-        return "InstanceStep(instance=$instance, definition=$definition, marker=$marker)"
-    }
+    override fun toString() = "InstanceStep(instance=$instance, definition=$definition, marker=$marker)"
 
     companion object {
         const val STARTED_AT_PROP = "startedAt"

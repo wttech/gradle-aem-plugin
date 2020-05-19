@@ -6,6 +6,8 @@ import java.io.File
 
 class PackageWrapper(val aem: AemExtension) {
 
+    val workDir = aem.obj.dir { convention(aem.obj.buildDir("package/wrapper")) }
+
     val bundlePath = aem.obj.string { convention(aem.packageOptions.installPath) }
 
     fun definition(definition: PackageDefinition.(BundleFile) -> Unit) {
@@ -22,7 +24,7 @@ class PackageWrapper(val aem: AemExtension) {
 
     fun wrapJar(jar: File): File {
         val pkgName = jar.nameWithoutExtension
-        val pkg = File(jar.parentFile, "$pkgName.zip")
+        val pkg = File(workDir.get().asFile, "$pkgName.zip")
         if (pkg.exists()) {
             aem.logger.info("CRX package wrapping OSGi bundle already exists: $pkg")
             return pkg

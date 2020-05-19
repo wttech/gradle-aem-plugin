@@ -12,6 +12,8 @@ open class InstanceManager(val aem: AemExtension) {
 
     private val project = aem.project
 
+    private val logger = project.logger
+
     val local by lazy { aem.localInstanceManager }
 
     /**
@@ -200,5 +202,11 @@ open class InstanceManager(val aem: AemExtension) {
                     "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
             )
         }
+    }
+
+    fun resolveFiles() {
+        logger.info("Initializing resources needed by instance provisioner")
+        provisioner.init()
+        logger.info("Initialized resources needed by instance provisioner")
     }
 }

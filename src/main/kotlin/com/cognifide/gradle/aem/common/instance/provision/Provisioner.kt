@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
-import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FilenameUtils
 
@@ -91,33 +91,36 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     private fun provisionActions(instances: Collection<Instance>): List<Action> {
-        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
+        val stepsFiltered = stepsFiltered()
         if (stepsFiltered.isEmpty()) {
             return listOf()
         }
 
         val actions = mutableListOf<Action>()
+        val steps = stepsFiltered.map { step -> step to instances.map { InstanceStep(it, step) } }.toMap()
+
         common.progress {
-            total = stepsFiltered.size.toLong()
+            total = steps.size.toLong()
             step = "Initializing"
-            stepsFiltered.forEach { definition ->
+            steps.forEach { (definition, instanceSteps) ->
                 increment("Step '${definition.label}'") {
-                    definition.initCallback()
+                    if (instanceSteps.any { it.performable }) {
+                        definition.init()
+                    }
                 }
             }
 
             count = 0
             step = "Running"
-            stepsFiltered.forEach { definition ->
+            steps.forEach { (definition, instanceSteps) ->
                 increment("Step '${definition.label}'") {
                     var intro = "Provision step '${definition.id}'"
                     if (!definition.description.isNullOrBlank()) {
                         intro += " / ${definition.description}"
                     }
                     logger.info(intro)
-                    common.parallel.each(instances) {
-                        val instanceStep = InstanceStep(it, definition)
-                        actions.add(provisionAction(instanceStep))
+                    common.parallel.each(instanceSteps) { instanceStep ->
+                        actions.add(instanceStep.perform())
                     }
                 }
             }
@@ -125,30 +128,29 @@ class Provisioner(val manager: InstanceManager) {
         return actions
     }
 
-    private fun provisionAction(step: InstanceStep): Action = step.run {
-        if (!isPerformable()) {
-            update()
-            logger.info("Provision step '${definition.id}' skipped for $instance")
-            return Action(this, Status.SKIPPED)
+    private fun stepsFiltered() = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
+
+    fun init() {
+        val stepsFiltered = stepsFiltered()
+        if (stepsFiltered.isEmpty()) {
+            return
         }
 
-        val startTime = System.currentTimeMillis()
-        logger.info("Provision step '${definition.id}' started at $instance")
-
-        return try {
-            perform()
-            logger.info("Provision step '${definition.id}' ended at $instance." +
-                    " Duration: ${Formats.durationSince(startTime)}")
-            Action(this, Status.ENDED)
-        } catch (e: ProvisionException) {
-            if (!definition.continueOnFail.get()) {
-                throw e
-            } else {
-                logger.error("Provision step '${definition.id} failed at $instance." +
-                        " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
-                logger.debug("Actual error", e)
-                Action(this, Status.FAILED)
+        common.progress {
+            total = stepsFiltered.size.toLong()
+            step = "Initializing"
+            stepsFiltered.forEach { definition ->
+                increment("Step '${definition.label}'") {
+                    definition.init()
+                }
             }
+        }
+    }
+
+    val fileResolver = FileResolver(aem.common).apply {
+        downloadDir.apply {
+            convention(aem.obj.buildDir("instance/provision/files"))
+            aem.prop.file("instance.provision.filesDir")?.let { set(it) }
         }
     }
 
@@ -171,7 +173,7 @@ class Provisioner(val manager: InstanceManager) {
         description = "Deploying package '$name'"
         version = name
 
-        val file by lazy { aem.packageOptions.wrapper.wrap(common.resolveFile(url)) }
+        val file by lazy { aem.packageOptions.wrapper.wrap(fileResolver.get(url).file) }
 
         init {
             logger.info("Resolved package '$name' to be deployed is file '$file'")
@@ -186,4 +188,10 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     private fun slug(name: String) = name.replace(".", "-").replace(":", "_")
+
+    init {
+        aem.project.afterEvaluate {
+            aem.prop.list("instance.provision.packageUrls")?.forEach { deployPackage(it) }
+        }
+    }
 }

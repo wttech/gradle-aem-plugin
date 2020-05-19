@@ -198,13 +198,6 @@ aem {
             proxyPort.set(prop.int("instance.http.proxyPort"))
             proxyScheme.set(prop.string("instance.http.proxyScheme"))
         }
-     
-        satisfier { // customizing CRX packages to be deployed as dependencies before built AEM application
-            packages {
-                "my-package"("http://.../my-package-1.0.0.zip")
-                "my-bundle"("group:name:version") // will be wrapped on-the-fly to CRX package
-            }
-        }
 
         provisioner { // configuring AEM instances in various circumstances (e.g only once)
             step("enable-crxde") {

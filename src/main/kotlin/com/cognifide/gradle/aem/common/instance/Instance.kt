@@ -20,7 +20,7 @@ import java.time.ZoneId
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Serializable {
+open class Instance(@Transient @JsonIgnore internal val aem: AemExtension) : Serializable {
 
     @Transient
     @JsonIgnore

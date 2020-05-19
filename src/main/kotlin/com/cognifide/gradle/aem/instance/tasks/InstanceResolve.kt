@@ -7,6 +7,7 @@ open class InstanceResolve : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
+        aem.instanceManager.resolveFiles()
         aem.localInstanceManager.resolveFiles()
     }
 

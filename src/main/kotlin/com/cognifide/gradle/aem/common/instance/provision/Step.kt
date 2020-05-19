@@ -12,7 +12,7 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     internal lateinit var actionCallback: Instance.() -> Unit
 
-    internal var initCallback: () -> Unit = {}
+    private var initCallback: () -> Unit = {}
 
     var conditionCallback: Condition.() -> Boolean = { once() }
 
@@ -53,6 +53,10 @@ class Step(val provisioner: Provisioner, val id: String) {
         if (!::actionCallback.isInitialized) {
             throw ProvisionException("Step '$id' action is not defined!")
         }
+    }
+
+    fun init() {
+        initCallback()
     }
 
     fun init(callback: () -> Unit) {
