@@ -61,7 +61,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      * Deploys only if package is changed (checksum based) or reinstalled on instance in the meantime.
      */
     val deployAvoidance = aem.obj.boolean {
-        convention(false)
+        convention(true)
         aem.prop.boolean("package.manager.deployAvoidance")?.let { set(it) }
     }
 
@@ -167,6 +167,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         logger.debug("Asking for uploaded packages on $instance")
         return common.buildScope.getOrPut("instance.${instance.name}.packages", { list() }, listRefresh.get()).let(resolver)
     }
+
+    operator fun contains(file: File) = find(file) != null
 
     fun list(): ListResponse {
         return listRetry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
@@ -311,6 +313,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
+
+    fun isDeployed(file: File): Boolean = find(file)?.installed ?: false
 
     fun deploy(file: File, activate: Boolean = false): Boolean {
         if (deployAvoidance.get()) {

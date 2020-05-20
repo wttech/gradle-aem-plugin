@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
+import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
+import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
@@ -65,10 +67,10 @@ class Provisioner(val manager: InstanceManager) {
     private val steps = mutableListOf<Step>()
 
     /**
-     * Define provision step.
+     * Define custom provision step.
      */
-    fun step(id: String, options: Step.() -> Unit) {
-        steps.add(Step(this, id).apply(options))
+    fun step(id: String, options: CustomStep.() -> Unit) {
+        steps.add(CustomStep(this, id).apply(options))
     }
 
     /**
@@ -172,8 +174,6 @@ class Provisioner(val manager: InstanceManager) {
             .map { step -> step to instances.map { InstanceStep(it, step) } }
             .toMap()
 
-    private fun slug(name: String) = name.replace(".", "-").replace(":", "_")
-
     // Predefined steps
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
@@ -187,27 +187,15 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    fun deployPackage(url: String, options: Step.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
+    fun deployPackage(url: String, options: DeployPackageStep.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
 
-    fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage/${slug(name)}") {
-        description.set("Deploying package '$name'")
-        version.set(name)
-
-        val file by lazy { aem.packageOptions.wrapper.wrap(fileResolver.get(url).file) }
-
-        init {
-            logger.info("Resolved package '$name' to be deployed is file '$file'")
-        }
-        sync {
-            logger.info("Deploying package '$name' to $instance")
-            awaitIf { packageManager.deploy(file) }
-        }
-        options()
+    fun deployPackage(name: String, url: Any, options: DeployPackageStep.() -> Unit = {}) {
+        steps.add(DeployPackageStep(this, name, url).apply(options))
     }
 
     init {
         aem.project.afterEvaluate {
-            aem.prop.list("instance.provision.packageUrls")?.forEach { deployPackage(it) }
+            aem.prop.list("instance.provision.deployPackage.urls")?.forEach { deployPackage(it) }
         }
     }
 }

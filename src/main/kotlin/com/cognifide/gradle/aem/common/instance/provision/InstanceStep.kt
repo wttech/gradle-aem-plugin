@@ -10,7 +10,7 @@ import java.util.*
  */
 class InstanceStep(val instance: Instance, val definition: Step) {
 
-    private val logger = instance.aem.logger
+    private val logger = definition.provisioner.aem.logger
 
     private val provisioner = definition.provisioner
 
@@ -47,7 +47,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         return marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
     }
 
-    val performable by lazy { definition.conditionCallback(Condition(this)) }
+    val performable by lazy { definition.condition(Condition(this)) }
 
     fun perform(): Action {
         if (!performable) {
@@ -112,7 +112,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         try {
             with(definition) {
                 retry.withCountdown<Unit, Exception>("perform provision step '$id' for '${instance.name}'") {
-                    actionCallback(instance)
+                    definition.action(instance)
                 }
             }
             marker.save(mapOf(
