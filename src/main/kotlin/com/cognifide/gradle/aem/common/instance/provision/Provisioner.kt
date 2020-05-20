@@ -2,10 +2,12 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
+import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FilenameUtils
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
@@ -44,6 +46,8 @@ class Provisioner(val manager: InstanceManager) {
 
     /**
      * Enables using step conditions based on counter e.g [Condition.repeatEvery].
+     *
+     * By default such conditions are disabled, because of extra HTTP calls (performance overhead).
      */
     val countable = aem.obj.boolean {
         convention(false)
@@ -92,57 +96,67 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     private fun provisionActions(instances: Collection<Instance>): Collection<Action> {
-        val stepsFiltered = stepsFiltered()
+        val stepsFiltered = stepsFor(instances)
         if (stepsFiltered.isEmpty()) {
             return listOf()
         }
 
-        val actions = CopyOnWriteArrayList<Action>()
-        val steps = stepsFiltered.map { step -> step to instances.map { InstanceStep(it, step) } }.toMap()
+        return common.progress {
+            initSteps(stepsFiltered)
+            performSteps(stepsFiltered)
+        }
+    }
 
-        common.progress {
-            total = steps.size.toLong()
-            step = "Initializing"
-            steps.forEach { (definition, instanceSteps) ->
-                increment("Step '${definition.label}'") {
-                    if (instanceSteps.any { it.performable }) {
-                        definition.init()
+    private fun ProgressIndicator.initSteps(steps: Map<Step, List<InstanceStep>>) {
+        total = steps.flatMap { it.value }.count().toLong()
+        step = "Initializing"
+
+        steps.forEach { (definition, instanceSteps) ->
+            message = "Step \"${definition.label}'\""
+
+            val initializable = AtomicBoolean(false)
+            common.parallel.each(instanceSteps) { instanceStep ->
+                increment("Step \"${definition.label}'\" on '${instanceStep.instance.name}'") {
+                    if (instanceStep.performable) {
+                        initializable.getAndSet(true)
                     }
                 }
             }
-
-            count = 0
-            step = "Running"
-            steps.forEach { (definition, instanceSteps) ->
-                increment("Step '${definition.label}'") {
-                    var intro = "Provision step '${definition.id}'"
-                    if (!definition.description.isNullOrBlank()) {
-                        intro += " / ${definition.description}"
-                    }
-                    logger.info(intro)
-                    common.parallel.each(instanceSteps) { actions.add(it.perform()) }
-                }
+            if (initializable.get()) {
+                definition.init()
             }
         }
+    }
+
+    private fun ProgressIndicator.performSteps(steps: Map<Step, List<InstanceStep>>): List<Action> {
+        val actions = CopyOnWriteArrayList<Action>()
+
+        total = steps.flatMap { it.value }.count().toLong()
+        count = 0
+        step = "Running"
+
+        steps.forEach { (definition, instanceSteps) ->
+            message = "Step \"${definition.label}'\""
+
+            common.parallel.each(instanceSteps) { instanceStep ->
+                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                    actions.add(instanceStep.perform())
+                }
+            }
+            definition.awaitUp(instanceSteps.filter { it.performable }.map { it.instance })
+        }
+
         return actions
     }
 
-    private fun stepsFiltered() = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
-
-    fun init() {
-        val stepsFiltered = stepsFiltered()
-        if (stepsFiltered.isEmpty()) {
+    fun init(instances: Collection<Instance>) {
+        val steps = stepsFor(instances)
+        if (steps.isEmpty()) {
             return
         }
 
         common.progress {
-            total = stepsFiltered.size.toLong()
-            step = "Initializing"
-            stepsFiltered.forEach { definition ->
-                increment("Step '${definition.label}'") {
-                    definition.init()
-                }
-            }
+            initSteps(steps)
         }
     }
 
@@ -153,10 +167,17 @@ class Provisioner(val manager: InstanceManager) {
         }
     }
 
+    private fun stepsFor(instances: Collection<Instance>) = steps
+            .filter { Patterns.wildcard(it.id, stepName.get()) }
+            .map { step -> step to instances.map { InstanceStep(it, step) } }
+            .toMap()
+
+    private fun slug(name: String) = name.replace(".", "-").replace(":", "_")
+
     // Predefined steps
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
-        description = "Enabling CRX DE"
+        description.set("Enabling CRX DE")
         condition { once() && instance.env != "prod" }
         sync {
             osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
@@ -169,8 +190,8 @@ class Provisioner(val manager: InstanceManager) {
     fun deployPackage(url: String, options: Step.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
 
     fun deployPackage(name: String, url: Any, options: Step.() -> Unit = {}) = step("deployPackage/${slug(name)}") {
-        description = "Deploying package '$name'"
-        version = name
+        description.set("Deploying package '$name'")
+        version.set(name)
 
         val file by lazy { aem.packageOptions.wrapper.wrap(fileResolver.get(url).file) }
 
@@ -179,14 +200,10 @@ class Provisioner(val manager: InstanceManager) {
         }
         sync {
             logger.info("Deploying package '$name' to $instance")
-            if (packageManager.deploy(file)) {
-                instance.awaitUp()
-            }
+            awaitIf { packageManager.deploy(file) }
         }
         options()
     }
-
-    private fun slug(name: String) = name.replace(".", "-").replace(":", "_")
 
     init {
         aem.project.afterEvaluate {

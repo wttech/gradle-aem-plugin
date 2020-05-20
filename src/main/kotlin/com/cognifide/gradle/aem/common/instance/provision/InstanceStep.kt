@@ -27,7 +27,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     val version: String get() = marker.takeIf { it.exists }?.properties?.string(VERSION_PROP) ?: VERSION_DEFAULT
 
-    val changed: Boolean get() = version != definition.version
+    val changed: Boolean get() = version != definition.version.get()
 
     val endedAt: Date get() = marker.properties.date(ENDED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
@@ -38,7 +38,14 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     val durationString: String get() = Formats.duration(duration)
 
-    val counter: Long get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
+    val counter: Long get() {
+        if (!provisioner.countable.get()) {
+            throw ProvisionException("Provision step counting is disabled!\n" +
+                    "Consider enabling it by setting property 'instance.provision.countable=true'")
+        }
+
+        return marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
+    }
 
     val performable by lazy { definition.conditionCallback(Condition(this)) }
 
@@ -89,11 +96,18 @@ class InstanceStep(val instance: Instance, val definition: Step) {
      */
     @Suppress("TooGenericExceptionCaught")
     private fun action() {
-        marker.save(mapOf(
-                Node.TYPE_UNSTRUCTURED,
-                STARTED_AT_PROP to Date(),
-                COUNTER_PROP to counter + 1
-        ))
+        if (provisioner.countable.get()) {
+            marker.save(mapOf(
+                    Node.TYPE_UNSTRUCTURED,
+                    STARTED_AT_PROP to Date(),
+                    COUNTER_PROP to counter + 1
+            ))
+        } else {
+            marker.save(mapOf(
+                    Node.TYPE_UNSTRUCTURED,
+                    STARTED_AT_PROP to Date()
+            ))
+        }
 
         try {
             with(definition) {
@@ -102,13 +116,13 @@ class InstanceStep(val instance: Instance, val definition: Step) {
                 }
             }
             marker.save(mapOf(
-                    VERSION_PROP to definition.version,
+                    VERSION_PROP to definition.version.get(),
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to false
             ))
         } catch (e: Exception) {
             marker.save(mapOf(
-                    VERSION_PROP to definition.version,
+                    VERSION_PROP to definition.version.get(),
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to true
             ))

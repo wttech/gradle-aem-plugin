@@ -204,9 +204,9 @@ open class InstanceManager(val aem: AemExtension) {
         }
     }
 
-    fun resolveFiles() {
+    fun resolveFiles(instances: Collection<Instance> = aem.instances) {
         logger.info("Initializing resources needed by instance provisioner")
-        provisioner.init()
+        provisioner.init(instances)
         logger.info("Initialized resources needed by instance provisioner")
     }
 }

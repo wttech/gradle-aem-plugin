@@ -201,7 +201,7 @@ aem {
 
         provisioner { // configuring AEM instances in various circumstances (e.g only once)
             step("enable-crxde") {
-                description = "Enables CRX DE"
+                description.set("Enables CRX DE")
                 condition { once() && instance.env != "prod" }
                 sync {
                     osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
