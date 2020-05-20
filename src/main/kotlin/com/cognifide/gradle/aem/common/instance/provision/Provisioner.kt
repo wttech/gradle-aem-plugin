@@ -112,11 +112,11 @@ class Provisioner(val manager: InstanceManager) {
         step = "Initializing"
 
         steps.forEach { (definition, instanceSteps) ->
-            message = "Step \"${definition.label}'\""
+            message = "Step \"${definition.label}\""
 
             val initializable = AtomicBoolean(false)
             common.parallel.each(instanceSteps) { instanceStep ->
-                increment("Step \"${definition.label}'\" on '${instanceStep.instance.name}'") {
+                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
                     if (instanceStep.performable) {
                         initializable.getAndSet(true)
                     }
@@ -136,7 +136,7 @@ class Provisioner(val manager: InstanceManager) {
         step = "Running"
 
         steps.forEach { (definition, instanceSteps) ->
-            message = "Step \"${definition.label}'\""
+            message = "Step \"${definition.label}\""
 
             common.parallel.each(instanceSteps) { instanceStep ->
                 increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
