@@ -116,15 +116,15 @@ class Provisioner(val manager: InstanceManager) {
         steps.forEach { (definition, instanceSteps) ->
             message = "Step \"${definition.label}\""
 
-            val initializable = AtomicBoolean(false)
-            common.parallel.each(instanceSteps) { instanceStep ->
+            var initializable = false
+            instanceSteps.forEach { instanceStep ->
                 increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
                     if (instanceStep.performable) {
-                        initializable.getAndSet(true)
+                        initializable = true
                     }
                 }
             }
-            if (initializable.get()) {
+            if (initializable) {
                 definition.init()
             }
         }
