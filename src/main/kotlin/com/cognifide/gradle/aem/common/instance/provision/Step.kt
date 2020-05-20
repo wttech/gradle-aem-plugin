@@ -112,5 +112,6 @@ class Step(val provisioner: Provisioner, val id: String) {
         this.retry = common.retry(options)
     }
 
-    override fun toString(): String = "Step(id='$id', description=${description.get()}, continueOnFail=${continueOnFail.get()}, rerunOnFail=${rerunOnFail.get()})"
+    override fun toString(): String = "Step(id='$id', description=${description.get()}, " +
+            "continueOnFail=${continueOnFail.get()}, rerunOnFail=${rerunOnFail.get()})"
 }
