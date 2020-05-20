@@ -145,20 +145,30 @@ class Provisioner(val manager: InstanceManager) {
                     actions.add(instanceStep.perform())
                 }
             }
-            definition.awaitUp(instanceSteps.filter { it.performable }.map { it.instance })
+            val instancesStepsPerformed = instanceSteps.filter { it.performable }.map { it.instance }
+            if (instancesStepsPerformed.isNotEmpty()) {
+                definition.awaitUp(instancesStepsPerformed)
+            }
         }
 
         return actions
     }
 
     fun init(instances: Collection<Instance>) {
-        val steps = stepsFor(instances)
+        val steps = stepsFor(instances).keys
         if (steps.isEmpty()) {
             return
         }
 
         common.progress {
-            initSteps(steps)
+            total = steps.count().toLong()
+            step = "Initializing"
+
+            steps.forEach { step ->
+                increment("Step \"${step.label}\"") {
+                    step.init()
+                }
+            }
         }
     }
 

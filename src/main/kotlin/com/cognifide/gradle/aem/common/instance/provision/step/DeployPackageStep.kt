@@ -11,7 +11,7 @@ class DeployPackageStep(provisioner: Provisioner, val name: String, val url: Any
     }
 
     override fun init() {
-        logger.info("Resolved package '$name' to be deployed is file '$pkg'")
+        logger.info("Resolved package '$name' to be deployed is located at path: '$pkg'")
     }
 
     override fun action(instance: Instance) = instance.sync {
