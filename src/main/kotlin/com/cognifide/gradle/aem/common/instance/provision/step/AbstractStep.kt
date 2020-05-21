@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.*
 
-abstract class AbstractStep(override val provisioner: Provisioner) : Step {
+abstract class AbstractStep(final override val provisioner: Provisioner) : Step {
 
     protected val aem = provisioner.aem
 
