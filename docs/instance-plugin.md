@@ -74,20 +74,12 @@ Sample configuration:
 aem {
     instance {
         provisioner {
-            step("enable-crxde") {
-                description = "Enables CRX DE"
-                condition { once() && instance.env != "prod" }
-                sync {
-                    osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                            "alias" to "/crx/server"
-                    ))
-                }
-            }
+            enableCrxDe()
             step("setup-replication-author") {
                 condition { once() && instance.author }
                 sync {
                     repository {
-                        node("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                        save("/etc/replication/agents.author/publish/jcr:content", mapOf(
                                 "enabled" to true,
                                 "userId" to instance.user,
                                 "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",

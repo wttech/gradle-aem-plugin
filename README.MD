@@ -200,13 +200,21 @@ aem {
         }
 
         provisioner { // configuring AEM instances in various circumstances (e.g only once)
-            step("enable-crxde") {
-                description.set("Enables CRX DE")
-                condition { once() && instance.env != "prod" }
+            enableCrxDe()
+            deployPackage("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
+            deployPackage("com.neva.felix:search-webconsole-plugin:1.3.0")
+            step("setup-replication-author") {
+                condition { once() && instance.author }
                 sync {
-                    osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                            "alias" to "/crx/server"
-                    ))
+                    repository {
+                        save("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                                "enabled" to true,
+                                "userId" to instance.user,
+                                "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
+                                "transportUser" to instance.user,
+                                "transportPassword" to instance.password
+                        ))
+                    }
                 }
             }
             // ...
