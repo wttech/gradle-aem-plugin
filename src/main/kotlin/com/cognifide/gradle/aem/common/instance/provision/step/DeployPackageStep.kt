@@ -15,7 +15,7 @@ class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
     val name = aem.obj.string { convention(aem.obj.provider { sourceProperties.name }) }
 
     override fun init() {
-        logger.info("Resolved package '${name.get()}' to be deployed is located at path: '$file'")
+        logger.debug("Resolved package '${name.get()}' to be deployed is located at path: '$file'")
     }
 
     override fun action(instance: Instance) = instance.sync {
