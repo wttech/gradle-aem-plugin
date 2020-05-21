@@ -15,8 +15,8 @@ open class CliApp(protected val aem: AemExtension) {
     val dependencyExtension = aem.obj.boolean { convention(true) }
 
     val dependencyDir = aem.obj.dir {
-        convention(aem.project.rootProject.layout.buildDirectory.dir(dependencyNotation.map {
-            "aem/cli/${Formats.toHashCodeHex(it)}"
+        convention(aem.project.rootProject.layout.projectDirectory.dir(dependencyNotation.map {
+            ".gradle/aem/cli/${Formats.toHashCodeHex(it)}"
         }))
     }
 
