@@ -24,6 +24,8 @@ class DeployPackageStep(provisioner: Provisioner, val name: String, val url: Any
     fun notDeployedOn(instance: Instance) = !isDeployedOn(instance)
 
     init {
+        description.set("Deploying package '$name'")
+
         if (aem.prop.boolean("instance.provision.deployPackage.strict") == true) {
             condition { notDeployedOn(instance) }
         }

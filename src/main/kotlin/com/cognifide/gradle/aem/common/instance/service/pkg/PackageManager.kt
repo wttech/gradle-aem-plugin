@@ -151,19 +151,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun find(definition: VaultDefinition) = find(definition.group.get(), definition.name.get(), definition.version.get())
 
-    fun find(group: String, name: String, version: String): Package? = find { listResponse ->
-        val expected = Package(group, name, version)
+    fun find(group: String, name: String, version: String): Package? = find { it.resolvePackage(Package(group, name, version)) }
 
-        logger.info("Finding package '${expected.coordinates}' on $instance")
-        val actual = listResponse.resolvePackage(expected)
-        if (actual == null) {
-            logger.info("Package not found '${expected.coordinates}' on $instance")
-        }
+    fun findAll(group: String, name: String) = find { it.results.filter { pkg -> pkg.group == group && pkg.name == name } }
 
-        actual
-    }
-
-    private fun find(resolver: (ListResponse) -> Package?): Package? {
+    private fun <T> find(resolver: (ListResponse) -> T): T {
         logger.debug("Asking for uploaded packages on $instance")
         return common.buildScope.getOrPut("instance.${instance.name}.packages", { list() }, listRefresh.get()).let(resolver)
     }
@@ -314,7 +306,16 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
 
-    fun isDeployed(file: File): Boolean = find(file)?.installed ?: false
+    fun isDeployed(file: File): Boolean {
+        val pkg = find(file) ?: return false
+        return isDeployed(pkg)
+    }
+
+    fun isDeployed(pkg: Package): Boolean {
+        if (!pkg.installed) return false
+        val otherVersions = findAll(pkg.group, pkg.name).filter { it != pkg }
+        return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp}
+    }
 
     fun deploy(file: File, activate: Boolean = false): Boolean {
         if (deployAvoidance.get()) {
@@ -333,7 +334,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
         logger.info("Package '$file' checksum '$checksumLocal' calculation took '${checksumTimed.duration}'")
 
-        if (pkg == null || !pkg.installed) {
+        if (pkg == null || !isDeployed(pkg)) {
             val pkgPath = deployRegularly(file, activate)
             val pkgMeta = getMetadataNode(pkgPath)
 
