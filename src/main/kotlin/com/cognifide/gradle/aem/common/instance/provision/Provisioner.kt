@@ -197,7 +197,14 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    fun deployPackage(url: String, options: DeployPackageStep.() -> Unit = {}) = deployPackage(FilenameUtils.getBaseName(url), url, options)
+    fun deployPackage(url: String, options: DeployPackageStep.() -> Unit = {}) {
+        val name = DeployPackageStep.deriveName(url)
+        if (name != null) {
+            deployPackage(name, url, options)
+        } else {
+            throw ProvisionException("Package name cannot be derived from URL '$url'! Please specify it explicitly.")
+        }
+    }
 
     fun deployPackage(name: String, url: Any, options: DeployPackageStep.() -> Unit = {}) {
         steps.add(DeployPackageStep(this, name, url).apply(options))

@@ -2,8 +2,10 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.common.utils.toLowerCamelCase
+import org.apache.commons.io.FilenameUtils
 
-class DeployPackageStep(provisioner: Provisioner, val name: String, val url: Any) : AbstractStep(provisioner, "deployPackage/${slug(name)}") {
+class DeployPackageStep(provisioner: Provisioner, val name: String, val url: Any) : AbstractStep(provisioner, "deployPackage/$name") {
 
     val pkg by lazy {
         val file = provisioner.fileResolver.get(url).file
@@ -32,6 +34,27 @@ class DeployPackageStep(provisioner: Provisioner, val name: String, val url: Any
     }
 
     companion object {
-        private fun slug(name: String) = name.replace(".", "-").replace(":", "_")
+        private val URL_DEPENDENCY_NOTATION = "[^:]+:([^:]+):[^:]+".toRegex()
+
+        private val URL_EXTENSIONS = listOf(".zip", ".jar")
+
+        private val URL_VERSION_PATTERNS = listOf(
+                "[^.]+-(\\d+.\\d+.\\d+-\\w+)",
+                "[^.]+-(\\d+.\\d+.\\w+)",
+                "[^.]+-(\\d+.\\d+)",
+                ".*-(\\d+.\\d+).*"
+        ).map { it.toRegex() }
+
+        fun deriveName(url: String): String? = when {
+            URL_EXTENSIONS.any { url.endsWith(it) } -> url
+                    .let { FilenameUtils.getBaseName(url) }
+                    ?.let { baseName ->
+                        URL_VERSION_PATTERNS.asSequence()
+                                .mapNotNull { it.matchEntire(baseName)?.groupValues?.get(1) }
+                                .firstOrNull()
+                                ?.let { baseName.substringBefore("-$it") }
+                    }
+            else -> URL_DEPENDENCY_NOTATION.matchEntire(url)?.groupValues?.get(1)
+        }?.replace(".", "_")?.toLowerCamelCase()
     }
 }
