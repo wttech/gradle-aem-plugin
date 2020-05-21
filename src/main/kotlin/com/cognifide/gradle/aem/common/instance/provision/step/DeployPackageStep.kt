@@ -12,7 +12,7 @@ class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
     val file by lazy { aem.packageOptions.wrapper.wrap(provisioner.fileResolver.get(source.get()).file) }
 
-    val name = aem.obj.string { convention(aem.obj.provider { sourceProperties.name.toLowerCamelCase() }) }
+    val name = aem.obj.string { convention(aem.obj.provider { sourceProperties.name }) }
 
     override fun init() {
         logger.info("Resolved package '${name.get()}' to be deployed is located at path: '$file'")
@@ -28,7 +28,7 @@ class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
     fun notDeployedOn(instance: Instance) = !isDeployedOn(instance)
 
     init {
-        id.convention(name.map { "deployPackage/$it" })
+        id.convention(name.map { "deployPackage/${it.toLowerCamelCase()}" })
         description.convention(name.map { "Deploying package '${name.get()}'" })
         version.convention(aem.obj.provider { sourceProperties.version })
 
