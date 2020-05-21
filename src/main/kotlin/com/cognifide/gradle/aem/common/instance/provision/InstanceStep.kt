@@ -14,12 +14,12 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     private val provisioner = definition.provisioner
 
-    private val marker get() = instance.sync.repository.node("${provisioner.path.get()}/step/${definition.id}")
+    private val marker get() = instance.sync.repository.node("${provisioner.path.get()}/step/${definition.id.get()}")
 
-    val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
+    val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id.get()}.greedy")
 
     val startedAt: Date get() = marker.properties.date(STARTED_AT_PROP)
-                ?: throw ProvisionException("Provision step '${definition.id}' not yet started on $instance!")
+                ?: throw ProvisionException("Provision step '${definition.id.get()}' not yet started on $instance!")
 
     val started: Boolean get() = marker.exists && marker.hasProperty(STARTED_AT_PROP)
 
@@ -30,7 +30,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
     val changed: Boolean get() = version != definition.version.get()
 
     val endedAt: Date get() = marker.properties.date(ENDED_AT_PROP)
-                ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
+                ?: throw ProvisionException("Provision step '${definition.id.get()}' not yet ended on $instance!")
 
     val failed: Boolean get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
 
