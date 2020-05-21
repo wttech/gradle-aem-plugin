@@ -70,5 +70,5 @@ abstract class AbstractStep(override val provisioner: Provisioner) : Step {
         // nothing to do
     }
 
-    override fun toString(): String = "${javaClass.simpleName}(id=$id, version=$version)"
+    override fun toString(): String = "${javaClass.simpleName}(id=${id.get()}, version=${version.get()})"
 }
