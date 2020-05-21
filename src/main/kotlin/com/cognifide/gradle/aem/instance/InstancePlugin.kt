@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
-import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -48,32 +47,24 @@ class InstancePlugin : CommonDefaultPlugin() {
 
         // Plugin tasks
 
-        val satisfy = register<InstanceSatisfy>(InstanceSatisfy.NAME)
-        val provision = register<InstanceProvision>(InstanceProvision.NAME) {
-            mustRunAfter(satisfy)
-        }
+        val provision = register<InstanceProvision>(InstanceProvision.NAME)
 
-        register<InstanceReload>(InstanceReload.NAME) {
-            mustRunAfter(satisfy)
-        }.apply(mustRunAfterPackageDeploy)
-
-        register<InstanceAwait>(InstanceAwait.NAME) {
-            mustRunAfter(satisfy)
-        }.apply(mustRunAfterPackageDeploy)
+        register<InstanceReload>(InstanceReload.NAME).apply(mustRunAfterPackageDeploy)
+        register<InstanceAwait>(InstanceAwait.NAME).apply(mustRunAfterPackageDeploy)
 
         register<InstanceSetup>(InstanceSetup.NAME) {
-            dependsOn(satisfy, provision)
+            dependsOn(provision)
         }.apply(dependsOnPackageDeploy)
 
         register<InstanceStatus>(InstanceStatus.NAME)
         register<InstanceTail>(InstanceTail.NAME)
 
         register<InstanceRcp>(InstanceRcp.NAME) {
-            mustRunAfter(satisfy, provision)
+            mustRunAfter(provision)
         }
 
         register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
-            mustRunAfter(satisfy, provision)
+            mustRunAfter(provision)
         }.apply(mustRunAfterPackageDeploy)
     }
 

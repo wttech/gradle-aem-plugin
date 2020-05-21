@@ -70,12 +70,11 @@ class PackagePlugin : CommonDefaultPlugin() {
                 if (plugins.hasPlugin(InstancePlugin::class.java)) {
                     val create = named<Task>(InstanceCreate.NAME)
                     val up = named<Task>(InstanceUp.NAME)
-                    val satisfy = named<Task>(InstanceSatisfy.NAME)
                     val provision = named<Task>(InstanceProvision.NAME)
                     val setup = named<Task>(InstanceSetup.NAME)
 
                     configureApply {
-                        mustRunAfter(create, up, satisfy, provision, setup)
+                        mustRunAfter(create, up, provision, setup)
                     }
                 }
             }

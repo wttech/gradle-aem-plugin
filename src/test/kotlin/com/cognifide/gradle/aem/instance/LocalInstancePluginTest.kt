@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
-import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceDown
 import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
@@ -25,7 +24,6 @@ class LocalInstancePluginTest : AemTest() {
         tasks.getByName(InstanceDown.NAME)
 
         tasks.getByName(InstanceSetup.NAME)
-        tasks.getByName(InstanceSatisfy.NAME)
         tasks.getByName(InstanceRcp.NAME)
     }
 
