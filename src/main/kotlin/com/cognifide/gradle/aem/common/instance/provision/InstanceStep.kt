@@ -52,23 +52,23 @@ class InstanceStep(val instance: Instance, val definition: Step) {
     fun perform(): Action {
         if (!performable) {
             update()
-            logger.info("Provision step '${definition.id}' skipped for $instance")
+            logger.info("Provision step '${definition.id.get()}' skipped for $instance")
             return Action(this, Status.SKIPPED)
         }
 
         val startTime = System.currentTimeMillis()
-        logger.info("Provision step '${definition.id}' started at $instance")
+        logger.info("Provision step '${definition.id.get()}' started at $instance")
 
         return try {
             action()
-            logger.info("Provision step '${definition.id}' ended at $instance." +
+            logger.info("Provision step '${definition.id.get()}' ended at $instance." +
                     " Duration: ${Formats.durationSince(startTime)}")
             Action(this, Status.ENDED)
         } catch (e: ProvisionException) {
             if (!definition.continueOnFail.get()) {
                 throw e
             } else {
-                logger.error("Provision step '${definition.id} failed at $instance." +
+                logger.error("Provision step '${definition.id.get()} failed at $instance." +
                         " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
                 logger.debug("Actual error", e)
                 Action(this, Status.FAILED)
@@ -126,7 +126,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to true
             ))
-            throw ProvisionException("Cannot perform provision step '${definition.id}' on $instance! Cause: ${e.message}")
+            throw ProvisionException("Cannot perform provision step '${definition.id.get()}' on $instance! Cause: ${e.message}")
         } finally {
             marker.reload()
         }
