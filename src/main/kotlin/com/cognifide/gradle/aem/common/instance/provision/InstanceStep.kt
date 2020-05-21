@@ -111,7 +111,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
         try {
             with(definition) {
-                retry.withCountdown<Unit, Exception>("perform provision step '$id' for '${instance.name}'") {
+                retry.withCountdown<Unit, Exception>("perform provision step '${id.get()}' for '${instance.name}'") {
                     definition.action(instance)
                 }
             }

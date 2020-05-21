@@ -22,7 +22,7 @@ interface Step {
     /**
      * Description if set, ID otherwise.
      */
-    val label get() = description.orNull ?: id
+    val label get() = description.orNull ?: id.get()
 
     /**
      * Implementation version.

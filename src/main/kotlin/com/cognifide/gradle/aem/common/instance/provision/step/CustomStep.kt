@@ -12,7 +12,7 @@ class CustomStep(provisioner: Provisioner) : AbstractStep(provisioner) {
             throw ProvisionException("Step ID is not defined!")
         }
         if (!::actionCallback.isInitialized) {
-            throw ProvisionException("Step '$id' action is not defined!")
+            throw ProvisionException("Step '${id.get()}' action is not defined!")
         }
     }
 
