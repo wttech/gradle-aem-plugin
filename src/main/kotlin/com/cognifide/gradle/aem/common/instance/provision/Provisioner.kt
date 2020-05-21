@@ -7,9 +7,7 @@ import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
-import org.apache.commons.io.FilenameUtils
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
@@ -70,7 +68,10 @@ class Provisioner(val manager: InstanceManager) {
      * Define custom provision step.
      */
     fun step(id: String, options: CustomStep.() -> Unit) {
-        steps.add(CustomStep(this, id).apply(options))
+        steps.add(CustomStep(this).apply {
+            this.id.set(id)
+            options()
+        })
     }
 
     /**
@@ -180,7 +181,7 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     private fun stepsFor(instances: Collection<Instance>) = steps
-            .filter { Patterns.wildcard(it.id, stepName.get()) }
+            .filter { Patterns.wildcard(it.id.get(), stepName.get()) }
             .map { step -> step to instances.map { InstanceStep(it, step) } }
             .toMap()
 
@@ -197,17 +198,10 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    fun deployPackage(url: String, options: DeployPackageStep.() -> Unit = {}) {
-        val name = DeployPackageStep.deriveName(url)
-        if (name != null) {
-            deployPackage(name, url, options)
-        } else {
-            throw ProvisionException("Package name cannot be derived from URL '$url'! Please specify it explicitly.")
-        }
-    }
+    fun deployPackage(source: Any) = deployPackage { this.source.set(source) }
 
-    fun deployPackage(name: String, url: Any, options: DeployPackageStep.() -> Unit = {}) {
-        steps.add(DeployPackageStep(this, name, url).apply(options))
+    fun deployPackage(options: DeployPackageStep.() -> Unit) {
+        steps.add(DeployPackageStep(this).apply(options))
     }
 
     init {

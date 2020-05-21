@@ -5,9 +5,12 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 
-class CustomStep(provisioner: Provisioner, id: String) : AbstractStep(provisioner, id) {
+class CustomStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
     override fun validate() {
+        if (!id.isPresent) {
+            throw ProvisionException("Step ID is not defined!")
+        }
         if (!::actionCallback.isInitialized) {
             throw ProvisionException("Step '$id' action is not defined!")
         }

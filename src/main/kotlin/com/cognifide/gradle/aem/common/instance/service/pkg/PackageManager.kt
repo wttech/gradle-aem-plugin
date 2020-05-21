@@ -314,7 +314,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun isDeployed(pkg: Package): Boolean {
         if (!pkg.installed) return false
         val otherVersions = findAll(pkg.group, pkg.name).filter { it != pkg }
-        return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp}
+        return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp }
     }
 
     fun deploy(file: File, activate: Boolean = false): Boolean {

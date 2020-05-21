@@ -9,7 +9,10 @@ interface Step {
 
     val provisioner: Provisioner
 
-    val id: String
+    /**
+     * Short unique ID of step.
+     */
+    val id: Property<String>
 
     /**
      * Nice name of step describing purpose.
