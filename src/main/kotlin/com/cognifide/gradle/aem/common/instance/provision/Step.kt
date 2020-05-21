@@ -1,71 +1,67 @@
 package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.common.build.Retry
+import org.gradle.api.provider.Property
 
-class Step(val provisioner: Provisioner, val id: String) {
+interface Step {
 
-    private val aem = provisioner.aem
+    val provisioner: Provisioner
 
-    private val common = aem.common
-
-    internal lateinit var actionCallback: Instance.() -> Unit
-
-    var conditionCallback: Condition.() -> Boolean = { once() }
+    /**
+     * Short unique ID of step.
+     */
+    val id: Property<String>
 
     /**
      * Nice name of step describing purpose.
      */
-    var description: String? = null
+    val description: Property<String>
 
     /**
-     * Implementation version number.
+     * Description if set, ID otherwise.
      */
-    var version: Long = 1L
+    val label get() = description.orNull ?: id.get()
 
     /**
-     * Allows to redo step action after delay if exception is thrown.
+     * Implementation version.
      */
-    var retry: Retry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.retry") ?: 0L) }
+    val version: Property<String>
 
     /**
      * Controls logging error to console instead of breaking build with exception so that next step might be performed.
      */
-    val continueOnFail = aem.obj.boolean {
-        convention(false)
-        aem.prop.boolean("instance.provision.step.continueOnFail")?.let { set(it) }
-    }
+    val continueOnFail: Property<Boolean>
 
     /**
      * Controls if step should be performed again when previously failed.
      */
-    val rerunOnFail = aem.obj.boolean {
-        convention(true)
-        aem.prop.boolean("instance.provision.step.rerunOnFail")?.let { set(it) }
-    }
+    val rerunOnFail: Property<Boolean>
 
-    fun validate() {
-        if (!::actionCallback.isInitialized) {
-            throw ProvisionException("Step '$id' action is not defined!")
-        }
-    }
+    /**
+     * Allows to redo step action after delay if exception is thrown.
+     */
+    val retry: Retry
 
-    fun action(callback: Instance.() -> Unit) {
-        this.actionCallback = callback
-    }
+    /**
+     * Controls is after running step on all instances, checking for up instances need to be done.
+     */
+    val awaitUp: Property<Boolean>
 
-    fun sync(callback: InstanceSync.() -> Unit) = action { sync(callback) }
+    fun awaitIf(callback: () -> Boolean)
 
-    fun condition(callback: Condition.() -> Boolean) {
-        this.conditionCallback = callback
-    }
+    fun awaitUp(options: AwaitUpAction.() -> Unit)
 
-    fun retry(options: Retry.() -> Unit) {
-        this.retry = common.retry(options)
-    }
+    fun condition(callback: Condition.() -> Boolean)
 
-    override fun toString(): String {
-        return "Step(id='$id', description=$description, continueOnFail=$continueOnFail, rerunOnFail=$rerunOnFail)"
-    }
+    fun init()
+
+    fun validate()
+
+    fun condition(condition: Condition): Boolean
+
+    fun action(instance: Instance)
+
+    fun awaitUp(instances: Collection<Instance>)
 }

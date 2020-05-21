@@ -1,10 +1,13 @@
-
 package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
-import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
+import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
+import com.cognifide.gradle.common.build.ProgressIndicator
+import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
@@ -42,6 +45,16 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     /**
+     * Enables using step conditions based on counter e.g [Condition.repeatEvery].
+     *
+     * By default such conditions are disabled, because of extra HTTP calls (performance overhead).
+     */
+    val countable = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.provision.countable")?.let { set(it) }
+    }
+
+    /**
      * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
     val path = aem.obj.string {
@@ -52,10 +65,13 @@ class Provisioner(val manager: InstanceManager) {
     private val steps = mutableListOf<Step>()
 
     /**
-     * Define provision step.
+     * Define custom provision step.
      */
-    fun step(id: String, options: Step.() -> Unit) {
-        steps.add(Step(this, id).apply(options))
+    fun step(id: String, options: CustomStep.() -> Unit) {
+        steps.add(CustomStep(this).apply {
+            this.id.set(id)
+            options()
+        })
     }
 
     /**
@@ -66,7 +82,7 @@ class Provisioner(val manager: InstanceManager) {
     /**
      * Perform all provision steps for all instances in parallel.
      */
-    fun provision(instances: Collection<Instance>): List<Action> {
+    fun provision(instances: Collection<Instance>): Collection<Action> {
         if (!enabled.get()) {
             logger.lifecycle("No steps performed / instance provisioner is disabled.")
             return listOf()
@@ -74,20 +90,7 @@ class Provisioner(val manager: InstanceManager) {
 
         steps.forEach { it.validate() }
 
-        val actions = mutableListOf<Action>()
-
-        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
-        if (stepsFiltered.isNotEmpty()) {
-            stepsFiltered.forEach { definition ->
-                var intro = "Provision step '${definition.id}'"
-                if (!definition.description.isNullOrBlank()) {
-                    intro += " / ${definition.description}"
-                }
-                logger.info(intro)
-                common.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
-            }
-        }
-
+        val actions = provisionActions(instances)
         if (actions.none { it.status != Status.SKIPPED }) {
             logger.lifecycle("No steps to perform / all instances provisioned.")
         }
@@ -95,30 +98,118 @@ class Provisioner(val manager: InstanceManager) {
         return actions
     }
 
-    private fun InstanceStep.provisionStep(): Action {
-        if (!isPerformable()) {
-            update()
-            logger.info("Provision step '${definition.id}' skipped for $instance")
-            return Action(this, Status.SKIPPED)
+    private fun provisionActions(instances: Collection<Instance>): Collection<Action> {
+        val stepsFiltered = stepsFor(instances)
+        if (stepsFiltered.isEmpty()) {
+            return listOf()
         }
 
-        val startTime = System.currentTimeMillis()
-        logger.info("Provision step '${definition.id}' started at $instance")
+        return common.progress {
+            initSteps(stepsFiltered)
+            performSteps(stepsFiltered)
+        }
+    }
 
-        return try {
-            perform()
-            logger.info("Provision step '${definition.id}' ended at $instance." +
-                    " Duration: ${Formats.durationSince(startTime)}")
-            Action(this, Status.ENDED)
-        } catch (e: ProvisionException) {
-            if (!definition.continueOnFail.get()) {
-                throw e
-            } else {
-                logger.error("Provision step '${definition.id} failed at $instance." +
-                        " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
-                logger.debug("Actual error", e)
-                Action(this, Status.FAILED)
+    private fun ProgressIndicator.initSteps(steps: Map<Step, List<InstanceStep>>) {
+        total = steps.flatMap { it.value }.count().toLong()
+        step = "Initializing"
+
+        steps.forEach { (definition, instanceSteps) ->
+            message = "Step \"${definition.label}\""
+
+            var initializable = false
+            instanceSteps.forEach { instanceStep ->
+                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                    if (instanceStep.performable) {
+                        initializable = true
+                    }
+                }
             }
+            if (initializable) {
+                definition.init()
+            }
+        }
+    }
+
+    private fun ProgressIndicator.performSteps(steps: Map<Step, List<InstanceStep>>): List<Action> {
+        val actions = CopyOnWriteArrayList<Action>()
+
+        total = steps.flatMap { it.value }.count().toLong()
+        count = 0
+        step = "Running"
+
+        steps.forEach { (definition, instanceSteps) ->
+            message = "Step \"${definition.label}\""
+
+            common.parallel.each(instanceSteps) { instanceStep ->
+                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                    actions.add(instanceStep.perform())
+                }
+            }
+            val instancesStepsPerformed = instanceSteps.filter { it.performable }.map { it.instance }
+            if (instancesStepsPerformed.isNotEmpty()) {
+                definition.awaitUp(instancesStepsPerformed)
+            }
+        }
+
+        return actions
+    }
+
+    fun init(instances: Collection<Instance>) {
+        val steps = stepsFor(instances).keys
+        if (steps.isEmpty()) {
+            return
+        }
+
+        common.progress {
+            total = steps.count().toLong()
+            step = "Initializing"
+
+            steps.forEach { step ->
+                increment("Step \"${step.label}\"") {
+                    step.init()
+                }
+            }
+        }
+    }
+
+    val fileResolver = FileResolver(aem.common).apply {
+        downloadDir.apply {
+            convention(aem.obj.buildDir("instance/provision/files"))
+            aem.prop.file("instance.provision.filesDir")?.let { set(it) }
+        }
+    }
+
+    private fun stepsFor(instances: Collection<Instance>) = steps
+            .filter { Patterns.wildcard(it.id.get(), stepName.get()) }
+            .map { step -> step to instances.map { InstanceStep(it, step) } }
+            .toMap()
+
+    // Predefined steps
+
+    fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
+        description.set("Enabling CRX DE")
+        condition { once() && instance.env != "prod" }
+        sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx/server") }
+        options()
+    }
+
+    fun disableCrxDe(options: Step.() -> Unit = {}) = step("disableCrxDe") {
+        description.set("Disabling CRX DE")
+        condition { once() && instance.env != "local" }
+        sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx") }
+        options()
+    }
+
+    fun deployPackage(source: Any) = deployPackage { this.source.set(source) }
+
+    fun deployPackage(options: DeployPackageStep.() -> Unit) {
+        steps.add(DeployPackageStep(this).apply(options))
+    }
+
+    init {
+        aem.project.afterEvaluate {
+            aem.prop.list("instance.provision.deployPackage.urls")?.forEach { deployPackage(it) }
         }
     }
 }

@@ -35,7 +35,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.50")
+    implementation("com.cognifide.gradle:common-plugin:0.1.51")
 
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.3.0")

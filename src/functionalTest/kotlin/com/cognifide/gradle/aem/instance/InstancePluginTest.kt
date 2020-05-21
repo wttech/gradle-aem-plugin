@@ -35,15 +35,7 @@ class InstancePluginTest : AemBuildTest() {
                 aem {
                     instance {
                         provisioner {
-                            step("enable-crxde") {
-                                description = "Enables CRX DE"
-                                condition { once() && instance.env != "prod" }
-                                sync {
-                                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                                            "alias" to "/crx/server"
-                                    ))
-                                }
-                            }
+                            enableCrxDe()
                             step("setup-replication-author") {
                                 condition { once() && instance.author }
                                 sync {
