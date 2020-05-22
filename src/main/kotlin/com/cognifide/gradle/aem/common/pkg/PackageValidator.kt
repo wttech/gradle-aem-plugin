@@ -12,7 +12,6 @@ import com.cognifide.gradle.common.utils.using
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.*
 import java.io.File
-import java.util.jar.Manifest
 
 class PackageValidator(@Internal val aem: AemExtension) {
 
@@ -62,6 +61,9 @@ class PackageValidator(@Internal val aem: AemExtension) {
         convention("plan.json")
         aem.prop.string("package.validator.plan")?.let { set(it) }
     }
+
+    @Internal
+    val planFile = aem.obj.file { convention(aem.obj.provider { opearDir.file(planName.get()).get() }) }
 
     @Input
     val severity = aem.obj.typed<OakpalSeverity> {
@@ -159,14 +161,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
             logger.info("Using project-specific OakPAL Opear configuration files from directory '$dir' to '$tmpDir'")
             FileUtils.copyDirectory(dir, tmpDir)
         }
-
-        val manifestFile = opearDir.file(Package.MANIFEST_PATH).get().asFile
-        if (manifestFile.exists()) {
-            Manifest(manifestFile.readBytes().inputStream()).apply {
-                mainAttributes.putValue("Oakpal-Plan", planName.get())
-                manifestFile.outputStream().use { write(it) }
-            }
-        }
     }
 
     private fun prepareInitialPackage() {
@@ -194,15 +188,12 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     @Suppress("SpreadOperator")
     private fun runOakPal(packages: Collection<File>) {
-        val allPackages = mutableListOf<File>().apply {
-            add(initialPkg.get().asFile)
-            addAll(packages)
-        }
         val result = OakpalResult.byExitCode(cli.exec {
             isIgnoreExitValue = true
             environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
             workingDir(workDir.get().asFile)
-            args("-p", planName.get(), "-s", severity.get(), "-j", "-o", reportFile.get().asFile, *allPackages.toTypedArray())
+            args("-pi", initialPkg.get().asFile, "-pf", planFile.get().asFile, "-s", severity.get(),
+                    "-j", "-o", reportFile.get().asFile, *packages.toTypedArray())
         }.exitValue)
         if (result != OakpalResult.SUCCESS) {
             val message = "OakPAL validation failed due to ${result.cause}!\nSee report file: '${reportFile.get()}' for package(s):\n" +
