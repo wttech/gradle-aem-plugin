@@ -15,6 +15,12 @@
       "config": {
         "levelSet": "no_unsafe"
       }
+    },
+    {
+      "name": "net.adamcin.oakpal.core/basic/composite-store-alignment",
+      "config": {
+        "severity": "MINOR"
+      }
     }
   ]
 }
