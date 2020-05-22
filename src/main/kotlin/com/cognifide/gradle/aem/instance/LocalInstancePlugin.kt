@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
+import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -46,6 +47,9 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
         }
         val restart = register<InstanceRestart>(InstanceRestart.NAME) {
             dependsOn(down, up)
+        }
+        named<InstanceSatisfy>(InstanceSatisfy.NAME) {
+            mustRunAfter(resolve, create, up)
         }
         named<InstanceProvision>(InstanceProvision.NAME) {
             mustRunAfter(resolve, create, up)

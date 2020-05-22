@@ -10,7 +10,6 @@ import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.util.concurrent.CopyOnWriteArrayList
 
 open class PackageConfig : AemDefaultTask() {
 
@@ -57,7 +56,7 @@ open class PackageConfig : AemDefaultTask() {
                     step = "Processing"
 
                     val rootNode = repository.node(rootPath.get())
-                    val configNodes = CopyOnWriteArrayList<Node>()
+                    val configNodes = mutableListOf<Node>()
 
                     common.parallel.poolEach(configPids) { configPid ->
                         increment("Configuration '${configPid.shortenClass(PID_LENGTH)}'") {

@@ -10,71 +10,38 @@ import java.util.*
  */
 class InstanceStep(val instance: Instance, val definition: Step) {
 
-    private val logger = definition.provisioner.aem.logger
-
     private val provisioner = definition.provisioner
 
-    private val marker get() = instance.sync.repository.node("${provisioner.path.get()}/step/${definition.id.get()}")
+    private val marker get() = instance.sync.repository.node("${provisioner.path.get()}/step/${definition.id}")
 
-    val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id.get()}.greedy")
+    val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
 
-    val startedAt: Date get() = marker.properties.date(STARTED_AT_PROP)
-                ?: throw ProvisionException("Provision step '${definition.id.get()}' not yet started on $instance!")
+    val startedAt: Date
+        get() = marker.properties.date(STARTED_AT_PROP)
+                ?: throw ProvisionException("Provision step '${definition.id}' not yet started on $instance!")
 
     val started: Boolean get() = marker.exists && marker.hasProperty(STARTED_AT_PROP)
 
     val ended: Boolean get() = marker.exists && marker.hasProperty(ENDED_AT_PROP)
 
-    val version: String get() = marker.takeIf { it.exists }?.properties?.string(VERSION_PROP) ?: VERSION_DEFAULT
+    val version: Long get() = marker.takeIf { it.exists }?.properties?.long(VERSION_PROP) ?: 1L
 
-    val changed: Boolean get() = version != definition.version.get()
+    val changed: Boolean get() = version != definition.version
 
-    val endedAt: Date get() = marker.properties.date(ENDED_AT_PROP)
-                ?: throw ProvisionException("Provision step '${definition.id.get()}' not yet ended on $instance!")
+    val endedAt: Date
+        get() = marker.properties.date(ENDED_AT_PROP)
+                ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
 
-    val failed: Boolean get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
+    val failed: Boolean
+        get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
 
     val duration: Long get() = endedAt.time - startedAt.time
 
     val durationString: String get() = Formats.duration(duration)
 
-    val counter: Long get() {
-        if (!provisioner.countable.get()) {
-            throw ProvisionException("Provision step counting is disabled!\n" +
-                    "Consider enabling it by setting property 'instance.provision.countable=true'")
-        }
+    val counter: Long get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
 
-        return marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
-    }
-
-    val performable by lazy { definition.condition(Condition(this)) }
-
-    fun perform(): Action {
-        if (!performable) {
-            update()
-            logger.info("Provision step '${definition.id.get()}' skipped for $instance")
-            return Action(this, Status.SKIPPED)
-        }
-
-        val startTime = System.currentTimeMillis()
-        logger.info("Provision step '${definition.id.get()}' started at $instance")
-
-        return try {
-            action()
-            logger.info("Provision step '${definition.id.get()}' ended at $instance." +
-                    " Duration: ${Formats.durationSince(startTime)}")
-            Action(this, Status.ENDED)
-        } catch (e: ProvisionException) {
-            if (!definition.continueOnFail.get()) {
-                throw e
-            } else {
-                logger.error("Provision step '${definition.id.get()} failed at $instance." +
-                        " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
-                logger.debug("Actual error", e)
-                Action(this, Status.FAILED)
-            }
-        }
-    }
+    fun isPerformable(): Boolean = definition.conditionCallback(Condition(this))
 
     /**
      * Update provision step metadata on AEM instance.
@@ -82,57 +49,50 @@ class InstanceStep(val instance: Instance, val definition: Step) {
      * Condition 'every()' is basing on counter and allows to perform step every(n) times,
      * so that counting is needed even for step that is actually not performed.
      */
-    private fun update() {
-        if (provisioner.countable.get()) {
-            marker.save(mapOf(
-                    Node.TYPE_UNSTRUCTURED,
-                    COUNTER_PROP to counter + 1
-            ))
-        }
+    fun update() {
+        marker.save(mapOf(
+                Node.TYPE_UNSTRUCTURED,
+                COUNTER_PROP to counter + 1
+        ))
     }
 
     /**
      * Perform provision step on AEM instance.
      */
     @Suppress("TooGenericExceptionCaught")
-    private fun action() {
-        if (provisioner.countable.get()) {
-            marker.save(mapOf(
-                    Node.TYPE_UNSTRUCTURED,
-                    STARTED_AT_PROP to Date(),
-                    COUNTER_PROP to counter + 1
-            ))
-        } else {
-            marker.save(mapOf(
-                    Node.TYPE_UNSTRUCTURED,
-                    STARTED_AT_PROP to Date()
-            ))
-        }
+    fun perform() {
+        marker.save(mapOf(
+                Node.TYPE_UNSTRUCTURED,
+                STARTED_AT_PROP to Date(),
+                COUNTER_PROP to counter + 1
+        ))
 
         try {
             with(definition) {
-                retry.withCountdown<Unit, Exception>("perform provision step '${id.get()}' for '${instance.name}'") {
-                    definition.action(instance)
+                retry.withCountdown<Unit, Exception>("perform provision step '$id' for '${instance.name}'") {
+                    actionCallback(instance)
                 }
             }
             marker.save(mapOf(
-                    VERSION_PROP to definition.version.get(),
+                    VERSION_PROP to definition.version,
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to false
             ))
         } catch (e: Exception) {
             marker.save(mapOf(
-                    VERSION_PROP to definition.version.get(),
+                    VERSION_PROP to definition.version,
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to true
             ))
-            throw ProvisionException("Cannot perform provision step '${definition.id.get()}' on $instance! Cause: ${e.message}")
+            throw ProvisionException("Cannot perform provision step '${definition.id}' on $instance! Cause: ${e.message}")
         } finally {
             marker.reload()
         }
     }
 
-    override fun toString() = "InstanceStep(instance=$instance, definition=$definition, marker=$marker)"
+    override fun toString(): String {
+        return "InstanceStep(instance=$instance, definition=$definition, marker=$marker)"
+    }
 
     companion object {
         const val STARTED_AT_PROP = "startedAt"
@@ -144,7 +104,5 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         const val COUNTER_PROP = "counter"
 
         const val VERSION_PROP = "version"
-
-        const val VERSION_DEFAULT = "default"
     }
 }

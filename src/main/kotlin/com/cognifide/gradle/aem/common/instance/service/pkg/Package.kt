@@ -3,8 +3,6 @@ package com.cognifide.gradle.aem.common.instance.service.pkg
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import org.apache.commons.lang3.builder.EqualsBuilder
-import org.apache.commons.lang3.builder.HashCodeBuilder
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Package private constructor() {
@@ -80,24 +78,14 @@ class Package private constructor() {
         const val VLT_NODETYPES_FILE = "nodetypes.cnd"
 
         fun coordinates(group: String, name: String, version: String) = "[group=$group][name=$name][version=$version]"
+
+        fun bundlePath(path: String, runMode: String?): String {
+            var result = path
+            if (!runMode.isNullOrBlank()) {
+                result = "$path.$runMode"
+            }
+
+            return result
+        }
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Package
-
-        return EqualsBuilder()
-                .append(group, other.group)
-                .append(name, other.name)
-                .append(version, other.version)
-                .isEquals
-    }
-
-    override fun hashCode() = HashCodeBuilder()
-            .append(group)
-            .append(name)
-            .append(version)
-            .toHashCode()
 }

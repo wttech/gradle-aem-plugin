@@ -61,7 +61,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      * Deploys only if package is changed (checksum based) or reinstalled on instance in the meantime.
      */
     val deployAvoidance = aem.obj.boolean {
-        convention(true)
+        convention(false)
         aem.prop.boolean("package.manager.deployAvoidance")?.let { set(it) }
     }
 
@@ -151,16 +151,22 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun find(definition: VaultDefinition) = find(definition.group.get(), definition.name.get(), definition.version.get())
 
-    fun find(group: String, name: String, version: String): Package? = find { it.resolvePackage(Package(group, name, version)) }
+    fun find(group: String, name: String, version: String): Package? = find { listResponse ->
+        val expected = Package(group, name, version)
 
-    fun findAll(group: String, name: String) = find { it.results.filter { pkg -> pkg.group == group && pkg.name == name } }
+        logger.info("Finding package '${expected.coordinates}' on $instance")
+        val actual = listResponse.resolvePackage(expected)
+        if (actual == null) {
+            logger.info("Package not found '${expected.coordinates}' on $instance")
+        }
 
-    private fun <T> find(resolver: (ListResponse) -> T): T {
+        actual
+    }
+
+    private fun find(resolver: (ListResponse) -> Package?): Package? {
         logger.debug("Asking for uploaded packages on $instance")
         return common.buildScope.getOrPut("instance.${instance.name}.packages", { list() }, listRefresh.get()).let(resolver)
     }
-
-    operator fun contains(file: File) = find(file) != null
 
     fun list(): ListResponse {
         return listRetry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
@@ -306,17 +312,6 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
 
-    fun isDeployed(file: File): Boolean {
-        val pkg = find(file) ?: return false
-        return isDeployed(pkg)
-    }
-
-    fun isDeployed(pkg: Package): Boolean {
-        if (!pkg.installed) return false
-        val otherVersions = findAll(pkg.group, pkg.name).filter { it != pkg }
-        return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp }
-    }
-
     fun deploy(file: File, activate: Boolean = false): Boolean {
         if (deployAvoidance.get()) {
             return deployAvoiding(file, activate)
@@ -334,7 +329,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
         logger.info("Package '$file' checksum '$checksumLocal' calculation took '${checksumTimed.duration}'")
 
-        if (pkg == null || !isDeployed(pkg)) {
+        if (pkg == null || !pkg.installed) {
             val pkgPath = deployRegularly(file, activate)
             val pkgMeta = getMetadataNode(pkgPath)
 

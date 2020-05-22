@@ -20,14 +20,10 @@ import java.time.ZoneId
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) : Serializable {
+open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Serializable {
 
-    @Transient
-    @JsonIgnore
     protected val common = aem.common
 
-    @Transient
-    @JsonIgnore
     protected val logger = aem.logger
 
     lateinit var httpUrl: String
@@ -172,6 +168,8 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
     val state: String get() = checkState().summary
 
     fun provision() = manager.provisioner.provision(this)
+
+    fun satisfy() = manager.satisfier.satisfy(this)
 
     fun tail() = manager.tailer.tail(this)
 

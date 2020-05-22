@@ -40,7 +40,7 @@ class BackupManager(private val aem: AemExtension) {
      * Directory storing locally created backup files.
      */
     val localDir = aem.obj.dir {
-        convention(aem.project.rootProject.layout.projectDirectory.dir(".gradle/aem/$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
+        convention(aem.obj.buildDir("$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
         aem.prop.file("localInstance.backup.localDir")?.let { set(it) }
     }
 

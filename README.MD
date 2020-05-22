@@ -198,23 +198,22 @@ aem {
             proxyPort.set(prop.int("instance.http.proxyPort"))
             proxyScheme.set(prop.string("instance.http.proxyScheme"))
         }
+     
+        satisfier { // customizing CRX packages to be deployed as dependencies before built AEM application
+            packages {
+                "my-package"("http://.../my-package-1.0.0.zip")
+                "my-bundle"("group:name:version") // will be wrapped on-the-fly to CRX package
+            }
+        }
 
         provisioner { // configuring AEM instances in various circumstances (e.g only once)
-            enableCrxDe()
-            deployPackage("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
-            deployPackage("com.neva.felix:search-webconsole-plugin:1.3.0")
-            step("setup-replication-author") {
-                condition { once() && instance.author }
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { once() && instance.env != "prod" }
                 sync {
-                    repository {
-                        save("/etc/replication/agents.author/publish/jcr:content", mapOf(
-                                "enabled" to true,
-                                "userId" to instance.user,
-                                "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
-                                "transportUser" to instance.user,
-                                "transportPassword" to instance.password
-                        ))
-                    }
+                    osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                            "alias" to "/crx/server"
+                    ))
                 }
             }
             // ...

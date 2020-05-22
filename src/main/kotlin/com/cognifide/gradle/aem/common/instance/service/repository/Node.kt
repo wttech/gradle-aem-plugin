@@ -285,11 +285,6 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     }
 
     /**
-     * Change node name (effectively moves node).
-     */
-    fun rename(newName: String, replace: Boolean = false) = move("${parent.path}/$newName", replace)
-
-    /**
      * Copy node to path pointing to folder with preserving original node name.
      */
     fun copyTo(targetDir: String) = copy("$targetDir/$name")

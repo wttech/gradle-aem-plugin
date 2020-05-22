@@ -45,11 +45,15 @@ class LocalInstancePluginTest : AemBuildTest() {
                 
                 aem {
                     instance {
-                        provisioner {
-                            deployPackage("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip")
-                            deployPackage("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip")
-                            deployPackage("com.neva.felix:search-webconsole-plugin:1.3.0")
-                            deployPackage("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
+                        satisfier {
+                            packages {
+                               "dep.ac-tool"(
+                                   "https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip", 
+                                   "https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip"
+                                )
+                               "dep.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.3.0")
+                               "tool.aem-groovy-console"("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
+                            }
                         }
                     }
                 }
@@ -62,10 +66,10 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertFileExists("build/instance/quickstart/cq-quickstart-6.5.0.jar")
             assertFileExists("build/instance/quickstart/license.properties")
 
-            assertFileExists("build/instance/provision/files/4f135495/aem-groovy-console-14.0.0.zip")
-            assertFileExists("build/instance/provision/files/6182d096/accesscontroltool-oakindex-package-2.3.2.zip")
-            assertFileExists("build/instance/provision/files/f30506c4/accesscontroltool-package-2.3.2.zip")
-            assertPackage("build/package/wrapper/search-webconsole-plugin-1.3.0.zip")
+            assertFileExists("build/instance/satisfy/packages/4f135495/aem-groovy-console-14.0.0.zip")
+            assertFileExists("build/instance/satisfy/packages/f30506c4/accesscontroltool-package-2.3.2.zip")
+            assertFileExists("build/instance/satisfy/packages/6182d096/accesscontroltool-oakindex-package-2.3.2.zip")
+            assertPackage("build/instance/satisfy/packages/df0bbfa8/search-webconsole-plugin-1.3.0.zip")
         }
     }
 
@@ -93,8 +97,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
                 
-                localInstance.backup.localDir=$BACKUP_DIR
-                localInstance.backup.uploadUrl=$BACKUP_DIR/upload
+                localInstance.backup.uploadUrl=build/localInstance/backup/upload
                 """)
 
             settingsGradle("")
@@ -110,10 +113,24 @@ class LocalInstancePluginTest : AemBuildTest() {
                 
                 aem {
                     instance {
+                        satisfier {
+                            packages {
+                                "dep.core-components-all"("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
+                                "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
+                            }
+                        }
                         provisioner {
-                            enableCrxDe()
-                            deployPackage("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
-                            deployPackage("com.neva.felix:search-webconsole-plugin:1.2.0")
+                            step("enable-crxde") {
+                                description = "Enables CRX DE"
+                                condition { once() && instance.env != "prod" }
+                                action {
+                                    sync {
+                                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                                                "alias" to "/crx/server"
+                                        ))
+                                    }
+                                }
+                            }
                         }
                     }
                     
@@ -157,13 +174,13 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceBackup") {
             assertTask(":instanceBackup")
 
-            val localBackupDir = "$BACKUP_DIR/local"
+            val localBackupDir = "build/localInstance/backup/local"
             assertFileExists(localBackupDir)
             val localBackups = files(localBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
-            val remoteBackupDir = "$BACKUP_DIR/upload"
+            val remoteBackupDir = "build/localInstance/backup/upload"
             assertFileExists(remoteBackupDir)
             val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
@@ -202,9 +219,5 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "clean") {
             assertTask(":clean")
         }
-    }
-
-    companion object {
-        const val BACKUP_DIR = ".gradle/aem/localInstance/backup"
     }
 }

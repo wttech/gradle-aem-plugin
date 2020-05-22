@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.common.utils.using
 import java.io.Serializable
 
 class PackageOptions(private val aem: AemExtension) : Serializable {
@@ -91,8 +90,4 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     }
 
     internal var validatorOptions: PackageValidator.() -> Unit = {}
-
-    val wrapper by lazy { PackageWrapper(aem) }
-
-    fun wrapper(options: PackageWrapper.() -> Unit) = wrapper.using(options)
 }
