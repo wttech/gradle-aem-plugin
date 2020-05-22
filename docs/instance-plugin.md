@@ -10,7 +10,6 @@
 * [Task instanceStatus](#task-instancestatus)
 * [Task instanceReload](#task-instancereload)
 * [Task instanceResolve](#task-instanceresolve)
-* [Task instanceSatisfy](#task-instancesatisfy)
 * [Task instanceProvision](#task-instanceprovision)
 * [Task instanceAwait](#task-instanceawait)
 * [Task instanceTail](#task-instancetail)
@@ -23,7 +22,7 @@
 
 ## About
 
-Provides tasks related to remote instance management:  `instanceSatisfy`, `instanceProvision`, `instanceTail`, `instanceReload`, `instanceAwait` etc.
+Provides tasks related to remote instance management:  `instanceProvision`, `instanceTail`, `instanceReload`, `instanceAwait` etc.
 Allows to interact with remote AEM instances (without direct access to the instance files).
 
 Should be applied only at root project / only once within whole build.
@@ -57,7 +56,9 @@ Resolve instance files from remote sources before running other tasks.
 
 Files considered:
 
-* CRX packages configured in [satisfy task](#task-instancesatisfy)
+* AEM instance source files (JAR and license) used by [create task](local-instance-plugin.md#task-instancecreate),
+* AEM instance backups (ZIP) created via [backup task](local-instance-plugin.md#task-instancebackup),
+* CRX packages to be deployed via [provision task](#task-instanceprovision).
 
 This task might be also useful to check amended configuration to verify HTTP urls, SMB / SSH credentials etc and fail fast when they are wrong.
 
