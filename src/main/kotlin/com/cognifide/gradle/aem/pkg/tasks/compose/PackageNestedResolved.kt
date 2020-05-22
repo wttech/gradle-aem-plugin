@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks.compose
 
 import com.cognifide.gradle.aem.common.pkg.PackageFile
+import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.build.DependencyFile
 import org.gradle.api.tasks.Input
@@ -18,4 +19,6 @@ class PackageNestedResolved(private val target: PackageCompose, @Input val notat
     override val fileName = aem.obj.string { convention(aem.obj.provider { resolvedFile.name }) }
 
     override val vaultFilter = aem.obj.boolean { convention(target.vaultFilters) }
+
+    override val vaultFilterType = aem.obj.typed<FilterType> { convention(FilterType.FILE) }
 }
