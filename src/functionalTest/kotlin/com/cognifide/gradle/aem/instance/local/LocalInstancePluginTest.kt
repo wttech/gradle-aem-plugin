@@ -93,7 +93,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
                 
-                localInstance.backup.uploadUrl=build/localInstance/backup/upload
+                localInstance.backup.localDir=$BACKUP_DIR
+                localInstance.backup.uploadUrl=$BACKUP_DIR/upload
                 """)
 
             settingsGradle("")
@@ -110,9 +111,9 @@ class LocalInstancePluginTest : AemBuildTest() {
                 aem {
                     instance {
                         provisioner {
+                            enableCrxDe()
                             deployPackage("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
                             deployPackage("com.neva.felix:search-webconsole-plugin:1.2.0")
-                            enableCrxDe()
                         }
                     }
                     
@@ -156,13 +157,13 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceBackup") {
             assertTask(":instanceBackup")
 
-            val localBackupDir = "build/localInstance/backup/local"
+            val localBackupDir = "$BACKUP_DIR/local"
             assertFileExists(localBackupDir)
             val localBackups = files(localBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
-            val remoteBackupDir = "build/localInstance/backup/upload"
+            val remoteBackupDir = "$BACKUP_DIR/upload"
             assertFileExists(remoteBackupDir)
             val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
@@ -201,5 +202,9 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "clean") {
             assertTask(":clean")
         }
+    }
+
+    companion object {
+        const val BACKUP_DIR = ".gradle/aem/localInstance/backup"
     }
 }
