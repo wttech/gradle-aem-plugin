@@ -11,6 +11,7 @@ import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.pkg.tasks.compose.*
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.using
+import org.apache.commons.lang3.StringUtils
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
@@ -145,14 +146,23 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private fun fromArchive(archive: RepositoryArchive) {
         val dirPath = archive.dirPath.map { path ->
-            when {
-                archive is BundleInstalled && archive.runMode.isPresent -> "$path.${archive.runMode.get()}"
-                else -> path
+            if (archive is BundleInstalled) {
+                var installPath = StringUtils.appendIfMissing(path, "/install")
+                if (archive.runMode.isPresent) {
+                    installPath = "$path.${archive.runMode.get()}"
+                }
+                installPath
+            } else {
+                path
             }
         }
 
         if (archive.vaultFilter.get()) {
-            vaultDefinition.filter(dirPath.map { "$it/${archive.fileName.get()}" }) { type = FilterType.FILE }
+            when (archive.vaultFilterType.get()) {
+                FilterType.FILE -> vaultDefinition.filter("${dirPath.get()}/${archive.fileName.get()}") { type = FilterType.FILE }
+                FilterType.DIR -> vaultDefinition.filter(dirPath.get()) { type = FilterType.DIR }
+                else -> Unit
+            }
         }
 
         into("${Package.JCR_ROOT}/${dirPath.get()}") { spec ->

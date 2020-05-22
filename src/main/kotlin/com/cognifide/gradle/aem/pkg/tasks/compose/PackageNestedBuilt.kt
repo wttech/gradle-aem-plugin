@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks.compose
 
+import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import org.gradle.api.tasks.TaskProvider
 
@@ -14,4 +15,6 @@ class PackageNestedBuilt(target: PackageCompose, private val task: TaskProvider<
     override val fileName = aem.obj.string { convention(task.flatMap { it.archiveFileName }) }
 
     override val vaultFilter = aem.obj.boolean { convention(task.flatMap { it.vaultFilters }) }
+
+    override val vaultFilterType = aem.obj.typed<FilterType> { convention(FilterType.FILE) }
 }
