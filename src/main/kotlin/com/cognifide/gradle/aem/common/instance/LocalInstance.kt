@@ -343,7 +343,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     companion object {
 
-        const val FILES_PATH = "instance/local"
+        const val FILES_PATH = "localInstance/defaults"
 
         const val ENVIRONMENT = "local"
 
