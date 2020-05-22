@@ -16,10 +16,7 @@ class BundleFile(val file: File) : Serializable {
 
     val description: String = jar.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_DESCRIPTION) ?: ""
 
-    val group: String
-        get() = symbolicName.substringBeforeLast(".")
+    val group: String get() = symbolicName.substringBeforeLast(".")
 
-    override fun toString(): String {
-        return "BundleFile(symbolicName='$symbolicName', version='$version', file='$file')"
-    }
+    override fun toString(): String = "BundleFile(symbolicName='$symbolicName', version='$version', file='$file')"
 }

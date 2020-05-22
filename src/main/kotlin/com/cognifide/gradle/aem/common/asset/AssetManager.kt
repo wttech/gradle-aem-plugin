@@ -8,7 +8,7 @@ import java.io.File
 
 class AssetManager(private val aem: AemExtension) {
 
-    val rootDir = aem.obj.dir { convention(aem.project.rootProject.layout.buildDirectory.dir("aem/plugin/${AemPlugin.BUILD.pluginVersion}")) }
+    val rootDir = aem.obj.dir { convention(aem.project.rootProject.layout.projectDirectory.dir(".gradle/aem/plugin/${AemPlugin.BUILD.pluginVersion}")) }
 
     private val assets get() = ZipFile(rootDir.file(ZIP_PATH).get().asFile.also { assetsFromResources(it) })
 
