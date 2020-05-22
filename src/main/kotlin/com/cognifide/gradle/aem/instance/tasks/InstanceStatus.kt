@@ -18,11 +18,11 @@ open class InstanceStatus : InstanceTask() {
             instanceManager.statusReporter.init()
 
             step = "Checking statuses"
-            common.parallel.each(instances.get()) { instance ->
+            common.parallel.map(instances.get()) { instance ->
                 increment("Instance '${instance.name}'") {
-                    println(instanceManager.statusReporter.report(instance))
+                    instance to instanceManager.statusReporter.report(instance)
                 }
-            }
+            }.sortedBy { it.first.name }.forEach { println(it.second) }
         }
     }
 
