@@ -22,11 +22,11 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private val cli = CliApp(aem).apply {
         dependencyNotation.apply {
-            convention("net.adamcin.oakpal:oakpal-cli:1.5.2:dist")
+            convention("net.adamcin.oakpal:oakpal-cli:2.0.0:dist")
             aem.prop.string("oakpal.cli.dependency")?.let { set(it) }
         }
         executable.apply {
-            convention("oakpal-cli-1.5.2/bin/oakpal")
+            convention("oakpal-cli-2.0.0/bin/oakpal")
             aem.prop.string("oakpal.cli.executable")?.let { set(it) }
         }
     }
