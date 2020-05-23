@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
@@ -14,6 +15,7 @@ import org.buildobjects.process.ProcBuilder
 import org.gradle.api.JavaVersion
 import java.io.File
 import java.io.Serializable
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
 class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
@@ -44,7 +46,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Path in which local AEM instances will be stored.
      */
     val rootDir = aem.obj.dir {
-        convention(projectDir.dir(".instance"))
+        convention(projectDir.dir(".gradle/aem/localInstance/instance"))
         aem.prop.file("localInstance.rootDir")?.let { set(it) }
     }
 
@@ -388,14 +390,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             return listOf()
         }
 
-        val openedInstances = mutableListOf<LocalInstance>()
+        val openedInstances = CopyOnWriteArrayList<LocalInstance>()
         common.progress(upInstances.size) {
             common.parallel.with(upInstances) {
                 increment("Opening instance '$name'") {
                     try {
                         aem.webBrowser.open(httpOpenUrl) { withTimeoutMillis(openTimeout.get()) }
                         openedInstances += this@with
-                    } catch (e: LocalInstanceException) {
+                    } catch (e: AemException) {
                         logger.debug("Instance '$name' open error", e)
                         logger.warn("Cannot open instance '$name'! Cause: ${e.message}")
                     }
@@ -408,6 +410,37 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
 
         return openedInstances
+    }
+
+    fun kill(instance: LocalInstance) = kill(listOf(instance))
+
+    fun kill(instances: Collection<LocalInstance> = aem.localInstances): List<LocalInstance> {
+        val killableInstances = instances.filter { it.pid > 0 }
+        if (killableInstances.isEmpty()) {
+            logger.lifecycle("No instances to kill.")
+            return listOf()
+        }
+
+        val killedInstances = CopyOnWriteArrayList<LocalInstance>()
+        common.progress(killableInstances.size) {
+            common.parallel.with(killableInstances) {
+                increment("Killing instance '$name'") {
+                    try {
+                        aem.processKiller.kill(pid)
+                        killedInstances += this@with
+                    } catch(e: AemException) {
+                        logger.debug("Instance '$name' kill error", e)
+                        logger.warn("Cannot kill instance '$name'! Cause: ${e.message}")
+                    }
+                }
+            }
+        }
+
+        if (killedInstances.isEmpty()) {
+            logger.lifecycle("No instances killed!")
+        }
+
+        return killedInstances
     }
 
     fun examine(instances: Collection<LocalInstance> = aem.localInstances) = base.examine(instances)

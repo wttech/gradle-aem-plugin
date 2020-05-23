@@ -73,6 +73,8 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
             mustRunAfter(resolve, create, up)
         }
 
+        register<InstanceKill>(InstanceKill.NAME)
+
         // Runtime lifecycle
 
         named<Up>(Up.NAME) {

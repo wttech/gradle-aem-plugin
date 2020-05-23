@@ -297,6 +297,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     fun open() = localManager.open(this)
 
+    fun kill() = localManager.kill(this)
+
     @get:JsonIgnore
     val status: Status get() = checkStatus()
 
