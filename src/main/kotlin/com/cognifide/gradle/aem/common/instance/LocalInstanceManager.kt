@@ -428,7 +428,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     try {
                         aem.processKiller.kill(pid)
                         killedInstances += this@with
-                    } catch(e: AemException) {
+                    } catch (e: AemException) {
                         logger.debug("Instance '$name' kill error", e)
                         logger.warn("Cannot kill instance '$name'! Cause: ${e.message}")
                     }

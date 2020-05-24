@@ -15,6 +15,7 @@ class ProcessKiller(private val aem: AemExtension) {
         this.options = options
     }
 
+    @Suppress("TooGenericExceptionCaught", "SpreadOperator", "MagicNumber")
     fun kill(pid: Int, options: ProcBuilder.() -> Unit = {}) {
         try {
             val os = OperatingSystem.current()
@@ -30,7 +31,7 @@ class ProcessKiller(private val aem: AemExtension) {
 
             ProcBuilder(executable, *args.toTypedArray())
                     .withWorkingDirectory(aem.project.projectDir)
-                    .withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
+                    .withTimeoutMillis(TimeUnit.SECONDS.toMillis(10))
                     .withExpectedExitStatuses(0)
                     .apply(this.options)
                     .apply(options)
