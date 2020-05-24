@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.action
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Reloads all instances (both remote and local instances).
@@ -19,7 +20,7 @@ class ReloadAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private fun reload(instances: Collection<Instance>) {
-        val reloaded = mutableListOf<Instance>()
+        val reloaded = CopyOnWriteArrayList<Instance>()
 
         common.parallel.with(instances) {
             try {

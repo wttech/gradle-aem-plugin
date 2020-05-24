@@ -4,10 +4,15 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
-import org.gradle.process.internal.streams.SafeStreams
 import java.util.concurrent.TimeUnit
 
 class WebBrowser(private val aem: AemExtension) {
+
+    private var options: ProcBuilder.() -> Unit = {}
+
+    fun options(options: ProcBuilder.() -> Unit) {
+        this.options = options
+    }
 
     @Suppress("TooGenericExceptionCaught", "MagicNumber")
     fun open(url: String, options: ProcBuilder.() -> Unit = {}) {
@@ -23,9 +28,7 @@ class WebBrowser(private val aem: AemExtension) {
                     .withWorkingDirectory(aem.project.projectDir)
                     .withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
                     .ignoreExitStatus()
-                    .withInputStream(SafeStreams.emptyInput())
-                    .withOutputStream(SafeStreams.systemOut())
-                    .withErrorStream(SafeStreams.systemOut())
+                    .apply(this.options)
                     .apply(options)
                     .run()
         } catch (e: Exception) {

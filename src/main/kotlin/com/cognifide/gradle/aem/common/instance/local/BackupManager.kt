@@ -40,7 +40,7 @@ class BackupManager(private val aem: AemExtension) {
      * Directory storing locally created backup files.
      */
     val localDir = aem.obj.dir {
-        convention(aem.project.rootProject.layout.projectDirectory.dir(".gradle/aem/$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
+        convention(aem.project.layout.projectDirectory.dir("$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
         aem.prop.file("localInstance.backup.localDir")?.let { set(it) }
     }
 
@@ -53,7 +53,7 @@ class BackupManager(private val aem: AemExtension) {
      * Directory storing downloaded remote backup files.
      */
     val remoteDir = aem.obj.dir {
-        convention(aem.obj.buildDir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
+        convention(aem.project.layout.projectDirectory.dir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
         aem.prop.file("localInstance.backup.remoteDir")?.let { set(it) }
     }
 
@@ -228,7 +228,7 @@ class BackupManager(private val aem: AemExtension) {
     }
 
     companion object {
-        const val OUTPUT_DIR = "localInstance/backup"
+        const val OUTPUT_DIR = ".gradle/aem/localInstance/backup"
 
         const val SUFFIX_DEFAULT = ".backup.zip"
     }

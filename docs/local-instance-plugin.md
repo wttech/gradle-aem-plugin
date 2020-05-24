@@ -50,11 +50,11 @@ Ensure having directory *aem/.instance* ignored in VCS and excluded from indexin
 
 ## Task `instanceSetup`
 
-Performs initial setup of local AEM instance(s). Automated version of `instanceCreate instanceUp instanceSatisfy packageDeploy`.
+Performs initial setup of local AEM instance(s). Shorthand for `instanceCreate instanceUp instanceProvision`.
 
 ## Task `instanceResetup`
 
-Combination of `instanceDown instanceDestroy instanceSetup`. Allows to quickly back to initial state of local AEM instance(s).
+Allows to quickly back to initial state of local AEM instance(s). Shorthand for `instanceDown instanceDestroy instanceSetup`. 
 
 To prevent data loss, this unsafe task execution must be confirmed by parameter `-Pforce`.
 
@@ -126,7 +126,6 @@ aem {
 }
 ```
 
-Files section works in a same way as in [instance satisfy task](instance-plugin.md#task-instancesatisfy).
 For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
 
 ### Customization of extracted instance files (optional)
@@ -253,12 +252,10 @@ It is also possible to download packages to be satisfied on instances via custom
 
 ```kotlin
 aem {
+    provisioner {
+        deployPackage("s3://packages/my-package.zip")
+    }
     tasks {
-        instanceSatisfy {
-            packages {
-                download("s3://packages/my-package.zip")
-            }
-        }
         tasks {
             register("doThings") {
                 fileTransfer.download("s3://packages/my-package.zip")

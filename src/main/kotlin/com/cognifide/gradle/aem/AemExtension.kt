@@ -20,6 +20,7 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
+import com.cognifide.gradle.aem.common.utils.ProcessKiller
 import com.cognifide.gradle.aem.common.utils.WebBrowser
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.common.CommonExtension
@@ -55,6 +56,8 @@ class AemExtension(val project: Project) : Serializable {
     val assetManager by lazy { AssetManager(this) }
 
     val webBrowser by lazy { WebBrowser(this) }
+
+    val processKiller by lazy { ProcessKiller(this) }
 
     /**
      * Defines common settings like environment name, line endings when generating files etc

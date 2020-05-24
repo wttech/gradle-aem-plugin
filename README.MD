@@ -53,14 +53,17 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 
 What is being done above by simply running super easy command `sh gradlew` <=> `gw` ?
 
-* `:env:instanceProvision` - configuring AEM instances / performing provisioning steps like configuring replication agents (AEM platform wide changes).
-* `:env:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+* `:env:instanceProvision` - configuring AEM instances / performing provisioning steps like:
+    * deploying dependent CRX packages,
+    * enabling access to CRX DE (e.g on all environments except production),
+    * configuring replication agents (AEM platform wide changes),
 * `:app:aem:all:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
 
 **Build is incremental** which guarantees optimized time every time regardless of build command used.
 Only changed parts of application are processed again:
 
 * Dependent CRX packages are installed only when they are not already installed on particular AEM instances.
+* Provisioning steps are performed only once on each AEM instance (by default but customizable),
 * CRX package is rebuild only when JCR content / files under *jcr_root* are changed.
 * Java code is recompiled only when code in *\*.java* files is changed.
 * Front-end / Webpack build is run again only when code in *\*.scss* and *\*.js* etc files is changed.
@@ -74,7 +77,7 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 * [Advanced AEM instance(s) stability & health checking](docs/instance-plugin.md#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](docs/instance-plugin.md#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Easy parallel [CRX package deployment](docs/package-plugin.md#task-packagedeploy) to many remote group of instances.
-* [Fail-safe dependent CRX packages installation](docs/instance-plugin.md#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
+* [Fail-safe dependent CRX packages installation](docs/instance-plugin.md#task-instanceprovision) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
 * [Fast JCR content synchronization](docs/package-sync-plugin.md#task-packagesync) from running AEM instances with advanced content normalization.
 * [Composing CRX package](docs/package-plugin.md#task-packagecompose) from multiple separate JCR content roots, bundles.
 * [Validating CRX package](docs/package-plugin.md#crx-package-validation) using seamless integration with [OakPAL tool](http://adamcin.net/oakpal).
@@ -164,7 +167,7 @@ plugins {
 
 group = "com.company.aem"
 version = "1.0.0"
-defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
+defaultTasks(":instanceProvision", ":packageDeploy")
 
 aem {
     `package` { // built CRX package options
@@ -286,7 +289,6 @@ To see all available options and actual documentation, please follow to:
 * `bundleCompose` - [BundleCompose](src/main/kotlin/com/cognifide/gradle/aem/bundle/tasks/BundleCompose.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
 * `instanceProvision` - [InstanceProvision](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/InstanceProvision.kt)
-* `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
 
 ### Plugins documentation
@@ -361,20 +363,18 @@ aem {
 
 Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.
 
-Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `instanceSatisfy` (which is not fully qualified, better if it will be `:instanceSatisfy` of root project).
-Let's imagine if task `instanceSatisfy` will come from package plugin, then Gradle will execute more than one `instanceSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
+Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `instanceStatus` (which is not fully qualified, better if it will be `:instanceStatus` of root project).
+Let's imagine if task `instanceStatus` will come from package plugin, then Gradle will execute more than one `instanceStatus` (for all projects that have plugin applied), so that this is unintended behavior.
 Currently used plugin architecture solves that problem.
 
 ### Work effectively on start and daily basis
 
 Initially, to create fully configured local AEM instances simply run command `gradlew instanceSetup`.
-
-Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy`.
+Later during development process, building and deploying to AEM should be done using the command: `gradlew instanceProvision packageDeploy`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
-* Finally build awaits till all AEM instances are stable.
+* Finally build awaits till all AEM instances and built application are stable.
 
 ### Customize convention for CRX package and OSGi bundle names and paths
 

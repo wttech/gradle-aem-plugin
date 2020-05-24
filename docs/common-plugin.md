@@ -43,7 +43,7 @@ Apply other plugins to have useful tasks or implement own.
 * Instance **id** is an instance purpose identifier and must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
 * Instance **type** indicates physical type of instance and could be only: *local* and *remote*. Local means that instance could be created by plugin automatically under local file system.
 * Only instances defined as *local* are considered in command `instanceSetup`, `instanceCreate`, `instanceUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances defined as *local* or *remote* are considered in commands CRX package deployment related like `instanceSatisfy`, `packageDeploy`, `packageUpload`, `packageInstall` etc.
+* All instances defined as *local* or *remote* are considered in commands CRX package deployment related like `instanceProvision`, `packageDeploy`, `packageUpload`, `packageInstall` etc.
 
 Instances could be defined in two ways, via:
  
@@ -409,14 +409,14 @@ Under the hood, repository service is using only AEM built-in [Sling Post Servle
 #### Executing code on AEM runtime
 
 It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
-Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
+Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceProvision` task, then it is possible to use [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
 
 ```kotlin
 aem {
+    provisioner {
+        deployPackage("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip")
+    }
     tasks {
-        satisfy {
-            group("tool.groovyconsole") { download("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
-        }
         register("generatePosts") {
             doLast {
                 syncInstances {
