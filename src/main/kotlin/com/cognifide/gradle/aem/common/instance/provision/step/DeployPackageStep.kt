@@ -8,7 +8,7 @@ class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
     val source = aem.obj.typed<Any>()
 
-    val sourceProperties by lazy { DeployPackageSource.from(source.get()) }
+    val sourceProperties by lazy { DeployPackageSource.from(source.get(), aem) }
 
     val file by lazy { aem.packageOptions.wrapper.wrap(provisioner.fileResolver.get(source.get()).file) }
 

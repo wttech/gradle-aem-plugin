@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.provision.step
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.artifacts.Dependency
@@ -7,13 +8,13 @@ import org.gradle.api.artifacts.Dependency
 data class DeployPackageSource(val name: String, val version: String) {
 
     companion object {
-        fun from(source: Any) = when (source) {
-            is String -> from(source)
-            is Dependency -> from(source)
-            else -> throw fail(source)
+        fun from(source: Any, aem: AemExtension): DeployPackageSource = when (source) {
+            is String -> fromUrlOrNotation(source)
+            is Dependency -> fromDependency(source)
+            else -> fromFile(source, aem)
         }
 
-        fun from(dependency: Dependency): DeployPackageSource {
+        fun fromDependency(dependency: Dependency): DeployPackageSource {
             if (dependency.version != null) {
                 return DeployPackageSource(dependency.name, dependency.version!!)
             }
@@ -21,7 +22,7 @@ data class DeployPackageSource(val name: String, val version: String) {
             throw fail(dependency)
         }
 
-        fun from(urlOrNotation: String): DeployPackageSource {
+        fun fromUrlOrNotation(urlOrNotation: String): DeployPackageSource {
             if (URL_EXTENSIONS.any { urlOrNotation.endsWith(it) }) {
                 val baseName = FilenameUtils.getBaseName(urlOrNotation)
                 val version = URL_VERSION_PATTERNS.asSequence()
@@ -31,9 +32,7 @@ data class DeployPackageSource(val name: String, val version: String) {
                     val name = baseName.substringBefore("-$version")
                     return DeployPackageSource(name, version)
                 }
-            }
-
-            if (DEPENDENCY_NOTATION.matches(urlOrNotation)) {
+            } else if (DEPENDENCY_NOTATION.matches(urlOrNotation)) {
                 val parts = urlOrNotation.substringBefore("@").split(":")
                 return DeployPackageSource(parts[1], parts[2])
             }
@@ -41,7 +40,18 @@ data class DeployPackageSource(val name: String, val version: String) {
             throw fail(urlOrNotation)
         }
 
-        fun fail(source: Any) = ProvisionException("Package name cannot be derived from provided source '$source'! Please specify it explicitly.")
+        @Suppress("TooGenericExceptionCaught")
+        fun fromFile(path: Any, aem: AemExtension): DeployPackageSource = try {
+            fromUrlOrNotation(aem.project.file(path).absolutePath)
+        } catch (e: Exception) {
+            throw fail(path, e)
+        }
+
+        private fun fail(source: Any) = ProvisionException(failMessage(source))
+
+        private fun fail(source: Any, e: Throwable) = ProvisionException(failMessage(source), e)
+
+        private fun failMessage(source: Any) = "Package name cannot be derived from provided source '$source'! Please specify it explicitly."
 
         private val DEPENDENCY_NOTATION = "[^:]+:[^:]+:[^:]+".toRegex()
 
