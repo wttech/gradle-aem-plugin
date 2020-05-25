@@ -142,8 +142,8 @@ class LocalInstancePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "instanceSetup") {
             assertTask(":instanceSetup")
-            assertFileExists(file(".gradle/localInstance/instance/author"))
-            assertFileExists(file(".gradle/localInstance/instance/publish"))
+            assertFileExists(file(".gradle/aem/localInstance/instance/author"))
+            assertFileExists(file(".gradle/aem/localInstance/instance/publish"))
         }
 
         runBuild(projectDir, "instanceStatus") {
@@ -180,15 +180,15 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceDestroy", "-Pforce") {
             assertTask(":instanceDown")
             assertTask(":instanceDestroy")
-            assertFileNotExists(".gradle/localInstance/instance/author")
-            assertFileNotExists(".gradle/localInstance/instance/publish")
+            assertFileNotExists(".gradle/aem/localInstance/instance/author")
+            assertFileNotExists(".gradle/aem/localInstance/instance/publish")
         }
 
         runBuild(projectDir, "instanceUp") {
             assertTask(":instanceCreate")
             assertTask(":instanceUp")
-            assertFileExists(".gradle/localInstance/instance/author")
-            assertFileExists(".gradle/localInstance/instance/publish")
+            assertFileExists(".gradle/aem/localInstance/instance/author")
+            assertFileExists(".gradle/aem/localInstance/instance/publish")
         }
 
         runBuild(projectDir, "assertIfCrxDeEnabled") {
