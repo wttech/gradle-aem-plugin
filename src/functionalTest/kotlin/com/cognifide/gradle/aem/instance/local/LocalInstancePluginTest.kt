@@ -136,71 +136,73 @@ class LocalInstancePluginTest : AemBuildTest() {
                 """)
         }
 
-        runBuild(projectDir, "instanceStatus") {
-            assertTask(":instanceStatus")
-        }
+        try {
+            runBuild(projectDir, "instanceStatus") {
+                assertTask(":instanceStatus")
+            }
 
-        runBuild(projectDir, "instanceSetup") {
-            assertTask(":instanceSetup")
-            assertFileExists(file(".gradle/aem/localInstance/instance/author"))
-            assertFileExists(file(".gradle/aem/localInstance/instance/publish"))
-        }
+            runBuild(projectDir, "instanceSetup") {
+                assertTask(":instanceSetup")
+                assertFileExists(file(".gradle/aem/localInstance/instance/author"))
+                assertFileExists(file(".gradle/aem/localInstance/instance/publish"))
+            }
 
-        runBuild(projectDir, "instanceStatus") {
-            assertTask(":instanceStatus")
-        }
+            runBuild(projectDir, "instanceStatus") {
+                assertTask(":instanceStatus")
+            }
 
-        runBuild(projectDir, "instanceDown") {
-            assertTask(":instanceDown")
-        }
+            runBuild(projectDir, "instanceDown") {
+                assertTask(":instanceDown")
+            }
 
-        runBuild(projectDir, "instanceBackup") {
-            assertTask(":instanceBackup")
+            runBuild(projectDir, "instanceBackup") {
+                assertTask(":instanceBackup")
 
-            val localBackupDir = "$BACKUP_DIR/local"
-            assertFileExists(localBackupDir)
-            val localBackups = files(localBackupDir, "**/*.backup.zip")
-            assertEquals("Backup file should end with *.backup.zip suffix!",
-                    1, localBackups.count())
+                val localBackupDir = "$BACKUP_DIR/local"
+                assertFileExists(localBackupDir)
+                val localBackups = files(localBackupDir, "**/*.backup.zip")
+                assertEquals("Backup file should end with *.backup.zip suffix!",
+                        1, localBackups.count())
 
-            val remoteBackupDir = "$BACKUP_DIR/upload"
-            assertFileExists(remoteBackupDir)
-            val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
-            assertEquals("Backup file should end with *.backup.zip suffix!",
-                    1, remoteBackups.count())
+                val remoteBackupDir = "$BACKUP_DIR/upload"
+                assertFileExists(remoteBackupDir)
+                val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
+                assertEquals("Backup file should end with *.backup.zip suffix!",
+                        1, remoteBackups.count())
 
-            val localBackup = localBackups.first()
-            val remoteBackup = remoteBackups.first()
-            assertEquals("Local & remote backup names does not match!",
-                    localBackup.name, remoteBackup.name)
-            assertEquals("Local & remote backup size does not match!",
-                    localBackup.length(), remoteBackup.length())
-        }
+                val localBackup = localBackups.first()
+                val remoteBackup = remoteBackups.first()
+                assertEquals("Local & remote backup names does not match!",
+                        localBackup.name, remoteBackup.name)
+                assertEquals("Local & remote backup size does not match!",
+                        localBackup.length(), remoteBackup.length())
+            }
 
-        runBuild(projectDir, "instanceDestroy", "-Pforce") {
-            assertTask(":instanceDown")
-            assertTask(":instanceDestroy")
-            assertFileNotExists(".gradle/aem/localInstance/instance/author")
-            assertFileNotExists(".gradle/aem/localInstance/instance/publish")
-        }
+            runBuild(projectDir, "instanceDestroy", "-Pforce") {
+                assertTask(":instanceDown")
+                assertTask(":instanceDestroy")
+                assertFileNotExists(".gradle/aem/localInstance/instance/author")
+                assertFileNotExists(".gradle/aem/localInstance/instance/publish")
+            }
 
-        runBuild(projectDir, "instanceUp") {
-            assertTask(":instanceCreate")
-            assertTask(":instanceUp")
-            assertFileExists(".gradle/aem/localInstance/instance/author")
-            assertFileExists(".gradle/aem/localInstance/instance/publish")
-        }
+            runBuild(projectDir, "instanceUp") {
+                assertTask(":instanceCreate")
+                assertTask(":instanceUp")
+                assertFileExists(".gradle/aem/localInstance/instance/author")
+                assertFileExists(".gradle/aem/localInstance/instance/publish")
+            }
 
-        runBuild(projectDir, "assertIfCrxDeEnabled") {
-            assertTask(":assertIfCrxDeEnabled")
-        }
+            runBuild(projectDir, "assertIfCrxDeEnabled") {
+                assertTask(":assertIfCrxDeEnabled")
+            }
 
-        runBuild(projectDir, "instanceDestroy", "-Pforce") {
-            assertTask(":instanceDestroy")
-        }
-
-        runBuild(projectDir, "clean") {
-            assertTask(":clean")
+            runBuild(projectDir, "instanceDestroy", "-Pforce") {
+                assertTask(":instanceDestroy")
+            }
+        } finally {
+            runBuild(projectDir, "instanceKill") {
+                assertTask(":instanceKill")
+            }
         }
     }
 
