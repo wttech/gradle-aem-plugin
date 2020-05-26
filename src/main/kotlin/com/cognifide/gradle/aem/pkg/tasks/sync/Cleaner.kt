@@ -73,6 +73,7 @@ class Cleaner(private val aem: AemExtension) {
                 "jcr:created*",
                 "jcr:isCheckedOut",
                 "cq:lastReplicat*",
+                "cq:lastRolledout*",
                 "dam:extracted",
                 "dam:assetState",
                 "dc:modified",
