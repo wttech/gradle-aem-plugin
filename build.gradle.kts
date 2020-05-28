@@ -35,7 +35,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.51")
+    implementation("com.cognifide.gradle:common-plugin:0.1.52")
 
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.3.0")
@@ -55,12 +55,6 @@ dependencies {
 
 tasks {
 
-    register<Zip>("tailerZip") {
-        from("dists/gradle-aem-tailer")
-
-        archiveFileName.set("gradle-aem-tailer.zip")
-        destinationDirectory.set(file("dists"))
-    }
     register<Zip>("assetsZip") {
         from("src/asset")
         archiveFileName.set("assets.zip")

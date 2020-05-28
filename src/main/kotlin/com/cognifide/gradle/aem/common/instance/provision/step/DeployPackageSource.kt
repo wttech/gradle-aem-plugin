@@ -42,7 +42,7 @@ data class DeployPackageSource(val name: String, val version: String) {
 
         @Suppress("TooGenericExceptionCaught")
         fun fromFile(path: Any, aem: AemExtension): DeployPackageSource = try {
-            fromUrlOrNotation(aem.project.file(path).absolutePath)
+            fromUrlOrNotation(aem.project.files(path).singleFile.absolutePath)
         } catch (e: Exception) {
             throw fail(path, e)
         }
