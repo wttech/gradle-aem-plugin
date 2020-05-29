@@ -21,6 +21,7 @@
 * [Task instanceDestroy](#task-instancedestroy)
 * [Task instanceUp](#task-instanceup)
 * [Task instanceDown](#task-instancedown)
+* [Task instanceKill](#task-instancekill)
 * [Task instanceRestart](#task-instancerestart)
 * [Task instanceResolve](#task-instanceresolve)
 
@@ -279,7 +280,13 @@ Turn on local AEM instance(s).
 
 ## Task `instanceDown`
 
-Turn off local AEM instance(s).
+Turn off local AEM instance(s) gracefully.
+
+## Task `instanceKill`
+
+Turn off local AEM instances(s) ultimately by killing OS processes.
+
+Should be used only when `instanceDown` does not turn off instances properly.
 
 ## Task `instanceRestart`
 

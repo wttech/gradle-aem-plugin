@@ -35,7 +35,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.51")
+    implementation("com.cognifide.gradle:common-plugin:0.1.53")
 
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.3.0")
@@ -55,12 +55,6 @@ dependencies {
 
 tasks {
 
-    register<Zip>("tailerZip") {
-        from("dists/gradle-aem-tailer")
-
-        archiveFileName.set("gradle-aem-tailer.zip")
-        destinationDirectory.set(file("dists"))
-    }
     register<Zip>("assetsZip") {
         from("src/asset")
         archiveFileName.set("assets.zip")
@@ -99,33 +93,10 @@ tasks {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
-    withType<Test>().configureEach {
-        testLogging.showStandardStreams = true
-        useJUnitPlatform()
-    }
+
 
     withType<DokkaTask>().configureEach {
         onlyIf { project.gradle.taskGraph.hasTask(":release")}
-    }
-
-    test {
-        dependsOn("detektTest")
-    }
-
-    register<Test>("functionalTest") {
-        testClassesDirs = functionalTestSourceSet.output.classesDirs
-        classpath = functionalTestSourceSet.runtimeClasspath
-
-        systemProperties(System.getProperties().asSequence().map {
-            it.key.toString() to it.value.toString() }.filter {
-                it.first.run { startsWith("fileTransfer.") || startsWith("localInstance.") }
-            }.toMap()
-        )
-
-        useJUnitPlatform()
-        mustRunAfter("test")
-        dependsOn("jar", "detektFunctionalTest")
-        outputs.dir("build/functionalTest")
     }
 
     build {
@@ -152,6 +123,31 @@ tasks {
 
     publishToMavenLocal {
         dependsOn(jar)
+    }
+
+    withType<Test>().configureEach {
+        testLogging.showStandardStreams = true
+        useJUnitPlatform()
+    }
+
+    test {
+        dependsOn(buildProperties, "detektTest")
+    }
+
+    register<Test>("functionalTest") {
+        testClassesDirs = functionalTestSourceSet.output.classesDirs
+        classpath = functionalTestSourceSet.runtimeClasspath
+
+        systemProperties(System.getProperties().asSequence().map {
+            it.key.toString() to it.value.toString() }.filter {
+            it.first.run { startsWith("fileTransfer.") || startsWith("localInstance.") }
+        }.toMap()
+        )
+
+        useJUnitPlatform()
+        mustRunAfter("test")
+        dependsOn("jar", "detektFunctionalTest")
+        outputs.dir("build/functionalTest")
     }
 
     afterReleaseBuild {
