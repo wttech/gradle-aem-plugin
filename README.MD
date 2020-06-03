@@ -115,7 +115,9 @@ To use Gradle AEM Plugin it is not needed to have configured a regular Gradle pr
 By using a single bash command, to be able to:
 
 * set up local AEM instances and be able to share command to others even on team chat,
+* download and deploy to AEM instances dependent CRX package from any source by single command run in terminal,
 * copy JCR content between instances using GAP run on continuous integration server,
+* and more,
 
 consider using [standalone launcher](docs/launcher.md) as it could be the easiest and fastest way to use GAP.
 
