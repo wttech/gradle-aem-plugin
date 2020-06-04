@@ -32,7 +32,7 @@ Below there are some sample usages of standalone launcher.
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
-curl -O -J -L https://github.com/Cognifide/gradle-aem-plugin/releases/download/13.2.1/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
 && java -jar gap.jar --save-props up \
 -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
 -PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
@@ -54,7 +54,7 @@ For deploying to AEM instance CRX package from any source consider using command
 
 ```bash
 curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
-&& java -jar gap.jar instanceProvision -Pinstance.author -Pinstance.provision.deployPackage.urls=\[https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar\]
+&& java -jar gap.jar instanceProvision -Pinstance.author -Pinstance.provision.deployPackage.urls=https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar
 ```
 
 Parameter `-Pinstance.author` is used to deploy only to default AEM author instance (available at *http://localhost:4502*), but any instances could be used, see [instance filtering](common-plugin.md#instance-filtering). 
@@ -62,7 +62,9 @@ Skip it to deploy package to both author & publish instances at once.
 
 The URL could point to CRX package or to OSGi bundle which will be automatically wrapped into CRX package on-the-fly.
 
-Notice that package URL could be using SMB/SFTP protocols too. In such case remember to specify file transfer properties as in [local instance](#setting-up-local-instance) example.
+Notice that package URL could be using SMB/SFTP protocols too.
+In such case remember to specify file transfer properties as in [local instance](#setting-up-local-instance) example.
+Also instead of URL, dependency notation could be used to resolve package from Maven Central or JCenter repository.x
 
 ### Tailing logs
 
