@@ -141,8 +141,7 @@ tasks {
         systemProperties(System.getProperties().asSequence().map {
             it.key.toString() to it.value.toString() }.filter {
             it.first.run { startsWith("fileTransfer.") || startsWith("localInstance.") }
-        }.toMap()
-        )
+        }.toMap())
 
         useJUnitPlatform()
         mustRunAfter("test")
