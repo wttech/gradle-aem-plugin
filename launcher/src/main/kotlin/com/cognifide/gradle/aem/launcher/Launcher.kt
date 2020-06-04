@@ -11,15 +11,22 @@ class Launcher {
 
         val WORK_DIR_NAME = "gap"
 
+        val ARG_PRINT_STACKTRACE = "--print-stacktrace"
+
+        val ARG_NO_COLOR_OUTPUT = "--no-color"
+
         val ARG_SAVE_PROPS = "--save-props"
 
         val ARG_SAVE_PREFIX = "-P"
 
-        val ARGS = listOf(ARG_SAVE_PROPS)
+        val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT)
 
         @JvmStatic
         fun main(args: Array<String>) {
             val saveProps = args.contains(ARG_SAVE_PROPS)
+            val printStackTrace = args.contains(ARG_PRINT_STACKTRACE)
+            val colorOutput = !args.contains(ARG_NO_COLOR_OUTPUT)
+
             val gradleArgs = args.filterNot { ARGS.contains(it) }
             val buildConfig = Properties().apply {
                 load(Launcher::class.java.getResourceAsStream("/build.properties"))
@@ -35,10 +42,11 @@ class Launcher {
             if (saveProps) {
                 saveProperties(workDir, gradleArgs)
             }
+
             saveSettings(workDir)
             saveBuildScript(workDir, pluginVersion)
 
-            runBuild(workDir, gradleArgs, gradleVersion)
+            runBuild(workDir, gradleArgs, gradleVersion, colorOutput, printStackTrace)
         }
 
         private fun saveProperties(workDir: File, args: List<String>) {
@@ -92,14 +100,15 @@ class Launcher {
             }
         }
 
-        private fun runBuild(workDir: File, args: List<String>, gradleVersion: String?): Unit = try {
+        private fun runBuild(workDir: File, args: List<String>, gradleVersion: String?, colorOutput: Boolean, printStackTrace: Boolean): Unit = try {
             GradleConnector.newConnector()
                     .useGradleVersion(gradleVersion)
+                    .useBuildDistribution()
                     .forProjectDirectory(workDir)
                     .connect().use { connection ->
                         connection.newBuild()
                                 .withArguments(args)
-                                .setColorOutput(true)
+                                .setColorOutput(colorOutput)
                                 .setStandardOutput(System.out)
                                 .setStandardError(System.err)
                                 .setStandardInput(System.`in`)
@@ -107,7 +116,9 @@ class Launcher {
                     }
             exitProcess(0)
         } catch (e: Exception) {
-            e.printStackTrace(System.err)
+            if (printStackTrace) {
+                e.printStackTrace(System.err)
+            }
             exitProcess(1)
         }
     }
