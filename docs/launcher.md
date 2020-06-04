@@ -53,7 +53,7 @@ java -jar gap.jar down
 For deploying to AEM instance CRX package from any source consider using command:
 
 ```bash
-curl -O -J -L https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.1/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
 && java -jar gap.jar instanceProvision -Pinstance.author -Pinstance.provision.deployPackage.urls=\[https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar\]
 ```
 
@@ -69,7 +69,7 @@ Notice that package URL could be using SMB/SFTP protocols too. In such case reme
 To interactively monitor logs of any AEM instances using task [`instanceTail`](instance-plugin.md#task-instancetail), consider running command:
 
 ```bash
-curl -O -J -L https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.1/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
 && java -jar gap.jar --save-props instanceTail \
 -Pinstance.staging-author.httpUrl=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.staging-publish.httpUrl=http://foo:pass@10.11.12.2:4503
@@ -80,7 +80,7 @@ curl -O -J -L https://github.com/Cognifide/gradle-aem-plugin/releases/download/1
 To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running command:
 
 ```bash
-curl -O -J -L https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.1/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
 && java -jar gap.jar instanceRcp \
 -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
