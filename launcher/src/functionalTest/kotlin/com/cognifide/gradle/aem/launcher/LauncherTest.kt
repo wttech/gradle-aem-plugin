@@ -12,7 +12,6 @@ class LauncherTest {
     fun shouldRunProperly() = test("tasks") { launch("tasks") }
 
     @Test
-    @Disabled // TODO fix it on CI
     fun shouldDisplayInstanceStatus() = test("instance-status") {
         launch("instanceStatus", "-Pinstance.local-author.httpUrl=http://localhost:8502") // some unavailable instance
     }
@@ -30,7 +29,7 @@ class LauncherTest {
             withWorkingDirectory(this@launch)
             withOutputStream(System.out)
             withErrorStream(System.err)
-            withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
+            withTimeoutMillis(TimeUnit.SECONDS.toMillis(120))
             run()
         }
     }
