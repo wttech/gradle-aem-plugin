@@ -88,9 +88,10 @@ class Provisioner(val manager: InstanceManager) {
             return listOf()
         }
 
-        steps.forEach { it.validate() }
+        val steps = stepsFor(instances)
+        steps.keys.forEach { it.validate() }
 
-        val actions = provisionActions(instances)
+        val actions = provisionActions(steps)
         if (actions.none { it.status != Status.SKIPPED }) {
             logger.lifecycle("No steps to perform / all instances provisioned.")
         }
@@ -98,15 +99,14 @@ class Provisioner(val manager: InstanceManager) {
         return actions
     }
 
-    private fun provisionActions(instances: Collection<Instance>): Collection<Action> {
-        val stepsFiltered = stepsFor(instances)
-        if (stepsFiltered.isEmpty()) {
+    private fun provisionActions(steps: Map<Step, List<InstanceStep>>): Collection<Action> {
+        if (steps.isEmpty()) {
             return listOf()
         }
 
         return common.progress {
-            initSteps(stepsFiltered)
-            performSteps(stepsFiltered)
+            initSteps(steps)
+            performSteps(steps)
         }
     }
 
@@ -205,11 +205,5 @@ class Provisioner(val manager: InstanceManager) {
 
     fun deployPackage(options: DeployPackageStep.() -> Unit) {
         steps.add(DeployPackageStep(this).apply(options))
-    }
-
-    init {
-        aem.project.afterEvaluate {
-            aem.prop.list("instance.provision.deployPackage.urls")?.forEach { deployPackage(it) }
-        }
     }
 }
