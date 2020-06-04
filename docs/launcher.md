@@ -64,7 +64,7 @@ The URL could point to CRX package or to OSGi bundle which will be automatically
 
 Notice that package URL could be using SMB/SFTP protocols too.
 In such case remember to specify file transfer properties as in [local instance](#setting-up-local-instance) example.
-Also instead of URL, dependency notation could be used to resolve package from Maven Central or JCenter repository.x
+Also instead of URL, dependency notation could be used to resolve package from Maven Central or JCenter repository.
 
 ### Tailing logs
 
