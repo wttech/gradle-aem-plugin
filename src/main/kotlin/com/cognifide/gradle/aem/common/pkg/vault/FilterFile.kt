@@ -13,7 +13,7 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 
-class FilterFile(@InputFile val file: File, private val temporary: Boolean = false) : Closeable {
+class FilterFile(@InputFile val file: File, val temporary: Boolean = false) : Closeable {
 
     @get:Internal
     val elements: List<FilterElement>
