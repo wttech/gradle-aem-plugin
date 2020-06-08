@@ -108,12 +108,7 @@ open class PackageSync : AemDefaultTask() {
         }
 
         try {
-            if (filter.get().temporary) {
-                contentDir.get().asFile.mkdirs()
-            } else if (!contentDir.get().asFile.exists()) {
-                common.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.jcrRootDir}")
-                return
-            }
+            contentDir.get().asFile.mkdirs()
 
             if (mode.get() != Mode.COPY_ONLY) {
                 prepareContent()
