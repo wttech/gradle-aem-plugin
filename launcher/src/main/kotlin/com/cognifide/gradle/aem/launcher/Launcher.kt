@@ -9,7 +9,7 @@ class Launcher {
 
     companion object {
 
-        val WORK_DIR_NAME = "gap"
+        val ARG_WORK_DIR = "--work-dir"
 
         val ARG_PRINT_STACKTRACE = "--print-stacktrace"
 
@@ -19,15 +19,16 @@ class Launcher {
 
         val ARG_SAVE_PREFIX = "-P"
 
-        val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT)
+        val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
 
         @JvmStatic
         fun main(args: Array<String>) {
             val saveProps = args.contains(ARG_SAVE_PROPS)
             val printStackTrace = args.contains(ARG_PRINT_STACKTRACE)
             val colorOutput = !args.contains(ARG_NO_COLOR_OUTPUT)
+            val workDirName = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
 
-            val gradleArgs = args.filterNot { ARGS.contains(it) }
+            val gradleArgs = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
             val buildConfig = Properties().apply {
                 load(Launcher::class.java.getResourceAsStream("/build.properties"))
             }
@@ -37,8 +38,7 @@ class Launcher {
                     ?: throw LauncherException("AEM Plugin version info not available!")
 
             val currentDir = File(".")
-            val workDir = currentDir.resolve(WORK_DIR_NAME)
-
+            val workDir = if (workDirName != null) currentDir.resolve(workDirName) else currentDir
             if (saveProps) {
                 saveProperties(workDir, gradleArgs)
             }
@@ -94,8 +94,6 @@ class Launcher {
                                     gradlePluginPortal()
                                 }
                             }
-                            
-                            rootProject.name = "$WORK_DIR_NAME"
                         """.trimIndent())
             }
         }

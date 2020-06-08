@@ -7,10 +7,12 @@
 # Standalone launcher
 
 * [About](#about)
+* [Downloads](#downloads)
 * [Usages](#usages)
     * [Setting up local instance](#setting-up-local-instance)
     * [Deploying packages](#deploying-packages)
     * [Tailing logs](#tailing-logs)
+    * [Syncing content](#syncing-content)
     * [Copying content between instances](#copying-content-between-instances)
 * [Options](#options)
   * [Saving properties](#saving-properties)
@@ -23,6 +25,12 @@ Moreover, to run GAP, it is needed to have a project which has at least Gradle W
 To eliminate such ceremony, GAP standalone launcher could be used to be able to use its features with minimal effort, anywhere.
 Simply, using e.g bash script - download the GAP launcher run it with regular GAP arguments - all tasks and properties are available to be used.
 
+## Downloads
+
+Grab most recent version of launcher from GitHub [releases](https://github.com/Cognifide/gradle-aem-plugin/releases) section.
+
+The launcher on release asset list is a file named **gap.jar**.
+
 ## Usages
 
 Below there are some sample usages of standalone launcher.
@@ -32,7 +40,7 @@ Below there are some sample usages of standalone launcher.
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
 && java -jar gap.jar --save-props up \
 -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
 -PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
@@ -53,7 +61,7 @@ java -jar gap.jar down
 For deploying to AEM instance CRX package from any source consider using command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
 && java -jar gap.jar instanceProvision -Pinstance.author -Pinstance.provision.deployPackage.urls=https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar
 ```
 
@@ -71,10 +79,19 @@ Also instead of URL, dependency notation could be used to resolve package from M
 To interactively monitor logs of any AEM instances using task [`instanceTail`](instance-plugin.md#task-instancetail), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
 && java -jar gap.jar --save-props instanceTail \
 -Pinstance.staging-author.httpUrl=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.staging-publish.httpUrl=http://foo:pass@10.11.12.2:4503
+```
+
+### Syncing content
+
+To pull JCR content with content normalization from running instance using task [`packageSync`](package-sync-plugin.md), consider running command:
+
+```bash
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
+&& java -jar gap.jar packageSync -Pfilter.roots=[/content/example,/content/dam/example]
 ```
 
 ### Copying content between instances
@@ -82,7 +99,7 @@ curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.
 To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.2/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
 && java -jar gap.jar instanceRcp \
 -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
@@ -97,7 +114,7 @@ Note that when it is needed to e.g specify GAP properties e.g related with sourc
 consider adding argument `--save-props` when running GAP launcher. It will save all other command line properties to `gradle.properties` file.
 Thanks to that, when running `down` task next time, all properties related with instance definitions will be no longer needed to be passed as command line arguments.
 
-Alternatively, when technique for credentials passed as command line parameters is considered as not enough safe, it is an option to create file `gap/gradle.properties` 
+Alternatively, when technique for credentials passed as command line parameters is considered as not enough safe, it is an option to create file `gradle.properties` 
 and specify all required properties there before running the launcher.
 
 ### Console output
