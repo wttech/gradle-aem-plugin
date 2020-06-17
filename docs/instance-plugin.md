@@ -219,7 +219,7 @@ Instead, tailer is continuously polling log files using HTTP endpoint provided b
 New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
 By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
 
-To customize tailer behavior, see [Tailer](src/main/kotlin/com/cognifide/gradle/aem/common/instance/tail/Tailer.kt).
+To customize tailer behavior, see [Tailer](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/tail/Tailer.kt).
 
 ```kotlin
 aem {
@@ -393,7 +393,7 @@ Succeeded: 2/2=100.00%. Elapsed time: 00:02
 ```
 
 To allow seeing particular script errors and continuing evaluation after error, 
-verbose mode of [Groovy Console](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
+verbose mode of [Groovy Console](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
 
 Below is presented command for multiple scripts usage with output logging and continuation on errors:
 

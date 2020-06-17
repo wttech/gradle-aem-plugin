@@ -153,9 +153,9 @@ aem {
 }
 ```
 
-Besides `expandProperties`, there is one predefined variable [instance](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstance.kt) 
+Besides `expandProperties`, there is one predefined variable [instance](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstance.kt) 
 that can be used to customize scripts and other files 
-(see [start script](src/main/resources/com/cognifide/gradle/aem/instance/local/start)).
+(see [start script](../src/main/resources/com/cognifide/gradle/aem/instance/local/start)).
 
 ### Customization of `sling.properties` files
 

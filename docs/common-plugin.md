@@ -229,7 +229,7 @@ Otherwise, password value must be encoded by e.g [online URL encoder](https://me
 
 ### Implementing tasks
 
-Most of built-in tasks logic is based on `aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt). 
+Most of built-in tasks logic is based on `aem` object of type [AemExtension](../src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt). 
 It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized instance services of `aem.sync` 
 to make tasks implementation a breeze. The options for automating things around AEM are almost unlimited. 
 
@@ -237,14 +237,14 @@ to make tasks implementation a breeze. The options for automating things around 
 
 While implementing custom AEM tasks, mix usages of following instance services:
 
-* `http` [InstanceHttpClient](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceHttpClient.kt) - Provides extremely easy to use HTTP client designed especially to be used with AEM (covers basic authentication, allows to use only relative paths instead of full URLs etc) 
-* `packageManager` [PackageManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/pkg/PackageManager.kt) - Allows to communicate with CRX Package Manager. 
-* `osgiFramework` [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) - Controls OSGi framework using [Apache Felix Web Console endpoints](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
-* `repository` [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) - Allows to communicate with JCR Content Repository.
-* `workflowManager` [WorkflowManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) - Allows to temporarily toggle (enable or disabled) change workflow launcher state e.g to disable DAM assets regeneration while deploying CRX package.
-* `groovyConsole` [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) - Allows to execute Groovy code / scripts on AEM instance having [Groovy Console](https://github.com/icfnext/aem-groovy-console) CRX package installed.
-* `status` [Status](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
-* `crx` [Crx](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/crx/Crx.kt) - Allows to read available node types of JCR repository / AEM instance.
+* `http` [InstanceHttpClient](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceHttpClient.kt) - Provides extremely easy to use HTTP client designed especially to be used with AEM (covers basic authentication, allows to use only relative paths instead of full URLs etc) 
+* `packageManager` [PackageManager](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/pkg/PackageManager.kt) - Allows to communicate with CRX Package Manager. 
+* `osgiFramework` [OsgiFramework](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) - Controls OSGi framework using [Apache Felix Web Console endpoints](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `repository` [Repository](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) - Allows to communicate with JCR Content Repository.
+* `workflowManager` [WorkflowManager](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) - Allows to temporarily toggle (enable or disabled) change workflow launcher state e.g to disable DAM assets regeneration while deploying CRX package.
+* `groovyConsole` [GroovyConsole](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) - Allows to execute Groovy code / scripts on AEM instance having [Groovy Console](https://github.com/icfnext/aem-groovy-console) CRX package installed.
+* `status` [Status](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `crx` [Crx](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/crx/Crx.kt) - Allows to read available node types of JCR repository / AEM instance.
 
 #### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
 
@@ -356,7 +356,7 @@ aem {
 
 #### Working with content repository (JCR)
 
-To make changes in AEM content repository, use [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
+To make changes in AEM content repository, use [Repository](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
 
 For example, to migrate pages even without using [Groovy Console](https://github.com/icfnext/aem-groovy-console) deployed on instance, simply write:
 
@@ -409,7 +409,7 @@ Under the hood, repository service is using only AEM built-in [Sling Post Servle
 #### Executing code on AEM runtime
 
 It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
-Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceProvision` task, then it is possible to use [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
+Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceProvision` task, then it is possible to use [GroovyConsole](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
 
 ```kotlin
 aem {
@@ -435,7 +435,7 @@ aem {
 
 #### Controlling OSGi bundles, components and configurations
 
-Simply use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service.
+Simply use [OsgiFramework](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service.
 
 To restart some bundle after deploying a CRX package, write:
 
@@ -494,7 +494,7 @@ All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi con
 
 #### Controlling workflows
 
-Simply use [Workflow Manager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) instance service.
+Simply use [Workflow Manager](../src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) instance service.
 
 Workflows can be either enabled or disabled by:
 
