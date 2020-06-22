@@ -206,4 +206,10 @@ class Provisioner(val manager: InstanceManager) {
     fun deployPackage(options: DeployPackageStep.() -> Unit) {
         steps.add(DeployPackageStep(this).apply(options))
     }
+
+    fun evalGroovyScript(fileName: String, data: Map<String, Any?> = mapOf()) = step("evalGroovyScript/$fileName") {
+        description.set("Evaluating Groovy Script '$fileName'")
+        sync { groovyConsole.evalScript(fileName, data)  }
+    }
+
 }
