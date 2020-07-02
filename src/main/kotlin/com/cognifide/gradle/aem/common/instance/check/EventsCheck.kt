@@ -1,5 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import com.cognifide.gradle.aem.common.instance.service.osgi.byAgeMillis
+import com.cognifide.gradle.aem.common.instance.service.osgi.byTopics
+import com.cognifide.gradle.aem.common.instance.service.osgi.ignoreDetails
 import com.cognifide.gradle.aem.common.utils.shortenClass
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.StringUtils
@@ -16,6 +19,16 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
     }
 
     val unstableAgeMillis = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
+
+    val ignoredDetails = aem.obj.strings {
+        convention(aem.obj.provider {
+            when {
+                // TODO to be removed when AEM will fix: https://github.com/Cognifide/gradle-aem-plugin/issues/726
+                instance.version.cloud -> listOf("org.osgi.service.component.runtime.ServiceComponentRuntime")
+                else -> listOf()
+            }
+        })
+    }
 
     init {
         sync.apply {
@@ -37,7 +50,11 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
             return
         }
 
-        val unstable = state.matching(unstableTopics.get(), unstableAgeMillis.get(), instance.zoneId)
+        val unstable = state.events.asSequence()
+                .byTopics(unstableTopics.get())
+                .byAgeMillis(unstableAgeMillis.get(), instance.zoneId)
+                .ignoreDetails(ignoredDetails.get())
+                .toList()
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {

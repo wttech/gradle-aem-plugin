@@ -206,4 +206,16 @@ class Provisioner(val manager: InstanceManager) {
     fun deployPackage(options: DeployPackageStep.() -> Unit) {
         steps.add(DeployPackageStep(this).apply(options))
     }
+
+    fun deployPackages(vararg sources: Any) = deployPackages(sources.asIterable())
+
+    fun deployPackages(sources: Iterable<Any>) = sources.forEach { deployPackage(it) }
+
+    fun evalGroovyScript(fileName: String, options: Step.() -> Unit = {}) = evalGroovyScript(fileName, mapOf(), options)
+
+    fun evalGroovyScript(fileName: String, data: Map<String, Any?> = mapOf(), options: Step.() -> Unit = {}) = step("evalGroovyScript/$fileName") {
+        description.set("Evaluating Groovy Script '$fileName'")
+        sync { groovyConsole.evalScript(fileName, data) }
+        options()
+    }
 }

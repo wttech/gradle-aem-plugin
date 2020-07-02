@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.common.utils.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -10,6 +11,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ComponentState private constructor() {
 
+    @JsonIgnore
+    lateinit var instance: Instance
+
     @JsonProperty("data")
     lateinit var components: List<Component>
 
@@ -17,8 +21,7 @@ class ComponentState private constructor() {
     var total: Int = 0
 
     @get:JsonIgnore
-    val unknown: Boolean
-        get() = components.isEmpty()
+    val unknown: Boolean get() = components.isEmpty()
 
     fun check(pids: Collection<String>, predicate: (Component) -> Boolean): Boolean {
         return !unknown && find(pids, listOf()).all(predicate)
@@ -28,14 +31,10 @@ class ComponentState private constructor() {
         return !unknown && find(pids, ignoredPids).all(predicate)
     }
 
-    fun find(pids: Collection<String>): List<Component> {
-        return find(pids, listOf())
-    }
+    fun find(pids: Collection<String>): List<Component> = find(pids, listOf())
 
-    fun find(pids: Collection<String>, ignoredPids: Collection<String>): List<Component> {
-        return components.filter {
-            Patterns.wildcard(it.uid, pids) && !Patterns.wildcard(it.uid, ignoredPids)
-        }
+    fun find(pids: Collection<String>, ignoredPids: Collection<String>): List<Component> = components.filter {
+        Patterns.wildcard(it.uid, pids) && !Patterns.wildcard(it.uid, ignoredPids)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -50,19 +49,14 @@ class ComponentState private constructor() {
                 .isEquals
     }
 
-    override fun hashCode(): Int {
-        return HashCodeBuilder()
-                .append(components)
-                .append(total)
-                .toHashCode()
-    }
+    override fun hashCode(): Int = HashCodeBuilder()
+            .append(components)
+            .append(total)
+            .toHashCode()
 
-    override fun toString(): String {
-        return "ComponentState(total='$total')"
-    }
+    override fun toString(): String = "ComponentState(instance='${instance.name}', total='$total')"
 
     companion object {
-
         fun unknown(): ComponentState = ComponentState().apply {
             components = listOf()
             total = 0

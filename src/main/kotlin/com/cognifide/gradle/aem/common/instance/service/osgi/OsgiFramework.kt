@@ -36,25 +36,24 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         } catch (e: CommonException) {
             logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
+        }.apply {
+            this.instance = this@OsgiFramework.instance
+            this.bundles.forEach { it.instance = instance }
         }
     }
 
     /**
      * Find OSGi bundle by symbolic name.
      */
-    fun findBundle(symbolicName: String): Bundle? {
-        return determineBundleState().bundles.find {
-            symbolicName.equals(it.symbolicName, ignoreCase = true)
-        }
+    fun findBundle(symbolicName: String): Bundle? = determineBundleState().bundles.find {
+        symbolicName.equals(it.symbolicName, ignoreCase = true)
     }
 
     /**
      * Get OSGi bundle by symbolic name. Fail if not found.
      */
-    fun getBundle(symbolicName: String): Bundle {
-        return findBundle(symbolicName)
-                ?: throw OsgiException("OSGi bundle '$symbolicName' cannot be found on $instance.")
-    }
+    fun getBundle(symbolicName: String): Bundle = findBundle(symbolicName)
+            ?: throw OsgiException("OSGi bundle '$symbolicName' cannot be found on $instance.")
 
     /**
      * Start OSGi bundle. Does nothing if already started.
@@ -159,8 +158,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Get all OSGi components.
      */
-    val components: List<Component>
-        get() = determineComponentState().components
+    val components: List<Component> get() = determineComponentState().components
 
     /**
      * Determine OSGi components state.
@@ -173,24 +171,24 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         } catch (e: CommonException) {
             logger.debug("Cannot determine OSGi components state on $instance. Cause: ${e.message}", e)
             ComponentState.unknown()
+        }.apply {
+            this.instance = this@OsgiFramework.instance
+            this.components.forEach { it.instance = instance }
         }
     }
 
     /**
      * Find OSGi component by PID.
      */
-    fun findComponent(pid: String): Component? {
-        return determineComponentState().components.find {
-            pid.equals(it.uid, ignoreCase = true)
-        }
+    fun findComponent(pid: String): Component? = determineComponentState().components.find {
+        pid.equals(it.uid, ignoreCase = true)
     }
 
     /**
      * Get OSGi component by PID. Fail if not found.
      */
-    fun getComponent(pid: String): Component {
-        return findComponent(pid) ?: throw OsgiException("OSGi component '$pid' cannot be found on $instance.")
-    }
+    fun getComponent(pid: String): Component = findComponent(pid)
+            ?: throw OsgiException("OSGi component '$pid' cannot be found on $instance.")
 
     /**
      * Enable OSGi component. Does nothing if already enabled.
@@ -258,11 +256,14 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 val html = asString(response)
                 val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value
                         ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
-                Formats.toObjectFromJson(configJson)
+                Formats.toObjectFromJson<ConfigurationState>(configJson)
             }
         } catch (e: CommonException) {
             logger.debug("Cannot determine OSGi configuration state on $instance. Cause: ${e.message}", e)
             ConfigurationState.unknown()
+        }.apply {
+            this.instance = this@OsgiFramework.instance
+            this.pids.forEach { it.instance = instance }
         }
     }
 
@@ -270,47 +271,41 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Find OSGi configuration by PID.
      * Also ensures that for given configuration there is metatype service available (to reduce typo errors).
      */
-    fun findConfiguration(pid: String, metatypeChecking: Boolean = true): Configuration? {
-        return try {
-            sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { response ->
-                asObjectFromJson(response, Configuration::class.java).takeIf { !metatypeChecking || !it.metatypeAbsence }
-            }
-        } catch (e: CommonException) {
-            throw OsgiException("Cannot read OSGi configuration for PID '$pid' on $instance. Cause: ${e.message}", e)
+    fun findConfiguration(pid: String, metatypeChecking: Boolean = true): Configuration? = try {
+        sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { response ->
+            asObjectFromJson(response, Configuration::class.java).takeIf { !metatypeChecking || !it.metatypeAbsence }
         }
+    } catch (e: CommonException) {
+        throw OsgiException("Cannot read OSGi configuration for PID '$pid' on $instance. Cause: ${e.message}", e)
+    }?.apply {
+        this.instance = this@OsgiFramework.instance
     }
 
     /**
      * Get OSGi configuration by PID. Fail if not found.
      */
-    fun getConfiguration(pid: String): Configuration {
-        return findConfiguration(pid)
-                ?: throw OsgiException("OSGi configuration for PID '$pid' cannot be found on $instance")
-    }
+    fun getConfiguration(pid: String): Configuration = findConfiguration(pid)
+            ?: throw OsgiException("OSGi configuration for PID '$pid' cannot be found on $instance")
 
     /**
      * Get all OSGi configurations for specified factory PID.
      */
-    fun getConfigurations(fpid: String): Sequence<Configuration> {
-        return determineConfigurationState().pids.asSequence()
-                .filter { fpid == it.fpid }
-                .mapNotNull { findConfiguration(it.id) }
-    }
+    fun getConfigurations(fpid: String): Sequence<Configuration> = determineConfigurationState().pids.asSequence()
+            .filter { fpid == it.fpid }
+            .mapNotNull { findConfiguration(it.id) }
 
     /**
      * Set properties for existing OSGi configuration.
      */
-    fun updateConfiguration(pid: String, properties: Map<String, Any?>) {
-        try {
-            logger.info("Updating OSGi configuration for PID '$pid' on $instance using properties: $properties")
+    fun updateConfiguration(pid: String, properties: Map<String, Any?>) = try {
+        logger.info("Updating OSGi configuration for PID '$pid' on $instance using properties: $properties")
 
-            val config = getConfiguration(pid)
-            val props = configurationProperties(config, properties)
+        val config = getConfiguration(pid)
+        val props = configurationProperties(config, properties)
 
-            sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
-        } catch (e: CommonException) {
-            throw OsgiException("OSGi configuration for PID '$pid' cannot be updated on $instance. Cause: ${e.message}", e)
-        }
+        sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
+    } catch (e: CommonException) {
+        throw OsgiException("OSGi configuration for PID '$pid' cannot be updated on $instance. Cause: ${e.message}", e)
     }
 
     /**
@@ -321,17 +316,15 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Set properties for existing OSGi configuration or create new.
      */
-    fun saveConfiguration(pid: String, properties: Map<String, Any?>) {
-        try {
-            logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
+    fun saveConfiguration(pid: String, properties: Map<String, Any?>) = try {
+        logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
 
-            val config = findConfiguration(pid, false)!! // endpoint always return data even for non-existing PID
-            val props = configurationProperties(config, properties)
+        val config = findConfiguration(pid, false)!! // endpoint always return data even for non-existing PID
+        val props = configurationProperties(config, properties)
 
-            sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
-        } catch (e: CommonException) {
-            throw OsgiException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
-        }
+        sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
+    } catch (e: CommonException) {
+        throw OsgiException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
     }
 
     private fun configurationProperties(existingConfig: Configuration, properties: Map<String, Any?>): Map<String, Any?> {
@@ -352,19 +345,17 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Delete existing OSGi configuration.
      */
-    fun deleteConfiguration(pid: String) {
-        try {
-            logger.info("Deleting OSGi configuration for PID '$pid' on $instance")
+    fun deleteConfiguration(pid: String) = try {
+        logger.info("Deleting OSGi configuration for PID '$pid' on $instance")
 
-            val properties = mapOf(
-                    "apply" to 1,
-                    "delete" to 1
-            )
+        val properties = mapOf(
+                "apply" to 1,
+                "delete" to 1
+        )
 
-            sync.http.post("$CONFIGURATION_PATH/$pid", properties)
-        } catch (e: CommonException) {
-            throw OsgiException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
-        }
+        sync.http.post("$CONFIGURATION_PATH/$pid", properties)
+    } catch (e: CommonException) {
+        throw OsgiException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
     }
 
     /**
@@ -390,6 +381,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         } catch (e: CommonException) {
             logger.debug("Cannot determine OSGi events state on $instance. Cause: ${e.message}", e)
             EventState.unknown()
+        }.apply {
+            this.instance = this@OsgiFramework.instance
+            this.events.forEach { it.instance = instance }
         }
     }
 

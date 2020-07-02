@@ -1,11 +1,16 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Component {
+
+    @JsonIgnore
+    lateinit var instance: Instance
 
     lateinit var id: String
 
@@ -19,29 +24,21 @@ class Component {
 
     var pid: String? = null
 
-    val uid: String
-        get() = pid ?: name
+    val uid: String get() = pid ?: name
 
-    val active: Boolean
-        get() = stateRaw == STATE_RAW_ACTIVE
+    val active: Boolean get() = stateRaw == STATE_RAW_ACTIVE
 
-    val satisfied: Boolean
-        get() = stateRaw == STATE_RAW_SATISTIED
+    val satisfied: Boolean get() = stateRaw == STATE_RAW_SATISTIED
 
-    val notUnsatisfied: Boolean
-        get() = stateRaw != STATE_RAW_UNSATISFIED
+    val notUnsatisfied: Boolean get() = stateRaw != STATE_RAW_UNSATISFIED
 
-    val unsatisfied: Boolean
-        get() = stateRaw == STATE_RAW_UNSATISFIED
+    val unsatisfied: Boolean get() = stateRaw == STATE_RAW_UNSATISFIED
 
-    val failedActivation: Boolean
-        get() = stateRaw == STATE_RAW_FAILED_ACTIVATION
+    val failedActivation: Boolean get() = stateRaw == STATE_RAW_FAILED_ACTIVATION
 
-    val noConfig: Boolean
-        get() = state == STATE_NO_CONFIG
+    val noConfig: Boolean get() = state == STATE_NO_CONFIG
 
-    val disabled: Boolean
-        get() = state == STATE_DISABLED
+    val disabled: Boolean get() = state == STATE_DISABLED
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -69,9 +66,7 @@ class Component {
                 .toHashCode()
     }
 
-    override fun toString(): String {
-        return "Component(uid='$uid', state='$state', id='$id', bundleId='$bundleId')"
-    }
+    override fun toString(): String = "Component(uid='$uid', state='$state', id='$id', bundleId='$bundleId', instance='${instance.name}')"
 
     companion object {
         const val STATE_RAW_DISABLED_OR_NO_CONFIG = -1

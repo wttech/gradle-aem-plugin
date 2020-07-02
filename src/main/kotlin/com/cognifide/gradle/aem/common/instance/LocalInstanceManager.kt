@@ -2,13 +2,13 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
+import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
 import org.buildobjects.process.ProcBuilder
@@ -245,9 +245,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
-        if (quickstart.jar == null || quickstart.license == null) {
+        if (quickstart.jar == null) {
             throw LocalInstanceException("Cannot create instances due to lacking source files. " +
-                    "Ensure having specified local instance quickstart jar & license urls.")
+                    "Ensure having specified local instance quickstart JAR url.")
+        }
+        if (quickstart.license == null) {
+            throw LocalInstanceException("Cannot create instances due to lacking source files. " +
+                    "Ensure having specified local instance quickstart license url.")
         }
 
         common.progress(instances.size) {
@@ -492,7 +496,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     val javaCompatibility = aem.obj.map<String, String> {
         convention(mapOf(
                 "6.0.0-6.5.0" to "1.7|1.8",
-                "6.5.0-6.6.0" to "1.8|11"
+                "6.5.0-6.6.0" to "1.8|11",
+                "*.*.*.*T*Z" to "1.8|11" // cloud service
         ))
         aem.prop.map("localInstance.javaCompatibility")?.let { set(it) }
     }
@@ -508,13 +513,11 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         val versionCurrent = JavaVersion.current()
         val errors = instances.fold(mutableListOf<String>()) { result, instance ->
             val aemVersion = instance.version
-            javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
-                if (aemVersion in AemVersion.unclosedRange(aemVersionRange, "-")) {
-                    val versions = versionList.javaVersions("|")
-                    if (versionCurrent !in versions) {
-                        result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion" +
-                                " and requires Java ${versions.joinToString("|")}!")
-                    }
+            javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
+                val versions = versionList.javaVersions("|")
+                if ((aemVersion.inRange(aemVersionValue) || Patterns.wildcard(aemVersion.value, aemVersionValue)) && versionCurrent !in versions) {
+                    result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion" +
+                            " and requires Java ${versions.joinToString("|")}!")
                 }
             }
             result

@@ -1,12 +1,17 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.common.utils.Formats
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Configuration {
+
+    @JsonIgnore
+    lateinit var instance: Instance
 
     @JsonProperty
     lateinit var pid: String
@@ -30,8 +35,7 @@ class Configuration {
         rawProperties.mapValues { it.value.value }
     }
 
-    val metatypeAbsence: Boolean
-        get() = description.orEmpty().contains(DESCRIPTION_METATYPE_ABSENCE, ignoreCase = true)
+    val metatypeAbsence: Boolean get() = description.orEmpty().contains(DESCRIPTION_METATYPE_ABSENCE, ignoreCase = true)
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class ConfigurationProperty {
@@ -61,16 +65,13 @@ class Configuration {
         return true
     }
 
-    override fun hashCode(): Int {
-        return HashCodeBuilder()
-                .append(pid)
-                .append(rawProperties)
-                .toHashCode()
-    }
+    override fun hashCode(): Int = HashCodeBuilder()
+            .append(pid)
+            .append(rawProperties)
+            .toHashCode()
 
-    override fun toString(): String {
-        return "Configuration(pid='$pid', title='$title', description='$description', properties=${Formats.toJson(properties, false)})"
-    }
+    override fun toString(): String = "Configuration(pid='$pid', title='$title', description='$description'" +
+                    ", properties=${Formats.toJson(properties, false)}, instance='${instance.name}')"
 
     companion object {
         const val DESCRIPTION_METATYPE_ABSENCE = "absence of the OSGi Metatype Service or the absence of a MetaType descriptor for this configuration"

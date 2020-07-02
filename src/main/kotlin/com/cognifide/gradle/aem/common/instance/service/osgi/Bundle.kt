@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
@@ -8,6 +10,10 @@ import org.osgi.framework.Bundle as Base
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Bundle {
+
+    @JsonIgnore
+    lateinit var instance: Instance
+
     lateinit var id: String
 
     lateinit var name: String
@@ -60,7 +66,7 @@ class Bundle {
             .append(version)
             .toHashCode()
 
-    override fun toString(): String = "Bundle(symbolicName='$symbolicName', state='$state', id='$id')"
+    override fun toString(): String = "Bundle(symbolicName='$symbolicName', state='$state', id='$id', instance='${instance.name}')"
 
     companion object {
 
