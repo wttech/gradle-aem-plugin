@@ -4,7 +4,7 @@ import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.JavaVersion
 
-class AemVersion(value: String) : Comparable<AemVersion> {
+class AemVersion(private val value: String) : Comparable<AemVersion> {
 
     private val base = Formats.asVersion(value)
 
@@ -31,7 +31,7 @@ class AemVersion(value: String) : Comparable<AemVersion> {
     /**
      * Cloud manager version contains time in the end
      */
-    val cloud get() = Patterns.wildcard(base.version, "*.*.*.*T*Z")
+    val cloud get() = Patterns.wildcard(value, "*.*.*.*T*Z")
 
     // === Overriddes ===
 

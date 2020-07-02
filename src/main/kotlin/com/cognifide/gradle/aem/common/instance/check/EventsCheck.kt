@@ -21,14 +21,16 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
     val unstableAgeMillis = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
 
     val ignoredDetails = aem.obj.strings {
-        convention(listOf())
+        convention(aem.obj.provider {
+            when {
+                // TODO to be removed when AEM will fix: https://github.com/Cognifide/gradle-aem-plugin/issues/726
+                instance.version.cloud -> listOf("org.osgi.service.component.runtime.ServiceComponentRuntime")
+                else -> listOf()
+            }
+        })
     }
 
     init {
-        if (instance.version.cloud) {
-            ignoredDetails.convention(listOf("org.osgi.service.component.runtime.ServiceComponentRuntime"))
-        }
-
         sync.apply {
             http.connectionTimeout.convention(250)
             http.connectionRetries.convention(false)

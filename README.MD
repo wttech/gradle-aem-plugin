@@ -89,13 +89,14 @@ Still all features are **fully configurable**.
 
 ## Compatibility
 
-| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |   Java   |
-|:-----------------:|:-----------------:|:------------------------:|:--------:|
-|     4.x -> 5.x    |     4.x -> 4.8    |        6.x and up        |     8    |
-|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |     8    |
-|   6.3.0 -> 6.x    |     5.1 -> 5.6    |        6.x and up        |     8    |
-|   7.2.0 -> 8.1.1  |     5.1 -> 5.6    |        6.x and up        |    8,11  |
-|   8.1.2 and up    |     6.0 and up    |        6.x and up        |    8,11  |
+| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager  | Java |
+|-:-:---------------|-:-:---------------|-:-:-----------------------|-:-:--|
+| 4.x up to 5.x     | 4.0 up to 4.8     | 6.x and up                | 8    |
+| 6.0.0 up to 6.2.1 | 4.9 up to 5.0     | 6.x and up                | 8    |
+| 6.3.0 up to 6.x   | 5.1 up to 5.6     | 6.x and up                | 8    |
+| 7.2.0 up to 8.1.1 | 5.1 up to 5.6     | 6.x and up                | 8,11 |
+| 8.1.2 up to 13.x  | 6.0 and up        | 6.x and up                | 8,11 |
+| 14.1.0 and up     | 6.0 and up        | 6.x and up, Cloud Service | 8,11 |
 
 ## Getting started
 
