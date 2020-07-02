@@ -9,7 +9,8 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
     val platformComponents = aem.obj.strings {
         convention(listOf(
                 "com.day.crx.packaging.*",
-                "org.apache.sling.installer.*"
+                "org.apache.sling.installer.*",
+                "!org.apache.sling.installer.core.impl.console.*"
         ))
     }
 

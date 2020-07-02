@@ -70,6 +70,9 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
             convention(TimeUnit.SECONDS.toMillis(5))
             aem.prop.long("instance.awaitUp.event.unstableAgeMillis")?.let { set(it) }
         }
+        ignoredDetails.apply {
+            aem.prop.list("instance.awaitUp.event.ignoredDetails")?.let { set(it) }
+        }
     }
 
     fun events(options: EventsCheck.() -> Unit) {

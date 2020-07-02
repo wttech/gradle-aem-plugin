@@ -1,5 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import com.cognifide.gradle.aem.common.instance.service.osgi.byAgeMillis
+import com.cognifide.gradle.aem.common.instance.service.osgi.byTopics
+import com.cognifide.gradle.aem.common.instance.service.osgi.ignoreDetails
 import com.cognifide.gradle.aem.common.utils.shortenClass
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.StringUtils
@@ -17,7 +20,15 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
 
     val unstableAgeMillis = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
 
+    val ignoredDetails = aem.obj.strings {
+        convention(listOf())
+    }
+
     init {
+        if (instance.version.cloud) {
+            ignoredDetails.convention(listOf("org.osgi.service.component.runtime.ServiceComponentRuntime"))
+        }
+
         sync.apply {
             http.connectionTimeout.convention(250)
             http.connectionRetries.convention(false)
@@ -37,7 +48,11 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
             return
         }
 
-        val unstable = state.matching(unstableTopics.get(), unstableAgeMillis.get(), instance.zoneId)
+        val unstable = state.events.asSequence()
+                .byTopics(unstableTopics.get())
+                .byAgeMillis(unstableAgeMillis.get(), instance.zoneId)
+                .ignoreDetails(ignoredDetails.get())
+                .toList()
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {

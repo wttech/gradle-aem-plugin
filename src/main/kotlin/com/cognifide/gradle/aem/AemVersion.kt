@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.JavaVersion
 
 class AemVersion(value: String) : Comparable<AemVersion> {
@@ -26,6 +27,11 @@ class AemVersion(value: String) : Comparable<AemVersion> {
      * @see <https://docs.adobe.com/content/help/en/experience-manager-64/deploying/restructuring/repository-restructuring.html>
      */
     val frozen get() = atLeast(VERSION_6_4_0)
+
+    /**
+     * Cloud manager version contains time in the end
+     */
+    val cloud get() = Patterns.wildcard(base.version, "*.*.*.*T*Z")
 
     // === Overriddes ===
 

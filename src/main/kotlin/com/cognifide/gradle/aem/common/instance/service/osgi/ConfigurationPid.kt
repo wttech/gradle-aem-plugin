@@ -6,19 +6,23 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class ConfigurationState {
+class ConfigurationPid {
 
     @JsonIgnore
     lateinit var instance: Instance
 
     @JsonProperty
-    lateinit var pids: List<ConfigurationPid>
+    lateinit var id: String
 
-    val unknown: Boolean get() = pids.isEmpty()
+    @JsonProperty
+    lateinit var name: String
 
-    override fun toString(): String = "ConfigurationState(instance='${instance.name}', total='${pids.size}')"
+    @JsonProperty("has_config")
+    var hasConfig: Boolean = false
 
-    companion object {
-        fun unknown(): ConfigurationState = ConfigurationState().apply { pids = listOf() }
-    }
+    @JsonProperty
+    var fpid: String? = null
+
+    @JsonProperty
+    var nameHint: String? = null
 }
