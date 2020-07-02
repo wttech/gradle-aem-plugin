@@ -115,7 +115,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             ?.let { ZipFile(it).listDir("static/app") }
             ?.map { it.substringAfterLast("/") }
             ?.firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
-            ?.let { AemVersion(it.removePrefix("cq-quickstart-").substringBefore("-")) }
+            ?.let { AemVersion(it.removePrefix("cq-quickstart-").removePrefix("cloudready-").substringBefore("-")) }
             ?: AemVersion.UNKNOWN
 
     private val startScript: Script get() = binScript("start")

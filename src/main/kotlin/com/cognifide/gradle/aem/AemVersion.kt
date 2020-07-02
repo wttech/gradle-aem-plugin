@@ -4,7 +4,7 @@ import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.JavaVersion
 
-class AemVersion(private val value: String) : Comparable<AemVersion> {
+class AemVersion(val value: String) : Comparable<AemVersion> {
 
     private val base = Formats.asVersion(value)
 
@@ -17,6 +17,8 @@ class AemVersion(private val value: String) : Comparable<AemVersion> {
     fun atMost(other: AemVersion) = other <= this
 
     fun atMost(other: String) = atMost(AemVersion(other))
+
+    fun inRange(range: String): Boolean = range.contains("-") && this in unclosedRange(range, "-")
 
     /**
      * Indicates repository restructure performed in AEM 6.4.0 / preparations for making AEM available on cloud.
@@ -33,9 +35,14 @@ class AemVersion(private val value: String) : Comparable<AemVersion> {
      */
     val cloud get() = Patterns.wildcard(value, "*.*.*.*T*Z")
 
+    val type get() = when {
+        cloud -> "cloud"
+        else -> "on-prem"
+    }
+
     // === Overriddes ===
 
-    override fun toString() = version
+    override fun toString() = "$value ($type)"
 
     override fun compareTo(other: AemVersion): Int = base.compareTo(other.base)
 
