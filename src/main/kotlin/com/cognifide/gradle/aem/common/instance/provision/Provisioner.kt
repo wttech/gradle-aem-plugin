@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
+import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -216,6 +217,14 @@ class Provisioner(val manager: InstanceManager) {
     fun evalGroovyScript(fileName: String, data: Map<String, Any?> = mapOf(), options: Step.() -> Unit = {}) = step("evalGroovyScript/$fileName") {
         description.set("Evaluating Groovy Script '$fileName'")
         sync { groovyConsole.evalScript(fileName, data) }
+        options()
+    }
+
+    fun evalGroovyScript(file: File, options: Step.() -> Unit = {}) = evalGroovyScript(file, mapOf(), options)
+
+    fun evalGroovyScript(file: File, data: Map<String, Any?> = mapOf(), options: Step.() -> Unit = {}) = step("evalGroovyScript/$fileName") {
+        description.set("Evaluating Groovy Script '${file.name}'")
+        sync { groovyConsole.evalScript(file, data) }
         options()
     }
 }
