@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
-import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
