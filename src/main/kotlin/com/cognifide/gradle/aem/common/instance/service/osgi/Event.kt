@@ -55,7 +55,7 @@ class Event {
             .append(received)
             .toHashCode()
 
-    override fun toString(): String = "Event(details='$details', received='${receivedDate}' id='$id', instance='${instance.name}')"
+    override fun toString(): String = "Event(details='$details', received='$receivedDate' id='$id', instance='${instance.name}')"
 }
 
 fun Sequence<Event>.byTopics(topics: Iterable<String>) = filter { Patterns.wildcard(it.topic, topics) }
