@@ -219,12 +219,4 @@ class Provisioner(val manager: InstanceManager) {
         sync { groovyConsole.evalScript(fileName, data) }
         options()
     }
-
-    fun evalGroovyScript(file: File, options: Step.() -> Unit = {}) = evalGroovyScript(file, mapOf(), options)
-
-    fun evalGroovyScript(file: File, data: Map<String, Any?> = mapOf(), options: Step.() -> Unit = {}) = step("evalGroovyScript/$fileName") {
-        description.set("Evaluating Groovy Script '${file.name}'")
-        sync { groovyConsole.evalScript(file, data) }
-        options()
-    }
 }
