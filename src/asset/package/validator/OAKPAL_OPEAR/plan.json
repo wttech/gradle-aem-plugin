@@ -1,0 +1,26 @@
+{
+  "checklists": [
+    "net.adamcin.oakpal.core/basic"
+  ],
+  "installHookPolicy": "SKIP",
+  "checks": [
+    {
+      "name": "basic/subpackages",
+      "config": {
+        "denyAll": false
+      }
+    },
+    {
+      "name": "basic/acHandling",
+      "config": {
+        "levelSet": "no_unsafe"
+      }
+    },
+    {
+      "name": "net.adamcin.oakpal.core/basic/composite-store-alignment",
+      "config": {
+        "severity": "MINOR"
+      }
+    }
+  ]
+}

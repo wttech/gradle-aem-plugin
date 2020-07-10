@@ -1,0 +1,1 @@
+call sling/bin/stop.bat

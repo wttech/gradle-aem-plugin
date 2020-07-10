@@ -1,0 +1,4 @@
+#!/bin/sh
+
+chmod u+x sling/bin/stop
+./sling/bin/stop

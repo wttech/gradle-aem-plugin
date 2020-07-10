@@ -1,0 +1,4 @@
+#!/bin/sh
+
+chmod u+x sling/bin/status
+./sling/bin/status

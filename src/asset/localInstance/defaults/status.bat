@@ -1,0 +1,1 @@
+call sling\bin\status.bat
