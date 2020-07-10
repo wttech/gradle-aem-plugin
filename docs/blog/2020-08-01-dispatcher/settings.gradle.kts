@@ -1,0 +1,1 @@
+rootProject.name = "aem-dispatcher-with-ease"
