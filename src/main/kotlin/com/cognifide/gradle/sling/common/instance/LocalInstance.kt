@@ -91,23 +91,18 @@ class LocalInstance private constructor(sling: SlingExtension) : Instance(sling)
     @get:JsonIgnore
     val slingDir get() = dir.resolve("sling")
 
-    // TODO what to do with this
     @get:JsonIgnore
-    val pid: Int get() = slingDir.resolve("conf/cq.pid")
+    val pid: Int get() = slingDir.resolve("conf/sling.pid")
             .takeIf { it.exists() }?.readText()?.trim()?.ifBlank { null }?.toInt() ?: 0
 
     private val startScript: Script get() = binScript("start")
 
     internal fun executeStartScript() {
-        ProcessBuilder().command(startScript.commandLine).directory(dir).start()
-
-        // TODO dump PID to file
-
-//        try {
-//            startScript.executeVerbosely()
-//        } catch (e: LocalInstanceException) {
-//            throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
-//        }
+        try {
+            startScript.executeVerbosely()
+        } catch (e: LocalInstanceException) {
+            throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+        }
     }
 
     private val stopScript: Script get() = binScript("stop")

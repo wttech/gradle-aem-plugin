@@ -1,4 +1,6 @@
 #!/bin/sh
 
 mkdir -p sling/logs
-java {{instance.jvmOptsString}} -jar {{instance.jar.name}} start {{instance.startOptsString}} > sling/logs/launchpad.log 2>&1 &
+mkdir -p sling/conf
+
+java {{instance.jvmOptsString}} -jar {{instance.jar.name}} start {{instance.startOptsString}} > sling/logs/launchpad.log 2>&1 & echo $! > sling/conf/sling.pid
