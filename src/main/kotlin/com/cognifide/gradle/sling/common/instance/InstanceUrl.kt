@@ -47,11 +47,7 @@ class InstanceUrl(raw: String) {
             }
         }
 
-    val id: String
-        get() = type.name.toLowerCase()
-
-    val type: IdType
-        get() = IdType.byUrl(httpUrl)
+    val id: String get() = "master" // TODO is this could be a convention?
 
     val debugPort: Int
         get() = if (config.port != -1) {

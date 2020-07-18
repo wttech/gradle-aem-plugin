@@ -129,7 +129,9 @@ class LocalInstanceManager(internal val sling: SlingExtension) : Serializable {
                 "**/start.bat",
                 "**/stop.bat",
                 "**/start",
-                "**/stop"
+                "**/stop",
+                "**/status.bat",
+                "**/status"
         ))
     }
 
@@ -448,7 +450,6 @@ class LocalInstanceManager(internal val sling: SlingExtension) : Serializable {
     fun examinePrerequisites(instances: Collection<LocalInstance> = sling.localInstances) {
         examinePaths()
         examineJavaAvailable()
-        examineJavaCompatibility(instances)
         examineRunningOther(instances)
     }
 
@@ -480,50 +481,6 @@ class LocalInstanceManager(internal val sling: SlingExtension) : Serializable {
         } catch (e: Exception) {
             throw LocalInstanceException("Local instances support requires Java properly installed! Cause: '${e.message}'\n" +
                     "Ensure having directory with 'java' executable listed in 'PATH' environment variable.", e)
-        }
-    }
-
-    /**
-     * Defines compatibility related to Sling versions and Java versions.
-     *
-     * Sling version is definable as range inclusive at a start, exclusive at an end.
-     * Java Version is definable as list of supported versions pipe delimited.
-     *
-     * TODO adapt it to Sling
-     */
-    val javaCompatibility = sling.obj.map<String, String> {
-        convention(mapOf(
-                "6.0.0-6.5.0" to "1.7|1.8",
-                "6.5.0-6.6.0" to "1.8|11",
-                "*.*.*.*T*Z" to "1.8|11" // cloud service
-        ))
-        sling.prop.map("localInstance.javaCompatibility")?.let { set(it) }
-    }
-
-    fun examineJavaCompatibility(instances: Collection<LocalInstance> = sling.localInstances) {
-        if (javaCompatibility.get().isEmpty()) {
-            logger.debug("Examining Java compatibility skipped as configuration not provided!")
-            return
-        }
-
-        logger.debug("Examining Java compatibility for configuration: ${javaCompatibility.get()}")
-
-        val versionCurrent = JavaVersion.current()
-        val errors = instances.fold(mutableListOf<String>()) { result, instance ->
-            val slingVersion = instance.version
-            javaCompatibility.get().forEach { (slingVersionValue, versionList) ->
-                val versions = versionList.javaVersions("|")
-                if ((slingVersion.inRange(slingVersionValue) || Patterns.wildcard(slingVersion.value, slingVersionValue)) && versionCurrent !in versions) {
-                    result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is Sling $slingVersion" +
-                            " and requires Java ${versions.joinToString("|")}!")
-                }
-            }
-            result
-        }
-        if (errors.isNotEmpty()) {
-            throw LocalInstanceException("Some instances (${errors.size}) require different Java version than current $versionCurrent:\n" +
-                    errors.joinToString("\n")
-            )
         }
     }
 

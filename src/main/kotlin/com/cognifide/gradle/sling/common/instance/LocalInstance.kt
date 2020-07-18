@@ -71,7 +71,7 @@ class LocalInstance private constructor(sling: SlingExtension) : Instance(sling)
     val startOptsString: String get() = startOpts.joinToString(" ")
 
     @get:JsonIgnore
-    val runModesDefault get() = listOf(type.name.toLowerCase())
+    val runModesDefault get() = listOf(id.toLowerCase())
 
     @get:JsonIgnore
     var runModes: List<String> = listOf(ENVIRONMENT)
@@ -96,35 +96,18 @@ class LocalInstance private constructor(sling: SlingExtension) : Instance(sling)
     val pid: Int get() = slingDir.resolve("conf/cq.pid")
             .takeIf { it.exists() }?.readText()?.trim()?.ifBlank { null }?.toInt() ?: 0
 
-    override val version: SlingVersion
-        get() {
-            val remoteVersion = super.version
-            if (remoteVersion != SlingVersion.UNKNOWN) {
-                return remoteVersion
-            }
-            val standaloneVersion = readStandaloneVersion()
-            if (standaloneVersion != SlingVersion.UNKNOWN) {
-                return standaloneVersion
-            }
-            return SlingVersion.UNKNOWN
-        }
-
-    // TODO fix it for Sling
-    private fun readStandaloneVersion(): SlingVersion = jar.takeIf { it.exists() }
-            ?.let { ZipFile(it).listDir("static/app") }
-            ?.map { it.substringAfterLast("/") }
-            ?.firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
-            ?.let { SlingVersion(it.removePrefix("cq-quickstart-").removePrefix("cloudready-").substringBefore("-")) }
-            ?: SlingVersion.UNKNOWN
-
     private val startScript: Script get() = binScript("start")
 
     internal fun executeStartScript() {
-        try {
-            startScript.executeVerbosely()
-        } catch (e: LocalInstanceException) {
-            throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
-        }
+        ProcessBuilder().command(startScript.commandLine).directory(dir).start()
+
+        // TODO dump PID to file
+
+//        try {
+//            startScript.executeVerbosely()
+//        } catch (e: LocalInstanceException) {
+//            throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+//        }
     }
 
     private val stopScript: Script get() = binScript("stop")
@@ -169,8 +152,6 @@ class LocalInstance private constructor(sling: SlingExtension) : Instance(sling)
         cleanDir(true)
         copyFiles()
         validateFiles()
-        unpackFiles()
-        correctFiles()
         customize()
         lock(LOCK_CREATE)
     }
@@ -185,65 +166,6 @@ class LocalInstance private constructor(sling: SlingExtension) : Instance(sling)
     private fun validateFiles() {
         if (!jar.exists()) {
             throw LocalInstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
-        }
-    }
-
-    // TODO is this needed for Sling?
-    private fun correctFiles() {
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
-            var result = origin
-
-            // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
-            result = result.replace(
-                    "timeout /T 1 /NOBREAK >nul",
-                    "ping 127.0.0.1 -n 3 > nul"
-            )
-
-            // Force AEM to be launched in background
-            result = result.replace(
-                    "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
-            ) // AEM <= 6.2
-            result = result.replace(
-                    "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
-            ) // AEM 6.3
-
-            // Introduce missing CQ_START_OPTS injectable by parent script.
-            result = result.replace(
-                    "set START_OPTS=start -c %CurrDirName% -i launchpad",
-                    "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%"
-            )
-
-            result
-        }
-
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin) { origin ->
-            var result = origin
-
-            // Introduce missing CQ_START_OPTS injectable by parent script.
-            result = result.replace(
-                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
-                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
-            )
-
-            result
-        }
-
-        // Ensure that 'logs' directory exists
-        slingDir.resolve("logs").mkdirs()
-    }
-
-    private fun unpackFiles() {
-        logger.info("Unpacking Sling from JAR '$jar' to directory '$slingDir'")
-
-        common.progressIndicator {
-            message = "Unpacking Sling JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
-            sling.project.javaexec { spec ->
-                spec.workingDir = dir
-                spec.main = "-jar"
-                spec.args = listOf(jar.name, "-unpack")
-            }
         }
     }
 

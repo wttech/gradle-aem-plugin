@@ -1,10 +1,4 @@
 #!/bin/sh
 
-# TODO pass it via sling.properties
-#export CQ_PORT={{instance.httpPort}}
-#export CQ_RUNMODE='{{instance.runModesString}}'
-#export CQ_JVM_OPTS='{{instance.jvmOptsString}}'
-#export CQ_START_OPTS='{{instance.startOptsString}}'
-
-chmod u+x sling/bin/start
-./sling/bin/start
+mkdir -p sling/logs
+java {{instance.jvmOptsString}} -jar {{instance.jar.name}} start {{instance.startOptsString}} > sling/logs/launchpad.log 2>&1 &

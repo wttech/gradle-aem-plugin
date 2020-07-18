@@ -317,17 +317,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp }
     }
 
-    fun deploy(file: File, activate: Boolean = false): Boolean {
+    fun deploy(file: File): Boolean {
         if (deployAvoidance.get()) {
-            return deployAvoiding(file, activate)
+            return deployAvoiding(file)
         }
 
-        deployRegularly(file, activate)
+        deployRegularly(file)
+
         return true
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun deployAvoiding(file: File, activate: Boolean): Boolean {
+    private fun deployAvoiding(file: File): Boolean {
         val pkg = find(file)
         val checksumTimed = measureTimedValue { Checksum.md5(file) }
         val checksumLocal = checksumTimed.value
@@ -335,7 +336,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Package '$file' checksum '$checksumLocal' calculation took '${checksumTimed.duration}'")
 
         if (pkg == null || !isDeployed(pkg)) {
-            val pkgPath = deployRegularly(file, activate)
+            val pkgPath = deployRegularly(file)
             val pkgMeta = getMetadataNode(pkgPath)
 
             saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
@@ -358,7 +359,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                     logger.info("Deploying package '$pkgPath' on $instance (changed checksum)")
                 }
 
-                deployRegularly(file, activate)
+                deployRegularly(file)
                 saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
                 return true
             } else {
@@ -382,43 +383,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
     ))
 
-    private fun deployRegularly(file: File, activate: Boolean = false): String {
-        val uploadResponse = upload(file)
-        val packagePath = uploadResponse.path
-
-        sync.workflowManager.toggleTemporarily(workflowToggle.get()) {
-            install(packagePath)
-            if (activate) {
-                activate(packagePath)
-            }
-        }
-
-        return packagePath
-    }
-
-    fun distribute(file: File) = deploy(file, true)
-
-    fun activate(file: File) = activate(get(file).path)
-
-    fun activate(remotePath: String): UploadResponse {
-        val url = "$JSON_PATH$remotePath/?cmd=replicate"
-
-        logger.info("Activating package '$remotePath' on $instance")
-
-        val response = try {
-            http.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
-        } catch (e: RequestException) {
-            throw InstanceException("Cannot activate package '$remotePath' on $instance. Cause: ${e.message}", e)
-        } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after activating package '$remotePath' on $instance. Cause: ${e.message}", e)
-        }
-
-        if (!response.isSuccess) {
-            throw InstanceException("Cannot activate package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
-        }
-
-        return response
-    }
+    private fun deployRegularly(file: File): String = upload(file).path.also { install(it) }
 
     fun delete(file: File) = delete(get(file).path)
 

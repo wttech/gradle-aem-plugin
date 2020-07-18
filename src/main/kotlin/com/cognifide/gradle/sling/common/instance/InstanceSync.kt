@@ -6,7 +6,6 @@ import com.cognifide.gradle.sling.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.sling.common.instance.service.repository.Repository
 import com.cognifide.gradle.sling.common.instance.service.crx.Crx
 import com.cognifide.gradle.sling.common.instance.service.status.Status
-import com.cognifide.gradle.sling.common.instance.service.workflow.WorkflowManager
 
 class InstanceSync(val sling: SlingExtension, val instance: Instance) {
 
@@ -46,13 +45,6 @@ class InstanceSync(val sling: SlingExtension, val instance: Instance) {
      * Status retriever (system properties, product version etc).
      */
     fun <T> status(callback: Status.() -> T): T = status.run(callback)
-
-    val workflowManager by lazy { WorkflowManager(this) }
-
-    /**
-     * Perform operations on workflows (enabling, disabling)
-     */
-    fun <T> workflowManager(callback: WorkflowManager.() -> T) = workflowManager.run(callback)
 
     // TODO rename / use composum endpoints instead
     val crx by lazy { Crx(this) }

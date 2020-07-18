@@ -40,9 +40,7 @@ class StatusReporter(private val sling: SlingExtension) {
 
     private fun Instance.details() = mutableListOf<String>().apply {
         add("URL: $httpUrl")
-        if (version != SlingVersion.UNKNOWN) {
-            add("Version: $version")
-        }
+
         when (this@details) {
             is LocalInstance -> add("Status: ${if (created) status.displayName else "uncreated"}")
             else -> add("Status: ${if (available) "available" else "unavailable"}")

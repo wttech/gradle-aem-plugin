@@ -1,1 +1,1 @@
-call sling\bin\status.bat
+java -jar {{instance.jar.name}} status -p {{instance.httpPort}}

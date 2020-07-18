@@ -215,40 +215,8 @@ class SlingExtension(val project: Project) : Serializable {
         }
 
         // Defined by build script, via properties or defaults are filterable by name
-        return all.filter { instance ->
-            when {
-                prop.flag("instance.author", "instance.authors") -> instance.author
-                prop.flag("instance.publish", "instance.publishes", "instance.publishers") -> instance.publish
-                else -> Patterns.wildcard(instance.name, nameMatcher)
-            }
-        }
+        return all.filter { Patterns.wildcard(it.name, nameMatcher) }
     }
-
-    /**
-     * Get all author instances running on current environment.
-     */
-    val authorInstances: List<Instance> get() = filterInstances().filter { it.author }
-
-    val authorInstance: Instance get() = authorInstances.firstOrNull()
-            ?: throw SlingException("No author instances defined!")
-
-    /**
-     * Work in parallel with all author instances running on current environment.
-     */
-    fun authorInstances(consumer: (Instance) -> Unit) = common.parallel.with(authorInstances, consumer)
-
-    /**
-     * Get all publish instances running on current environment.
-     */
-    val publishInstances: List<Instance> get() = filterInstances().filter { it.publish }
-
-    val publishInstance: Instance get() = publishInstances.firstOrNull()
-            ?: throw SlingException("No publish instances defined!")
-
-    /**
-     * Work in parallel with all publish instances running on current environment.
-     */
-    fun publishInstances(consumer: Instance.() -> Unit) = common.parallel.with(publishInstances, consumer)
 
     /**
      * Get all local instances.

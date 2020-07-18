@@ -59,8 +59,6 @@ open class Instance(@Transient @get:JsonIgnore protected val sling: SlingExtensi
 
     lateinit var id: String
 
-    val type: IdType get() = IdType.byId(id)
-
     val physicalType: PhysicalType get() = PhysicalType.byInstance(this)
 
     @get:JsonIgnore
@@ -70,12 +68,6 @@ open class Instance(@Transient @get:JsonIgnore protected val sling: SlingExtensi
         is LocalInstance -> this.run(action)
         else -> throw InstanceException("Instance '$name' is not defined as local!")
     }
-
-    @get:JsonIgnore
-    val author: Boolean get() = type == IdType.AUTHOR
-
-    @get:JsonIgnore
-    val publish: Boolean get() = type == IdType.PUBLISH
 
     var name: String
         get() = "$env-$id"
@@ -144,9 +136,6 @@ open class Instance(@Transient @get:JsonIgnore protected val sling: SlingExtensi
             ?.removeSurrounding("[", "]")
             ?.split(",")?.map { it.trim() }
             ?: throw InstanceException("Cannot read running modes of $this!")
-
-    @get:JsonIgnore
-    open val version: SlingVersion get() = SlingVersion(sync.status.productVersion)
 
     @get:JsonIgnore
     val manager: InstanceManager get() = sling.instanceManager

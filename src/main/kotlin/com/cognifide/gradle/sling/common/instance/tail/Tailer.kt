@@ -140,15 +140,9 @@ class Tailer(val manager: InstanceManager) {
         isLevel(levels) && !isOlderThan(oldMillis) && !logFilter.isExcluded(this)
     }
 
-    // https://sridharmandra.blogspot.com/2016/08/tail-aem-logs-in-browser.html
+    @Suppress("unused_parameter")
     fun errorLogEndpoint(instance: Instance): String {
-        val fileName = logFilePath.get()
-        val path = when {
-            instance.version.atLeast(SlingVersion.VERSION_6_2_0) -> ENDPOINT_PATH
-            else -> ENDPOINT_PATH_OLD
-        }
-
-        return "$path?tail=$linesChunkSize&name=$fileName"
+        return "$ENDPOINT_PATH?tail=$linesChunkSize&name=${logFilePath.get()}"
     }
 
     val logFile: String get() = Paths.get(logFilePath.get()).fileName.toString()

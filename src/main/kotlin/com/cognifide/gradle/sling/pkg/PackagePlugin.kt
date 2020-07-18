@@ -60,10 +60,6 @@ class PackagePlugin : CommonDefaultPlugin() {
                 dependsOn(compose, validate)
                 mustRunAfter(upload, install)
             }
-            val activate = register<PackageActivate>(PackageActivate.NAME) {
-                dependsOn(compose, validate)
-                mustRunAfter(upload, install)
-            }
             val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
                 dependsOn(compose, validate)
             }.apply {
@@ -81,11 +77,11 @@ class PackagePlugin : CommonDefaultPlugin() {
 
             register<PackageDelete>(PackageDelete.NAME) {
                 dependsOn(compose, validate)
-                mustRunAfter(deploy, upload, install, activate, uninstall)
+                mustRunAfter(deploy, upload, install, uninstall)
             }
             register<PackagePurge>(PackagePurge.NAME) {
                 dependsOn(compose, validate)
-                mustRunAfter(deploy, upload, install, activate, uninstall)
+                mustRunAfter(deploy, upload, install, uninstall)
             }
             named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
                 dependsOn(compose)

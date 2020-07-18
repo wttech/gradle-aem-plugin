@@ -9,6 +9,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
     val platformComponents = sling.obj.strings {
         convention(listOf(
                 "org.apache.sling.installer.*",
+                "!org.apache.sling.installer.hc.*",
                 "!org.apache.sling.installer.core.impl.console.*"
         ))
     }

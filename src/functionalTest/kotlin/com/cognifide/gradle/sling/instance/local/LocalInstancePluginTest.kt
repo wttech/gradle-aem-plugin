@@ -3,7 +3,6 @@ package com.cognifide.gradle.sling.instance.local
 import com.cognifide.gradle.sling.test.SlingBuildTest
 import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
 @Suppress("LongMethod", "MaxLineLength")
 class LocalInstancePluginTest : SlingBuildTest() {
@@ -33,7 +32,7 @@ class LocalInstancePluginTest : SlingBuildTest() {
             file("src/sling/files/org.apache.sling.starter-11.jar", "")
 
             gradleProperties("""
-                localInstance.starter.jarUrl=https://downloads.apache.org/sling/org.apache.sling.starter-11.jar
+                localInstance.starter.jarUrl=org.apache.sling:org.apache.sling.starter:11
             """)
 
             buildGradle("""

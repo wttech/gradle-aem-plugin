@@ -1,1 +1,1 @@
-call sling/bin/stop.bat
+java -jar {{instance.jar.name}} stop -p {{instance.httpPort}}
