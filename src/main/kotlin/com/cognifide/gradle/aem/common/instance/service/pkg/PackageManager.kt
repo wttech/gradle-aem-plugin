@@ -464,12 +464,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return response
     }
 
-    fun purge(file: File) {
+    fun purge(file: File): Boolean {
+        var purged = false
         try {
             val pkg = get(file)
 
             try {
                 uninstall(pkg.path)
+                purged = true
             } catch (e: InstanceException) {
                 logger.info("${e.message} Is it installed already?")
                 logger.debug("Cannot uninstall package.", e)
@@ -477,6 +479,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             try {
                 delete(pkg.path)
+                purged = true
             } catch (e: InstanceException) {
                 logger.info(e.message)
                 logger.debug("Cannot delete package.", e)
@@ -485,6 +488,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info(e.message)
             aem.logger.debug("Nothing to purge.", e)
         }
+        return purged
     }
 
     companion object {
