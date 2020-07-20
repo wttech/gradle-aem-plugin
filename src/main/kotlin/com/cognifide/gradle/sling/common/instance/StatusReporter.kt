@@ -69,14 +69,14 @@ class StatusReporter(private val sling: SlingExtension) {
                         .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
                         .sortedWith(
                                 compareByDescending<PackageFile> {
-                                    it.pkg?.lastUnpacked ?: 0L
+                                    it.pkg?.definition?.installedTimestamp
                                 }.thenBy { it.file.name }
                         )
                         .joinToString("\n") { (file, pkg) ->
                             when {
                                 !file.exists() -> "${file.name} | not built"
                                 pkg == null || !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
-                                else -> "${file.name} | ${Formats.date(date(pkg.installedTimestamp))} | ${Formats.fileSize(file)}"
+                                else -> "${file.name} | ${Formats.date(date(pkg.definition.installedTimestamp))} | ${Formats.fileSize(file)}"
                             }
                         }
             }.ifBlank { "none" }

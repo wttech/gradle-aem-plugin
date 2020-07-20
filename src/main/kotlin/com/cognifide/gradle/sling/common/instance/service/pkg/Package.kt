@@ -1,61 +1,49 @@
 package com.cognifide.gradle.sling.common.instance.service.pkg
 
-import com.cognifide.gradle.sling.pkg.tasks.PackageCompose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.text.SimpleDateFormat
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Package private constructor() {
 
-    lateinit var group: String
-
-    lateinit var name: String
-
-    lateinit var version: String
+    lateinit var definition: Definition
 
     lateinit var path: String
 
-    lateinit var downloadName: String
+    val installed: Boolean get() = definition.lastUnpacked != null
 
-    @get:JsonIgnore
-    var conventionPaths = listOf<String>()
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class Definition {
 
-    var lastUnpacked: Long? = null
+        lateinit var group: String
 
-    constructor(compose: PackageCompose) : this() {
-        this.group = compose.vaultDefinition.group.get()
-        this.name = compose.vaultDefinition.name.get()
-        this.version = compose.vaultDefinition.version.get()
+        lateinit var name: String
 
-        this.downloadName = "$name-$version.zip"
-        this.conventionPaths = listOf(
-                "/etc/packages/$group/${compose.archiveFileName.get()}",
-                "/etc/packages/$group/$name-$version.zip"
-        )
+        lateinit var version: String
+
+        @JsonProperty("jcr:description")
+        var description: String? = null
+
+        @JsonProperty("jcr:lastModified")
+        var lastModified: String? = null
+
+        var lastUnpacked: String? = null
+
+        @get:JsonIgnore
+        val coordinates: String get() = coordinates(group, name, version)
+
+        @get:JsonIgnore
+        val dependencyNotation: String get() = "$group:$name:$version"
+
+        val installed: Boolean get() = !lastUnpacked.isNullOrBlank()
+
+        @get:JsonIgnore
+        val installedTimestamp get() = timestamp(lastUnpacked)
     }
-
-    constructor(group: String, name: String, version: String) : this() {
-        this.group = group
-        this.name = name
-        this.version = version
-
-        this.path = ""
-        this.downloadName = ""
-        this.conventionPaths = listOf("/etc/packages/$group/$name-$version.zip")
-    }
-
-    @get:JsonIgnore
-    val coordinates: String get() = coordinates(group, name, version)
-
-    @get:JsonIgnore
-    val dependencyNotation: String get() = "$group:$name:$version"
-
-    val installed: Boolean get() = lastUnpacked?.let { it > 0 } ?: false
-
-    @get:JsonIgnore
-    val installedTimestamp get() = lastUnpacked ?: 0L
 
     companion object {
 
@@ -80,7 +68,13 @@ class Package private constructor() {
         const val VLT_NODETYPES_FILE = "nodetypes.cnd"
 
         fun coordinates(group: String, name: String, version: String) = "[group=$group][name=$name][version=$version]"
+
+        fun timestamp(date: String?) = date?.let { SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(it)?.time } ?: 0L
     }
+
+    fun compare(group: String, name: String) = definition.group == group && definition.name == name
+
+    fun compare(group: String, name: String, version: String) = compare(group, name) && definition.version == version
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -89,15 +83,17 @@ class Package private constructor() {
         other as Package
 
         return EqualsBuilder()
-                .append(group, other.group)
-                .append(name, other.name)
-                .append(version, other.version)
+                .append(definition.group, other.definition.group)
+                .append(definition.name, other.definition.name)
+                .append(definition.version, other.definition.version)
                 .isEquals
     }
 
     override fun hashCode() = HashCodeBuilder()
-            .append(group)
-            .append(name)
-            .append(version)
+            .append(definition.group)
+            .append(definition.name)
+            .append(definition.version)
             .toHashCode()
+
+    override fun toString(): String = "Package(path='$path', coordinates=${definition.coordinates})"
 }

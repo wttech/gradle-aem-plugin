@@ -151,21 +151,23 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun find(definition: VaultDefinition) = find(definition.group.get(), definition.name.get(), definition.version.get())
 
-    fun find(group: String, name: String, version: String): Package? = find { it.resolvePackage(Package(group, name, version)) }
+    fun find(path: String) = find { it.firstOrNull { pkg -> pkg.path == path } }
 
-    fun findAll(group: String, name: String) = find { it.results.filter { pkg -> pkg.group == group && pkg.name == name } }
+    fun find(group: String, name: String, version: String): Package? = find { it.firstOrNull { pkg -> pkg.compare(group, name, version) } }
 
-    private fun <T> find(resolver: (ListResponse) -> T): T {
+    fun findAll(group: String, name: String) = find { it.filter { pkg -> pkg.compare(group, name) } }
+
+    private fun <T> find(resolver: (List<Package>) -> T): T {
         logger.debug("Asking for uploaded packages on $instance")
         return common.buildScope.getOrPut("instance.${instance.name}.packages", { list() }, listRefresh.get()).let(resolver)
     }
 
     operator fun contains(file: File) = find(file) != null
 
-    fun list(): ListResponse {
-        return listRetry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
+    fun list(): List<Package> {
+        return listRetry.withCountdown<List<Package>, InstanceException>("list packages on '${instance.name}'") {
             return try {
-                http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
+                http.get("/bin/cpm/package.list.json") { asObjectFromJson<Array<Package>>(it) }.toList()
             } catch (e: RequestException) {
                 throw InstanceException("Cannot list packages on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
@@ -176,15 +178,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun upload(file: File): UploadResponse {
         return uploadRetry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
-            val url = "$JSON_PATH/?cmd=upload"
-
             logger.info("Uploading package '$file' to $instance'")
 
             val response = try {
-                http.postMultipart(url, mapOf(
-                        "package" to file,
-                        "force" to (uploadForce.get() || isSnapshot(file))
-                )) { asObjectFromJson(it, UploadResponse::class.java) }
+                http.postMultipart("/bin/cpm/package.upload.json", mapOf(
+                        "file" to file,
+                        "force" to (uploadForce.get() || isSnapshot(file)) // TODO is this supported by composum?
+                )) { asObjectFromJson<UploadResponse>(it) }
             } catch (e: FileNotFoundException) {
                 throw PackageException("Package '$file' to be uploaded not found!", e)
             } catch (e: RequestException) {
@@ -193,8 +193,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 throw InstanceException("Malformed response after uploading package '$file' to $instance. Cause: ${e.message}", e)
             }
 
-            if (!response.isSuccess) {
-                throw InstanceException("Cannot upload package '$file' to $instance. Reason: ${interpretFail(response.msg)}.")
+            if (!response.success) {
+                throw InstanceException("Cannot upload package '$file' to $instance. Reason: ${interpretFail(response.status)}.")
             }
 
             return response
@@ -252,20 +252,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun build(remotePath: String): BuildResponse {
-        val url = "$JSON_PATH$remotePath/?cmd=build"
-
         logger.info("Building package '$remotePath' on $instance")
 
         val response = try {
-            http.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
+            http.postMultipart("/bin/cpm/package.build.json", mapOf("path" to remotePath)) { asObjectFromJson<BuildResponse>(it) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
             throw InstanceException("Malformed response after building package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
-        if (!response.isSuccess) {
-            throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
+        if (!response.success) {
+            throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${interpretFail(response.status)}")
         }
 
         return response
@@ -275,24 +273,21 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun install(remotePath: String): InstallResponse {
         return installRetry.withCountdown<InstallResponse, InstanceException>("install package '$remotePath' on '${instance.name}'") {
-            val url = "$HTML_PATH$remotePath/?cmd=install"
-
             logger.info("Installing package '$remotePath' on $instance")
 
             val response = try {
-                http.postMultipart(url, mapOf("recursive" to installRecursive.get())) {
-                    InstallResponse.from(asStream(it), responseBuffer.get())
-                }
+                http.postMultipart("/bin/cpm/package.install.json", mapOf(
+                        "path" to remotePath,
+                        "recursive" to installRecursive.get()) // TODO it this supported by composum?
+                ) { asObjectFromJson<InstallResponse>(it) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package '$remotePath' on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
                 throw InstanceException("Malformed response after installing package '$remotePath' on $instance. Cause: ${e.message}", e)
             }
 
-            if (response.hasPackageErrors(errors.get())) {
-                throw PackageException("Cannot install malformed package '$remotePath' on $instance. Status: ${response.status}. Errors: ${response.errors}")
-            } else if (!response.success) {
-                throw InstanceException("Cannot install package '$remotePath' on $instance. Status: ${response.status}. Errors: ${response.errors}")
+            if (!response.success) {
+                throw InstanceException("Cannot install package '$remotePath' on $instance. Status: ${response.status}")
             }
 
             return response
@@ -300,7 +295,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun interpretFail(message: String): String = when (message) {
-        "Inaccessible value" -> "Probably no disk space left (server respond with '$message')" // https://forums.adobe.com/thread/2338290
+        "Inaccessible value" -> "Probably no disk space left (server respond with '$message')"
         else -> message
     }
 
@@ -313,8 +308,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun isDeployed(pkg: Package): Boolean {
         if (!pkg.installed) return false
-        val otherVersions = findAll(pkg.group, pkg.name).filter { it != pkg }
-        return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp }
+        val otherVersions = findAll(pkg.definition.group, pkg.definition.name).filter { it != pkg }
+        return otherVersions.none { it.definition.installedTimestamp > pkg.definition.installedTimestamp }
     }
 
     fun deploy(file: File): Boolean {
@@ -388,12 +383,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun delete(file: File) = delete(get(file).path)
 
     fun delete(remotePath: String): DeleteResponse {
-        val url = "$HTML_PATH$remotePath/?cmd=delete"
-
         logger.info("Deleting package '$remotePath' on $instance")
 
         val response = try {
-            http.postMultipart(url) { DeleteResponse.from(asStream(it), responseBuffer.get()) }
+            http.postMultipart("/bin/cpm/package.delete.json", mapOf("path" to remotePath)) { asObjectFromJson<DeleteResponse>(it) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot delete package '$remotePath' from $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -401,7 +394,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
 
         if (!response.success) {
-            throw InstanceException("Cannot delete package '$remotePath' from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot delete package '$remotePath' from $instance. Status: ${response.status}.")
         }
 
         return response
@@ -410,12 +403,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun uninstall(file: File) = uninstall(get(file).path)
 
     fun uninstall(remotePath: String): UninstallResponse {
-        val url = "$HTML_PATH$remotePath/?cmd=uninstall"
-
         logger.info("Uninstalling package '$remotePath' on $instance")
 
         val response = try {
-            http.postMultipart(url) { UninstallResponse.from(asStream(it), responseBuffer.get()) }
+            http.postMultipart("/bin/cpm/package.install.json", mapOf("path" to remotePath)) { asObjectFromJson<UninstallResponse>(it) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot uninstall package '$remotePath' on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -423,7 +414,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
 
         if (!response.success) {
-            throw InstanceException("Cannot uninstall package '$remotePath' from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot uninstall package '$remotePath' from $instance. Status: ${response.status}.")
         }
 
         return response
@@ -453,14 +444,6 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     companion object {
-        const val PATH = "/crx/packmgr/service"
-
-        const val JSON_PATH = "$PATH/.json"
-
-        const val HTML_PATH = "$PATH/.html"
-
-        const val LIST_JSON = "/crx/packmgr/list.jsp"
-
         const val DEFINITION_PATH = "jcr:content/vlt:definition"
 
         const val METADATA_PATH = "/var/gap/package/deploy"

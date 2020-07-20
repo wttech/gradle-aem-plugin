@@ -1,22 +1,13 @@
 package com.cognifide.gradle.sling.common.instance.service.pkg
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.ObjectMapper
-import java.io.InputStream
+import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class UploadResponse private constructor() {
+class UploadResponse : PackageResponse() {
 
-    var isSuccess: Boolean = false
+    override val success: Boolean get() =  (operation == "upload" && status == "successful")
 
-    lateinit var msg: String
-
-    lateinit var path: String
-
-    companion object {
-
-        fun fromJson(json: InputStream): UploadResponse {
-            return ObjectMapper().readValue(json, UploadResponse::class.java)
-        }
-    }
+    @JsonProperty("package")
+    lateinit var pkg: Package
 }
