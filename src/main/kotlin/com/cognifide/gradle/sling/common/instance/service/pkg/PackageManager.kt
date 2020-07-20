@@ -32,14 +32,6 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     private val http = sync.http
 
     /**
-     * Force upload CRX package regardless if it was previously uploaded.
-     */
-    val uploadForce = sling.obj.boolean {
-        convention(true)
-        sling.prop.boolean("package.manager.uploadForce")?.let { set(it) }
-    }
-
-    /**
      * Repeat upload when failed (brute-forcing).
      */
     var uploadRetry = common.retry { afterSquaredSecond(sling.prop.long("package.manager.uploadRetry") ?: 3) }
@@ -50,27 +42,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     var installRetry = common.retry { afterSquaredSecond(sling.prop.long("package.manager.installRetry") ?: 2) }
 
     /**
-     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
-     */
-    val installRecursive = sling.obj.boolean {
-        convention(true)
-        sling.prop.boolean("package.manager.installRecursive")?.let { set(it) }
-    }
-
-    /**
      * Deploys only if package is changed (checksum based) or reinstalled on instance in the meantime.
      */
     val deployAvoidance = sling.obj.boolean {
         convention(true)
         sling.prop.boolean("package.manager.deployAvoidance")?.let { set(it) }
-    }
-
-    /**
-     * Allows to temporarily enable or disable workflows during CRX package deployment.
-     */
-    val workflowToggle = sling.obj.map<String, Boolean> {
-        convention(mapOf())
-        sling.prop.map("package.manager.workflowToggle")?.let { m -> set(m.mapValues { it.value.toBoolean() }) }
     }
 
     /**
@@ -80,13 +56,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     /**
      * Packages are installed lazy which means already installed will no be installed again.
-     * By default, information about currently installed packages is being retrieved from Sling only once.
+     * By default, information about currently installed packages is being retrieved from Sling always when requested (instead of once).
      *
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
     val listRefresh = sling.obj.boolean {
-        convention(false)
+        convention(true)
         sling.prop.boolean("package.manager.listRefresh")?.let { set(it) }
     }
 
@@ -96,40 +72,12 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     var downloadRetry = common.retry { afterSquaredSecond(sling.prop.long("package.manager.downloadRetry") ?: 3) }
 
     /**
-     * Define patterns for known exceptions which could be thrown during package installation
-     * making it impossible to succeed.
-     *
-     * When declared exception is encountered during package installation process, no more
-     * retries will be applied.
-     */
-    val errors = sling.obj.strings {
-        convention(listOf(
-                "javax.jcr.nodetype.*Exception",
-                "org.apache.jackrabbit.oak.api.*Exception",
-                "org.apache.jackrabbit.vault.packaging.*Exception",
-                "org.xml.sax.*Exception"
-        ))
-        sling.prop.list("package.manager.errors")?.let { set(it) }
-    }
-
-    /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
     val snapshots = sling.obj.strings {
         convention(listOf())
         sling.prop.list("package.manager.snapshots")?.let { set(it) }
-    }
-
-    /**
-     * Determines number of lines to process at once during reading Package Manager HTML responses.
-     *
-     * The higher the value, the bigger consumption of memory but shorter execution time.
-     * It is a protection against exceeding max Java heap size.
-     */
-    val responseBuffer = sling.obj.int {
-        convention(4096)
-        sling.prop.int("package.manager.responseBuffer")?.let { set(it) }
     }
 
     fun get(file: File): Package {
@@ -181,10 +129,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             logger.info("Uploading package '$file' to $instance'")
 
             val response = try {
-                http.postMultipart("/bin/cpm/package.upload.json", mapOf(
-                        "file" to file,
-                        "force" to (uploadForce.get() || isSnapshot(file)) // TODO is this supported by composum?
-                )) { asObjectFromJson<UploadResponse>(it) }
+                http.postMultipart("/bin/cpm/package.upload.json", mapOf("file" to file)) { asObjectFromJson<UploadResponse>(it) }
             } catch (e: FileNotFoundException) {
                 throw PackageException("Package '$file' to be uploaded not found!", e)
             } catch (e: RequestException) {
@@ -276,10 +221,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             logger.info("Installing package '$remotePath' on $instance")
 
             val response = try {
-                http.postMultipart("/bin/cpm/package.install.json", mapOf(
-                        "path" to remotePath,
-                        "recursive" to installRecursive.get()) // TODO it this supported by composum?
-                ) { asObjectFromJson<InstallResponse>(it) }
+                http.postMultipart("/bin/cpm/package.install.json", mapOf("path" to remotePath)) { asObjectFromJson<InstallResponse>(it) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package '$remotePath' on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
@@ -365,7 +307,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun readLastUnpacked(pkgPath: String): Date {
-        return sync.repository.node(pkgPath).child(DEFINITION_PATH).properties.date(METADATA_LAST_UNPACKED_PROP)
+        return sync.repository.node("$STORAGE_PATH/$pkgPath").child(DEFINITION_PATH).properties.date(METADATA_LAST_UNPACKED_PROP)
                 ?: throw PackageException("Cannot read package '$pkgPath' installation time on $instance!")
     }
 
@@ -386,7 +328,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Deleting package '$remotePath' on $instance")
 
         val response = try {
-            http.postMultipart("/bin/cpm/package.delete.json", mapOf("path" to remotePath)) { asObjectFromJson<DeleteResponse>(it) }
+            http.delete("/bin/cpm/package.delete.json?path=$remotePath") { asObjectFromJson<DeleteResponse>(it) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot delete package '$remotePath' from $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -406,7 +348,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Uninstalling package '$remotePath' on $instance")
 
         val response = try {
-            http.postMultipart("/bin/cpm/package.install.json", mapOf("path" to remotePath)) { asObjectFromJson<UninstallResponse>(it) }
+            http.postMultipart("/bin/cpm/package.uninstall.json", mapOf("path" to remotePath)) { asObjectFromJson<UninstallResponse>(it) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot uninstall package '$remotePath' on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -420,12 +362,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return response
     }
 
-    fun purge(file: File) {
+    fun purge(file: File): Boolean {
+        var purged = false
         try {
             val pkg = get(file)
 
             try {
                 uninstall(pkg.path)
+                purged = true
             } catch (e: InstanceException) {
                 logger.info("${e.message} Is it installed already?")
                 logger.debug("Cannot uninstall package.", e)
@@ -433,6 +377,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             try {
                 delete(pkg.path)
+                purged = true
             } catch (e: InstanceException) {
                 logger.info(e.message)
                 logger.debug("Cannot delete package.", e)
@@ -441,10 +386,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             sling.logger.info(e.message)
             sling.logger.debug("Nothing to purge.", e)
         }
+        return purged
     }
 
     companion object {
         const val DEFINITION_PATH = "jcr:content/vlt:definition"
+
+        const val STORAGE_PATH = "/etc/packages"
 
         const val METADATA_PATH = "/var/gap/package/deploy"
 

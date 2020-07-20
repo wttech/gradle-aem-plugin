@@ -4,7 +4,7 @@ import com.cognifide.gradle.sling.SlingExtension
 import com.cognifide.gradle.sling.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.sling.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.sling.common.instance.service.repository.Repository
-import com.cognifide.gradle.sling.common.instance.service.crx.Crx
+import com.cognifide.gradle.sling.common.instance.service.composum.Composum
 import com.cognifide.gradle.sling.common.instance.service.status.Status
 
 class InstanceSync(val sling: SlingExtension, val instance: Instance) {
@@ -46,13 +46,12 @@ class InstanceSync(val sling: SlingExtension, val instance: Instance) {
      */
     fun <T> status(callback: Status.() -> T): T = status.run(callback)
 
-    // TODO rename / use composum endpoints instead
-    val crx by lazy { Crx(this) }
+    val composum by lazy { Composum(this) }
 
     /**
      * CRX DE Endpoints accessor (node types etc).
      */
-    fun <T> crx(callback: Crx.() -> T): T = crx.run(callback)
+    fun <T> composum(callback: Composum.() -> T): T = composum.run(callback)
 
     init {
         sling.instanceManager.syncOptions(this)

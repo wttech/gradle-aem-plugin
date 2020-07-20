@@ -1,8 +1,8 @@
-package com.cognifide.gradle.sling.common.instance.service.crx
+package com.cognifide.gradle.sling.common.instance.service.composum
 
 import com.cognifide.gradle.sling.common.instance.InstanceException
 
-class CrxException : InstanceException {
+class ComposumException : InstanceException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

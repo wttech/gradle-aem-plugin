@@ -45,7 +45,7 @@ class CndSync(private val sling: SlingExtension) {
             try {
                 file.get().asFile.apply {
                     parentFile.mkdirs()
-                    writeText(crx.nodeTypes)
+                    writeText(composum.nodeTypes)
                 }
             } catch (e: CommonException) {
                 sling.logger.debug("Cannot synchronize CND file using $instance! Cause: ${e.message}", e)
