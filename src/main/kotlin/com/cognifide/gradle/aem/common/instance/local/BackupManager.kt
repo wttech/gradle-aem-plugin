@@ -158,7 +158,7 @@ class BackupManager(private val aem: AemExtension) {
         get() {
             val fileEntries = common.fileTransfer.list(uploadUrl.get())
             if (fileEntries.isEmpty()) {
-                logger.info("No instance backups available at URL '$uploadUrl'.")
+                logger.info("No instance backups available at URL '${uploadUrl.get()}'.")
             }
 
             return fileEntries.map { file ->
