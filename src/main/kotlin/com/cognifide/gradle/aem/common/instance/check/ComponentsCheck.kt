@@ -10,6 +10,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
         convention(listOf(
                 "com.day.crx.packaging.*",
                 "org.apache.sling.installer.*",
+                "!org.apache.sling.installer.hc.*",
                 "!org.apache.sling.installer.core.impl.console.*"
         ))
     }

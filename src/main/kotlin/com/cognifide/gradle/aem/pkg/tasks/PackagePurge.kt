@@ -9,7 +9,7 @@ open class PackagePurge : PackageTask() {
 
     @TaskAction
     fun purge() {
-        sync { packageManager.purge(it) }
+        sync { awaitIf { packageManager.purge(it) } }
         common.notifier.notify("Package purged", "${files.files.fileNames} from ${instances.get().names}")
     }
 
