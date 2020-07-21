@@ -8,7 +8,7 @@ class PackageWrapper(val aem: AemExtension) {
 
     val workDir = aem.obj.dir { convention(aem.obj.buildDir("package/wrapper")) }
 
-    val bundlePath = aem.obj.string { convention(aem.packageOptions.installPath) }
+    val bundlePath = aem.obj.string { convention("/apps/gap/wrapper/install") }
 
     fun definition(definition: PackageDefinition.(BundleFile) -> Unit) {
         this.definition = definition
