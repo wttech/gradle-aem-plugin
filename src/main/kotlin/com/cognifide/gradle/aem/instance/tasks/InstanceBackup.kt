@@ -36,14 +36,14 @@ open class InstanceBackup : AemDefaultTask() {
 
     private fun zip(): File {
         val file = manager.create(aem.localInstances)
-        common.notifier.lifecycle("Backed up instances", "File: ${file.name}, Size: ${Formats.fileSize(file)}")
+        common.notifier.lifecycle("Instance(s) backed up", "File: ${file.name}, Size: ${Formats.fileSize(file)}")
         return file
     }
 
     private fun upload(file: File, verbose: Boolean) {
         val uploaded = manager.upload(file, verbose)
         if (uploaded) {
-            common.notifier.lifecycle("Uploaded instances backup", "File: ${file.name}")
+            common.notifier.lifecycle("Instance backup uploaded", "File: ${file.name}")
         }
     }
 
