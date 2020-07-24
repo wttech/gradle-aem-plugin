@@ -84,6 +84,8 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.apply(options)
     }
 
+    fun vault(options: VaultDefinition.() -> Unit) = vaultDefinition(options)
+
     @Internal
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
