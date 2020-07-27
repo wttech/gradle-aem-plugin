@@ -58,7 +58,6 @@ tasks {
     register<Test>("functionalTest") {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
-
         testLogging.showStandardStreams = true
         useJUnitPlatform()
         mustRunAfter("test")

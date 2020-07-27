@@ -62,7 +62,7 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         val expectedNormalized = normalizeString(expectedContent)
         val actualNormalized = normalizeString(actual)
 
-        assertTrue(FilenameUtils.wildcardMatch(actual, expectedNormalized),
+        assertTrue(FilenameUtils.wildcardMatch(actualNormalized, expectedNormalized),
                 "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
                         "==> expected content pattern:\n\n$expectedNormalized\n\n==> actual content:\n\n$actualNormalized\n\n")
     }

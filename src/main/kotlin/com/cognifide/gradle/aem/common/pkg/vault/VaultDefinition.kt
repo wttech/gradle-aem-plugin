@@ -23,12 +23,23 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     @Input
     val manifestProperties = aem.obj.map<String, String> {
-        convention(aem.obj.provider {
+        set(aem.obj.provider {
             mapOf(
-                    "Content-Package-Type" to "mixed",
-                    "Content-Package-Id" to "${group.get()}:${name.get()}:${version.get()}",
-                    "Content-Package-Roots" to filterRoots.joinToString(",")
-            )
+                    "Content-Package-Type" to "application",
+                    "Content-Package-Id" to if (group.isPresent && name.isPresent && version.isPresent) {
+                        "${group.get()}:${name.get()}:${version.get()}"
+                    } else null,
+                    "Content-Package-Roots" to filterRoots.joinToString(","),
+                    "Implementation-Vendor-Id" to group.orNull,
+                    "Implementation-Title" to description.orNull,
+                    "Implementation-Version" to version.orNull,
+                    "Build-Jdk" to System.getProperty("java.version"),
+                    "Built-By" to createdBy.orNull,
+                    "Created-By" to "Gradle (AEM Plugin)"
+            ).mapNotNull {
+                if (!it.value.isNullOrBlank()) it.key to it.value!!
+                else null
+            }.toMap()
         })
     }
 
@@ -52,7 +63,7 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     @Input
     @Optional
-    val description = aem.obj.string()
+    val description = aem.obj.string { convention(aem.obj.provider { aem.project.description }) }
 
     @Input
     @Optional
