@@ -69,10 +69,15 @@ class PackagePluginTest : AemBuildTest() {
                 </properties>
             """)
 
-            assertZipEntryEquals(pkg, "META-INF/MANIFEST.MF", """
+            assertZipEntryMatching(pkg, "META-INF/MANIFEST.MF", """
                 Manifest-Version: 1.0
                 Content-Package-Roots: /apps/example
-                Content-Package-Type: mixed
+                Implementation-Version: 1.0.0
+                Built-By: ${System.getProperty("user.name")}
+                Implementation-Vendor-Id: com.company.example
+                Content-Package-Type: application
+                Build-Jdk: *
+                Created-By: Gradle (AEM Plugin)
                 Content-Package-Id: com.company.example:package-minimal:1.0.0
             """)
         }

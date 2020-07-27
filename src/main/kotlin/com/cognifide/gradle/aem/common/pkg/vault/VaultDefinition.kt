@@ -35,7 +35,6 @@ open class VaultDefinition(private val aem: AemExtension) {
                     "Implementation-Version" to version.orNull,
                     "Build-Jdk" to System.getProperty("java.version"),
                     "Built-By" to createdBy.orNull,
-                    "Archiver-Version" to "Gradle Archiver",
                     "Created-By" to "Gradle (AEM Plugin)"
             ).mapNotNull {
                 if (!it.value.isNullOrBlank()) it.key to it.value!!
@@ -64,7 +63,7 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     @Input
     @Optional
-    val description = aem.obj.string { convention(aem.obj.provider { aem.project.description } )}
+    val description = aem.obj.string { convention(aem.obj.provider { aem.project.description }) }
 
     @Input
     @Optional
