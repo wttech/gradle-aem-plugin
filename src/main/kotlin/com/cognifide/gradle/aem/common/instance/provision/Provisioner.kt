@@ -218,4 +218,18 @@ class Provisioner(val manager: InstanceManager) {
         sync { groovyConsole.evalScript(fileName, data) }
         options()
     }
+
+    fun configureReplicationAgent(location: String, name: String, props: Map<String, Any?>, options: Step.() -> Unit = {}) = step("configureReplicationAgent/$location/$name") {
+        description.set("Configuring replication agent on '$location' named '$name'")
+        sync { repository.save("/etc/replication/agents.$location/$name/jcr:content", props) }
+        options()
+    }
+
+    fun enableReplicationAgent(location: String, name: String, instance: Instance, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf(
+        "enabled" to true,
+        "userId" to instance.user,
+        "transportUri" to "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
+        "transportUser" to instance.user,
+        "transportPassword" to instance.password
+    ), options)
 }
