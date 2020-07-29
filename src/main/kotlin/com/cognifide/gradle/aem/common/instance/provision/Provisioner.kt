@@ -225,11 +225,20 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
+    fun enableReplicationAgent(location: String, name: String, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf("enabled" to true), options)
+
+    fun disableReplicationAgent(location: String, name: String, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf("enabled" to false), options)
+
+    fun enableReplicationAgent(location: String, name: String, transportUri: String, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf(
+            "enabled" to true,
+            "transportUri" to transportUri
+    ), options)
+
     fun enableReplicationAgent(location: String, name: String, instance: Instance, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf(
-        "enabled" to true,
-        "userId" to instance.user,
-        "transportUri" to "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
-        "transportUser" to instance.user,
-        "transportPassword" to instance.password
+            "enabled" to true,
+            "transportUri" to "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
+            "transportUser" to instance.user,
+            "transportPassword" to instance.password,
+            "userId" to instance.user
     ), options)
 }
