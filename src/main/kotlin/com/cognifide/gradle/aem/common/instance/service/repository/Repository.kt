@@ -91,6 +91,18 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         throw RepositoryException("Malformed response after querying $criteria on $instance. Cause: ${e.message}", e)
     }
 
+    fun replicationAgent(name: String, location: String) = ReplicationAgent(node("/etc/replication/agents.$location/$name"))
+
+    fun replicationAgents(location: String): Sequence<ReplicationAgent> = node("/etc/replication/agents.$location").siblings()
+            .filter { it.type == "cq:Page" }
+            .map { ReplicationAgent(it) }
+
+    fun replicationAgents(): Sequence<ReplicationAgent> {
+        return replicationAgents(ReplicationAgent.LOCATION_AUTHOR) + replicationAgents(ReplicationAgent.LOCATION_PUBLISH)
+    }
+
+    val replicationAgents: List<ReplicationAgent> get() = replicationAgents().toList()
+
     private fun splitPath(path: String): Pair<String, String> {
         return path.substringBeforeLast("/") to path.substringAfterLast("/")
     }

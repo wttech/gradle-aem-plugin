@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
+import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
@@ -219,26 +220,39 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    fun configureReplicationAgent(location: String, name: String, props: Map<String, Any?>, options: Step.() -> Unit = {}) = step("configureReplicationAgent/$location/$name") {
-        description.set("Configuring replication agent on '$location' named '$name'")
-        sync { repository.save("/etc/replication/agents.$location/$name/jcr:content", props) }
+    fun deleteReplicationAgents(options: Step.() -> Unit = {}) = step("deleteReplicationAgents") {
+        description.set("Deleting replication agents")
+        sync { repository.replicationAgents().forEach { it.delete() } }
         options()
     }
 
-    fun enableReplicationAgent(location: String, name: String, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf("enabled" to true), options)
+    fun configureReplicationAgent(location: String, name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit = {}) {
+        step("configureReplicationAgent/$location/$name") {
+            description.set("Configuring replication agent on '$location' named '$name'")
+            sync { repository.replicationAgent(location, name).apply(configurer) }
+            options()
+        }
+    }
 
-    fun disableReplicationAgent(location: String, name: String, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf("enabled" to false), options)
+    fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit) {
+        configureReplicationAgentAuthor(name, configurer) {}
+    }
 
-    fun enableReplicationAgent(location: String, name: String, transportUri: String, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf(
-            "enabled" to true,
-            "transportUri" to transportUri
-    ), options)
+    fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
+        configureReplicationAgent(ReplicationAgent.LOCATION_AUTHOR, name, configurer) {
+            condition { instance.author && once() }
+            options()
+        }
+    }
 
-    fun enableReplicationAgent(location: String, name: String, instance: Instance, options: Step.() -> Unit = {}) = configureReplicationAgent(location, name, mapOf(
-            "enabled" to true,
-            "transportUri" to "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
-            "transportUser" to instance.user,
-            "transportPassword" to instance.password,
-            "userId" to instance.user
-    ), options)
+    fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit) {
+        configureReplicationAgentPublish(name, configurer) {}
+    }
+
+    fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
+        configureReplicationAgent(ReplicationAgent.LOCATION_PUBLISH, name, configurer) {
+            condition { instance.publish && once() }
+            options()
+        }
+    }
 }
