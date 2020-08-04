@@ -98,6 +98,18 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val pid: Int get() = quickstartDir.resolve("conf/cq.pid")
             .takeIf { it.exists() }?.readText()?.trim()?.ifBlank { null }?.toInt() ?: 0
 
+    @get:JsonIgnore
+    val logsDir get() = quickstartDir.resolve("logs")
+
+    @get:JsonIgnore
+    val stdoutLog get() = logsDir.resolve("stdout.log")
+
+    @get:JsonIgnore
+    val errorLog get() = logsDir.resolve("error.log")
+
+    @get:JsonIgnore
+    val requestLog get() = logsDir.resolve("request.log")
+
     override val version: AemVersion
         get() {
             val remoteVersion = super.version
@@ -238,7 +250,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         }
 
         // Ensure that 'logs' directory exists
-        quickstartDir.resolve("logs").mkdirs()
+        logsDir.mkdirs()
     }
 
     private fun unpackFiles() {
