@@ -41,7 +41,10 @@ open class SyncFileTask : AemDefaultTask() {
      * Check instance(s) condition after performing action related with synced file(s).
      */
     @Internal
-    val awaited = aem.obj.boolean { convention(true) }
+    val awaited = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("syncFile.awaited")?.let { set(it) }
+    }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 

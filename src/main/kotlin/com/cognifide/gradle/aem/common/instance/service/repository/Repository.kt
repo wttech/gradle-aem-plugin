@@ -91,7 +91,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         throw RepositoryException("Malformed response after querying $criteria on $instance. Cause: ${e.message}", e)
     }
 
-    fun replicationAgent(name: String, location: String) = ReplicationAgent(node("/etc/replication/agents.$location/$name"))
+    fun replicationAgent(location: String, name: String) = ReplicationAgent(node("/etc/replication/agents.$location/$name"))
 
     fun replicationAgents(location: String): Sequence<ReplicationAgent> = node("/etc/replication/agents.$location").siblings()
             .filter { it.type == "cq:Page" }
