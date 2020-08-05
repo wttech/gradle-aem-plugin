@@ -93,7 +93,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     fun replicationAgent(location: String, name: String) = ReplicationAgent(node("/etc/replication/agents.$location/$name"))
 
-    fun replicationAgents(location: String): Sequence<ReplicationAgent> = node("/etc/replication/agents.$location").siblings()
+    fun replicationAgents(location: String): Sequence<ReplicationAgent> = node("/etc/replication/agents.$location").children()
             .filter { it.type == "cq:Page" }
             .map { ReplicationAgent(it) }
 
