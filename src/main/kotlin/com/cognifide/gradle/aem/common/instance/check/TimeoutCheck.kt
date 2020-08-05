@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.common.utils.Formats
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +24,14 @@ class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
 
     override fun check() {
         if (!instance.available && progress.stateTime >= unavailableTime.get()) {
-            throw InstanceException("Instance unavailable timeout reached '${Formats.duration(progress.stateTime)}' for $instance!")
+            val error = "Instance unavailable timeout reached '${Formats.duration(progress.stateTime)}' for $instance!"
+            if (instance is LocalInstance) {
+                throw InstanceException("$error\n\n" +
+                        "Troubleshoot by investigating log files:\n${instance.stdoutLog}\n${instance.errorLog}\n\n" +
+                        "When ports are already used ('bind failed: Address already in use'), try rebooting machine.")
+            } else {
+                throw InstanceException(error)
+            }
         }
 
         if (progress.stateTime >= stateTime.get()) {

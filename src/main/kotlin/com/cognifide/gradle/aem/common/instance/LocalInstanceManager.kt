@@ -355,7 +355,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()
 
     fun down(instances: Collection<LocalInstance> = aem.localInstances, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
-        val upInstances = instances.filter { it.running }
+        val upInstances = instances.filter { it.running || it.checkAvailable() }
         if (upInstances.isEmpty()) {
             logger.lifecycle("No instances to turn off.")
             return listOf()
@@ -365,17 +365,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             common.parallel.with(upInstances) {
                 increment("Stopping instance '$name'") {
                     if (!created) {
-                        logger.info("Instance not created, so it could not be down: $this")
-                        return@increment
+                        sync.osgi.stop()
+                        logger.warn("Instance not created, but available. Stopping OSGi on: $this")
+                    } else {
+                        val status = checkStatus()
+                        if (status == Status.RUNNING) {
+                            executeStopScript()
+                        } else {
+                            logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
+                            sync.osgi.stop()
+                        }
                     }
-
-                    val status = checkStatus()
-                    if (status != Status.RUNNING) {
-                        logger.info("Instance is not running (reports status '$status'). No need to stop: $this")
-                        return@increment
-                    }
-
-                    executeStopScript()
                 }
             }
         }

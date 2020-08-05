@@ -108,7 +108,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             ?: slingSettings[key]
 
     @get:JsonIgnore
-    val available: Boolean get() = systemProperties.isNotEmpty()
+    val available: Boolean get() = sync.status.available
+
+    fun checkAvailable(): Boolean = sync.status.checkAvailable()
 
     @get:JsonIgnore
     val zoneId: ZoneId get() = systemProperties["user.timezone"]?.let { ZoneId.of(it) }

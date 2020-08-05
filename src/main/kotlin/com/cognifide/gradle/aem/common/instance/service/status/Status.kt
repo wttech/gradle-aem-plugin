@@ -16,6 +16,21 @@ import java.util.*
 class Status(sync: InstanceSync) : InstanceService(sync) {
 
     /**
+     * Check if instance was available at least once across whole build, fail-safe.
+     */
+    val available: Boolean get() = systemProperties.isNotEmpty()
+
+    /**
+     * On-demand checks instance availability.
+     */
+    fun checkAvailable(): Boolean = try {
+        readProperties(SYSTEM_PROPERTIES_PATH).isNotEmpty()
+    } catch (e: CommonException) {
+        logger.debug("Seems that instance is not available: $instance", e)
+        false
+    }
+
+    /**
      * System properties of instance read once across whole build, fail-safe.
      */
     val systemProperties: Map<String, String> get() = readPropertiesOnce(SYSTEM_PROPERTIES_PATH)

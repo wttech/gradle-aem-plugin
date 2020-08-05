@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
+import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
@@ -217,5 +218,41 @@ class Provisioner(val manager: InstanceManager) {
         description.set("Evaluating Groovy Script '$fileName'")
         sync { groovyConsole.evalScript(fileName, data) }
         options()
+    }
+
+    fun deleteReplicationAgents(options: Step.() -> Unit = {}) = step("deleteReplicationAgents") {
+        description.set("Deleting replication agents")
+        sync { repository.replicationAgents().forEach { it.delete() } }
+        options()
+    }
+
+    fun configureReplicationAgent(location: String, name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit = {}) {
+        step("configureReplicationAgent/$location/$name") {
+            description.set("Configuring replication agent on '$location' named '$name'")
+            sync { repository.replicationAgent(location, name).apply(configurer) }
+            options()
+        }
+    }
+
+    fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit) {
+        configureReplicationAgentAuthor(name, configurer) {}
+    }
+
+    fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
+        configureReplicationAgent(ReplicationAgent.LOCATION_AUTHOR, name, configurer) {
+            condition { instance.author && once() }
+            options()
+        }
+    }
+
+    fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit) {
+        configureReplicationAgentPublish(name, configurer) {}
+    }
+
+    fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
+        configureReplicationAgent(ReplicationAgent.LOCATION_PUBLISH, name, configurer) {
+            condition { instance.publish && once() }
+            options()
+        }
     }
 }
