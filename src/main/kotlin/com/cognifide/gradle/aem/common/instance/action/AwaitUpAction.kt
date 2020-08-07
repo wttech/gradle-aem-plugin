@@ -52,6 +52,14 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         helpOptions = options
     }
 
+    private var installerOptions: InstallerCheck.() -> Unit = {
+        // TODO ...
+    }
+
+    fun installer(options: InstallerCheck.() -> Unit) {
+        installerOptions = options
+    }
+
     private var bundlesOptions: BundlesCheck.() -> Unit = {
         symbolicNamesIgnored.apply {
             aem.prop.list("instance.awaitUp.bundles.symbolicNamesIgnored")?.let { set(it) }
@@ -120,6 +128,7 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
             listOf(
                     timeout(timeoutOptions),
                     help(helpOptions),
+                    installer(installerOptions),
                     bundles(bundlesOptions),
                     events(eventsOptions),
                     components(componentsOptions),
