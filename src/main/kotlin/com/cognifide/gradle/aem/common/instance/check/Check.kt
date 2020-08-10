@@ -1,6 +1,10 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import org.gradle.api.provider.Property
+
 interface Check {
+
+    val enabled: Property<Boolean>
 
     fun check()
 
@@ -8,6 +12,5 @@ interface Check {
 
     val success: Boolean
 
-    val failure: Boolean
-        get() = !success
+    val failure: Boolean get() = !success
 }

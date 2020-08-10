@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
 import com.cognifide.gradle.aem.common.instance.service.crx.Crx
-import com.cognifide.gradle.aem.common.instance.service.jmx.Jmx
+import com.cognifide.gradle.aem.common.instance.service.sling.SlingInstaller
 import com.cognifide.gradle.aem.common.instance.service.status.Status
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowManager
 
@@ -70,12 +70,12 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      */
     fun <T> crx(callback: Crx.() -> T): T = crx.run(callback)
 
-    val jmx by lazy { Jmx(this) }
+    val slingInstaller by lazy { SlingInstaller(this) }
 
     /**
      * JMX / monitoring endpoints accessor.
      */
-    fun <T> jmx(callback: Jmx.() -> T): T = jmx.run(callback)
+    fun <T> slingInstaller(callback: SlingInstaller.() -> T): T = slingInstaller.run(callback)
 
     init {
         aem.instanceManager.syncOptions(this)

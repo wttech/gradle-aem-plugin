@@ -32,6 +32,13 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     fun sync(callback: InstanceSync.() -> Unit) = sync.using(callback)
 
+    val name get() = this::class.simpleName!!.removeSuffix("Check").decapitalize()
+
+    override val enabled = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.check.$name.enabled")?.let { set(it) }
+    }
+
     override val status: String get() = statusLogger.entries.firstOrNull()?.summary ?: "Check passed"
 
     override val success: Boolean get() = statusLogger.entries.none { it.level == LogLevel.ERROR }

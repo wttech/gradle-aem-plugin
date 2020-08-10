@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
 import java.io.File
@@ -103,19 +102,6 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     }
 
     val replicationAgents: List<ReplicationAgent> get() = replicationAgents().toList()
-
-    fun checkSlingInstallerPause() = try {
-        node(SLING_INSTALLER_PAUSE).children().any()
-    } catch (e: Exception) {
-        throw RepositoryException("Cannot check Sling OSGi installer pause on $instance!", e)
-    }
-
-    val slingInstallerPaused get() = try {
-        checkSlingInstallerPause()
-    } catch (e: CommonException) {
-        logger.debug("Repository error", e)
-        false
-    }
 
     private fun splitPath(path: String): Pair<String, String> {
         return path.substringBeforeLast("/") to path.substringAfterLast("/")

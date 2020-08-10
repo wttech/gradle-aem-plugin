@@ -18,7 +18,8 @@ class CheckGroup(
 
     @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
     fun check() {
-        for (check in checks) {
+        val checksEnabled = checks.filter { it.enabled.get() }
+        for (check in checksEnabled) {
             try {
                 check.check()
                 if (check.failure) {

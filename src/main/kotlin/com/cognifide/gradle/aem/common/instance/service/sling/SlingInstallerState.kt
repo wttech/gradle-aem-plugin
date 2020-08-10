@@ -1,13 +1,14 @@
-package com.cognifide.gradle.aem.common.instance.service.jmx
+package com.cognifide.gradle.aem.common.instance.service.sling
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class SlingOsgiInstallerState private constructor() {
+class SlingInstallerState private constructor() {
 
     @JsonIgnore
     lateinit var instance: Instance
@@ -28,6 +29,20 @@ class SlingOsgiInstallerState private constructor() {
 
     val unknown get() = installedResourceCount == -1L
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SlingInstallerState
+
+        return EqualsBuilder()
+                .append(active, other.active)
+                .append(suspendedSince, other.suspendedSince)
+                .append(activeResourceCount, other.activeResourceCount)
+                .append(installedResourceCount, other.installedResourceCount)
+                .isEquals
+    }
+
     override fun hashCode(): Int = HashCodeBuilder()
             .append(active)
             .append(suspendedSince)
@@ -35,10 +50,10 @@ class SlingOsgiInstallerState private constructor() {
             .append(installedResourceCount)
             .toHashCode()
 
-    override fun toString(): String = "SlingOsgiInstallerState(instance='${instance.name}', active='$active', activeResourceCount=$activeResourceCount)"
+    override fun toString(): String = "SlingInstallerState(instance='${instance.name}', active='$active', activeResourceCount=$activeResourceCount)"
 
     companion object {
-        fun unknown(instance: Instance) = SlingOsgiInstallerState().apply {
+        fun unknown(instance: Instance) = SlingInstallerState().apply {
             this.instance = instance
         }
     }

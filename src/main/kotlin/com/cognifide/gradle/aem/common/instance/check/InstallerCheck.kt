@@ -1,18 +1,31 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-@Suppress("MagicNumber")
 class InstallerCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    override fun check() {
-        logger.info("Checking OSGi installer on $instance")
+    val busy = aem.obj.boolean { convention(true) }
 
-        val state = state(sync.jmx.determineSlingOsgiInstallerState())
+    val pause = aem.obj.boolean { convention(true) }
+
+    override fun check() {
+        if (busy.get()) {
+            if (isBusy()) return
+        }
+
+        if (pause.get()) {
+            if (isPaused()) return
+        }
+    }
+
+    private fun isBusy(): Boolean {
+        logger.info("Checking OSGi installer busyiness on $instance")
+
+        val state = state(sync.slingInstaller.state)
         if (state.unknown) {
             statusLogger.error(
                     "Installer state unknown",
                     "Unknown Sling OSGi Installer state on $instance"
             )
-            return
+            return true
         }
 
         if (state.busy) {
@@ -27,13 +40,24 @@ class InstallerCheck(group: CheckGroup) : DefaultCheck(group) {
                         "Sling OSGi Installer is active on $instance"
                 )
             }
+            return true
         }
 
-        if (sync.repository.slingInstallerPaused) {
+        return false
+    }
+
+    private fun isPaused(): Boolean {
+        logger.info("Checking OSGi installer pause on $instance")
+
+        val paused = state(sync.slingInstaller.paused)
+        if (paused) {
             statusLogger.error(
                     "Installation paused",
                     "Sling OSGi Installer is paused on $instance"
             )
+            return true
         }
+
+        return false
     }
 }
