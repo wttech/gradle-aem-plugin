@@ -6,6 +6,8 @@ class CheckFactory(val group: CheckGroup) {
 
     fun bundles(options: BundlesCheck.() -> Unit = {}) = BundlesCheck(group).apply(options)
 
+    fun installer(options: InstallerCheck.() -> Unit = {}) = InstallerCheck(group).apply(options)
+
     fun components(options: ComponentsCheck.() -> Unit = {}) = ComponentsCheck(group).apply(options)
 
     fun events(options: EventsCheck.() -> Unit = {}) = EventsCheck(group).apply(options)

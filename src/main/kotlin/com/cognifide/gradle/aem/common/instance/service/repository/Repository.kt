@@ -120,5 +120,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     companion object {
         const val QUERY_BUILDER_PATH = "/bin/querybuilder.json"
+
+        const val SLING_INSTALLER_PAUSE = "/system/sling/installer/jcr/pauseInstallation"
     }
 }
