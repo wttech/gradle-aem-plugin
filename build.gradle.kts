@@ -92,12 +92,6 @@ tasks {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
-
-
-    withType<DokkaTask>().configureEach {
-        onlyIf { project.gradle.taskGraph.hasTask(":release")}
-    }
-
     build {
         dependsOn("sourcesJar", "javadocJar")
     }
