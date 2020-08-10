@@ -17,7 +17,7 @@ class InstallerCheck(group: CheckGroup) : DefaultCheck(group) {
     }
 
     private fun isBusy(): Boolean {
-        logger.info("Checking OSGi installer busyiness on $instance")
+        logger.info("Checking OSGi installer busyness on $instance")
 
         val state = state(sync.slingInstaller.state)
         if (state.unknown) {
