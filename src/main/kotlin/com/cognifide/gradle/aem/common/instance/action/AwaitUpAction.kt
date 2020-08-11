@@ -134,8 +134,8 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
                     timeout(timeoutOptions),
                     help(helpOptions),
                     bundles(bundlesOptions),
-                    installer(installerOptions),
                     events(eventsOptions),
+                    installer(installerOptions),
                     components(componentsOptions),
                     unchanged(unchangedOptions)
             )
