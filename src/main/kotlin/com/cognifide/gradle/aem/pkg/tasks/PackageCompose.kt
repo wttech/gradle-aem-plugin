@@ -75,6 +75,15 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     /**
+     * Controls generation of MD5 checksum file after composing a package.
+     */
+    @Input
+    val checksumGenerated = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.checksumGenerated")?.let { set(it) }
+    }
+
+    /**
      * Defines properties being used to generate CRX package metadata files.
      */
     @Nested
@@ -318,6 +327,18 @@ open class PackageCompose : ZipTask(), AemTask {
 
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it) }
+
+    @TaskAction
+    override fun copy() {
+        super.copy()
+        generateChecksum()
+    }
+
+    private fun generateChecksum() {
+        if (checksumGenerated.get()) {
+            common.checksumFile(archiveFile.get().asFile)
+        }
+    }
 
     init {
         group = AemTask.GROUP

@@ -105,10 +105,26 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     /**
+     * Maximum time to wait for start script response.
+     */
+    val startTimeout = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(30))
+        aem.prop.long("localInstance.startTimeout")?.let { set(it) }
+    }
+
+    /**
+     * Maximum time to wait for stop script response.
+     */
+    val stopTimeout = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(30))
+        aem.prop.long("localInstance.stopTimeout")?.let { set(it) }
+    }
+
+    /**
      * Maximum time to wait for status script response.
      */
     val statusTimeout = aem.obj.long {
-        convention(TimeUnit.SECONDS.toMillis(5))
+        convention(TimeUnit.SECONDS.toMillis(10))
         aem.prop.long("localInstance.statusTimeout")?.let { set(it) }
     }
 

@@ -59,8 +59,8 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceResolve", "-Poffline") {
             assertTask(":instanceResolve")
 
-            assertFileExists("build/instance/quickstart/cq-quickstart-6.5.0.jar")
-            assertFileExists("build/instance/quickstart/license.properties")
+            assertFileExists("build/localInstance/quickstart/cq-quickstart-6.5.0.jar")
+            assertFileExists("build/localInstance/quickstart/license.properties")
 
             assertFileExists("build/instance/provision/files/4f135495/aem-groovy-console-14.0.0.zip")
             assertFileExists("build/instance/provision/files/6182d096/accesscontroltool-oakindex-package-2.3.2.zip")

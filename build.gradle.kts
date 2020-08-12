@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.dokka.gradle.DokkaTask
 import io.gitlab.arturbosch.detekt.Detekt
 
 plugins {
@@ -35,7 +34,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.57")
+    implementation("com.cognifide.gradle:common-plugin:0.1.58")
 
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.3.0")

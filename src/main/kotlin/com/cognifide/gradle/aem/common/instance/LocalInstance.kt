@@ -134,7 +134,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     internal fun executeStartScript() {
         try {
-            startScript.executeVerbosely()
+            startScript.executeVerbosely { withTimeoutMillis(localManager.startTimeout.get()) }
         } catch (e: LocalInstanceException) {
             throw LocalInstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
         }
@@ -145,7 +145,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     internal fun executeStopScript() {
         val pidOrigin = pid
         try {
-            stopScript.executeVerbosely()
+            stopScript.executeVerbosely { withTimeoutMillis(localManager.stopTimeout.get()) }
         } catch (e: LocalInstanceException) {
             throw LocalInstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin.", e)
         }

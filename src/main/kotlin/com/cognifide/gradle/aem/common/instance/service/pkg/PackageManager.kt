@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.common.utils.Checksum
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.utils.Formats
@@ -19,7 +18,6 @@ import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Input
 import java.util.*
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -329,10 +327,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     @OptIn(ExperimentalTime::class)
     private fun deployAvoiding(file: File, activate: Boolean): Boolean {
         val pkg = find(file)
-        val checksumTimed = measureTimedValue { Checksum.md5(file) }
-        val checksumLocal = checksumTimed.value
-
-        logger.info("Package '$file' checksum '$checksumLocal' calculation took '${checksumTimed.duration}'")
+        val checksumLocal = Formats.checksumLazy(file)
 
         if (pkg == null || !isDeployed(pkg)) {
             val pkgPath = deployRegularly(file, activate)
