@@ -34,4 +34,12 @@ class QuickstartResolver(private val aem: AemExtension) {
     val license: File? get() = licenseUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
 
     val files: List<File> get() = listOfNotNull(jar, license)
+
+    /**
+     * Shorthand for setting both requires URLs at once.
+     */
+    fun files(jarUrl: String, licenseUrl: String) {
+        this.jarUrl.set(jarUrl)
+        this.licenseUrl.set(licenseUrl)
+    }
 }
