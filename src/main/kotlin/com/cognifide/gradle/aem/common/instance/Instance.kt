@@ -276,7 +276,8 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
         @Suppress("ComplexMethod")
         fun properties(aem: AemExtension): List<Instance> {
-            return aem.project.properties.filterKeys {
+            val allProps = aem.project.rootProject.properties
+            return allProps.filterKeys {
                 Patterns.wildcard(it, "instance.*.httpUrl")
             }.keys.mapNotNull { property ->
                 val name = property.split(".")[1]
@@ -286,7 +287,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                     return@mapNotNull null
                 }
 
-                val props = aem.project.properties.filterKeys {
+                val props = allProps.filterKeys {
                     Patterns.wildcard(it, "instance.$name.*")
                 }.entries.fold(mutableMapOf<String, String>()) { result, e ->
                     val (key, value) = e
