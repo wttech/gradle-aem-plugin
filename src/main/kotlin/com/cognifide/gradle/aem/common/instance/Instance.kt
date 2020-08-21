@@ -64,11 +64,20 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
     val physicalType: PhysicalType get() = PhysicalType.byInstance(this)
 
     @get:JsonIgnore
+    var enabled: Boolean = true
+
+    @get:JsonIgnore
     val local: Boolean get() = physicalType == PhysicalType.LOCAL
 
     fun <T> local(action: LocalInstance.() -> T) = when (this) {
         is LocalInstance -> this.run(action)
         else -> throw InstanceException("Instance '$name' is not defined as local!")
+    }
+
+    fun <T> whenLocal(action: LocalInstance.() -> T) {
+        if (local) {
+            local(action)
+        }
     }
 
     @get:JsonIgnore
@@ -259,10 +268,10 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
         const val PASSWORD_DEFAULT = "admin"
 
-        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes",
+        val LOCAL_PROPS = listOf("httpUrl", "enabled", "type", "password", "jvmOpts", "startOpts", "runModes",
                 "debugPort", "debugAddress", "openPath")
 
-        val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
+        val REMOTE_PROPS = listOf("httpUrl", "enabled", "type", "user", "password")
 
         fun defaultPair(aem: AemExtension) = listOf(defaultAuthor(aem), defaultPublish(aem))
 
@@ -309,6 +318,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                         this.env = env
                         this.id = id
 
+                        props["enabled"]?.let { this.enabled = it.toBoolean() }
                         props["password"]?.let { this.password = it }
                         props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
                         props["startOpts"]?.let { this.startOpts = it.split(" ") }
@@ -323,6 +333,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                         this.env = env
                         this.id = id
 
+                        props["enabled"]?.let { this.enabled = it.toBoolean() }
                         props["user"]?.let { this.user = it }
                         props["password"]?.let { this.password = it }
 

@@ -16,20 +16,22 @@ class ReplicationAgent(val page: Node) {
 
     fun enable() = toggle(true)
 
-    fun enable(transportUri: String) = configure(mapOf(
+    fun disable() = toggle(false)
+
+    fun enable(transportUri: String, props: Map<String, Any?> = mapOf()) = configure(mapOf(
             "enabled" to true,
             "transportUri" to transportUri
-    ))
+    ) + props)
 
-    fun enable(instance: Instance) = configure(mapOf(
+    fun enable(instance: Instance, props: Map<String, Any?> = mapOf()) = configure(mapOf(
             "enabled" to true,
             "transportUri" to "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
             "transportUser" to instance.user,
             "transportPassword" to instance.password,
             "userId" to instance.user
-    ))
+    ) + props)
 
-    fun disable() = toggle(false)
+    fun configure(propName: String, propValue: Any?) = configure(mapOf(propName to propValue))
 
     fun configure(props: Map<String, Any?>) {
         if (!page.exists) page.save(mapOf(

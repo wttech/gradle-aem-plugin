@@ -154,8 +154,10 @@ class AemExtension(val project: Project) : Serializable {
 
     /**
      * Shorthand method for getting defined instance or creating temporary instance by URL.
+     *
+     * Note that this method intentionally allows to read details of instance which is even not enabled.
      */
-    fun instance(urlOrName: String): Instance = instanceManager.parse(urlOrName)
+    fun instance(urlOrName: String): Instance = instanceManager.find(urlOrName) ?: instanceManager.parse(urlOrName)
 
     /**
      * Shorthand method for getting defined instances or creating temporary instances by URLs.
@@ -208,7 +210,7 @@ class AemExtension(val project: Project) : Serializable {
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
     fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "${commonOptions.env.get()}-*"): List<Instance> {
-        val all = instanceManager.defined.get()
+        val all = instanceManager.defined.get().filter { it.enabled }
 
         // Specified by command line should not be filtered
         val cmd = all.filter { it.env == Instance.ENV_CMD }
