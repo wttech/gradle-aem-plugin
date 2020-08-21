@@ -122,8 +122,9 @@ open class InstanceManager(val aem: AemExtension) {
         defined.add(aem.obj.provider { Instance.create(aem, httpUrl, options) })
     }
 
-    fun named(name: String) = defined.get().firstOrNull()
-            ?: throw InstanceException("Instance named '$name' is not defined!")
+    fun find(name: String) = defined.get().firstOrNull { it.name == name }
+
+    fun get(name: String) = find(name) ?: throw InstanceException("Instance named '$name' is not defined!")
 
     /**
      * Get defined instance by name or create temporary definition if URL provided.
