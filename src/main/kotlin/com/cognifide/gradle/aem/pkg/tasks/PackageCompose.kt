@@ -336,7 +336,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private fun generateChecksum() {
         if (checksumGenerated.get()) {
-            common.checksumFile(archiveFile.get().asFile)
+            common.checksumFile(archiveFile.get().asFile, true)
         }
     }
 

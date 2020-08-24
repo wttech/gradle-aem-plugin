@@ -327,7 +327,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     @OptIn(ExperimentalTime::class)
     private fun deployAvoiding(file: File, activate: Boolean): Boolean {
         val pkg = find(file)
-        val checksumLocal = Formats.checksumLazy(file)
+        val checksumLocal = Formats.checksum(file)
 
         if (pkg == null || !isDeployed(pkg)) {
             val pkgPath = deployRegularly(file, activate)
