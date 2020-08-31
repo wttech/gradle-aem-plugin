@@ -1,29 +1,38 @@
 plugins {
-    id("com.cognifide.aem.instance")
+    id("com.cognifide.aem.instance.local") version "14.2.9"
+    id("com.cognifide.environment") version "1.0.2"
 }
 
 aem {
-    tasks {
-        instanceProvision {
-            step("enable-crxde") {
-                description = "Enables CRX DE"
-                condition { once() && instance.author }
-                action {
-                    sync {
-                        osgiFramework.configure(
-                                "org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet",
-                                mapOf("alias" to "/crx/server")
-                        )
+    instance {
+        provisioner {
+            enableCrxDe()
+            deployPackage("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
+            deployPackage("com.neva.felix:search-webconsole-plugin:1.3.0")
+        }
+    }
+}
+
+environment { // https://github.com/Cognifide/gradle-environment-plugin
+    docker {
+        containers {
+            "dispatcher" {
+                resolve {
+                    resolveFiles {
+                        download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz").use {
+                            copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
+                        }
                     }
+                    ensureDir("htdocs", "cache", "logs")
+                }
+                up {
+                    ensureDir("/usr/local/apache2/logs", "/var/www/localhost/htdocs", "/var/www/localhost/cache")
+                    execShell("Starting HTTPD server", "/usr/sbin/httpd -k start")
                 }
             }
         }
-        instanceSatisfy {
-            packages {
-                "dep.acs-aem-commons"("https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases/download/acs-aem-commons-4.0.0/acs-aem-commons-content-4.0.0-min.zip")
-                "dep.kotlin"("org.jetbrains.kotlin:kotlin-osgi-bundle:1.3.50")
-                "dep.groovy-console"("https://github.com/icfnext/aem-groovy-console/releases/download/13.0.0/aem-groovy-console-13.0.0.zip")
-            }
-        }
+    }
+    hosts {
+        "http://example.com" { tag("live") }
     }
 }
