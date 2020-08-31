@@ -29,10 +29,24 @@ environment { // https://github.com/Cognifide/gradle-environment-plugin
                     ensureDir("/usr/local/apache2/logs", "/var/www/localhost/htdocs", "/var/www/localhost/cache")
                     execShell("Starting HTTPD server", "/usr/sbin/httpd -k start")
                 }
+                reload {
+                    cleanDir("/var/www/localhost/cache")
+                    execShell("Restarting HTTPD server", "/usr/sbin/httpd -k restart")
+                }
+                dev {
+                    watchRootDir("src/environment/dispatcher")
+                }
             }
         }
     }
     hosts {
         "http://example.com" { tag("live") }
+    }
+    healthChecks {
+        http("Site 'live'", "http://example.com", "For those who challenge the elements")
+        http("Author Sites Editor", "http://localhost:4502/sites.html") {
+            containsText("Sites")
+            options { basicCredentials = aem.authorInstance.credentials }
+        }
     }
 }
