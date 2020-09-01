@@ -4,8 +4,8 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.cli.CliApp
 import com.cognifide.gradle.common.utils.using
-import org.apache.commons.lang3.time.StopWatch
 import java.io.File
+import kotlin.system.measureTimeMillis
 
 class VaultClient(val aem: AemExtension) {
 
@@ -50,10 +50,10 @@ class VaultClient(val aem: AemExtension) {
         aem.logger.lifecycle("Working directory: $contentDirEffective")
         aem.logger.lifecycle("Executing command: vlt $commandEffective")
 
-        val stopWatch = StopWatch().apply { start() }
-        cli.exec(contentDirEffective, commandEffective)
-        stopWatch.stop()
+        val elapsed = measureTimeMillis {
+            cli.exec(contentDirEffective, commandEffective)
+        }
 
-        return VaultSummary(commandEffective, contentDirEffective, stopWatch.time)
+        return VaultSummary(commandEffective, contentDirEffective, elapsed)
     }
 }

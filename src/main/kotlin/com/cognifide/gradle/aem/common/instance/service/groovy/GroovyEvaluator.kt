@@ -3,8 +3,9 @@ package com.cognifide.gradle.aem.common.instance.service.groovy
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.time.StopWatch
 import java.io.File
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.system.measureTimeMillis
 
 class GroovyEvaluator(private val aem: AemExtension) {
 
@@ -70,56 +71,56 @@ class GroovyEvaluator(private val aem: AemExtension) {
             return GroovyEvalSummary.empty()
         }
 
-        val statuses = mutableListOf<GroovyEvalStatus>()
+        val statuses = CopyOnWriteArrayList<GroovyEvalStatus>()
 
-        val stopWatch = StopWatch().apply { start() }
-        common.progress(instances.get().size * scripts.size) {
-            step = "Validating"
-            aem.sync(instances.get()) {
-                groovyConsole.requireAvailable()
-            }
+        val elapsed = measureTimeMillis {
+            common.progress(instances.get().size * scripts.size) {
+                step = "Validating"
+                aem.sync(instances.get()) {
+                    groovyConsole.requireAvailable()
+                }
 
-            step = "Evaluating"
-            aem.sync(instances.get()) {
-                groovyConsole.apply(consoleOptions)
+                step = "Evaluating"
+                aem.sync(instances.get()) {
+                    groovyConsole.apply(consoleOptions)
 
-                scripts.forEach { script ->
-                    increment("Script '${script.name}' on '${instance.name}'")
+                    scripts.forEach { script ->
+                        increment("Script '${script.name}' on '${instance.name}'")
 
-                    groovyConsole.evalScript(script, data.get()).apply {
-                        val message = mutableListOf<String>().apply {
-                            if (success) {
-                                add("Groovy script '$script' evaluated with success in '$runningTime' on $instance")
-                            } else {
-                                add("Groovy script '$script' evaluated with error on $instance")
+                        groovyConsole.evalScript(script, data.get()).apply {
+                            val message = mutableListOf<String>().apply {
+                                if (success) {
+                                    add("Groovy script '$script' evaluated with success in '$runningTime' on $instance")
+                                } else {
+                                    add("Groovy script '$script' evaluated with error on $instance")
+                                }
+
+                                if (logger.isInfoEnabled) {
+                                    result.orEmpty().trim().takeIf { it.isNotEmpty() }?.let {
+                                        add("Groovy script '$script' result:\n$it")
+                                    }
+                                    exceptionStackTrace.trim().takeIf { it.isNotEmpty() }?.let {
+                                        add("Groovy script '$script' exception:\n$it")
+                                    }
+                                    output.trim().takeIf { it.isNotEmpty() }?.let {
+                                        add("Groovy script '$script' output:\n$it")
+                                    }
+                                }
+                            }.joinToString("\n")
+
+                            when {
+                                success -> logger.info(message)
+                                else -> logger.error(message)
                             }
 
-                            if (logger.isInfoEnabled) {
-                                result.orEmpty().trim().takeIf { it.isNotEmpty() }?.let {
-                                    add("Groovy script '$script' result:\n$it")
-                                }
-                                exceptionStackTrace.trim().takeIf { it.isNotEmpty() }?.let {
-                                    add("Groovy script '$script' exception:\n$it")
-                                }
-                                output.trim().takeIf { it.isNotEmpty() }?.let {
-                                    add("Groovy script '$script' output:\n$it")
-                                }
-                            }
-                        }.joinToString("\n")
-
-                        when {
-                            success -> logger.info(message)
-                            else -> logger.error(message)
+                            val error = exceptionStackTrace.trim().lineSequence().firstOrNull().orEmpty()
+                            statuses.add(GroovyEvalStatus(script, instance, success, error))
                         }
-
-                        val error = exceptionStackTrace.trim().lineSequence().firstOrNull().orEmpty()
-                        statuses.add(GroovyEvalStatus(script, instance, success, error))
                     }
                 }
             }
         }
-        stopWatch.stop()
 
-        return GroovyEvalSummary(statuses, stopWatch.time)
+        return GroovyEvalSummary(statuses, elapsed)
     }
 }
