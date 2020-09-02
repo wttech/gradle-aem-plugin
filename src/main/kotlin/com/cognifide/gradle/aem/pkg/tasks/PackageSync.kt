@@ -10,6 +10,8 @@ import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
 import com.cognifide.gradle.common.utils.using
+import org.gradle.api.file.Directory
+import org.gradle.api.provider.Provider
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -54,11 +56,32 @@ open class PackageSync : AemDefaultTask() {
     @Internal
     val filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
 
+    fun filter(path: String) {
+        filter.set(aem.filter(path))
+    }
+
+    fun filter(file: File) {
+        filter.set(aem.filter(file))
+    }
+
+    fun filter(file: Provider<File>) {
+        filter.set(file.map { aem.filter(it) })
+    }
+
     /**
      * Location of JCR content root to which content will be copied.
      */
     @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
+
+    fun contentDir(rootPath: String) = contentDir(project.rootProject.layout.projectDirectory.dir(rootPath))
+
+    fun contentDir(dir: Directory) {
+        contentDir.set(dir)
+        filter.set(contentDir.map {
+            aem.filter(it.file("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}").asFile)
+        })
+    }
 
     private val filterRootFiles: List<File>
         get() = contentDir.get().asFile.run {
