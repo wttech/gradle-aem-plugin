@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Internal
 
 class Downloader(@Internal private val aem: AemExtension) {
 
-    private val common = aem.common
+    private val logger = aem.logger
 
     /**
      * Determines instance from which JCR content will be downloaded.
@@ -59,12 +59,24 @@ class Downloader(@Internal private val aem: AemExtension) {
         aem.prop.file("package.sync.downloader.extractDir")?.let { set(it) }
     }
 
+    /**
+     * Delete downloaded package after extraction.
+     */
+    val delete = aem.obj.boolean {
+        convention(extract)
+        aem.prop.boolean("package.sync.downloader.delete")?.let { set(it) }
+    }
+
     fun download() {
         val file = instance.get().sync { packageManager.download(definition) }
         if (extract.get()) {
             extractDir.get().asFile.using {
-                aem.logger.info("Extracting package $file to $this")
+                logger.info("Extracting package $file to $this")
                 extractDownloadedPackage(file, this)
+                if (delete.get()) {
+                    logger.info("Deleting extracted package $file")
+                    file.delete()
+                }
             }
         }
     }
