@@ -1,0 +1,27 @@
+version: "3"
+services:
+  dispatcher:
+    image: centos/httpd:latest
+    command: ["tail", "-f", "--retry", "/usr/local/apache2/logs/error.log"]
+    deploy:
+      replicas: 1
+    ports:
+      - "80:80"
+    networks:
+      - docker-net
+    volumes:
+      - "{{ docker.rootPath }}/src/environment/dispatcher/conf/httpd.conf:/etc/httpd/conf/httpd.conf"
+      - "{{ docker.rootPath }}/src/environment/dispatcher/conf.d:/etc/httpd/conf.d"
+      - "{{ docker.rootPath }}/src/environment/dispatcher/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
+      - "{{ docker.workPath }}/dispatcher/modules/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
+      - "{{ docker.workPath }}/dispatcher/logs:/etc/httpd/logs"
+      {% if docker.runtime.safeVolumes %}
+      - "{{ docker.workPath }}/dispatcher/cache:/var/www/localhost/cache"
+      - "{{ docker.workPath }}/dispatcher/htdocs:/var/www/localhost/htdocs"
+      {% endif %}
+    {% if docker.runtime.hostInternalIpMissing %}
+    extra_hosts:
+      - "host.docker.internal:{{ docker.runtime.hostInternalIp }}"
+    {% endif %}
+networks:
+  docker-net:

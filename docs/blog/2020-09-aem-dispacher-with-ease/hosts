@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./gradlew environmentHosts -q | sudo tee -a /etc/hosts
