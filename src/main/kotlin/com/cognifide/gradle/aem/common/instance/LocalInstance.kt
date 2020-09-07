@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.zip.ZipFile
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils

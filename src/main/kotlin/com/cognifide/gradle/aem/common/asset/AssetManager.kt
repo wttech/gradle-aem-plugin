@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.common.asset
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.common.zip.ZipFile
 import java.io.File
 
 class AssetManager(private val aem: AemExtension) {

@@ -2,13 +2,13 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.asset.AssetManager
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.aem.common.cli.CliApp
 import com.cognifide.gradle.aem.common.pkg.validator.OakpalResult
 import com.cognifide.gradle.aem.common.pkg.validator.OakpalSeverity
 import com.cognifide.gradle.common.utils.using
+import com.cognifide.gradle.common.zip.ZipFile
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.*
 import java.io.File

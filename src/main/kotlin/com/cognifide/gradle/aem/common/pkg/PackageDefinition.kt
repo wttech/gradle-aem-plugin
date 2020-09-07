@@ -3,9 +3,9 @@ package com.cognifide.gradle.aem.common.pkg
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
+import com.cognifide.gradle.common.zip.ZipFile
 import org.apache.commons.io.FileUtils
 import java.io.File
 

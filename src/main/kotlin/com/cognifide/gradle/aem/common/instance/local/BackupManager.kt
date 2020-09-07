@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.instance.names
@@ -9,6 +8,7 @@ import com.cognifide.gradle.common.file.FileException
 import com.cognifide.gradle.common.file.transfer.FileEntry
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.onEachApply
+import com.cognifide.gradle.common.zip.ZipFile
 import java.io.File
 
 class BackupManager(private val aem: AemExtension) {

@@ -150,10 +150,9 @@ class Cleaner(private val aem: AemExtension) {
     fun clean(root: File) {
         flattenFiles(root)
 
-        if (parentsBackupEnabled.get()) {
-            undoParentsBackup(root)
-        } else {
-            cleanParents(root)
+        when {
+            parentsBackupEnabled.get() -> undoParentsBackup(root)
+            else -> cleanParents(root)
         }
 
         cleanDotContents(root)
@@ -281,10 +280,9 @@ class Cleaner(private val aem: AemExtension) {
         val rules by lazy { CleanerRule.manyFrom(propertiesSkipped.get()) }
 
         return eachProp(line) { propOccurrence, _ ->
-            if (matchAnyRule(propOccurrence, file, rules)) {
-                ""
-            } else {
-                line
+            when {
+                matchAnyRule(propOccurrence, file, rules) -> ""
+                else -> line
             }
         }
     }
@@ -315,10 +313,9 @@ class Cleaner(private val aem: AemExtension) {
     private fun eachProp(line: String, processProp: (String, String) -> String): String {
         val normalizedLine = line.trim().removeSuffix("/>").removeSuffix(">")
         val matcher = CONTENT_PROP_PATTERN.matcher(normalizedLine)
-        return if (matcher.matches()) {
-            processProp(matcher.group(1), matcher.group(2))
-        } else {
-            line
+        return when {
+            matcher.matches() -> processProp(matcher.group(1), matcher.group(2))
+            else -> line
         }
     }
 
@@ -340,7 +337,15 @@ class Cleaner(private val aem: AemExtension) {
         file.renameTo(dest)
     }
 
-    private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
+    private fun deleteFiles(root: File) {
+        eachParentFiles(root) { parent ->
+            aem.project.fileTree(parent)
+                    .matching { it.include("*") }
+                    .matching(filesDeleted)
+                    .forEach { deleteFile(it) }
+        }
+        eachFiles(root, filesDeleted) { deleteFile(it) }
+    }
 
     private fun deleteBackupFiles(root: File) = eachFiles(root, {
         include(listOf(
@@ -373,7 +378,8 @@ class Cleaner(private val aem: AemExtension) {
 
     private fun doParentsBackup(root: File) {
         root.parentFile.mkdirs()
-        eachParentFiles(root) { parent, siblingFiles ->
+        eachParentFiles(root) { parent ->
+            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator.get()).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }
@@ -400,31 +406,28 @@ class Cleaner(private val aem: AemExtension) {
         }
     }
 
-    private fun undoParentsBackup(root: File) {
-        eachParentFiles(root) { _, siblingFiles ->
-            if (siblingFiles.any { it.name == parentsBackupDirIndicator.get() }) {
-                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }.forEach { FileUtils.deleteQuietly(it) }
-                siblingFiles.filter { it.name.endsWith(parentsBackupSuffix.get()) }.forEach { backup ->
-                    val origin = File(backup.path.removeSuffix(parentsBackupSuffix.get()))
-                    aem.logger.info("Undoing backup of parent file: $backup")
-                    backup.renameTo(origin)
-                }
+    private fun undoParentsBackup(root: File) = eachParentFiles(root) { parent ->
+        val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+        if (siblingFiles.any { it.name == parentsBackupDirIndicator.get() }) {
+            siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }.forEach { FileUtils.deleteQuietly(it) }
+            siblingFiles.filter { it.name.endsWith(parentsBackupSuffix.get()) }.forEach { backup ->
+                val origin = File(backup.path.removeSuffix(parentsBackupSuffix.get()))
+                aem.logger.info("Undoing backup of parent file: $backup")
+                backup.renameTo(origin)
             }
         }
     }
 
-    private fun cleanParents(root: File) {
-        eachParentFiles(root) { _, siblingFiles ->
-            siblingFiles.forEach { deleteFile(it) }
-            siblingFiles.forEach { cleanDotContentFile(it) }
-        }
+    private fun cleanParents(root: File) = eachParentFiles(root) { parent ->
+        val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+        siblingFiles.forEach { deleteFile(it) }
+        siblingFiles.forEach { cleanDotContentFile(it) }
     }
 
-    private fun eachParentFiles(root: File, processFiles: (File, Array<File>) -> Unit) {
+    private fun eachParentFiles(root: File, processFiles: (File) -> Unit) {
         var parent = root.parentFile
         while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
-            processFiles(parent, siblingFiles)
+            processFiles(parent)
 
             if (parent.name == Package.JCR_ROOT) {
                 break
@@ -444,10 +447,9 @@ class Cleaner(private val aem: AemExtension) {
 
     fun pathRule(pattern: String, excludedPaths: List<String>, includedPaths: List<String>): String {
         val paths = excludedPaths.map { "!$it" } + includedPaths
-        return if (paths.isEmpty()) {
-            pattern
-        } else {
-            pattern + "|" + paths.joinToString(",")
+        return when {
+            paths.isEmpty() -> pattern
+            else -> pattern + "|" + paths.joinToString(",")
         }
     }
 

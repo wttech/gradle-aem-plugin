@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.utils.shortenClass
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.zip.ZipFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File

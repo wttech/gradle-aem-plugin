@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.pkg
 
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.common.zip.ZipFile
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
