@@ -13,7 +13,7 @@ enum class Status(val exitStatus: Int) {
 
     companion object {
 
-        fun findByExitValue(code: Int) =  values().find { it.exitStatus == code }
+        fun findByExitValue(code: Int) = values().find { it.exitStatus == code }
 
         fun getByExitValue(code: Int) = findByExitValue(code)
                 ?: throw LocalInstanceException("Unrecognized local instance script exit value '$code'")

@@ -533,7 +533,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
                 val versions = versionList.javaVersions("|")
                 if ((aemVersion.inRange(aemVersionValue) || Patterns.wildcard(aemVersion.value, aemVersionValue)) && versionCurrent !in versions) {
-                    result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion" +
+                    result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
                             " and requires Java ${versions.joinToString("|")}!")
                 }
             }
@@ -547,10 +547,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun examineJavaInScripts(instances: Collection<LocalInstance>) {
-        val unknowns = instances.filter { it.created && it.checkStatus(true) == Status.UNKNOWN }
+        val unknowns = instances.filter { it.created && it.checkStatus() == Status.UNKNOWN }
         if (unknowns.isNotEmpty()) {
             throw LocalInstanceException("Some instances are created but their status is unknown:\n" +
-                    unknowns.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    unknowns.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure that shell scripts have an ability to execute 'java' process or try rebooting machine."
             )
         }
@@ -560,7 +560,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         val running = instances.filter { it.runningOther }
         if (running.isNotEmpty()) {
             throw LocalInstanceException("Other instances (${running.size}) are running:\n" +
-                    running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure having these instances down."
             )
         }

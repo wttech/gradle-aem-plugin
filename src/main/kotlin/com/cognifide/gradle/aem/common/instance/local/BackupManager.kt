@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 import com.cognifide.gradle.aem.common.instance.names

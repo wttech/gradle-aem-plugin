@@ -314,21 +314,24 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val status: Status get() = checkStatus()
 
-    fun checkStatus(verbose: Boolean = false): Status {
+    fun checkStatus(): Status {
         if (!created) {
             return Status.UNKNOWN
         }
 
-        return try {
-            val procResult = statusScript.executeQuietly { withTimeoutMillis(localManager.statusTimeout.get()) }
-            Status.getByExitValue(procResult.exitValue).also { status ->
-                logger.debug("Instance status of $this is: $status")
+        var exitValue = -1
+        var result = Status.UNKNOWN
+
+        try {
+            exitValue = statusScript.executeQuietly { withTimeoutMillis(localManager.statusTimeout.get()) }.exitValue
+            result = Status.getByExitValue(exitValue).also { status ->
+                logger.debug("Instance status of $this is $status")
             }
         } catch (e: LocalInstanceException) {
-            logger.info("Instance status not available: $this")
-            logger.debug("Instance status error", e)
-            Status.UNKNOWN
+            logger.debug("Instance status checking error: $this", e)
+            logger.info("Instance status of $this is not available (exit value: $exitValue)")
         }
+        return result
     }
 
     @get:JsonIgnore
