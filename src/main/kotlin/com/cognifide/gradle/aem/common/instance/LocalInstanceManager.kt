@@ -313,7 +313,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun up(instance: LocalInstance, awaitUpOptions: AwaitUpAction.() -> Unit = {}) = up(listOf(instance), awaitUpOptions).isNotEmpty()
 
     fun up(instances: Collection<LocalInstance> = aem.localInstances, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
-        val downInstances = instances.filter { !it.running }
+        val downInstances = instances.filter { it.runnable }
         if (downInstances.isEmpty()) {
             logger.lifecycle("No instances to turn on.")
             return listOf()
@@ -469,6 +469,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         examinePaths()
         examineJavaAvailable()
         examineJavaCompatibility(instances)
+        examineJavaInScripts(instances)
         examineRunningOther(instances)
     }
 
@@ -532,7 +533,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
                 val versions = versionList.javaVersions("|")
                 if ((aemVersion.inRange(aemVersionValue) || Patterns.wildcard(aemVersion.value, aemVersionValue)) && versionCurrent !in versions) {
-                    result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion" +
+                    result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
                             " and requires Java ${versions.joinToString("|")}!")
                 }
             }
@@ -545,11 +546,21 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
     }
 
+    fun examineJavaInScripts(instances: Collection<LocalInstance>) {
+        val unknowns = instances.filter { it.created && it.checkStatus() == Status.UNKNOWN }
+        if (unknowns.isNotEmpty()) {
+            throw LocalInstanceException("Some instances are created but their status is unknown:\n" +
+                    unknowns.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    "Ensure that shell scripts have an ability to execute 'java' process or try rebooting machine."
+            )
+        }
+    }
+
     fun examineRunningOther(instances: Collection<LocalInstance> = aem.localInstances) {
         val running = instances.filter { it.runningOther }
         if (running.isNotEmpty()) {
             throw LocalInstanceException("Other instances (${running.size}) are running:\n" +
-                    running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure having these instances down."
             )
         }

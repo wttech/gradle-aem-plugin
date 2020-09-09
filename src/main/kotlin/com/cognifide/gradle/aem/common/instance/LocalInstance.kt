@@ -319,20 +319,26 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             return Status.UNKNOWN
         }
 
-        return try {
-            val procResult = statusScript.executeQuietly { withTimeoutMillis(localManager.statusTimeout.get()) }
-            Status.byExitCode(procResult.exitValue).also { status ->
-                logger.debug("Instance status of $this is: $status")
+        var exitValue = -1
+        var result = Status.UNKNOWN
+
+        try {
+            exitValue = statusScript.executeQuietly { withTimeoutMillis(localManager.statusTimeout.get()) }.exitValue
+            result = Status.getByExitValue(exitValue).also { status ->
+                logger.debug("Instance status of $this is $status")
             }
         } catch (e: LocalInstanceException) {
-            logger.info("Instance status not available: $this")
-            logger.debug("Instance status error", e)
-            Status.UNKNOWN
+            logger.debug("Instance status checking error: $this", e)
+            logger.info("Instance status of $this is not available (exit value: $exitValue)")
         }
+        return result
     }
 
     @get:JsonIgnore
     val running: Boolean get() = created && checkStatus() == Status.RUNNING
+
+    @get:JsonIgnore
+    val runnable: Boolean get() = created && checkStatus() == Status.NOT_RUNNING
 
     @get:JsonIgnore
     val runningDir get() = aem.project.file(runningPath)
