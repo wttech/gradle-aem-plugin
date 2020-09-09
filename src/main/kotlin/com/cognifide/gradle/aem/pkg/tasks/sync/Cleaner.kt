@@ -66,7 +66,7 @@ class Cleaner(private val aem: AemExtension) {
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     val propertiesSkipped = aem.obj.strings {
-        convention(listOf(
+        set(listOf(
                 pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
                 pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
                 "jcr:lastModified*",
@@ -85,7 +85,7 @@ class Cleaner(private val aem: AemExtension) {
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
     val mixinTypesSkipped = aem.obj.strings {
-        convention(listOf(
+        set(listOf(
                 "cq:ReplicationStatus",
                 "mix:versionable"
         ))
