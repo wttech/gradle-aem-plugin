@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 
 @Suppress("MagicNumber")
 enum class Status(val exitStatus: Int) {
@@ -13,10 +13,12 @@ enum class Status(val exitStatus: Int) {
 
     companion object {
 
-        fun byExitCode(exitStatus: Int) = values().find { it.exitStatus == exitStatus }
-                ?: throw InstanceException("Unrecognized local instance script exit status '$exitStatus'")
+        fun findByExitValue(code: Int) =  values().find { it.exitStatus == code }
+
+        fun getByExitValue(code: Int) = findByExitValue(code)
+                ?: throw LocalInstanceException("Unrecognized local instance script exit value '$code'")
 
         fun of(name: String) = values().find { it.name.equals(name, true) }
-                ?: throw InstanceException("Unsupported local instance status '$name'")
+                ?: throw LocalInstanceException("Unsupported local instance status '$name'")
     }
 }

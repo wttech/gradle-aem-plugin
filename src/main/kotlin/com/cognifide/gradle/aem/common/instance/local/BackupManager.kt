@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.local
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.common.file.FileException
 import com.cognifide.gradle.common.file.transfer.FileEntry
@@ -173,12 +174,12 @@ class BackupManager(private val aem: AemExtension) {
     fun create(file: File, instances: Collection<LocalInstance>) {
         val uncreated = instances.filter { !it.created }
         if (uncreated.isNotEmpty()) {
-            throw InstanceException("Cannot create local instance backup, because there are instances not yet created: ${uncreated.names}")
+            throw LocalInstanceException("Cannot create local instance backup, because there are instances not yet created: ${uncreated.names}")
         }
 
         val running = instances.filter { it.status == Status.RUNNING }
         if (running.isNotEmpty()) {
-            throw InstanceException("Cannot create local instance backup, because there are instances still running: ${running.names}")
+            throw LocalInstanceException("Cannot create local instance backup, because there are instances still running: ${running.names}")
         }
 
         val zip = ZipFile(file)
@@ -200,7 +201,7 @@ class BackupManager(private val aem: AemExtension) {
         if (dirUrl.isNullOrBlank()) {
             val message = "Skipped uploading local instance backup as of URL is not defined."
             if (verbose) {
-                throw InstanceException(message)
+                throw LocalInstanceException(message)
             } else {
                 logger.info(message)
                 return false
