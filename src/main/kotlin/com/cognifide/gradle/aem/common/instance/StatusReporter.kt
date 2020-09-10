@@ -44,7 +44,7 @@ class StatusReporter(private val aem: AemExtension) {
             add("Version: $version")
         }
         when (this@details) {
-            is LocalInstance -> add("Status: ${if (created) status.displayName else "uncreated"}")
+            is LocalInstance -> add("Status: ${if (created) status.text else "uncreated"}")
             else -> add("Status: ${if (available) "available" else "unavailable"}")
         }
         if (this@details is LocalInstance) {

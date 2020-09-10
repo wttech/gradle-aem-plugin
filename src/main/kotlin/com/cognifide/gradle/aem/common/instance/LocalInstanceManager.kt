@@ -338,7 +338,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     }
 
                     val status = checkStatus()
-                    if (status == Status.RUNNING) {
+                    if (status.running) {
                         logger.info("Instance already running. No need to start: $this")
                         return@increment
                     }
@@ -385,7 +385,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         logger.warn("Instance not created, but available. Stopping OSGi on: $this")
                     } else {
                         val status = checkStatus()
-                        if (status == Status.RUNNING) {
+                        if (status.running) {
                             executeStopScript()
                         } else {
                             logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
@@ -469,7 +469,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         examinePaths()
         examineJavaAvailable()
         examineJavaCompatibility(instances)
-        examineJavaInScripts(instances)
+        examineStatusUncorecognized(instances)
         examineRunningOther(instances)
     }
 
@@ -546,12 +546,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
     }
 
-    fun examineJavaInScripts(instances: Collection<LocalInstance>) {
-        val unknowns = instances.filter { it.created && it.checkStatus() == Status.UNKNOWN }
-        if (unknowns.isNotEmpty()) {
-            throw LocalInstanceException("Some instances are created but their status is unknown:\n" +
-                    unknowns.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
-                    "Ensure that shell scripts have an ability to execute 'java' process or try rebooting machine."
+    fun examineStatusUncorecognized(instances: Collection<LocalInstance>) {
+        val unrecognized = instances.filter { it.created }
+                .map { it to it.checkStatus() }
+                .filter { it.second.unrecognized }
+        if (unrecognized.isNotEmpty()) {
+            throw LocalInstanceException(
+                    "Some instances are created but their status is unrecognized:\n" +
+                            unrecognized.joinToString("\n") { (i, s) ->
+                                "Instance '${i.name}' located at path '${i.dir}' reports status exit code ${s.exitValue}"
+                            } + "\n\n" +
+                            "Ensure that shell scripts have an ability to execute 'java' process or try rebooting machine."
             )
         }
     }

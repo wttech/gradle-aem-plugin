@@ -23,10 +23,10 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
 
         if (instance is LocalInstance) {
             val status = state(instance.checkStatus())
-            if (!STATUS_EXPECTED.contains(status)) {
+            if (!status.runnable) {
                 statusLogger.error(
                         "Awaiting not running",
-                        "Unexpected instance status '$status'. Waiting for status '$STATUS_EXPECTED' of $instance"
+                        "Unexpected instance status '$status'. Waiting for status '${Status.Type.RUNNABLE}' of $instance"
                 )
             }
         } else {
@@ -37,9 +37,5 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
                 )
             }
         }
-    }
-
-    companion object {
-        val STATUS_EXPECTED = listOf(Status.NOT_RUNNING, Status.UNKNOWN)
     }
 }

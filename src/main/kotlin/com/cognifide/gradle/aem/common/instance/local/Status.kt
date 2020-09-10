@@ -1,24 +1,41 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.common.instance.LocalInstanceException
-
 @Suppress("MagicNumber")
-enum class Status(val exitStatus: Int) {
-    RUNNING(0),
-    DEAD(1),
-    NOT_RUNNING(3),
-    UNKNOWN(4);
+class Status(val type: Type, val exitValue: String) {
 
-    val displayName: String get() = name.toLowerCase().replace("_", " ").capitalize()
+    val text: String get() = when (type) {
+        Type.UNRECOGNIZED -> "${type.displayName} ($exitValue)"
+        else -> type.displayName
+    }
+
+    val running: Boolean get() = type == Type.RUNNING
+
+    val runnable: Boolean get() = Type.RUNNABLE.contains(type)
+
+    val unrecognized: Boolean get() = type == Type.UNRECOGNIZED
+
+    @Suppress("MagicNumber")
+    enum class Type(val exitValue: String) {
+        RUNNING("0"),
+        DEAD("1"),
+        NOT_RUNNING("3"),
+        UNKNOWN("4"),
+        UNRECOGNIZED("<none>");
+
+        val displayName: String get() = name.toLowerCase().replace("_", " ").capitalize()
+
+        companion object {
+            val RUNNABLE = arrayOf(NOT_RUNNING, UNKNOWN)
+
+            fun byExitValue(exitValue: Int) = values().find { it.exitValue == exitValue.toString() } ?: UNRECOGNIZED
+        }
+    }
+
+    override fun toString() = text
 
     companion object {
+        val UNRECOGNIZED = Status(Type.UNRECOGNIZED, Type.UNRECOGNIZED.exitValue)
 
-        fun findByExitValue(code: Int) = values().find { it.exitStatus == code }
-
-        fun getByExitValue(code: Int) = findByExitValue(code)
-                ?: throw LocalInstanceException("Unrecognized local instance script exit value '$code'")
-
-        fun of(name: String) = values().find { it.name.equals(name, true) }
-                ?: throw LocalInstanceException("Unsupported local instance status '$name'")
+        fun byExitValue(exitValue: Int) = Status(Type.byExitValue(exitValue), exitValue.toString())
     }
 }

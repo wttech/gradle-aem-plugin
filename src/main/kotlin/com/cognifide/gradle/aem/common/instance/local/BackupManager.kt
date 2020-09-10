@@ -176,7 +176,7 @@ class BackupManager(private val aem: AemExtension) {
             throw LocalInstanceException("Cannot create local instance backup, because there are instances not yet created: ${uncreated.names}")
         }
 
-        val running = instances.filter { it.status == Status.RUNNING }
+        val running = instances.filter { it.status.running }
         if (running.isNotEmpty()) {
             throw LocalInstanceException("Cannot create local instance backup, because there are instances still running: ${running.names}")
         }
