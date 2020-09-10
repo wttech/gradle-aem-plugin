@@ -172,6 +172,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    val all get() = list().results
+
     fun upload(file: File): UploadResponse {
         return uploadRetry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
             val url = "$JSON_PATH/?cmd=upload"
