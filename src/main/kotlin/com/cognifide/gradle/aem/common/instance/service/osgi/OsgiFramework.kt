@@ -69,6 +69,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
     }
 
+    fun startBundle(bundle: Bundle) = startBundle(bundle.symbolicName)
+
     /**
      * Stop OSGi bundle. Does nothing if already stopped.
      */
@@ -83,6 +85,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
     }
 
+    fun stopBundle(bundle: Bundle) = stopBundle(bundle.symbolicName)
+
     /**
      * Stop then start again OSGi bundle. Works correctly even it is already stopped.
      */
@@ -90,6 +94,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         stopBundle(symbolicName)
         startBundle(symbolicName)
     }
+
+    fun restartBundle(bundle: Bundle) = restartBundle(bundle.symbolicName)
 
     /**
      * Refresh OSGi bundle by symbolic name.
@@ -100,6 +106,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "refresh"))
     }
 
+    fun refreshBundle(bundle: Bundle) = refreshBundle(bundle.symbolicName)
+
     /**
      * Update OSGi bundle by symbolic name.
      */
@@ -108,6 +116,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Updating OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
     }
+
+    fun updateBundle(bundle: Bundle) = updateBundle(bundle.symbolicName)
 
     /**
      * Install OSGi bundle JAR.
@@ -148,6 +158,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Uninstalling OSGi bundle '$symbolicName' on $instance.")
         uninstallBundleInternal(symbolicName)
     }
+
+    fun uninstallBundle(bundle: Bundle) = uninstallBundle(bundle.symbolicName)
 
     private fun uninstallBundleInternal(symbolicName: String) {
         sync.http.post("$BUNDLES_PATH/${getBundle(symbolicName).id}", mapOf("action" to "uninstall"))
@@ -204,6 +216,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$COMPONENTS_PATH/${component.uid}", mapOf("action" to "enable"))
     }
 
+    fun enableComponent(component: Component) = enableComponent(component.uid)
+
     /**
      * Disable OSGi component. Does nothing if already disabled.
      */
@@ -218,6 +232,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$COMPONENTS_PATH/${component.id}", mapOf("action" to "disable"))
     }
 
+    fun disableComponent(component: Component) = disableComponent(component.uid)
+
     /**
      * Disable then enable again OSGi component. Works correctly even it is already disabled.
      */
@@ -225,6 +241,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         disableComponent(pid)
         enableComponent(pid)
     }
+
+    fun restartComponent(component: Component) = restartComponent(component.uid)
 
     // ----- Configurations -----
 
@@ -357,6 +375,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     } catch (e: CommonException) {
         throw OsgiException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
     }
+
+    fun deleteConfiguration(configuration: Configuration) = deleteConfiguration(configuration.pid)
 
     /**
      * Delete existing OSGi configuration.

@@ -249,6 +249,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    fun build(file: File) = build(get(file))
+
+    fun build(pkg: Package) = build(pkg.path)
+
     fun build(remotePath: String): BuildResponse {
         val url = "$JSON_PATH$remotePath/?cmd=build"
 
@@ -270,6 +274,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun install(file: File) = install(get(file).path)
+
+    fun install(pkg: Package) = install(pkg.path)
 
     fun install(remotePath: String): InstallResponse {
         return installRetry.withCountdown<InstallResponse, InstanceException>("install package '$remotePath' on '${instance.name}'") {
@@ -395,6 +401,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun activate(file: File) = activate(get(file).path)
 
+    fun activate(pkg: Package) = activate(pkg.path)
+
     fun activate(remotePath: String): UploadResponse {
         val url = "$JSON_PATH$remotePath/?cmd=replicate"
 
@@ -416,6 +424,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun delete(file: File) = delete(get(file).path)
+
+    fun delete(pkg: Package) = delete(pkg.path)
 
     fun delete(remotePath: String): DeleteResponse {
         val url = "$HTML_PATH$remotePath/?cmd=delete"
@@ -439,6 +449,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun uninstall(file: File) = uninstall(get(file).path)
 
+    fun uninstall(pkg: Package) = uninstall(pkg.path)
+
     fun uninstall(remotePath: String): UninstallResponse {
         val url = "$HTML_PATH$remotePath/?cmd=uninstall"
 
@@ -459,13 +471,15 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return response
     }
 
-    fun purge(file: File): Boolean {
+    fun purge(file: File) = purge(get(file))
+
+    fun purge(pkg: Package) = purge(pkg.path)
+
+    fun purge(remotePath: String): Boolean {
         var purged = false
         try {
-            val pkg = get(file)
-
             try {
-                uninstall(pkg.path)
+                uninstall(remotePath)
                 purged = true
             } catch (e: InstanceException) {
                 logger.info("${e.message} Is it installed already?")
@@ -473,7 +487,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             }
 
             try {
-                delete(pkg.path)
+                delete(remotePath)
                 purged = true
             } catch (e: InstanceException) {
                 logger.info(e.message)
