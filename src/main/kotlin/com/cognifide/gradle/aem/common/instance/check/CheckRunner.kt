@@ -88,35 +88,41 @@ class CheckRunner(internal val aem: AemExtension) {
         runningWatch.start()
 
         common.parallel.each(progresses) { progress ->
+            logger.info("Checking started for ${progress.instance}.")
+
             val instance = progress.instance
             progress.stateWatch.start()
 
-            do {
+            while (true) {
                 if (aborted) {
-                    logger.info("Checking aborted for $instance")
+                    logger.info("Checking aborted for $instance!")
                     break
                 }
 
-                val checks = check(instance)
-                progress.currentCheck = checks
-
-                if (progress.stateChanged) {
-                    progress.stateChanges++
-                    progress.stateWatch.apply { reset(); start() }
-                }
-
-                progress.previousCheck = progress.currentCheck
-
+                val checks = doChecks(instance, progress)
                 if (checks.done) {
-                    logger.info("Checking done for $instance")
+                    logger.info("Checking done for $instance.")
                     break
                 }
 
                 Behaviors.waitFor(delay.get())
-            } while (isActive)
+            }
+
+            logger.info("Checking ended for ${progress.instance}.")
         }
 
         runningWatch.stop()
+    }
+
+    private fun doChecks(instance: Instance, progress: CheckProgress): CheckGroup {
+        val checks = check(instance)
+        progress.currentCheck = checks
+        if (progress.stateChanged) {
+            progress.stateChanges++
+            progress.stateWatch.apply { reset(); start() }
+        }
+        progress.previousCheck = progress.currentCheck
+        return checks
     }
 
     fun check(instance: Instance) = CheckGroup(this@CheckRunner, instance, this.checks).apply {
