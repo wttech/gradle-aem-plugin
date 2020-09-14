@@ -5,9 +5,9 @@ import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 
 class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
-    val bundleSymbolicName = aem.obj.string {
+    val fileSymbolicName = aem.obj.string {
         convention("com.adobe.granite.crypto.file")
-        aem.prop.string("instance.provision.configureCrypto.bundleSymbolicName")?.let { set(it) }
+        aem.prop.string("instance.provision.configureCrypto.fileSymbolicName")?.let { set(it) }
     }
 
     val hmac = aem.obj.typed<Any>()
@@ -30,8 +30,8 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
         instance.local {
             logger.info("Configuring Crypto started for $instance")
 
-            val bundle = osgi.getBundle(bundleSymbolicName.get())
-            val dataDir = bundle.dir.resolve("data")
+            val fileBundle  = osgi.getBundle(fileSymbolicName.get())
+            val dataDir = fileBundle.dir.resolve("data")
 
             logger.info(listOf(
                     "Copying Crypto files to directory $dataDir:",
@@ -40,7 +40,8 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
             ).joinToString("\n"))
             hmacFile.copyTo(dataDir.resolve("hmac"), true)
             masterFile.copyTo(dataDir.resolve("master"), true)
-            osgi.restartBundle(bundle)
+
+            osgi.restart()
 
             logger.info("Configuring Crypto finished for $instance")
         }
