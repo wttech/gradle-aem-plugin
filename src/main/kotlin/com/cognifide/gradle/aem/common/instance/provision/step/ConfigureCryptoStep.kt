@@ -20,7 +20,7 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
 
     override fun init() {
         logger.debug(listOf(
-                "Resolved Crypto support files are located at paths:",
+                "Resolved Crypto files are located at paths:",
                 "HMAC: $hmacFile",
                 "Master: $masterFile"
         ).joinToString("\n"))
@@ -28,17 +28,26 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
 
     override fun action(instance: Instance) = instance.sync {
         instance.local {
-            logger.info("Configuring Crypto Support using HMAC '$hmac' and master '$master' for $instance")
+            logger.info("Configuring Crypto started for $instance")
+
             val bundle = osgi.getBundle(bundleSymbolicName.get())
-            hmacFile.copyTo(bundle.dir.resolve("hmac"), true)
-            masterFile.copyTo(bundle.dir.resolve("master"), true)
+            val dataDir = bundle.dir.resolve("data")
+
+            logger.info(listOf(
+                    "Copying Crypto files to directory $dataDir:",
+                    "HMAC: $hmacFile",
+                    "Master: $masterFile"
+            ).joinToString("\n"))
+            hmacFile.copyTo(dataDir.resolve("hmac"), true)
+            masterFile.copyTo(dataDir.resolve("master"), true)
             osgi.restartBundle(bundle)
-            logger.info("Configuring Crypto Support finished for $instance")
+
+            logger.info("Configuring Crypto finished for $instance")
         }
     }
 
     init {
         id.set("configureCrypto")
-        description.convention("Configuring Crypto Support")
+        description.convention("Configuring Crypto")
     }
 }
