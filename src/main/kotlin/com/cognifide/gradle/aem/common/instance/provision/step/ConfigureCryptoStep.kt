@@ -5,6 +5,8 @@ import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 
 class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
+    val bundleSymbolicName = aem.obj.string { convention("com.adobe.granite.crypto.file") }
+
     val hmac = aem.obj.typed<Any>()
 
     val hmacFile by lazy { provisioner.fileResolver.get(hmac.get()).file }
@@ -24,7 +26,7 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
     override fun action(instance: Instance) = instance.sync {
         instance.local {
             logger.info("Configuring Crypto Support using HMAC '$hmac' and master '$master' for $instance")
-            val bundle = osgi.getBundle("com.adobe.granite.crypto.file")
+            val bundle = osgi.getBundle(bundleSymbolicName.get())
             hmacFile.copyTo(bundle.dir.resolve("hmac"), true)
             masterFile.copyTo(bundle.dir.resolve("master"), true)
             osgi.restartBundle(bundle)
