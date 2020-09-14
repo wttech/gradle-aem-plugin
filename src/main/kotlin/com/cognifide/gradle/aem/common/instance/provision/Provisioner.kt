@@ -119,11 +119,11 @@ class Provisioner(val manager: InstanceManager) {
         step = "Initializing"
 
         steps.forEach { (definition, instanceSteps) ->
-            message = "Step \"${definition.label}\""
+            message = definition.label
 
             var initializable = false
             instanceSteps.forEach { instanceStep ->
-                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                increment("${definition.label} on '${instanceStep.instance.name}'") {
                     if (instanceStep.performable) {
                         initializable = true
                     }
@@ -143,10 +143,10 @@ class Provisioner(val manager: InstanceManager) {
         step = "Running"
 
         steps.forEach { (definition, instanceSteps) ->
-            message = "Step \"${definition.label}\""
+            message = definition.label
 
             common.parallel.each(instanceSteps) { instanceStep ->
-                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                increment("${definition.label} on '${instanceStep.instance.name}'") {
                     actions.add(instanceStep.perform())
                 }
             }
