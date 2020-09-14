@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.io.File
 
 import org.osgi.framework.Bundle as Base
 
@@ -42,6 +43,8 @@ class Bundle {
             Base.ACTIVE -> STATE_ACTIVE
             else -> STATE_UNKNOWN
         }
+
+    val dir: File get() = instance.local { bundleDir(this@Bundle) }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

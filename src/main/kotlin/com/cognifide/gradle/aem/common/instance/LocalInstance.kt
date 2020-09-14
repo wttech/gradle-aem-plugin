@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
+import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.zip.ZipFile
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -90,6 +91,13 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     val quickstartDir get() = dir.resolve("crx-quickstart")
+
+    @get:JsonIgnore
+    val bundlesDir get() = quickstartDir.resolve("launchpad/felix")
+
+    fun bundleDir(bundle: Bundle) = bundleDir(bundle.id.toInt())
+
+    fun bundleDir(no: Int) = bundlesDir.resolve("bundle$no")
 
     @get:JsonIgnore
     val license get() = dir.resolve("license.properties")
