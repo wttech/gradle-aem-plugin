@@ -5,7 +5,10 @@ import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 
 class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
-    val bundleSymbolicName = aem.obj.string { convention("com.adobe.granite.crypto.file") }
+    val bundleSymbolicName = aem.obj.string {
+        convention("com.adobe.granite.crypto.file")
+        aem.prop.string("instance.provision.configureCrypto.bundleSymbolicName")?.let { set(it) }
+    }
 
     val hmac = aem.obj.typed<Any>()
 
