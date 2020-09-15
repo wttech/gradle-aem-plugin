@@ -24,6 +24,8 @@ class Status(val type: Type, val exitValue: String) {
 
         val displayName: String get() = name.toLowerCase().replace("_", " ").capitalize()
 
+        override fun toString() = displayName
+
         companion object {
             val RUNNABLE = arrayOf(NOT_RUNNING, UNKNOWN)
 
