@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
+import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
@@ -16,6 +17,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class Provisioner(val manager: InstanceManager) {
 
     internal val aem = manager.aem
+
+    private val project = aem.project
 
     private val common = aem.common
 
@@ -116,11 +119,11 @@ class Provisioner(val manager: InstanceManager) {
         step = "Initializing"
 
         steps.forEach { (definition, instanceSteps) ->
-            message = "Step \"${definition.label}\""
+            message = definition.label
 
             var initializable = false
             instanceSteps.forEach { instanceStep ->
-                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                increment("${definition.label} on '${instanceStep.instance.name}'") {
                     if (instanceStep.performable) {
                         initializable = true
                     }
@@ -140,10 +143,10 @@ class Provisioner(val manager: InstanceManager) {
         step = "Running"
 
         steps.forEach { (definition, instanceSteps) ->
-            message = "Step \"${definition.label}\""
+            message = definition.label
 
             common.parallel.each(instanceSteps) { instanceStep ->
-                increment("Step \"${definition.label}\" on '${instanceStep.instance.name}'") {
+                increment("${definition.label} on '${instanceStep.instance.name}'") {
                     actions.add(instanceStep.perform())
                 }
             }
@@ -254,5 +257,16 @@ class Provisioner(val manager: InstanceManager) {
             condition { instance.publish && once() }
             options()
         }
+    }
+
+    fun configureCrypto(dirUrl: String) = configureCrypto("$dirUrl/hmac", "$dirUrl/master")
+
+    fun configureCrypto(hmac: Any, master: Any) = configureCrypto {
+        this.hmac.set(hmac)
+        this.master.set(master)
+    }
+
+    fun configureCrypto(options: ConfigureCryptoStep.() -> Unit) {
+        steps.add(ConfigureCryptoStep(this).apply(options))
     }
 }

@@ -74,7 +74,7 @@ class CheckRunner(internal val aem: AemExtension) {
         }
     }
 
-    @Suppress("LoopWithTooManyJumpStatements")
+    @Suppress("LoopWithTooManyJumpStatements", "TooGenericExceptionCaught")
     private fun ProgressIndicator.doChecking(instances: Collection<Instance>) {
         step = "Checking"
 
@@ -91,32 +91,42 @@ class CheckRunner(internal val aem: AemExtension) {
             val instance = progress.instance
             progress.stateWatch.start()
 
+            logger.info("Checking started for $instance")
+
             do {
-                if (aborted) {
-                    logger.info("Checking aborted for $instance")
-                    break
+                try {
+                    if (aborted) {
+                        logger.info("Checking aborted for $instance")
+                        break
+                    }
+
+                    val checks = doChecking(progress)
+                    if (checks.done) {
+                        logger.info("Checking done for $instance")
+                        break
+                    }
+
+                    Behaviors.waitFor(delay.get())
+                } catch (e: Exception) {
+                    logger.error("Checking failed for $instance", e)
                 }
-
-                val checks = check(instance)
-                progress.currentCheck = checks
-
-                if (progress.stateChanged) {
-                    progress.stateChanges++
-                    progress.stateWatch.apply { reset(); start() }
-                }
-
-                progress.previousCheck = progress.currentCheck
-
-                if (checks.done) {
-                    logger.info("Checking done for $instance")
-                    break
-                }
-
-                Behaviors.waitFor(delay.get())
             } while (isActive)
+
+            logger.info("Checking ended for $instance")
         }
 
         runningWatch.stop()
+    }
+
+    private fun doChecking(progress: CheckProgress): CheckGroup {
+        val checks = check(progress.instance)
+        progress.currentCheck = checks
+        if (progress.stateChanged) {
+            progress.stateChanges++
+            progress.stateWatch.apply { reset(); start() }
+        }
+        progress.previousCheck = progress.currentCheck
+        return checks
     }
 
     fun check(instance: Instance) = CheckGroup(this@CheckRunner, instance, this.checks).apply {

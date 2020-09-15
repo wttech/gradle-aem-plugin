@@ -422,7 +422,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun stop() = shutdown("Stop")
 
     private fun shutdown(type: String) = try {
-        logger.info("Triggering OSGi framework shutdown on $instance.")
+        logger.info("Triggering OSGi framework shutdown of type '$type' on $instance.")
         sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
     } catch (e: CommonException) {
         throw OsgiException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)
