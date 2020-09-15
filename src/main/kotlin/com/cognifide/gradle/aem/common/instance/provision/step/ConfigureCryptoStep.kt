@@ -30,7 +30,7 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
         instance.local {
             logger.info("Configuring Crypto started for $instance")
 
-            val fileBundle  = osgi.getBundle(fileSymbolicName.get())
+            val fileBundle = osgi.getBundle(fileSymbolicName.get())
             val dataDir = fileBundle.dir.resolve("data")
 
             logger.info(listOf(
