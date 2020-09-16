@@ -55,9 +55,9 @@ interface Step {
 
     fun condition(callback: Condition.() -> Boolean)
 
-    fun init()
-
     fun validate()
+
+    fun init()
 
     fun condition(condition: Condition): Boolean
 

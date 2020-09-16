@@ -8,13 +8,16 @@ import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
+import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
+import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
+import org.apache.commons.io.input.TeeInputStream
 import org.gradle.api.tasks.Input
 import java.util.*
 import kotlin.time.ExperimentalTime
@@ -128,6 +131,22 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     val responseBuffer = aem.obj.int {
         convention(4096)
         aem.prop.int("package.manager.responseBuffer")?.let { set(it) }
+    }
+
+    /**
+     * Controls dumping of package installation responses.
+     */
+    val responseDumping = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.manager.responseDumping")?.let { set(it) }
+    }
+
+    /**
+     * Location of dumped package installation responses.
+     */
+    val responseDir = aem.obj.dir {
+        convention((project.pluginProject(InstancePlugin.ID) ?: project.rootProject).layout.buildDirectory.dir("package/install"))
+        aem.prop.file("package.manager.responseDir")?.let { set(it) }
     }
 
     fun get(file: File): Package {
@@ -286,8 +305,23 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             logger.info("Installing package '$remotePath' on $instance")
 
             val response = try {
-                http.postMultipart(url, mapOf("recursive" to installRecursive.get())) {
-                    InstallResponse.from(asStream(it), responseBuffer.get())
+                http.postMultipart(url, mapOf("recursive" to installRecursive.get())) { response ->
+                    if (responseDumping.get()) {
+                        val dumpFile = responseDir.map { it.dir("$it/${instance.name}") }
+                                .get().asFile
+                                .resolve(remotePath.removePrefix("/"))
+                                .apply {
+                                    delete()
+                                    parentFile.mkdirs()
+                                }
+                                .run { parentFile.resolve("$nameWithoutExtension.html") }
+                        logger.info("Dumping package installation response to file '$dumpFile'")
+                        val teeOut = dumpFile.outputStream()
+                        val teeIn = TeeInputStream(asStream(response), teeOut, true)
+                        InstallResponse.from(teeIn, responseBuffer.get())
+                    } else {
+                        InstallResponse.from(asStream(response), responseBuffer.get())
+                    }
                 }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package '$remotePath' on $instance. Cause: ${e.message}", e)

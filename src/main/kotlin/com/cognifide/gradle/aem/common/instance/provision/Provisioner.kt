@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
@@ -68,6 +69,17 @@ class Provisioner(val manager: InstanceManager) {
 
     private val steps = mutableListOf<Step>()
 
+    private var awaitUpOptions: AwaitUpAction.() -> Unit = {
+        unchanged { enabled.set(false) }
+    }
+
+    /**
+     * Allows to customize instance stability checking performed before provisioning.
+     */
+    fun awaitUp(options: AwaitUpAction.() -> Unit) {
+        this.awaitUpOptions = options
+    }
+
     /**
      * Define custom provision step.
      */
@@ -94,6 +106,8 @@ class Provisioner(val manager: InstanceManager) {
 
         val steps = stepsFor(instances)
         steps.keys.forEach { it.validate() }
+
+        manager.awaitUp(instances, awaitUpOptions)
 
         val actions = provisionActions(steps)
         if (actions.none { it.status != Status.SKIPPED }) {

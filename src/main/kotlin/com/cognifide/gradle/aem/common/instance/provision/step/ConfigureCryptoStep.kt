@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.provision.step
 
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 
 class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) {
@@ -17,6 +18,15 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
     val master = aem.obj.typed<Any>()
 
     val masterFile by lazy { provisioner.fileResolver.get(master.get()).file }
+
+    override fun validate() {
+        if (!hmac.isPresent) {
+            throw ProvisionException("Crypto HMAC file source is not defined!")
+        }
+        if (!master.isPresent) {
+            throw ProvisionException("Crypto Master file source is not defined!")
+        }
+    }
 
     override fun init() {
         logger.debug(listOf(
