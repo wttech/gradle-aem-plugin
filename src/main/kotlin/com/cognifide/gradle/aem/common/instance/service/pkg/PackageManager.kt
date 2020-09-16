@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.common.http.HttpClient
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.pluginProject
@@ -18,6 +19,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.input.TeeInputStream
+import org.apache.http.HttpResponse
 import org.gradle.api.tasks.Input
 import java.util.*
 import kotlin.time.ExperimentalTime
@@ -305,24 +307,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             logger.info("Installing package '$remotePath' on $instance")
 
             val response = try {
-                http.postMultipart(url, mapOf("recursive" to installRecursive.get())) { response ->
-                    if (responseDumping.get()) {
-                        val dumpFile = responseDir.map { it.dir("$it/${instance.name}") }
-                                .get().asFile
-                                .resolve(remotePath.removePrefix("/"))
-                                .apply {
-                                    delete()
-                                    parentFile.mkdirs()
-                                }
-                                .run { parentFile.resolve("$nameWithoutExtension.html") }
-                        logger.info("Dumping package installation response to file '$dumpFile'")
-                        val teeOut = dumpFile.outputStream()
-                        val teeIn = TeeInputStream(asStream(response), teeOut, true)
-                        InstallResponse.from(teeIn, responseBuffer.get())
-                    } else {
-                        InstallResponse.from(asStream(response), responseBuffer.get())
-                    }
-                }
+                http.postMultipart(url, mapOf("recursive" to installRecursive.get())) { handleInstallResponse(remotePath, it) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package '$remotePath' on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
@@ -337,6 +322,24 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             return response
         }
+    }
+
+    private fun HttpClient.handleInstallResponse(remotePath: String, response: HttpResponse): InstallResponse = when {
+        responseDumping.get() -> {
+            val dumpFile = responseDir.map { it.dir("$it/${instance.name}") }
+                    .get().asFile
+                    .resolve(remotePath.removePrefix("/"))
+                    .apply {
+                        delete()
+                        parentFile.mkdirs()
+                    }
+                    .run { parentFile.resolve("$nameWithoutExtension.html") }
+            logger.info("Dumping package installation response to file '$dumpFile'")
+            val teeOut = dumpFile.outputStream()
+            val teeIn = TeeInputStream(asStream(response), teeOut, true)
+            InstallResponse.from(teeIn, responseBuffer.get())
+        }
+        else -> InstallResponse.from(asStream(response), responseBuffer.get())
     }
 
     private fun interpretFail(message: String): String = when (message) {
