@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.provision.step
 
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.common.utils.toLowerCamelCase
 
@@ -13,6 +14,12 @@ class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
     val file by lazy { aem.packageOptions.wrapper.wrap(provisioner.fileResolver.get(source.get()).file) }
 
     val name = aem.obj.string { convention(aem.obj.provider { sourceProperties.name }) }
+
+    override fun validate() {
+        if (!source.isPresent) {
+            throw ProvisionException("Deploy package source is not defined!")
+        }
+    }
 
     override fun init() {
         logger.debug("Resolved package '${name.get()}' to be deployed is located at path: '$file'")
