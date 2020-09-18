@@ -51,8 +51,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     fun requireAvailable() {
         if (!available) {
-            throw InstanceException("Package manager is not available on $instance!\n"
-                    + "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
+            throw InstanceException("Package manager is not available on $instance!\n" +
+                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
         }
     }
 

@@ -39,8 +39,8 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      */
     fun requireAvailable() {
         if (!available) {
-            throw GroovyConsoleException("Groovy console is not available on $instance!\n"
-                    + "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
+            throw GroovyConsoleException("Groovy console is not available on $instance!\n" +
+                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
         }
     }
 
