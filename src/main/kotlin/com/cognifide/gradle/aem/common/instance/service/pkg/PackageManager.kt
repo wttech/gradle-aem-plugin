@@ -179,7 +179,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return common.buildScope.getOrPut("instance.${instance.name}.packages", { list() }, listRefresh.get()).let(resolver)
     }
 
-    operator fun contains(file: File) = find(file) != null
+    fun contains(pkg: Package, checkSize: Boolean = true): Boolean = all
+            .firstOrNull { it == pkg }
+            ?.takeUnless { checkSize }
+            ?.let { it.size == pkg.size }
+            ?: false
+
+    fun contains(file: File, checkSize: Boolean) = find(file)
+            ?.takeUnless { checkSize }
+            ?.let { it.size == file.length() }
+            ?: false
+
+    operator fun contains(file: File): Boolean = contains(file, true)
 
     fun list(): ListResponse {
         return listRetry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
@@ -259,6 +270,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             return file
         }
     }
+
+    fun download(pkg: Package, targetFile: File = common.temporaryFile(FilenameUtils.getName(pkg.downloadName))) = download(pkg.path, targetFile)
 
     fun download(remotePath: String, targetFile: File = common.temporaryFile(FilenameUtils.getName(remotePath))) {
         return downloadRetry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
