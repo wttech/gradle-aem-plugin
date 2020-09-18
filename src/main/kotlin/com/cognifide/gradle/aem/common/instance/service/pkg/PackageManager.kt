@@ -185,7 +185,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             ?.let { it.size == pkg.size }
             ?: false
 
-    fun contains(file: File, checkSize: Boolean) = find(file)
+    fun contains(file: File, checkSize: Boolean): Boolean = find(file)
             ?.takeUnless { checkSize }
             ?.let { it.size == file.length() }
             ?: false
@@ -205,6 +205,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     val all get() = list().results
+
+    val installed get() = all.filter { it.installed }
 
     fun upload(file: File): UploadResponse {
         return uploadRetry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
@@ -280,10 +282,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             http.download(remotePath, targetFile)
 
             if (!targetFile.exists()) {
-                throw InstanceException("Downloaded package is missing: ${targetFile.path}")
+                throw InstanceException("Downloaded package is missing: ${targetFile.path}!")
             }
         }
     }
+
+    fun downloadTo(pkg: Package, targetDir: File) = downloadTo(pkg.path, targetDir)
+
+    fun downloadTo(remotePath: String, targetDir: File) = download(remotePath, targetDir.resolve(FilenameUtils.getName(remotePath)))
 
     fun build(file: File) = build(get(file))
 
