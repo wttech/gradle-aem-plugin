@@ -72,9 +72,9 @@ tasks {
 
 ## Embedding JAR file into OSGi bundle
 
-Use one of dedicated methods `bundleExportEmbed` or `bundlePrivateEmbed`.
-These methods are above `bundleCompose` section as of dependency management is task agnostic and these methods 
-are configuring `compileOnly` dependency and setting correct OSGi manifest entry at once (simplification).
+Simply use dedicated method `embedPackage`.
+
+That method is available for `jar` task in `bundle` task convention plugin section.
 
 ```kotlin
 import com.cognifide.gradle.aem.bundle.tasks.bundle

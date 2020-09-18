@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.service.pkg
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -23,6 +24,17 @@ class Package private constructor() {
     var conventionPaths = listOf<String>()
 
     var lastUnpacked: Long? = null
+
+    var lastUnwrapped: Long? = null
+
+    var lastWrapped: Long? = null
+
+    var size: Long = 0
+
+    lateinit var dependencies: List<PackageDependency>
+
+    @JsonProperty("filter")
+    lateinit var filters: List<PackageFilter>
 
     constructor(compose: PackageCompose) : this() {
         this.group = compose.vaultDefinition.group.get()
@@ -89,6 +101,7 @@ class Package private constructor() {
         other as Package
 
         return EqualsBuilder()
+                .append(path, other.path)
                 .append(group, other.group)
                 .append(name, other.name)
                 .append(version, other.version)
@@ -96,8 +109,11 @@ class Package private constructor() {
     }
 
     override fun hashCode() = HashCodeBuilder()
+            .append(path)
             .append(group)
             .append(name)
             .append(version)
             .toHashCode()
+
+    override fun toString(): String = "Package(path='$path', group='$group', name='$name', version='$version')"
 }

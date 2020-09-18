@@ -64,6 +64,13 @@ class InstanceUrl(raw: String) {
             }
         }
 
+    val env: String get() = when {
+        ENV_LOCAL_HOSTS.contains(config.host) -> "local"
+        else -> IdType.trim(config.host)
+                .replace(".", "_")
+                .replace("-", "_")
+    }
+
     private fun userPart(index: Int): String? {
         return config.userInfo?.split(":")
                 ?.takeIf { it.size == 2 }
@@ -80,6 +87,8 @@ class InstanceUrl(raw: String) {
         const val HTTP_PORT = 80
 
         const val HTTP_DEBUG_PORT = 50080
+
+        val ENV_LOCAL_HOSTS = listOf("127.0.0.1", "localhost")
 
         fun encode(text: String): String {
             return URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text

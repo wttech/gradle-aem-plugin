@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
@@ -27,6 +28,14 @@ class Condition(val step: InstanceStep) {
      * Perform step only once, but try again if it fails.
      */
     fun once() = greedy() || failSafeOnce()
+
+    fun onceOn(instanceName: String) = Patterns.wildcard(instance.name, instanceName) && once()
+
+    fun onceOnEnv(env: String) = instance.env == env && once()
+
+    fun onceOnAuthor() = instance.author && once()
+
+    fun onceOnPublish() = instance.publish && once()
 
     /**
      * Perform step only once, but try again if it fails.

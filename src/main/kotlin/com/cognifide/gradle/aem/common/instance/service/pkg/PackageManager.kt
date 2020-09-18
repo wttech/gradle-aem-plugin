@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.HttpClient
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
@@ -20,6 +21,7 @@ import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.input.TeeInputStream
 import org.apache.http.HttpResponse
+import org.apache.http.HttpStatus
 import org.gradle.api.tasks.Input
 import java.util.*
 import kotlin.time.ExperimentalTime
@@ -33,6 +35,26 @@ import kotlin.time.ExperimentalTime
 class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     private val http = sync.http
+
+    /**
+     * Check if console is installed on instance.
+     */
+    val available: Boolean get() = try {
+        http.head(INDEX_PATH) { it.statusLine.statusCode == HttpStatus.SC_OK }
+    } catch (e: CommonException) {
+        logger.debug("Seems that package manager is not available: $instance", e)
+        false
+    }
+
+    /**
+     * Ensure by throwing exception that package manager is available on instance.
+     */
+    fun requireAvailable() {
+        if (!available) {
+            throw InstanceException("Package manager is not available on $instance!\n" +
+                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
+        }
+    }
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
@@ -179,7 +201,16 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return common.buildScope.getOrPut("instance.${instance.name}.packages", { list() }, listRefresh.get()).let(resolver)
     }
 
-    operator fun contains(file: File) = find(file) != null
+    fun contains(pkg: Package, checkSize: Boolean = true): Boolean = all
+            .firstOrNull { it == pkg }
+            ?.let { !checkSize || it.size == pkg.size }
+            ?: false
+
+    fun contains(file: File, checkSize: Boolean): Boolean = find(file)
+            ?.let { !checkSize || it.size == file.length() }
+            ?: false
+
+    operator fun contains(file: File): Boolean = contains(file, true)
 
     fun list(): ListResponse {
         return listRetry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
@@ -194,6 +225,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     val all get() = list().results
+
+    val installed get() = all.filter { it.installed }
 
     fun upload(file: File): UploadResponse {
         return uploadRetry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
@@ -260,6 +293,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    fun download(pkg: Package, targetFile: File = common.temporaryFile(pkg.downloadName)) = download(pkg.path, targetFile)
+
     fun download(remotePath: String, targetFile: File = common.temporaryFile(FilenameUtils.getName(remotePath))) {
         return downloadRetry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
             logger.info("Downloading package from '$remotePath' to file '$targetFile'")
@@ -267,10 +302,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             http.download(remotePath, targetFile)
 
             if (!targetFile.exists()) {
-                throw InstanceException("Downloaded package is missing: ${targetFile.path}")
+                throw InstanceException("Downloaded package is missing: ${targetFile.path}!")
             }
         }
     }
+
+    fun downloadTo(pkg: Package, targetDir: File): File = downloadTo(pkg.path, targetDir)
+
+    fun downloadTo(remotePath: String, targetDir: File): File = targetDir.resolve(FilenameUtils.getName(remotePath)).also { download(remotePath, it) }
 
     fun build(file: File) = build(get(file))
 
@@ -547,6 +586,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         const val HTML_PATH = "$PATH/.html"
 
         const val LIST_JSON = "/crx/packmgr/list.jsp"
+
+        const val INDEX_PATH = "/crx/packmgr/index.jsp"
 
         const val DEFINITION_PATH = "jcr:content/vlt:definition"
 

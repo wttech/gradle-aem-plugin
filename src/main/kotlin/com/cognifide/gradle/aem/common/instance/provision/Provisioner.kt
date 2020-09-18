@@ -219,15 +219,18 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    fun deployPackage(source: Any) = deployPackage { this.source.set(source) }
-
     fun deployPackage(options: DeployPackageStep.() -> Unit) {
         steps.add(DeployPackageStep(this).apply(options))
     }
 
-    fun deployPackages(vararg sources: Any) = deployPackages(sources.asIterable())
+    fun deployPackage(source: Any, options: DeployPackageStep.() -> Unit = {}) = deployPackage {
+        this.source.set(source)
+        options()
+    }
 
-    fun deployPackages(sources: Iterable<Any>) = sources.forEach { deployPackage(it) }
+    fun deployPackages(vararg sources: Any, options: DeployPackageStep.() -> Unit = {}) = deployPackages(sources.asIterable(), options)
+
+    fun deployPackages(sources: Iterable<Any>, options: DeployPackageStep.() -> Unit = {}) = sources.forEach { deployPackage(it, options) }
 
     fun evalGroovyScript(fileName: String, options: Step.() -> Unit = {}) = evalGroovyScript(fileName, mapOf(), options)
 
@@ -257,7 +260,7 @@ class Provisioner(val manager: InstanceManager) {
 
     fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
         configureReplicationAgent(ReplicationAgent.LOCATION_AUTHOR, name, configurer) {
-            condition { instance.author && once() }
+            condition { onceOnAuthor() }
             options()
         }
     }
@@ -268,19 +271,33 @@ class Provisioner(val manager: InstanceManager) {
 
     fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
         configureReplicationAgent(ReplicationAgent.LOCATION_PUBLISH, name, configurer) {
-            condition { instance.publish && once() }
+            condition { onceOnPublish() }
             options()
         }
     }
 
-    fun configureCrypto(dirUrl: String) = configureCrypto("$dirUrl/hmac", "$dirUrl/master")
-
-    fun configureCrypto(hmac: Any, master: Any) = configureCrypto {
-        this.hmac.set(hmac)
-        this.master.set(master)
-    }
-
     fun configureCrypto(options: ConfigureCryptoStep.() -> Unit) {
         steps.add(ConfigureCryptoStep(this).apply(options))
+    }
+
+    fun configureCrypto(hmac: Any, master: Any, options: ConfigureCryptoStep.() -> Unit = {}) = configureCrypto {
+        this.hmac.set(hmac)
+        this.master.set(master)
+        options()
+    }
+
+    fun configureCrypto(dirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) = configureCrypto("$dirUrl/hmac", "$dirUrl/master", options)
+
+    fun configureCryptos(dirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) = configureCryptos("$dirUrl/author", "$dirUrl/publish", options)
+
+    fun configureCryptos(authorDirUrl: String, publishDirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) {
+        configureCrypto(authorDirUrl) {
+            condition { onceOnAuthor() }
+            options()
+        }
+        configureCrypto(publishDirUrl) {
+            condition { onceOnPublish() }
+            options()
+        }
     }
 }
