@@ -291,7 +291,13 @@ class Provisioner(val manager: InstanceManager) {
     fun configureCryptos(dirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) = configureCryptos("$dirUrl/author", "$dirUrl/publish", options)
 
     fun configureCryptos(authorDirUrl: String, publishDirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) {
-        configureCrypto(authorDirUrl, options) { condition { onceOnAuthor() } }
-        configureCrypto(publishDirUrl, options) { condition { onceOnPublish() } }
+        configureCrypto(authorDirUrl) {
+            condition { onceOnAuthor() }
+            options()
+        }
+        configureCrypto(publishDirUrl) {
+            condition { onceOnPublish() }
+            options()
+        }
     }
 }
