@@ -9,11 +9,15 @@ enum class IdType {
 
     companion object {
 
-        private val AUTHOR_PORTS = listOf("*02")
+        val AUTHOR_PORTS = listOf("*02")
 
-        private val AUTHOR_HOST_PREFIXES = listOf("author.", "author-", "autor.", "autor-")
+        val AUTHOR_HOST_PREFIXES = listOf("author.", "author-")
 
-        private val AUTHOR_HOST_SUFFIXES = listOf("-author", "-autor")
+        val AUTHOR_HOST_SUFFIXES = listOf(".author", "-author")
+
+        val PUBLISH_HOST_PREFIXES = listOf("publish.", "publish-")
+
+        val PUBLISH_HOST_SUFFIXES = listOf(".publish", "-publish")
 
         fun byId(id: String): IdType {
             return values().find { id.startsWith(it.name, ignoreCase = true) }
@@ -29,6 +33,15 @@ enum class IdType {
                 Patterns.wildcard(urlDetails.httpPort.toString(), AUTHOR_PORTS) -> AUTHOR
                 else -> PUBLISH
             }
+        }
+
+        fun trim(text: String) = text.run {
+            var result = this
+            AUTHOR_HOST_PREFIXES.forEach { result = result.removePrefix(it) }
+            AUTHOR_HOST_SUFFIXES.forEach { result = result.removeSuffix(it) }
+            PUBLISH_HOST_PREFIXES.forEach { result = result.removePrefix(it) }
+            PUBLISH_HOST_SUFFIXES.forEach { result = result.removeSuffix(it) }
+            result
         }
     }
 

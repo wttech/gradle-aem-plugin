@@ -248,7 +248,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                 this.httpUrl = instanceUrl.httpUrl
                 this.user = instanceUrl.user
                 this.password = instanceUrl.password
-                this.env = aem.commonOptions.env.get()
+                this.env = instanceUrl.env
                 this.id = instanceUrl.id
 
                 configurer()

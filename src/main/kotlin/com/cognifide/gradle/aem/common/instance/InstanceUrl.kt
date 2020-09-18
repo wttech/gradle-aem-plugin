@@ -64,6 +64,10 @@ class InstanceUrl(raw: String) {
             }
         }
 
+    val env: String get() = IdType.trim(config.host)
+            .replace(".", "_")
+            .replace("-", "_")
+
     private fun userPart(index: Int): String? {
         return config.userInfo?.split(":")
                 ?.takeIf { it.size == 2 }
