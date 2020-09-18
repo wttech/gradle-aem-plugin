@@ -287,9 +287,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    fun downloadTo(pkg: Package, targetDir: File) = downloadTo(pkg.path, targetDir)
+    fun downloadTo(pkg: Package, targetDir: File): File = downloadTo(pkg.path, targetDir)
 
-    fun downloadTo(remotePath: String, targetDir: File) = download(remotePath, targetDir.resolve(FilenameUtils.getName(remotePath)))
+    fun downloadTo(remotePath: String, targetDir: File): File = targetDir.resolve(FilenameUtils.getName(remotePath)).also { download(remotePath, it) }
 
     fun build(file: File) = build(get(file))
 
