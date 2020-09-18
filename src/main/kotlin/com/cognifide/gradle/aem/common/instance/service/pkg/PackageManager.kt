@@ -273,7 +273,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    fun download(pkg: Package, targetFile: File = common.temporaryFile(FilenameUtils.getName(pkg.downloadName))) = download(pkg.path, targetFile)
+    fun download(pkg: Package, targetFile: File = common.temporaryFile(pkg.downloadName)) = download(pkg.path, targetFile)
 
     fun download(remotePath: String, targetFile: File = common.temporaryFile(FilenameUtils.getName(remotePath))) {
         return downloadRetry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
