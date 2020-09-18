@@ -17,6 +17,7 @@
     * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
     * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
     * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+    * [Transferring live content CRX package to local AEM instances](#transferring-live-content-crx-package-to-local-aem-instances)
     * [Working with content repository (JCR)](#working-with-content-repository-jcr)
     * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
     * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
@@ -348,6 +349,45 @@ aem {
                 sync(instances) { 
                     packageManager.deploy(pkg) 
                 }
+            }
+        }
+    }
+}
+```
+
+#### Transferring live content CRX package to local AEM instances
+
+Task `contentSync` only downloads and deploys packages when a new live content package will become available and it is not yet deployed on local AEM instances. 
+The example below assumes a dynamic instance definition based on Gradle properties.
+
+```kotlin
+tasks {
+    register("contentSync") {
+        dependsOn(":requireProps")
+        doLast {
+            val sourceInstance = aem.instance(findProperty("contentSyncInstanceUrl")?.toString().orEmpty()).apply {
+                user = findProperty("contentSyncUser")?.toString().orEmpty()
+                password = findProperty("contentSyncPassword")?.toString().orEmpty()
+                sync { packageManager.requireAvailable() }
+            }
+            val sourcePkg = sourceInstance.sync {
+                packageManager.all.asSequence()
+                        .filter { it.group == "content-sync" }
+                        .maxBy { it.lastWrapped ?: 0 }
+                        ?: throw GradleException("Cannot find content sync package on $instance!")
+            }
+            val upToDate = aem.instances.all { it.sync { packageManager.contains(sourcePkg) } }
+            if (upToDate) {
+                logger.lifecycle("Most recent 'content-sync' package is available on all instances.")
+            } else {
+                val targetDir = file("build/contentSync").apply {
+                    deleteRecursively()
+                    mkdirs()
+                }
+                val targetFile = sourceInstance.sync { packageManager.downloadTo(sourcePkg, targetDir) }
+                aem.sync { packageManager.deploy(targetFile) }
+
+                logger.lifecycle("Most recent 'content-sync' package has been deployed to all instances.")
             }
         }
     }
