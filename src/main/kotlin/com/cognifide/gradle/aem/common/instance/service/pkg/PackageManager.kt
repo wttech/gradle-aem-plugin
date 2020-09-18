@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.HttpClient
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
@@ -20,6 +21,7 @@ import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.input.TeeInputStream
 import org.apache.http.HttpResponse
+import org.apache.http.HttpStatus
 import org.gradle.api.tasks.Input
 import java.util.*
 import kotlin.time.ExperimentalTime
@@ -33,6 +35,26 @@ import kotlin.time.ExperimentalTime
 class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     private val http = sync.http
+
+    /**
+     * Check if console is installed on instance.
+     */
+    val available: Boolean get() = try {
+        http.head(INDEX_PATH) { it.statusLine.statusCode == HttpStatus.SC_OK }
+    } catch (e: CommonException) {
+        logger.debug("Seems that package manager is not available: $instance", e)
+        false
+    }
+
+    /**
+     * Ensure by throwing exception that package manager is available on instance.
+     */
+    fun requireAvailable() {
+        if (!available) {
+            throw InstanceException("Package manager is not available on $instance!\n"
+                    + "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
+        }
+    }
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
@@ -181,13 +203,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun contains(pkg: Package, checkSize: Boolean = true): Boolean = all
             .firstOrNull { it == pkg }
-            ?.takeUnless { checkSize }
-            ?.let { it.size == pkg.size }
+            ?.let { !checkSize || it.size == pkg.size }
             ?: false
 
     fun contains(file: File, checkSize: Boolean): Boolean = find(file)
-            ?.takeUnless { checkSize }
-            ?.let { it.size == file.length() }
+            ?.let { !checkSize || it.size == file.length() }
             ?: false
 
     operator fun contains(file: File): Boolean = contains(file, true)
@@ -566,6 +586,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         const val HTML_PATH = "$PATH/.html"
 
         const val LIST_JSON = "/crx/packmgr/list.jsp"
+
+        const val INDEX_PATH = "/crx/packmgr/index.jsp"
 
         const val DEFINITION_PATH = "jcr:content/vlt:definition"
 
