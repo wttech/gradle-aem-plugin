@@ -22,6 +22,14 @@ class Condition(val step: InstanceStep) {
 
     fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
 
+    fun onInstance(name: String) = Patterns.wildcard(instance.name, name)
+
+    fun onEnv(env: String) = Patterns.wildcard(instance.env, env)
+
+    fun onRunMode(vararg modes: String) = onRunMode(modes.asIterable())
+
+    fun onRunMode(modes: Iterable<String>) = instance.runningModes.containsAll(modes.toList())
+
     // Complete conditions
 
     /**
@@ -29,9 +37,11 @@ class Condition(val step: InstanceStep) {
      */
     fun once() = greedy() || failSafeOnce()
 
-    fun onceOn(instanceName: String) = Patterns.wildcard(instance.name, instanceName) && once()
+    fun onceOnInstance(name: String) = onInstance(name) && once()
 
-    fun onceOnEnv(env: String) = instance.env == env && once()
+    fun onceOnEnv(env: String) = onEnv(env) && once()
+
+    fun onceOnRunMode(modes: String) = onRunMode(modes) && once()
 
     fun onceOnAuthor() = instance.author && once()
 
