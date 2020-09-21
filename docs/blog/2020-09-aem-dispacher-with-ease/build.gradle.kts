@@ -1,6 +1,6 @@
 plugins {
-    id("com.cognifide.aem.instance.local") version "14.2.9"
-    id("com.cognifide.environment") version "1.0.2"
+    id("com.cognifide.aem.instance.local") version "14.4.1"
+    id("com.cognifide.environment") version "1.0.8"
 }
 
 aem {
