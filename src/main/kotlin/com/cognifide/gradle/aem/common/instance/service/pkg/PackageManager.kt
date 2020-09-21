@@ -159,9 +159,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     /**
      * Controls dumping of package installation responses.
+     *
+     * Enable only for debugging purposes. May decrease deployment time.
      */
     val responseDumping = aem.obj.boolean {
-        convention(true)
+        convention(false)
         aem.prop.boolean("package.manager.responseDumping")?.let { set(it) }
     }
 
@@ -192,7 +194,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun find(definition: VaultDefinition) = find(definition.group.get(), definition.name.get(), definition.version.get())
 
-    fun find(group: String, name: String, version: String): Package? = find { it.resolvePackage(Package(group, name, version)) }
+    fun find(group: String, name: String, version: String): Package? = find { it.resolve(group, name, version) }
 
     fun findAll(group: String, name: String) = find { it.results.filter { pkg -> pkg.group == group && pkg.name == name } }
 
@@ -214,12 +216,15 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun list(): ListResponse {
         return listRetry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
-            return try {
+            try {
                 http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot list packages on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
                 throw InstanceException("Malformed response after listing packages on $instance. Cause: ${e.message}", e)
+            }.apply {
+                this.instance = this@PackageManager.instance
+                this.results.forEach { it.instance = this@PackageManager.instance }
             }
         }
     }
@@ -396,7 +401,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun isDeployed(pkg: Package): Boolean {
         if (!pkg.installed) return false
         val otherVersions = findAll(pkg.group, pkg.name).filter { it != pkg }
-        return otherVersions.none { it.installedTimestamp > pkg.installedTimestamp }
+        return otherVersions.none { (it.lastUnpacked ?: 0) > (pkg.lastUnpacked ?: 0) }
     }
 
     fun deploy(file: File, activate: Boolean = false): Boolean {
