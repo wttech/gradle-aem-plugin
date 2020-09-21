@@ -77,8 +77,9 @@ class StatusReporter(private val aem: AemExtension) {
                         .joinToString("\n") { (file, pkg) ->
                             when {
                                 !file.exists() -> "${file.name} | not built"
-                                pkg == null || !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
-                                else -> "${file.name} | ${Formats.date(date(pkg.installedTimestamp))} | ${Formats.fileSize(file)}"
+                                pkg == null -> "${file.name} | not uploaded | ${Formats.fileSize(file)}"
+                                !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
+                                else -> "${file.name} | ${pkg.installedDate} | ${Formats.fileSize(file)}"
                             }
                         }
             }.ifBlank { "none" }

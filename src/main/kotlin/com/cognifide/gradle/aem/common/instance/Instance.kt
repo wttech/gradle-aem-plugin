@@ -131,7 +131,12 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
     @get:JsonIgnore
     val zoneInfo: String get() = "${zoneId.id} (GMT${zoneOffset.id})"
 
-    fun date(timestamp: Long) = Formats.dateAt(timestamp, zoneId)
+    fun date(timestamp: Long) = try {
+        Formats.dateAt(timestamp, zoneId)
+    } catch (e: InstanceException) {
+        logger.debug("Cannot format instance date, because timezone cannot be read on $this!", e)
+        Formats.dateAt(timestamp, ZoneId.systemDefault())
+    }
 
     @get:JsonIgnore
     val osInfo: String get() = mutableListOf<String>().apply {
