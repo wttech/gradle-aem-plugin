@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.javaVersions
+import com.cognifide.gradle.common.build.Behaviors
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.onEachApply
@@ -343,7 +344,11 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         return@increment
                     }
 
-                    executeStartScript()
+                    triggerAwait(
+                            onTrigger = { triggerUp() },
+                            onVerify = { !sync.osgi.determineBundleState().unknown },
+                            onFail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
+                    )
                 }
             }
         }
@@ -368,6 +373,35 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         return downInstances
     }
 
+    private fun LocalInstance.triggerAwait(
+            repeatAfter: Long = 30_000L, times: Int = 3, delay: Long = 1000L,
+            onTrigger: LocalInstance.() -> Unit,
+            onVerify: LocalInstance.() -> Boolean,
+            onFail: LocalInstance.() -> Unit
+    ) {
+        var time = 0L
+        var no = 0
+        while (true) {
+            if (time <= 0L || (System.currentTimeMillis() - time) >= repeatAfter) {
+                onTrigger()
+                time = System.currentTimeMillis()
+                no++
+            }
+            Behaviors.waitFor(delay)
+            if (onVerify(this)) {
+                break
+            }
+            if (no == times) {
+                onFail()
+                break
+            }
+        }
+    }
+
+    private fun LocalInstance.triggerUp() {
+        executeStartScript()
+    }
+
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()
 
     fun down(instances: Collection<LocalInstance> = aem.localInstances, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
@@ -380,18 +414,12 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         common.progress(upInstances.size) {
             common.parallel.with(upInstances) {
                 increment("Stopping instance '$name'") {
-                    if (!created) {
-                        sync.osgi.stop()
-                        logger.warn("Instance not created, but available. Stopping OSGi on: $this")
-                    } else {
-                        val status = checkStatus()
-                        if (status.running) {
-                            executeStopScript()
-                        } else {
-                            logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
-                            sync.osgi.stop()
-                        }
-                    }
+                    val initState = sync.osgi.determineBundleState()
+                    triggerAwait(
+                            onTrigger = { triggerDown() },
+                            onVerify = { initState != sync.osgi.determineBundleState() },
+                            onFail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
+                    )
                 }
             }
         }
@@ -399,6 +427,21 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         base.awaitDown(upInstances, awaitDownOptions)
 
         return upInstances
+    }
+
+    private fun LocalInstance.triggerDown() {
+        if (!created) {
+            sync.osgi.stop()
+            logger.warn("Instance not created, but available. Stopping OSGi on: $this")
+        } else {
+            val status = checkStatus()
+            if (status.running) {
+                executeStopScript()
+            } else {
+                logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
+                sync.osgi.stop()
+            }
+        }
     }
 
     fun open(instance: LocalInstance) = open(listOf(instance))
