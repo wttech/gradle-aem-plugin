@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.javaVersions
-import com.cognifide.gradle.common.build.Behaviors
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.onEachApply
@@ -19,6 +18,7 @@ import java.io.Serializable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
+@Suppress("TooManyFunctions")
 class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private val project = aem.project
@@ -128,6 +128,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         convention(TimeUnit.SECONDS.toMillis(10))
         aem.prop.long("localInstance.statusTimeout")?.let { set(it) }
     }
+
+    val controlTrigger by lazy { ControlTrigger(aem) }
+
+    /**
+     * Configure behavior of triggering instance up/down.
+     */
+    fun controlTrigger(options: ControlTrigger.() -> Unit) = controlTrigger.using(options)
 
     /**
      * Collection of files potentially needed to create instance
@@ -344,10 +351,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         return@increment
                     }
 
-                    triggerAwait(
-                            onTrigger = { triggerUp() },
-                            onVerify = { !sync.osgi.determineBundleState().unknown },
-                            onFail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
+                    controlTrigger.trigger(
+                            action = { triggerUp() },
+                            verify = { !sync.osgi.determineBundleState().unknown },
+                            fail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
                     )
                 }
             }
@@ -373,31 +380,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         return downInstances
     }
 
-    private fun LocalInstance.triggerAwait(
-            repeatAfter: Long = 30_000L, times: Int = 3, delay: Long = 1000L,
-            onTrigger: LocalInstance.() -> Unit,
-            onVerify: LocalInstance.() -> Boolean,
-            onFail: LocalInstance.() -> Unit
-    ) {
-        var time = 0L
-        var no = 0
-        while (true) {
-            if (time <= 0L || (System.currentTimeMillis() - time) >= repeatAfter) {
-                onTrigger()
-                time = System.currentTimeMillis()
-                no++
-            }
-            Behaviors.waitFor(delay)
-            if (onVerify(this)) {
-                break
-            }
-            if (no == times) {
-                onFail()
-                break
-            }
-        }
-    }
-
     private fun LocalInstance.triggerUp() {
         executeStartScript()
     }
@@ -415,10 +397,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             common.parallel.with(upInstances) {
                 increment("Stopping instance '$name'") {
                     val initState = sync.osgi.determineBundleState()
-                    triggerAwait(
-                            onTrigger = { triggerDown() },
-                            onVerify = { initState != sync.osgi.determineBundleState() },
-                            onFail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
+                    controlTrigger.trigger(
+                            action = { triggerDown() },
+                            verify = { initState != sync.osgi.determineBundleState() },
+                            fail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
                     )
                 }
             }
