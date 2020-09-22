@@ -7,6 +7,9 @@ import com.cognifide.gradle.common.build.Behaviors
 import com.cognifide.gradle.common.build.ProgressIndicator
 import kotlinx.coroutines.isActive
 import org.apache.commons.lang3.time.StopWatch
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class CheckRunner(internal val aem: AemExtension) {
 
@@ -37,6 +40,11 @@ class CheckRunner(internal val aem: AemExtension) {
      * How long to wait after failed checking before checking again.
      */
     val delay = aem.obj.long { convention(0L) }
+
+    /**
+     * Definitive timeout for single check group execution.
+     */
+    val timeout = aem.obj.long { convention(10_000L) }
 
     /**
      * Controls if aborted running should fail build.
@@ -87,32 +95,39 @@ class CheckRunner(internal val aem: AemExtension) {
 
         runningWatch.start()
 
-        common.parallel.each(progresses) { progress ->
-            val instance = progress.instance
-            progress.stateWatch.start()
+        val executors = Executors.newFixedThreadPool(progresses.size)
+        try {
+            common.parallel.each(progresses) { progress ->
+                val instance = progress.instance
+                progress.stateWatch.start()
 
-            logger.info("Checking started for $instance")
+                logger.info("Checking started for $instance")
 
-            do {
-                try {
+                do {
                     if (aborted) {
-                        logger.info("Checking aborted for $instance")
+                        logger.info("Checking aborted for $instance!")
                         break
                     }
 
-                    val checks = doChecking(progress)
-                    if (checks.done) {
+                    val checks = try {
+                        val future = executors.submit(Callable { doChecking(progress) })
+                        future.get(timeout.get(), TimeUnit.MILLISECONDS)
+                    } catch (e: Exception) {
+                        logger.error("Checking failed for $instance!", e)
+                        null
+                    }
+                    if (checks != null && checks.done) {
                         logger.info("Checking done for $instance")
                         break
                     }
 
                     Behaviors.waitFor(delay.get())
-                } catch (e: Exception) {
-                    logger.error("Checking failed for $instance", e)
-                }
-            } while (isActive)
+                } while (isActive)
 
-            logger.info("Checking ended for $instance")
+                logger.info("Checking ended for $instance")
+            }
+        } finally {
+            executors.shutdownNow()
         }
 
         runningWatch.stop()

@@ -18,7 +18,7 @@ import java.io.Serializable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "MagicNumber")
 class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private val project = aem.project
@@ -351,11 +351,15 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         return@increment
                     }
 
-                    controlTrigger.trigger(
-                            action = { triggerUp() },
-                            verify = { !sync.osgi.determineBundleState().unknown },
-                            fail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
-                    )
+                    sync {
+                        http.connectionTimeout.set(1000)
+                        http.connectionRetries.set(false)
+                        controlTrigger.trigger(
+                                action = { triggerUp() },
+                                verify = { !osgi.determineBundleState().unknown },
+                                fail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
+                        )
+                    }
                 }
             }
         }
@@ -396,12 +400,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         common.progress(upInstances.size) {
             common.parallel.with(upInstances) {
                 increment("Stopping instance '$name'") {
-                    val initState = sync.osgi.determineBundleState()
-                    controlTrigger.trigger(
-                            action = { triggerDown() },
-                            verify = { initState != sync.osgi.determineBundleState() },
-                            fail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
-                    )
+                    sync {
+                        http.connectionTimeout.set(1000)
+                        http.connectionRetries.set(false)
+
+                        val initState = osgi.determineBundleState()
+                        controlTrigger.trigger(
+                                action = { triggerDown() },
+                                verify = { initState != osgi.determineBundleState() },
+                                fail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
+                        )
+                    }
                 }
             }
         }
