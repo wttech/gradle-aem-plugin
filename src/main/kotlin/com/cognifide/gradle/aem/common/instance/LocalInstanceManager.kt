@@ -18,6 +18,7 @@ import java.io.Serializable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
+@Suppress("TooManyFunctions")
 class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private val project = aem.project
@@ -127,6 +128,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         convention(TimeUnit.SECONDS.toMillis(10))
         aem.prop.long("localInstance.statusTimeout")?.let { set(it) }
     }
+
+    val controlTrigger by lazy { ControlTrigger(aem) }
+
+    /**
+     * Configure behavior of triggering instance up/down.
+     */
+    fun controlTrigger(options: ControlTrigger.() -> Unit) = controlTrigger.using(options)
 
     /**
      * Collection of files potentially needed to create instance
@@ -343,7 +351,11 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         return@increment
                     }
 
-                    executeStartScript()
+                    controlTrigger.trigger(
+                            action = { triggerUp() },
+                            verify = { !sync.osgi.determineBundleState().unknown },
+                            fail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
+                    )
                 }
             }
         }
@@ -368,6 +380,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         return downInstances
     }
 
+    private fun LocalInstance.triggerUp() {
+        executeStartScript()
+    }
+
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()
 
     fun down(instances: Collection<LocalInstance> = aem.localInstances, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
@@ -380,18 +396,12 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         common.progress(upInstances.size) {
             common.parallel.with(upInstances) {
                 increment("Stopping instance '$name'") {
-                    if (!created) {
-                        sync.osgi.stop()
-                        logger.warn("Instance not created, but available. Stopping OSGi on: $this")
-                    } else {
-                        val status = checkStatus()
-                        if (status.running) {
-                            executeStopScript()
-                        } else {
-                            logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
-                            sync.osgi.stop()
-                        }
-                    }
+                    val initState = sync.osgi.determineBundleState()
+                    controlTrigger.trigger(
+                            action = { triggerDown() },
+                            verify = { initState != sync.osgi.determineBundleState() },
+                            fail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
+                    )
                 }
             }
         }
@@ -399,6 +409,21 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         base.awaitDown(upInstances, awaitDownOptions)
 
         return upInstances
+    }
+
+    private fun LocalInstance.triggerDown() {
+        if (!created) {
+            sync.osgi.stop()
+            logger.warn("Instance not created, but available. Stopping OSGi on: $this")
+        } else {
+            val status = checkStatus()
+            if (status.running) {
+                executeStopScript()
+            } else {
+                logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
+                sync.osgi.stop()
+            }
+        }
     }
 
     fun open(instance: LocalInstance) = open(listOf(instance))
