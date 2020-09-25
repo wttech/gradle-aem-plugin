@@ -9,6 +9,7 @@
 *   [Defining instances by a properties file](#defining-instances-by-a-properties-file)
 *   [Defining instances by a build script](#defining-instances-by-a-build-script)
     *   [Instance filtering](#instance-filtering)
+    *   [Disabling defined instances](#disabling-defined-instances)
     *   [Instance URL credentials encoding](#instance-url-credentials-encoding)
     *   [Implementing tasks](#implementing-tasks)
         *   [Instance services](#instance-services)
@@ -201,6 +202,22 @@ gradlew packageDeploy -Pinstance.list=[http://admin:admin@localhost:4502,http://
 
 Instance URLs must be delimited by a colon.  
 Remember to [encode instance user & password](#instance-url-credentials-encoding) properly.
+
+### Disabling defined instances
+
+Sometimes, it might be to work only with AEM author instance (skipping publish) to optimize CPU usage / consume less workstation resources.
+Another case could be to enable some extra AEM publish instance (like so called *preview publish*) only temporarily.
+
+Controlling defined instances availability could be done by additional property `instance.$NAME.enabled=false` for instances defined by properties.
+
+```ini
+instance.local-author.httpUrl=http://localhost:4502
+instance.local-author.type=local
+instance.local-author.enabled=false
+```
+
+Still, such disabled AEM instances could be useful in scripting using Gradle AEM DSL, so they are accessible via method `aem.instance(name)`, 
+but not via `aem.namedInstance(name)`, `aem.instances`, `aem.authorInstance`, `aem.publishInstance` which are relying on [instance filtering](#instance-filtering).
 
 ### Instance URL credentials encoding
 
