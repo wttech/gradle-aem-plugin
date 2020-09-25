@@ -6,8 +6,8 @@
 
 *   [About](#about)
 *   [Instance conventions](#instance-conventions)
-*   [Defining instances by a properties file](#defining-instances-via-properties-file)
-*   [Defining instances by a build script](#defining-instances-via-build-script)
+*   [Defining instances by a properties file](#defining-instances-by-a-properties-file)
+*   [Defining instances by a build script](#defining-instances-by-a-build-script)
     *   [Instance filtering](#instance-filtering)
     *   [Instance URL credentials encoding](#instance-url-credentials-encoding)
     *   [Implementing tasks](#implementing-tasks)
