@@ -1,34 +1,32 @@
-[![Cognifide logo](cognifide-logo.png)](http://cognifide.com)
+![Cognifide logo](cognifide-logo.png)
 
-<p>
-  <img src="logo.png" alt="Gradle AEM Plugin"/>
-</p>
+![Gradle AEM Plugin](logo.png)
 
 # Package plugin
 
-  * [About](#about)
-  * [Task packageCompose](#task-packagecompose)
-     * [CRX package default configuration](#crx-package-default-configuration)
-     * [CRX package naming](#crx-package-naming)
-     * [CRX package validation](#crx-package-validation)
-     * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
-     * [Nesting CRX packages](#nesting-crx-packages)
-     * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
-     * [Expandable properties](#expandable-properties)
-     * [Publishing packages](#publishing-packages)
-  * [Task packagePrepare](#task-packageprepare)
-  * [Task packageValidate](#task-packagevalidate)
-  * [Task packageDeploy](#task-packagedeploy)
-     * [Deploying only to desired instances](#deploying-only-to-desired-instances)
-     * [Deploying options](#deploying-options)
-  * [Task packageUpload](#task-packageupload)
-  * [Task packageDelete](#task-packagedelete)
-  * [Task packageInstall](#task-packageinstall)
-  * [Task packageUninstall](#task-packageuninstall)
-  * [Task packagePurge](#task-packagepurge)
-  * [Task packageActivate](#task-packageactivate)
-  * [Known issues](#known-issues)
-     * [Caching task packageCompose](#caching-task-packagecompose)
+*   [About](#about)
+*   [Task packageCompose](#task-packagecompose)
+    *   [CRX package default configuration](#crx-package-default-configuration)
+    *   [CRX package naming](#crx-package-naming)
+    *   [CRX package validation](#crx-package-validation)
+    *   [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+    *   [Nesting CRX packages](#nesting-crx-packages)
+    *   [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
+    *   [Expandable properties](#expandable-properties)
+    *   [Publishing packages](#publishing-packages)
+*   [Task packagePrepare](#task-packageprepare)
+*   [Task packageValidate](#task-packagevalidate)
+*   [Task packageDeploy](#task-packagedeploy)
+    *   [Deploying only to desired instances](#deploying-only-to-desired-instances)
+    *   [Deploying options](#deploying-options)
+*   [Task packageUpload](#task-packageupload)
+*   [Task packageDelete](#task-packagedelete)
+*   [Task packageInstall](#task-packageinstall)
+*   [Task packageUninstall](#task-packageuninstall)
+*   [Task packagePurge](#task-packagepurge)
+*   [Task packageActivate](#task-packageactivate)
+*   [Known issues](#known-issues)
+    *   [Caching task packageCompose](#caching-task-packagecompose)
 
 ## About
 
@@ -36,7 +34,7 @@ Main responsibility of this plugin is to build CRX/AEM package.
 
 Provides CRX package related tasks: `packageCompose`, `packageDeploy`, `packageActivate`, `packagePurge` etc.
 
-Should be applied to all projects that are composing CRX packages from *JCR content only*.
+Should be applied to all projects that are composing CRX packages from _JCR content only_.
 
 To apply plugin use snippet:
 
@@ -50,7 +48,7 @@ This plugin implicitly applies also [Common Plugin](common-plugin.md).
 
 ## Task `packageCompose`
 
-Compose CRX package from JCR content and bundles. 
+Compose CRX package from JCR content and bundles.
 
 Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
@@ -107,7 +105,7 @@ aem {
 
 ### CRX package naming
 
-ZIP file name and metadata (Vault properties) of composed CRX package are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties. 
+ZIP file name and metadata (Vault properties) of composed CRX package are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties.  
 However, only if it is required (adapting the project to fit convention is more recommended approach), following snippet might be useful, to know how to customize particular values:
 
 ```kotlin
@@ -131,12 +129,12 @@ tasks {
 
 ### CRX package validation
 
-Built package is validated using [OakPAL tool](https://github.com/adamcin/oakpal).
-It helps preventing situation when CRX Package Manager reports message like *Package installed with errors*.
-Also gives immediate feedback for mistakes taken when using copy-pasting technique, 
-forgetting about using entities ('&' instead of '\&amp;), missing XML namespaces and much more.
+Built package is validated using [OakPAL tool](https://github.com/adamcin/oakpal).  
+It helps preventing situation when CRX Package Manager reports message like _Package installed with errors_.  
+Also gives immediate feedback for mistakes taken when using copy-pasting technique,  
+forgetting about using entities ('&' instead of '&amp;), missing XML namespaces and much more.
 
-By default, **nothing need to be configured** so that [default plan](https://github.com/Cognifide/gradle-aem-plugin/blob/master/src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR/plan.json) will be in use.
+By default, **nothing need to be configured** so that [default plan](https://github.com/Cognifide/gradle-aem-plugin/blob/master/src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR/plan.json) will be in use.  
 However, more detailed checks could be provided by configuring base artifact called Opear File containing OakPAL checks.
 
 It could be done via following snippet ([ACS AEM Commons OakPAL Checks](https://github.com/Adobe-Consulting-Services/acs-aem-commons/tree/master/oakpal-checks) as example):
@@ -151,8 +149,8 @@ aem {
 }
 ```
 
-To use custom checks, only left thing is to choose them in custom plan.
-Simply create file *plan.json* under path [src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/aem/common/package/OAKPAL_OPEAR)
+To use custom checks, only left thing is to choose them in custom plan.  
+Simply create file _plan.json_ under path [src/main/resources/com/cognifide/gradle/aem/package/OAKPAL\_OPEAR](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/aem/common/package/OAKPAL_OPEAR)
 
 Sample plan content:
 
@@ -185,17 +183,17 @@ See [plans documentation](http://adamcin.net/oakpal/the-oakpal-plan.html) and [e
 
 There could be many plan files created. To validate CRX package using different plan than default one, specify property `-package.validator.planName=<file>`.
 
-Notice that running OakPAL requires to have included in CRX package up-to-date node type definitions coming from AEM instance.
-Such definitions could be manually downloaded using CRXDE Lite interface (*Tools / Export Node Type*) and put inside CRX package.
+Notice that running OakPAL requires to have included in CRX package up-to-date node type definitions coming from AEM instance.  
+Such definitions could be manually downloaded using CRXDE Lite interface (_Tools / Export Node Type_) and put inside CRX package.  
 After installing some dependent CRX packages, the list of exported node types may change.
 
-To keep it up-to-date, plugin is synchronizing node types from one of available AEM instances automatically.
-Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.sync.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.sync.cnd). 
+To keep it up-to-date, plugin is synchronizing node types from one of available AEM instances automatically.  
+Synchronized file containing node types, later used when building CRX packages is placed at path [_\[aem/\]gradle/package/nodetypes.sync.cnd_](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.sync.cnd).  
 Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
 
-To configure node types synchronization behavior, use property `package.nodeTypesSync=<option>`. Available options: *preserve_auto* (default, sync only if file *nodetypes.sync.cnd* does not exist), *always*, *auto*, *fallback*, *preserve_fallback*, *never*.
+To configure node types synchronization behavior, use property `package.nodeTypesSync=<option>`. Available options: _preserve\_auto_ (default, sync only if file _nodetypes.sync.cnd_ does not exist), _always_, _auto_, _fallback_, _preserve\_fallback_, _never_.
 
-Package validation report is saved at path relative to project building CRX package: *build/aem/packageCompose/OAKPAL_OPEAR/report.json*.
+Package validation report is saved at path relative to project building CRX package: _build/aem/packageCompose/OAKPAL\_OPEAR/report.json_.
 
 ### Including additional OSGi bundle into CRX package
 
@@ -248,12 +246,12 @@ tasks {
 
 Let's assume following project structure:
 
-* *build.gradle.kts* (project `:`, no source files at all)
-* *core/build.gradle.kts*  (project `:core`, OSGi bundle only)
-* *ui.apps/build.gradle.kts*  (project `:ui.apps`, JCR content only)
-* *ui.content/build.gradle.kts*  (project `:ui.content`, JCR content only)
+*   _build.gradle.kts_ (project `:`, no source files at all)
+*   _core/build.gradle.kts_ (project `:core`, OSGi bundle only)
+*   _ui.apps/build.gradle.kts_ (project `:ui.apps`, JCR content only)
+*   _ui.content/build.gradle.kts_ (project `:ui.content`, JCR content only)
 
-File content of *build.gradle.kts*:
+File content of _build.gradle.kts_:
 
 ```kotlin
 plugins {
@@ -271,26 +269,26 @@ aem {
 }
 ```
 
-When building via command `gradlew :build`, then the effect will be a CRX package with merged JCR content from projects `:ui.apps`, `:ui.content` and OSGi bundle built by project `:core`.
+When building via command `gradlew :build`, then the effect will be a CRX package with merged JCR content from projects `:ui.apps`, `:ui.content` and OSGi bundle built by project `:core`.  
 [Vault workspace filters](http://jackrabbit.apache.org/filevault/filter.html) (defined in file _filter.xml_) from `:ui.apps` and `:ui.content` sub-projects will be combined into single one automatically. However, one rule must be kept while developing a multi-module project: **all Vault filter roots of all projects must be exclusive**. In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional workspace filter rules are being applied like `mode="merge"` etc.
 
 Gradle AEM Plugin is configured in a way that single Gradle project could have:
- 
-* JCR content,
-* source code to compile OSGi bundle,
-* both.
 
-It is worth to know a difference when comparing to package built by Maven and [Content Package Maven Plugin](https://helpx.adobe.com/pl/experience-manager/6-4/sites/developing/using/vlt-mavenplugin.html).
-When using it, there is a need for much more modules. Separate one for building OSGi bundle and other one for building CRX package and nesting built OSGi bundle.
+*   JCR content,
+*   source code to compile OSGi bundle,
+*   both.
+
+It is worth to know a difference when comparing to package built by Maven and [Content Package Maven Plugin](https://helpx.adobe.com/pl/experience-manager/6-4/sites/developing/using/vlt-mavenplugin.html).  
+When using it, there is a need for much more modules. Separate one for building OSGi bundle and other one for building CRX package and nesting built OSGi bundle.  
 When using Gradle AEM Plugin, there is just much more flexibility.
 
-By mixing usages of methods `nestPackage*`, `installBundle*` or `mergePackage*` there is ability to create any assembly CRX package with content of any type without restructuring the project.
+By mixing usages of methods `nestPackage*`, `installBundle*` or `mergePackage*` there is ability to create any assembly CRX package with content of any type without restructuring the project.  
 When using `installBundle` there is an ability to pass lambda to customize options like bundle run mode.
 
 By default, Gradle AEM Plugin will ensure:
 
-* Running unit tests for all sub-projects providing OSGi bundles to be put under install path inside built assembly package when using method `installBundleProject`. To disable, set property `package.bundleTest=false`.
-* Running package validations for all sub-projects providing CRX package to be nested when using method `nestPackageProject`. To disable it, set property `package.nestedValidation=false`.
+*   Running unit tests for all sub-projects providing OSGi bundles to be put under install path inside built assembly package when using method `installBundleProject`. To disable, set property `package.bundleTest=false`.
+*   Running package validations for all sub-projects providing CRX package to be nested when using method `nestPackageProject`. To disable it, set property `package.nestedValidation=false`.
 
 ### Expandable properties
 
@@ -319,12 +317,12 @@ aem {
 
 Predefined expandable properties:
 
-* `aem` - [AemExtension](../src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt) object,
-* `definition` - [VaultDefinition](../src/main/kotlin/com/cognifide/gradle/aem/common/pkg/vault/VaultDefinition.kt) object,
-* `rootProject` - project with directory in which *settings.gradle* is located,
-* `project` - current project.
+*   `aem` - [AemExtension](../src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt) object,
+*   `definition` - [VaultDefinition](../src/main/kotlin/com/cognifide/gradle/aem/common/pkg/vault/VaultDefinition.kt) object,
+*   `rootProject` - project with directory in which _settings.gradle_ is located,
+*   `project` - current project.
 
-This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](../src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/properties.xml) is used by plugin by default:
+This feature is especially useful to generate valid _META-INF/properties.xml_ file, below [template](../src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/properties.xml) is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -345,9 +343,9 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 </properties>
 ```
 
-Also file *nodetypes.cnd* is dynamically expanded from [template](../src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
+Also file _nodetypes.cnd_ is dynamically expanded from [template](../src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
-Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
+Each JAR file in separate _hooks_ directory will be combined into single directory when creating assembly package.
 
 ### Publishing packages
 
@@ -376,20 +374,20 @@ publishing {
 
 To publish package to repository (upload it to e.g Nexus repository) simply run one of [publish tasks](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:tasks) (typically `publish`).
 
-It might be worth to configure [publishing repositories](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:repositories) globally. Consider moving `publishing { repositories { /* ... */ } }` section to root project's _build.gradle.kts_ into `allprojects { }` section. 
+It might be worth to configure [publishing repositories](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:repositories) globally. Consider moving `publishing { repositories { /* ... */ } }` section to root project's _build.gradle.kts_ into `allprojects { }` section.  
 Then defining publishing repositories in each subproject will be no longer necessary.
 
 ## Task `packagePrepare`
 
-Processes CRX package metadata - combines default files provided by plugin itself with overridden ones.
-Also responsible for synchronizing Vault node types consumed later by [CRX package validation](#crx-package-validation) in the end of [compose task](#task-packagecompose).
+Processes CRX package metadata - combines default files provided by plugin itself with overridden ones.  
+Also responsible for synchronizing Vault node types consumed later by [CRX package validation](#crx-package-validation) in the end of [compose task](#task-packagecompose).  
 Covers extracted logic being initially a part of compose task. Reason of separation is effectively better Gradle caching.
- 
+
 ## Task `packageValidate`
 
 Validates composed CRX package.
 
-For setting common options see section [CRX package validation](#crx-package-validation). 
+For setting common options see section [CRX package validation](#crx-package-validation).
 
 For setting project/package specific options use snippet below:
 
@@ -407,10 +405,10 @@ tasks {
     }
 }
 ```
- 
-## Task `packageDeploy` 
 
-Upload & install CRX package into AEM instance(s). 
+## Task `packageDeploy`
+
+Upload & install CRX package into AEM instance(s).
 
 Recommended form of deployment. Optimized version of `packageUpload packageInstall`.
 
@@ -422,13 +420,13 @@ Simply follow general rules about [instance filtering](common-plugin.md#instance
 
 Add any of below command line parameters to customize CRX package deployment behavior:
 
-* `-Ppackage.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
-* `-Ppackage.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
-* `-Ppackage.manager.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-* `-Ppackage.manager.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
-* `-Ppackage.manager.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
-* `-Ppackage.manager.installRetry=n` - customize number of retries being performed after failed CRX package install.
-* `-Ppackage.manager.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID *dam_asset* is a shorthand alias for all workflows related with DAM asset processing.
+*   `-Ppackage.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
+*   `-Ppackage.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
+*   `-Ppackage.manager.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+*   `-Ppackage.manager.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.
+*   `-Ppackage.manager.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+*   `-Ppackage.manager.installRetry=n` - customize number of retries being performed after failed CRX package install.
+*   `-Ppackage.manager.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID _dam\_asset_ is a shorthand alias for all workflows related with DAM asset processing.
 
 ## Task `packageUpload`
 
@@ -448,13 +446,13 @@ Uninstall uploaded CRX package on AEM instance(s).
 
 To prevent data loss, this unsafe task execution must be confirmed by parameter `-Pforce`.
 
-## Task `packagePurge` 
+## Task `packagePurge`
 
 Fail-safe combination of `packageUninstall` and `packageDelete`.
 
 To prevent data loss, this unsafe task execution must be confirmed by parameter `-Pforce`.
 
-## Task `packageActivate` 
+## Task `packageActivate`
 
 Replicate installed CRX package to other AEM instance(s).
 
@@ -462,5 +460,5 @@ Replicate installed CRX package to other AEM instance(s).
 
 ### Caching task `packageCompose`
 
-Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
+Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally,  
 because such usages will effectively forbid caching `packageCompose` task and it will be never `UP-TO-DATE`.
