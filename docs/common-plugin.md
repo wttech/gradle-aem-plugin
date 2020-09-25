@@ -205,10 +205,10 @@ Remember to [encode instance user & password](#instance-url-credentials-encoding
 
 ### Disabling defined instances
 
-Sometimes, it might be to work only with AEM author instance (skipping publish) to optimize CPU usage / consume less workstation resources.
+Sometimes, it might be useful to work only with AEM author instance (skipping publish) to optimize CPU usage / consume less workstation resources.
 Another case could be to enable some extra AEM publish instance (like so called *preview publish*) only temporarily.
 
-Controlling defined instances availability could be done by additional property `instance.$NAME.enabled=false` for instances defined by properties.
+Controlling defined instances availability could be done by additional property `instance.$NAME.enabled` for instances defined by properties.
 
 ```ini
 instance.local-author.httpUrl=http://localhost:4502
