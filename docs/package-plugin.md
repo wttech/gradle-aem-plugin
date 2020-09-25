@@ -34,7 +34,7 @@ The main responsibility of this plugin is to build the CRX/AEM package.
 
 Provides CRX package related tasks: `packageCompose`, `packageDeploy`, `packageActivate`, `packagePurge` etc.
 
-Should be applied to all projects that are composing CRX packages from _JCR content only_.
+Should be applied to all projects that are composing CRX packages.
 
 To apply plugin use snippet:
 
@@ -191,7 +191,7 @@ After installing some dependent CRX packages, the list of exported node types ma
 To keep it up-to-date, the plugin is synchronizing node types from one of the available AEM instances automatically.  
 Synchronized file containing node types, later used when building CRX packages is placed at path [_src/aem/package/validator/initial/META-INF/vault/nodetypes.sync.cnd_](../src/asset/package/validator/initial/META-INF/vault/nodetypes.cnd) (location could be tuned by property `package.validator.cndSync.file`. Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
 
-To configure node types synchronization behavior, use property `package.validator.cndSync.type=<option>`. Available options: 
+To configure node types synchronization behavior, use property `package.validator.cndSync.type=<option>`. Available options:
 
 *   _always_ - assuming that AEM instance is always available so that the node types file is synchronized right before validation,
 *   _preserve_ (default) - node types file is synchronized only when it does not exist,
