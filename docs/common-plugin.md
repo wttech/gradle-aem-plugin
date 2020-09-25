@@ -55,31 +55,11 @@ The configuration could be specified through _gradle.properties_ file using dedi
 
 `instance.$ENVIRONMENT-$ID.$PROP_NAME=$PROP_VALUE`
 
-| Part | Possible values | Description |
-| --- | --- | --- |
-| `$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
-| `$ID` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of the instances of the same type is being configured. |
-| `$PROP_NAME=$PROP_VALUE` | 
-**Local instances:** 
-
-*   `type=local`
-*   `httpUrl=http://admin:admin@localhost:4502`
-*   `password=foo`
-*   `runModes=nosamplecontent`  
-    `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`
-*   `startOpts=...`
-*   `debugPort=24502`
-*   `enabled`
-
-**Remote instances:** 
-
-*   `type=remote`
-*   `httpUrl`
-*   `user`
-*   `password`
-*   `enabled`.
-
- | Run modes, JVM opts and start opts should be comma-delimited. |
+| Part                     | Possible values                                                                                                                                                                                                                                                                                                                     | Description                                                                                                                  |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| `$ENVIRONMENT`           | `local`, `int`, `stg` etc                                                                                                                                                                                                                                                                                                           | Environment name.                                                                                                            |
+| `$ID`                    | `author`, `publish`, `publish2`, etc                                                                                                                                                                                                                                                                                                | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+| `$PROP_NAME=$PROP_VALUE` | **Local instances:** `httpUrl=http://admin:admin@localhost:4502`<br>`type=local`(or remote)<br>`password=foo`<br>`runModes=nosamplecontent`<br>`jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`<br>`debugPort=24502`.<br><br>**Remote instances:** `httpUrl`, `type`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited.                                                                |
 
 Default remote instances defined via properties (below lines are optional):
 
