@@ -12,7 +12,7 @@ class ReplicationAgent(val page: Node) {
 
     val enabled get() = pageContent.properties.boolean("enabled")
 
-    fun toggle(flag: Boolean) = pageContent.saveProperty("enabled", flag)
+    fun toggle(flag: Boolean) = configure("enabled", flag)
 
     fun enable() = toggle(true)
 
