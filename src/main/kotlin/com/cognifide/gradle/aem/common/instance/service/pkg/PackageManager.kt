@@ -379,8 +379,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                     }
                     .run { parentFile.resolve("$nameWithoutExtension.html") }
             logger.info("Dumping package installation response to file '$dumpFile'")
-            val teeOut = dumpFile.outputStream()
-            val teeIn = TeeInputStream(asStream(response), teeOut, true)
+            val teeOut = dumpFile.outputStream().buffered()
+            val teeIn = TeeInputStream(asStream(response).buffered(), teeOut, true)
             InstallResponse.from(teeIn, responseBuffer.get())
         }
         else -> InstallResponse.from(asStream(response), responseBuffer.get())

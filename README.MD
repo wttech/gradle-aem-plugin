@@ -41,7 +41,16 @@ Swiss army knife for AEM related automation. Incremental build which takes secon
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
-Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
+Be inspired by:
+
+* watching live demos:
+    * [Sling AdaptTo 2020 Conference](https://adapt.to/2020/en/schedule/aem-developers-best-friend-gradle-aem-plugin.html),
+    * [Sling AdaptTo 2018 Conference](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html).
+ 
+* reading blog articles:
+    * [Gradle-powered AEM archetypes](https://tech.cognifide.com/blog/2020/gradle-powered-aem-project-archetypes/) by [Krystian Panek](https://github.com/pun-ky),
+    * [AEM Dispatcher with ease - Gradle AEM Plugins](https://tech.cognifide.com/blog/2020/aem-dispacher-with-ease-gradle-aem-plugins/) by [Damian Mierzwiński](https://github.com/mierzwid),
+    * [&amp; more...](https://tech.cognifide.com/tag/gradle-aem-plugin/).
 
 Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
