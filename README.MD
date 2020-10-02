@@ -109,7 +109,9 @@ Still all features are **fully configurable**.
 
 ## Getting started
 
-Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
+Most effective way to experience Gradle AEM Plugin is to use Dual or Hybrid [AEM Project Archetype](https://github.com/Cognifide/aem-project-archetype).
+
+Alternatively, consider using *Quickstart* located in:
   * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application/library** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
   * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
