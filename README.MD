@@ -45,14 +45,14 @@ Be inspired by:
 
 * watching live demos:
     * [Sling AdaptTo 2020 Conference](https://adapt.to/2020/en/schedule/aem-developers-best-friend-gradle-aem-plugin.html),
-    * [Sling AdaptTo 2018 Conference](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html).
+    * [Sling AdaptTo 2018 Conference](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html),
  
 * reading blog articles:
     * [Gradle-powered AEM archetypes](https://tech.cognifide.com/blog/2020/gradle-powered-aem-project-archetypes/) by [Krystian Panek](https://github.com/pun-ky),
     * [AEM Dispatcher with ease - Gradle AEM Plugins](https://tech.cognifide.com/blog/2020/aem-dispacher-with-ease-gradle-aem-plugins/) by [Damian Mierzwiński](https://github.com/mierzwid),
     * [&amp; more...](https://tech.cognifide.com/tag/gradle-aem-plugin/).
 
-Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
+Looking for a dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
 ### Screenshot
 
@@ -109,9 +109,7 @@ Still all features are **fully configurable**.
 
 ## Getting started
 
-Most effective way to experience Gradle AEM Plugin is to use Dual or Hybrid [AEM Project Archetype](https://github.com/Cognifide/aem-project-archetype).
-
-Alternatively, consider using *Quickstart* located in:
+Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
   * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application/library** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
   * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
