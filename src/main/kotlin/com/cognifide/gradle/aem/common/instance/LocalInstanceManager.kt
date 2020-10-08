@@ -498,7 +498,18 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         return killedInstances
     }
 
-    fun examine(instances: Collection<LocalInstance> = aem.localInstances) = base.examine(instances)
+    val examineEnabled = aem.obj.boolean {
+        convention(base.examineEnabled)
+        aem.prop.boolean("localInstance.examination.enabled")?.let { set(it) }
+    }
+
+    fun examine(instances: Collection<LocalInstance> = aem.localInstances) {
+        if (!examineEnabled.get()) {
+            return
+        }
+
+        base.examine(instances)
+    }
 
     val examinePrerequisites = aem.obj.boolean {
         convention(base.examineEnabled)
