@@ -168,6 +168,11 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun check(instances: Collection<Instance> = aem.instances, options: CheckAction.() -> Unit) = CheckAction(aem).apply(options).perform(instances)
 
+    val examineEnabled = aem.obj.boolean {
+        convention(aem.commonOptions.offline.map { !it })
+        aem.prop.boolean("instance.examination.enabled")?.let { set(it) }
+    }
+
     fun examine(instance: Instance) = examine(listOf(instance))
 
     /**
@@ -176,6 +181,10 @@ open class InstanceManager(val aem: AemExtension) {
      * Assumes that instances are already running.
      */
     fun examine(instances: Collection<Instance> = aem.instances) {
+        if (!examineEnabled.get()) {
+            return
+        }
+
         examinePrerequisites(instances)
         examineAvailable(instances)
     }
@@ -192,10 +201,19 @@ open class InstanceManager(val aem: AemExtension) {
         }
     }
 
+    val examineAvailable = aem.obj.boolean {
+        convention(examineEnabled)
+        aem.prop.boolean("instance.examination.available")?.let { set(it) }
+    }
+
     /**
      * Checks if instances are available before performing any other operations.
      */
     fun examineAvailable(instances: Collection<Instance> = aem.instances) {
+        if (!examineAvailable.get()) {
+            return
+        }
+
         val unavailable = instances.filter { !it.available }
         if (unavailable.isNotEmpty()) {
             throw InstanceException("Some instances (${unavailable.size}) are unavailable:\n" +

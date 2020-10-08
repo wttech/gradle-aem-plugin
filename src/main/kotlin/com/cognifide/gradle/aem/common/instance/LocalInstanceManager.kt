@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
+import com.cognifide.gradle.aem.common.utils.FileUtil
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
@@ -499,7 +500,16 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     fun examine(instances: Collection<LocalInstance> = aem.localInstances) = base.examine(instances)
 
+    val examinePrerequisites = aem.obj.boolean {
+        convention(base.examineEnabled)
+        aem.prop.boolean("localInstance.examination.prerequisites")?.let { set(it) }
+    }
+
     fun examinePrerequisites(instances: Collection<LocalInstance> = aem.localInstances) {
+        if (!examinePrerequisites.get()) {
+            return
+        }
+
         examinePaths()
         examineJavaAvailable()
         examineJavaCompatibility(instances)
@@ -508,10 +518,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun examinePaths() {
-        val rootDir = rootDir.get().asFile
-        if (rootDir.path.contains(" ")) {
-            throw LocalInstanceException("Local instances root path must not contain spaces: '$rootDir'!\n" +
-                    "AEM control scripts could run improperly with such paths.")
+        val rootPath = rootDir.get().asFile.path
+        val sanitizedPath = FileUtil.sanitizePath(rootPath)
+        if (sanitizedPath != rootPath) {
+            throw LocalInstanceException(
+                    "Local instances root path contains problematic characters!\n" +
+                    "AEM control scripts could run improperly with such paths.\n" +
+                    "Consider updating the path from '$rootPath' to '$sanitizedPath'."
+            )
         }
     }
 
