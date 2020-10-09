@@ -24,8 +24,13 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
         convention(aem.obj.provider {
             when {
                 // TODO to be removed when AEM will fix: https://github.com/Cognifide/gradle-aem-plugin/issues/726
-                instance.version.cloud -> listOf("org.osgi.service.component.runtime.ServiceComponentRuntime")
-                else -> listOf()
+                instance.version.cloud -> listOf(
+                        "org.apache.jackrabbit.oak.api.jmx.SessionMBean",
+                        "org.osgi.service.component.runtime.ServiceComponentRuntime"
+                )
+                else -> listOf(
+                        "org.apache.jackrabbit.oak.api.jmx.SessionMBean"
+                )
             }
         })
     }
