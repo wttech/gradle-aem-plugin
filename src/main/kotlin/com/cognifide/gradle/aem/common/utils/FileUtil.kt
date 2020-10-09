@@ -13,4 +13,6 @@ object FileUtil {
         val pathSanitized = pathNoLetter.split("/").joinToString("/") { sanitizeName(it) }
         return if (letter != null) "$letter:/$pathSanitized" else pathSanitized
     }
+
+    fun systemPath(path: String) = FilenameUtils.separatorsToSystem(path)
 }

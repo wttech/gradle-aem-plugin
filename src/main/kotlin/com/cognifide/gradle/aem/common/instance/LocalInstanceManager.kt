@@ -529,8 +529,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun examinePaths() {
-        val rootPath = rootDir.get().asFile.path
-        val sanitizedPath = FileUtil.sanitizePath(rootPath)
+        val rootPath = FileUtil.systemPath(rootDir.get().asFile.path)
+        val sanitizedPath = FileUtil.systemPath(FileUtil.sanitizePath(rootPath))
         if (sanitizedPath != rootPath) {
             throw LocalInstanceException(
                     "Local instances root path contains problematic characters!\n" +
