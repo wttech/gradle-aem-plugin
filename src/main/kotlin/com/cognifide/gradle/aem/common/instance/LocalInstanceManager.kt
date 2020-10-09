@@ -358,7 +358,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         controlTrigger.trigger(
                                 action = { triggerUp() },
                                 verify = { !osgi.determineBundleState().unknown },
-                                fail = { throw LocalInstanceException("Instance cannot be triggered up: $this!") }
+                                fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
                         )
                     }
                 }
@@ -409,7 +409,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         controlTrigger.trigger(
                                 action = { triggerDown() },
                                 verify = { initState != osgi.determineBundleState() },
-                                fail = { throw LocalInstanceException("Instance cannot be triggered down: $this!") }
+                                fail = { throw LocalInstanceException("Instance cannot be triggered down: $instance!") }
                         )
                     }
                 }

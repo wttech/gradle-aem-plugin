@@ -11,7 +11,7 @@ class ControlTrigger(aem: AemExtension) {
     private val logger = aem.logger
 
     val repeatAfter = aem.obj.long {
-        convention(60_000L)
+        convention(90_000L)
         aem.prop.long("localInstance.controlTrigger.repeatAfter")?.let { set(it) }
     }
 
