@@ -126,7 +126,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Maximum time to wait for status script response.
      */
     val statusTimeout = aem.obj.long {
-        convention(TimeUnit.SECONDS.toMillis(10))
+        convention(TimeUnit.SECONDS.toMillis(15))
         aem.prop.long("localInstance.statusTimeout")?.let { set(it) }
     }
 
