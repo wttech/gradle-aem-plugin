@@ -148,7 +148,15 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         if (recheck || existsCheck == null) {
             existsCheck = try {
                 log("Checking repository node '$path' existence on $instance")
-                http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
+                http.head(path) {
+                    val status = it.statusLine
+                    when (status.statusCode) {
+                        HttpStatus.SC_OK -> true
+                        HttpStatus.SC_NOT_FOUND -> false
+                        else -> throw RepositoryException("Cannot check repository node existence: $path on $instance." +
+                                "Unexpected status code in response:\n$status")
+                    }
+                }
             } catch (e: CommonException) {
                 throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
             }
