@@ -127,6 +127,8 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         }
     }
 
+    fun descendants(): Sequence<Node> = traverse(false)
+
     @get:JsonIgnore
     val siblings: List<Node> get() = siblings().toList()
 
