@@ -148,13 +148,11 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         if (recheck || existsCheck == null) {
             existsCheck = try {
                 log("Checking repository node '$path' existence on $instance")
-                http.head(path) {
-                    val status = it.statusLine
-                    when (status.statusCode) {
+                http.head("$path.json") {
+                    when (val status = it.statusLine.statusCode) {
                         HttpStatus.SC_OK -> true
-                        HttpStatus.SC_NOT_FOUND -> false
-                        else -> throw RepositoryException("Cannot check repository node existence: $path on $instance." +
-                                "Unexpected status code in response:\n$status")
+                        HttpStatus.SC_NOT_FOUND, HttpStatus.SC_FORBIDDEN, HttpStatus.SC_UNAUTHORIZED -> false
+                        else -> throw RepositoryException("Unexpected status code '$status' while checking node '$path' existence on $instance!")
                     }
                 }
             } catch (e: CommonException) {
