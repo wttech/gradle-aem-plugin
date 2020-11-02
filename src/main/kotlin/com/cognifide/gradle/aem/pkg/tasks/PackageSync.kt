@@ -76,6 +76,11 @@ open class PackageSync : AemDefaultTask() {
 
     fun contentDir(rootPath: String) = contentDir(project.rootProject.layout.projectDirectory.dir(rootPath))
 
+    fun contentDir(dir: File) {
+        contentDir.set(dir)
+        filter.set(aem.filter(dir.resolve("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}")))
+    }
+
     fun contentDir(dir: Directory) {
         contentDir.set(dir)
         filter.set(contentDir.map {
@@ -95,11 +100,11 @@ open class PackageSync : AemDefaultTask() {
 
     fun cleaner(options: Cleaner.() -> Unit) = cleaner.using(options)
 
-    private val cleaner = Cleaner(aem)
+    val cleaner by lazy { Cleaner(aem) }
 
     fun vaultClient(options: VaultClient.() -> Unit) = vaultClient.using(options)
 
-    private val vaultClient by lazy {
+    val vaultClient by lazy {
         VaultClient(aem).apply {
             contentDir.convention(this@PackageSync.contentDir)
             command.convention(aem.obj.provider {
@@ -111,7 +116,7 @@ open class PackageSync : AemDefaultTask() {
 
     fun downloader(options: Downloader.() -> Unit) = downloader.using(options)
 
-    private val downloader by lazy {
+    val downloader by lazy {
         Downloader(aem).apply {
             instance.convention(this@PackageSync.instance)
             filter.convention(this@PackageSync.filter)
