@@ -100,10 +100,12 @@ open class PackageSync : AemDefaultTask() {
 
     fun cleaner(options: Cleaner.() -> Unit) = cleaner.using(options)
 
+    @get:Internal
     val cleaner by lazy { Cleaner(aem) }
 
     fun vaultClient(options: VaultClient.() -> Unit) = vaultClient.using(options)
 
+    @get:Internal
     val vaultClient by lazy {
         VaultClient(aem).apply {
             contentDir.convention(this@PackageSync.contentDir)
@@ -116,6 +118,7 @@ open class PackageSync : AemDefaultTask() {
 
     fun downloader(options: Downloader.() -> Unit) = downloader.using(options)
 
+    @get:Internal
     val downloader by lazy {
         Downloader(aem).apply {
             instance.convention(this@PackageSync.instance)

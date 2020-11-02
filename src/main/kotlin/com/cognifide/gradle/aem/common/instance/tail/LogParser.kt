@@ -21,7 +21,7 @@ class LogParser(private val info: LogInfo = NoLogInfo()) {
     }
 
     private fun read(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
-        val (completeLogLines, firstLineOfNextLog) = readSubsequentLogLines(reader, firstLogLine?.let {listOf(it)} ?: emptyList<String>())
+        val (completeLogLines, firstLineOfNextLog) = readSubsequentLogLines(reader, firstLogLine?.let { listOf(it) } ?: emptyList<String>())
         return if (completeLogLines.isNotEmpty()) {
             Log.create(info, completeLogLines) to firstLineOfNextLog
         } else {
@@ -32,7 +32,7 @@ class LogParser(private val info: LogInfo = NoLogInfo()) {
     private tailrec fun readSubsequentLogLines(reader: BufferedReader, logLines: List<String>): Pair<List<String>, String?> {
         val followingLine = readLine(reader)
         return when {
-            logLines.isEmpty()-> logLines to null
+            logLines.isEmpty() -> logLines to null
             followingLine == null -> logLines to null
             Log.isFirstLineOfLog(followingLine) -> logLines to followingLine
             else -> readSubsequentLogLines(reader, logLines + followingLine)
