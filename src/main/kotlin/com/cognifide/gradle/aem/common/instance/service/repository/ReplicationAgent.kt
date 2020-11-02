@@ -4,6 +4,8 @@ import com.cognifide.gradle.aem.common.instance.Instance
 
 class ReplicationAgent(val page: Node) {
 
+    val instance = page.repository
+
     val name get() = page.name
 
     val location get() = page.parent.name.substringAfter("agents.")

@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 
 class Workflow(val manager: WorkflowManager, val id: String) {
 
-    private val repository = manager.repository
+    val instance = manager.instance
 
-    private val instance = manager.instance
+    private val repository = manager.repository
 
     private val logger = manager.aem.logger
 
