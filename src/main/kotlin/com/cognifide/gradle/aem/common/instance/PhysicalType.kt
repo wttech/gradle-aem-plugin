@@ -13,13 +13,9 @@ enum class PhysicalType {
             else -> REMOTE
         }
 
-        fun of(type: String?): PhysicalType? {
-            if (type.isNullOrBlank()) {
-                return null
-            }
+        fun of(type: String?) = find(type)
+                ?: throw AemException("Invalid instance physical type '$type'! Supported values are only: 'local' and 'remote'.")
 
-            return values().find { type.equals(it.name, ignoreCase = true) }
-                    ?: throw AemException("Invalid instance physical type '$type'! Supported values are only: 'local' and 'remote'.")
-        }
+        fun find(type: String?) = values().find { type.equals(it.name, ignoreCase = true) }
     }
 }

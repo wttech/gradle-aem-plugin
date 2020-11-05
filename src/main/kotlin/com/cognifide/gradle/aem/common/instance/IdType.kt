@@ -7,6 +7,13 @@ enum class IdType {
     AUTHOR,
     PUBLISH;
 
+    val type: String get() = name.toLowerCase()
+
+    val httpUrlDefault: String get() = when (this) {
+        AUTHOR -> InstanceUrl.AUTHOR_DEFAULT
+        PUBLISH -> InstanceUrl.PUBLISH_DEFAULT
+    }
+
     companion object {
 
         val AUTHOR_PORTS = listOf("*02")
@@ -44,7 +51,4 @@ enum class IdType {
             result
         }
     }
-
-    val type: String
-        get() = name.toLowerCase()
 }

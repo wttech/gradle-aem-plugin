@@ -288,7 +288,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         fun properties(aem: AemExtension): List<Instance> {
             val allProps = aem.project.rootProject.properties
             return allProps.filterKeys {
-                Patterns.wildcard(it, "instance.*.httpUrl")
+                Patterns.wildcard(it, "instance.*.httpUrl") || Patterns.wildcard(it, "instance.*.type")
             }.keys.mapNotNull { property ->
                 val name = property.split(".")[1]
                 val nameParts = name.split("-")
@@ -305,14 +305,14 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                     result.apply { put(prop, value as String) }
                 }
 
-                if (props["httpUrl"].isNullOrBlank()) {
-                    aem.logger.warn("Instance named '$name' must have property 'httpUrl' defined.")
+                if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
+                    aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")
                     return@mapNotNull null
                 }
 
                 val (env, id) = nameParts
-                val httpUrl = InstanceUrl.process(props["httpUrl"]!!, id)
-                val type = PhysicalType.of(props["type"]) ?: PhysicalType.REMOTE
+                val httpUrl = props["httpUrl"] ?: IdType.byId(id).httpUrlDefault
+                val type = props["type"]?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE
 
                 when (type) {
                     PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {

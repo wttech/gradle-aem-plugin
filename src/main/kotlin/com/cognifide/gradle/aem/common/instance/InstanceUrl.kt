@@ -10,21 +10,16 @@ class InstanceUrl(raw: String) {
 
     val config = URL(raw)
 
-    val user: String
-        get() = userPart(0) ?: Instance.USER_DEFAULT
+    val user: String get() = userPart(0) ?: Instance.USER_DEFAULT
 
-    val password: String
-        get() = userPart(1) ?: Instance.PASSWORD_DEFAULT
+    val password: String get() = userPart(1) ?: Instance.PASSWORD_DEFAULT
 
-    val httpUrl: String
-        get() = if (config.port != -1) {
-            "${config.protocol}://${config.host}:${config.port}"
-        } else {
-            "${config.protocol}://${config.host}"
-        }
+    val httpUrl: String get() = when {
+        config.port != -1 -> "${config.protocol}://${config.host}:${config.port}"
+        else -> "${config.protocol}://${config.host}"
+    }
 
-    val basicAuth: String
-        get() = basicAuth(user, password)
+    val basicAuth: String get() = basicAuth(user, password)
 
     fun basicAuth(user: String, password: String): String {
         val userInfo = "${encode(user)}:${encode(password)}"
@@ -37,21 +32,19 @@ class InstanceUrl(raw: String) {
     }
 
     val httpPort: Int
-        get() = if (config.port != -1) {
-            config.port
-        } else {
-            if (config.protocol == "https") {
-                HTTPS_PORT
-            } else {
-                HTTP_PORT
+        get() = when {
+            config.port != -1 -> config.port
+            else -> {
+                when (config.protocol) {
+                    "https" -> HTTPS_PORT
+                    else -> HTTP_PORT
+                }
             }
         }
 
-    val id: String
-        get() = type.name.toLowerCase()
+    val id: String get() = type.name.toLowerCase()
 
-    val type: IdType
-        get() = IdType.byUrl(httpUrl)
+    val type: IdType get() = IdType.byUrl(httpUrl)
 
     val debugPort: Int
         get() = if (config.port != -1) {
@@ -80,8 +73,6 @@ class InstanceUrl(raw: String) {
 
     companion object {
 
-        const val TOKEN_DEFAULT = "default"
-
         const val AUTHOR_DEFAULT = "http://localhost:4502"
 
         const val PUBLISH_DEFAULT = "http://localhost:4503"
@@ -96,30 +87,14 @@ class InstanceUrl(raw: String) {
 
         val ENV_LOCAL_HOSTS = listOf("127.0.0.1", "localhost")
 
-        fun encode(text: String): String {
-            return URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text
-        }
+        fun encode(text: String): String = URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text
 
-        fun decode(text: String): String {
-            return URLDecoder.decode(text, Charsets.UTF_8.name()) ?: text
-        }
+        fun decode(text: String): String = URLDecoder.decode(text, Charsets.UTF_8.name()) ?: text
 
-        fun parse(raw: String): InstanceUrl {
-            return try {
-                InstanceUrl(raw)
-            } catch (e: MalformedURLException) {
-                throw AemException("Cannot parse instance URL: '$raw'", e)
-            }
-        }
-
-        fun process(url: String, id: String): String = when (url) {
-            TOKEN_DEFAULT -> {
-                when (IdType.byId(id)) {
-                    IdType.AUTHOR -> AUTHOR_DEFAULT
-                    IdType.PUBLISH -> PUBLISH_DEFAULT
-                }
-            }
-            else -> url
+        fun parse(raw: String): InstanceUrl = try {
+            InstanceUrl(raw)
+        } catch (e: MalformedURLException) {
+            throw AemException("Cannot parse instance URL: '$raw'", e)
         }
     }
 }
