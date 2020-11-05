@@ -80,6 +80,12 @@ class InstanceUrl(raw: String) {
 
     companion object {
 
+        const val TOKEN_DEFAULT = "default"
+
+        const val AUTHOR_DEFAULT = "http://localhost:4502"
+
+        const val PUBLISH_DEFAULT = "http://localhost:4503"
+
         const val HTTPS_PORT = 443
 
         const val HTTPS_DEBUG_PORT = 50443
@@ -104,6 +110,16 @@ class InstanceUrl(raw: String) {
             } catch (e: MalformedURLException) {
                 throw AemException("Cannot parse instance URL: '$raw'", e)
             }
+        }
+
+        fun process(url: String, id: String): String = when (url) {
+            TOKEN_DEFAULT -> {
+                when (IdType.byId(id)) {
+                    IdType.AUTHOR -> AUTHOR_DEFAULT
+                    IdType.PUBLISH -> PUBLISH_DEFAULT
+                }
+            }
+            else -> url
         }
     }
 }

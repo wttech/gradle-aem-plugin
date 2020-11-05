@@ -265,10 +265,6 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
         const val ENV_CMD = "cmd"
 
-        const val URL_AUTHOR_DEFAULT = "http://localhost:4502"
-
-        const val URL_PUBLISH_DEFAULT = "http://localhost:4503"
-
         const val USER_DEFAULT = "admin"
 
         const val PASSWORD_DEFAULT = "admin"
@@ -280,9 +276,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
         fun defaultPair(aem: AemExtension) = listOf(defaultAuthor(aem), defaultPublish(aem))
 
-        fun defaultAuthor(aem: AemExtension) = create(aem, URL_AUTHOR_DEFAULT)
+        fun defaultAuthor(aem: AemExtension) = create(aem, InstanceUrl.AUTHOR_DEFAULT)
 
-        fun defaultPublish(aem: AemExtension) = create(aem, URL_PUBLISH_DEFAULT)
+        fun defaultPublish(aem: AemExtension) = create(aem, InstanceUrl.PUBLISH_DEFAULT)
 
         fun parse(aem: AemExtension, str: String, configurer: Instance.() -> Unit = {}): List<Instance> {
             return (Formats.toList(str) ?: listOf()).map { create(aem, it, configurer) }
@@ -314,9 +310,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                     return@mapNotNull null
                 }
 
-                val httpUrl = props["httpUrl"]!!
-                val type = PhysicalType.of(props["type"]) ?: PhysicalType.REMOTE
                 val (env, id) = nameParts
+                val httpUrl = InstanceUrl.process(props["httpUrl"]!!, id)
+                val type = PhysicalType.of(props["type"]) ?: PhysicalType.REMOTE
 
                 when (type) {
                     PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {
