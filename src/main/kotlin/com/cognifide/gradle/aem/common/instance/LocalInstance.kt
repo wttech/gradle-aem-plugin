@@ -81,6 +81,9 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val runModesString: String get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
+    val serviceOpts: Map<String, Any?> get() = localManager.service.opts
+
+    @get:JsonIgnore
     val dir get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
@@ -103,8 +106,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val license get() = dir.resolve("license.properties")
 
     @get:JsonIgnore
-    val pid: Int get() = quickstartDir.resolve("conf/cq.pid")
-            .takeIf { it.exists() }?.readText()?.trim()?.ifBlank { null }?.toInt() ?: 0
+    val pidFile get() = quickstartDir.resolve("conf/cq.pid")
+
+    @get:JsonIgnore
+    val pid: Int get() = pidFile.takeIf { it.exists() }?.readText()
+            ?.trim()?.ifBlank { null }?.toInt() ?: 0
 
     @get:JsonIgnore
     val logsDir get() = quickstartDir.resolve("logs")
@@ -287,17 +293,25 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     internal fun customize() {
         aem.assetManager.copyDir(FILES_PATH, dir)
+        copyOverrideFiles()
+        expandFiles()
+        copyInstallFiles()
+    }
 
+    private fun copyOverrideFiles() {
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)
         }
+    }
 
+    private fun expandFiles() {
         val propertiesAll = mapOf("instance" to this) + properties + localManager.expandProperties.get()
-
         FileOperations.amendFiles(dir, localManager.expandFiles.get()) { file, source ->
             aem.prop.expand(source, propertiesAll, file.absolutePath)
         }
+    }
 
+    private fun copyInstallFiles() {
         val installFiles = localManager.install.files
         if (installFiles.isNotEmpty()) {
             installDir.mkdirs()
