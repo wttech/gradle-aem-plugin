@@ -101,6 +101,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         openMode.set(OpenMode.of(name))
     }
 
+    /**
+     * System service related options.
+     */
+    val service by lazy { Service(aem) }
+
+    fun service(options: Service.() -> Unit) = service.using(options)
+
     fun resolveFiles() {
         logger.info("Resolving local instance files")
         logger.info("Resolved local instance files:\n${sourceFiles.joinToString("\n")}")
@@ -154,7 +161,9 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                 "**/start.bat",
                 "**/stop.bat",
                 "**/start",
-                "**/stop"
+                "**/stop",
+                "**/service/*.conf",
+                "**/service/*.sh"
         ))
     }
 

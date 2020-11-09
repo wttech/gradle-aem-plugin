@@ -16,8 +16,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.io.Serializable
-import java.time.ZoneId
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 
 open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) : Serializable {
@@ -123,7 +123,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
     @get:JsonIgnore
     val zoneId: ZoneId get() = systemProperties["user.timezone"]?.let { ZoneId.of(it) }
-            ?: throw InstanceException("Cannot read timezone of $this!")
+                ?: throw InstanceException("Cannot read timezone of $this!")
 
     @get:JsonIgnore
     val zoneOffset: ZoneOffset get() = zoneId.rules.getOffset(LocalDateTime.now())
@@ -140,26 +140,26 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
     @get:JsonIgnore
     val osInfo: String get() = mutableListOf<String>().apply {
-        systemProperties["os.name"]?.let { add(it) }
-        systemProperties["os.arch"]?.let { add(it) }
-        systemProperties["os.version"]?.let { add("($it)") }
-    }.joinToString(" ")
+            systemProperties["os.name"]?.let { add(it) }
+            systemProperties["os.arch"]?.let { add(it) }
+            systemProperties["os.version"]?.let { add("($it)") }
+        }.joinToString(" ")
 
     @get:JsonIgnore
     val javaInfo: String get() = mutableListOf<String>().apply {
-        systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
-        systemProperties["java.version"]?.let { add("($it)") }
-    }.joinToString(" ")
+            systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
+            systemProperties["java.version"]?.let { add("($it)") }
+        }.joinToString(" ")
 
     @get:JsonIgnore
     val runningPath: String get() = systemProperties["user.dir"]
-            ?: throw InstanceException("Cannot read running path of $this!")
+                ?: throw InstanceException("Cannot read running path of $this!")
 
     @get:JsonIgnore
     val runningModes: List<String> get() = slingSettings["Run_Modes"]
-            ?.removeSurrounding("[", "]")
-            ?.split(",")?.map { it.trim() }
-            ?: throw InstanceException("Cannot read running modes of $this!")
+                ?.removeSurrounding("[", "]")
+                ?.split(",")?.map { it.trim() }
+                ?: throw InstanceException("Cannot read running modes of $this!")
 
     @get:JsonIgnore
     open val version: AemVersion get() = AemVersion(sync.status.productVersion)
@@ -284,19 +284,22 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             return (Formats.toList(str) ?: listOf()).map { create(aem, it, configurer) }
         }
 
-        @Suppress("ComplexMethod")
         fun properties(aem: AemExtension): List<Instance> {
             val allProps = aem.project.rootProject.properties
-            return allProps.filterKeys {
+
+            val instanceNames = allProps.filterKeys {
                 Patterns.wildcard(it, "instance.*.httpUrl") || Patterns.wildcard(it, "instance.*.type")
-            }.keys.mapNotNull { property ->
-                val name = property.split(".")[1]
+            }.keys.mapNotNull { p ->
+                val name = p.split(".")[1]
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
-                    aem.logger.warn("Instance name has invalid format '$name' in property '$property'.")
+                    aem.logger.warn("Instance name has invalid format '$name' in property '$p'.")
                     return@mapNotNull null
                 }
+                name
+            }.distinct()
 
+            return instanceNames.mapNotNull { name ->
                 val props = allProps.filterKeys {
                     Patterns.wildcard(it, "instance.$name.*")
                 }.entries.fold(mutableMapOf<String, String>()) { result, e ->
@@ -304,44 +307,38 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                     val prop = key.substringAfter("instance.$name.")
                     result.apply { put(prop, value as String) }
                 }
-
                 if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
                     aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")
-                    return@mapNotNull null
-                }
-
-                val (env, id) = nameParts
-                val httpUrl = props["httpUrl"] ?: IdType.byId(id).httpUrlDefault
-                val type = props["type"]?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE
-
-                when (type) {
-                    PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {
-                        this.env = env
-                        this.id = id
-
-                        props["enabled"]?.let { this.enabled = it.toBoolean() }
-                        props["password"]?.let { this.password = it }
-                        props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
-                        props["startOpts"]?.let { this.startOpts = it.split(" ") }
-                        props["runModes"]?.let { this.runModes = it.split(",") }
-                        props["debugPort"]?.let { this.debugPort = it.toInt() }
-                        props["debugAddress"]?.let { this.debugAddress = it }
-                        props["openPath"]?.let { this.openPath = it }
-
-                        this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
-                    }
-                    PhysicalType.REMOTE -> create(aem, httpUrl) {
-                        this.env = env
-                        this.id = id
-
-                        props["enabled"]?.let { this.enabled = it.toBoolean() }
-                        props["user"]?.let { this.user = it }
-                        props["password"]?.let { this.password = it }
-
-                        this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
-                    }
+                    null
+                } else {
+                    properties(aem, name, props)
                 }
             }.sortedBy { it.name }
+        }
+
+        private fun properties(aem: AemExtension, name: String, props: Map<String, String>): Instance {
+            val httpUrl = props["httpUrl"] ?: IdType.byId(name.split("-")[1]).httpUrlDefault
+            return when (props["type"]?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE) {
+                PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {
+                    this.name = name
+                    props["enabled"]?.let { this.enabled = it.toBoolean() }
+                    props["password"]?.let { this.password = it }
+                    props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
+                    props["startOpts"]?.let { this.startOpts = it.split(" ") }
+                    props["runModes"]?.let { this.runModes = it.split(",") }
+                    props["debugPort"]?.let { this.debugPort = it.toInt() }
+                    props["debugAddress"]?.let { this.debugAddress = it }
+                    props["openPath"]?.let { this.openPath = it }
+                    this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
+                }
+                PhysicalType.REMOTE -> create(aem, httpUrl) {
+                    this.name = name
+                    props["enabled"]?.let { this.enabled = it.toBoolean() }
+                    props["user"]?.let { this.user = it }
+                    props["password"]?.let { this.password = it }
+                    this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
+                }
+            }
         }
     }
 }
