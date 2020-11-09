@@ -311,35 +311,42 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                     aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")
                     null
                 } else {
-                    properties(aem, name, props)
+                    singlefromProperties(aem, name, props)
                 }
             }.sortedBy { it.name }
         }
 
-        private fun properties(aem: AemExtension, name: String, props: Map<String, String>): Instance {
-            val httpUrl = props["httpUrl"] ?: IdType.byId(name.split("-")[1]).httpUrlDefault
-            return when (props["type"]?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE) {
-                PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {
-                    this.name = name
-                    props["enabled"]?.let { this.enabled = it.toBoolean() }
-                    props["password"]?.let { this.password = it }
-                    props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
-                    props["startOpts"]?.let { this.startOpts = it.split(" ") }
-                    props["runModes"]?.let { this.runModes = it.split(",") }
-                    props["debugPort"]?.let { this.debugPort = it.toInt() }
-                    props["debugAddress"]?.let { this.debugAddress = it }
-                    props["openPath"]?.let { this.openPath = it }
-                    this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
-                }
-                PhysicalType.REMOTE -> create(aem, httpUrl) {
-                    this.name = name
-                    props["enabled"]?.let { this.enabled = it.toBoolean() }
-                    props["user"]?.let { this.user = it }
-                    props["password"]?.let { this.password = it }
-                    this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
-                }
-            }
+        private fun singlefromProperties(aem: AemExtension, name: String, props: Map<String, String>) = when (typeProperty(props)) {
+            PhysicalType.LOCAL -> localFromProperties(aem, name, props)
+            PhysicalType.REMOTE -> remoteFromProperties(aem, name, props)
         }
+
+        private fun localFromProperties(aem: AemExtension, name: String, props: Map<String, String>) = LocalInstance.create(aem, httpUrlProperty(name, props)) {
+            this.name = name
+            props["enabled"]?.let { this.enabled = it.toBoolean() }
+            props["password"]?.let { this.password = it }
+            props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
+            props["startOpts"]?.let { this.startOpts = it.split(" ") }
+            props["runModes"]?.let { this.runModes = it.split(",") }
+            props["debugPort"]?.let { this.debugPort = it.toInt() }
+            props["debugAddress"]?.let { this.debugAddress = it }
+            props["openPath"]?.let { this.openPath = it }
+            this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
+        }
+
+        private fun remoteFromProperties(aem: AemExtension, name: String, props: Map<String, String>) = create(aem, httpUrlProperty(name, props)) {
+            this.name = name
+            props["enabled"]?.let { this.enabled = it.toBoolean() }
+            props["user"]?.let { this.user = it }
+            props["password"]?.let { this.password = it }
+            this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
+        }
+
+        private fun typeProperty(props: Map<String, String>) = props["type"]
+                ?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE
+
+        private fun httpUrlProperty(name: String, props: Map<String, String>) = props["httpUrl"]
+                ?: IdType.byId(name.split("-")[1]).httpUrlDefault
     }
 }
 
