@@ -73,7 +73,7 @@ class BundlePluginTest : AemBuildTest() {
                     compileOnly("com.adobe.aem:uber-jar:6.5.0:apis")
                     
                     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
-                    testImplementation("io.wcm:io.wcm.testing.aem-mock.junit5:2.5.2")
+                    // testImplementation("io.wcm:io.wcm.testing.aem-mock.junit5:2.5.2")
                 }
 
                 tasks {

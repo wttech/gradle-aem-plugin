@@ -359,7 +359,7 @@ class PackagePluginTest : AemBuildTest() {
                 compileOnly("org.osgi:osgi.cmpn:6.0.0")
                 
                 testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
-                testImplementation("io.wcm:io.wcm.testing.aem-mock.junit5:2.5.2")
+                // testImplementation("io.wcm:io.wcm.testing.aem-mock.junit5:2.5.2")
             }
             
             tasks {
