@@ -246,7 +246,6 @@ githubRelease {
     tagName(project.version.toString())
     releaseName(project.version.toString())
     draft((findProperty("github.draft") ?: "false").toString().toBoolean())
-    prerelease((findProperty("github.prerelease") ?: "true").toString().toBoolean())
     overwrite((findProperty("github.override") ?: "true").toString().toBoolean())
 
     gradle.projectsEvaluated {
@@ -254,19 +253,23 @@ githubRelease {
                 + project(":launcher").tasks.named("jar"))
     }
 
-    body { """
-    |# What's new
-    |
-    |TBD
-    |
-    |# Upgrade notes
-    |
-    |Nothing to do.
-    |
-    |# Contributions
-    |
-    |None.
-    """.trimMargin()
+    if ((findProperty("github.prerelease") ?: "true").toString().toBoolean()) {
+        prerelease(true)
+    } else {
+        body { """
+        |# What's new
+        |
+        |TBD
+        |
+        |# Upgrade notes
+        |
+        |Nothing to do.
+        |
+        |# Contributions
+        |
+        |None.
+        """.trimMargin()
+        }
     }
 }
 
