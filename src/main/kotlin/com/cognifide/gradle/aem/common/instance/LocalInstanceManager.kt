@@ -154,16 +154,26 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     /**
-     * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
+     * Determines files in which properties can be injected.
      */
     val expandFiles = aem.obj.strings {
         convention(listOf(
-                "**/start.bat",
-                "**/stop.bat",
-                "**/start",
-                "**/stop",
-                "**/service/*.conf",
-                "**/service/*.sh"
+                "start.bat",
+                "stop.bat",
+                "start.sh",
+                "stop.sh",
+                "service/*.conf",
+                "service/*.sh"
+        ))
+    }
+
+    /**
+     * Determines files which executable rights will be applied.
+     */
+    val executableFiles = aem.obj.strings {
+        convention(listOf(
+                "*.sh",
+                "service/*.sh"
         ))
     }
 

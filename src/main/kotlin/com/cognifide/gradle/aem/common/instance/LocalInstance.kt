@@ -296,6 +296,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         copyOverrideFiles()
         expandFiles()
         copyInstallFiles()
+        makeFilesExecutable()
     }
 
     private fun copyOverrideFiles() {
@@ -306,9 +307,13 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun expandFiles() {
         val propertiesAll = mapOf("instance" to this) + properties + localManager.expandProperties.get()
-        FileOperations.amendFiles(dir, localManager.expandFiles.get()) { file, source ->
-            aem.prop.expand(source, propertiesAll, file.absolutePath)
-        }
+        aem.project.fileTree(dir)
+                .matching { it.include(localManager.expandFiles.get()) }
+                .forEach { file ->
+                    FileOperations.amendFile(file) { content ->
+                        aem.prop.expand(content, propertiesAll, file.absolutePath)
+                    }
+                }
     }
 
     private fun copyInstallFiles() {
@@ -323,6 +328,12 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
                 }
             }
         }
+    }
+
+    private fun makeFilesExecutable() {
+        aem.project.fileTree(dir)
+                .matching { it.include(localManager.executableFiles.get()) }
+                .forEach { FileOperations.makeExecutable(it) }
     }
 
     fun up() = localManager.up(this)

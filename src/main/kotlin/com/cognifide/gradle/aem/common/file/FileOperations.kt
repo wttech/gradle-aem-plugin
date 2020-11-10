@@ -2,23 +2,14 @@ package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.filefilter.TrueFileFilter
 import org.gradle.api.Project
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermission
 
 object FileOperations {
-
-    fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
-        val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
-        files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->
-            val source = amender(file, file.inputStream().bufferedReader().use { it.readText() })
-            file.printWriter().use { it.print(source) }
-        }
-    }
 
     fun amendFile(file: File, amender: (String) -> String) {
         val source = amender(file.inputStream().bufferedReader().use { it.readText() })
@@ -92,5 +83,12 @@ object FileOperations {
             callback()
             lock(file)
         }
+    }
+
+    fun makeExecutable(file: File) {
+        Files.setPosixFilePermissions(file.toPath(), Files.getPosixFilePermissions(file.toPath()) + setOf(
+                PosixFilePermission.OWNER_EXECUTE,
+                PosixFilePermission.GROUP_EXECUTE
+        ))
     }
 }

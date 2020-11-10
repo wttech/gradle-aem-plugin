@@ -88,8 +88,8 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     val expandProperties = aem.obj.map<String, Any> { convention(aem.obj.provider { fileProperties }) }
 
     fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
-        FileOperations.amendFiles(dir, filePatterns) { source, content ->
-            common.prop.expand(content, expandProperties.get(), source.absolutePath)
+        aem.project.fileTree(dir).matching { it.include(filePatterns) }.forEach { file ->
+            FileOperations.amendFile(file) { content -> common.prop.expand(content, expandProperties.get(), file.absolutePath) }
         }
     }
 

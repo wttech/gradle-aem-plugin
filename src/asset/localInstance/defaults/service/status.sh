@@ -1,3 +1,3 @@
 #!/bin/sh
 
-(cd {{ rootProject.projectDir }} && sh gradlew -q --console=plain instanceStatus -Pinstance.name={{ instance.name }})
+(cd {{ rootProject.projectDir }} && {{ instance.serviceOpts['statusCommand'] }} -Pinstance.name={{ instance.name }})
