@@ -110,9 +110,9 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
 
     companion object {
         val EXPAND_FILES_DEFAULT = listOf(
-                "**/${Package.META_PATH}/*.xml",
-                "**/${Package.META_PATH}/*.MF",
-                "**/${Package.META_PATH}/*.cnd"
+                "**/${Package.META_PATH}/MANIFEST.MF",
+                "**/${Package.VLT_PATH}/nodetypes.cnd",
+                "**/${Package.META_PATH}/**/*.xml"
         )
 
         val EXCLUDE_FILES_DEFAULT = listOf(
