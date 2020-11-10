@@ -183,7 +183,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         return if (os.isWindows) {
             Script(this, listOf("cmd", "/C"), dir.resolve("$name.bat"), quickstartDir.resolve("bin/$name.bat"))
         } else {
-            Script(this, listOf("sh"), dir.resolve(name), quickstartDir.resolve("bin/$name"))
+            Script(this, listOf("sh"), dir.resolve("$name.sh"), quickstartDir.resolve("bin/$name"))
         }
     }
 
@@ -263,6 +263,18 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             result
         }
 
+        // Use java executable path explicitly to make instance working even when running from non-interactive shells (e.g as systemd service).
+        aem.project.fileTree(dir)
+                .matching { it.include(localManager.executableFiles.get()) }
+                .forEach { file ->
+                    FileOperations.amendFile(file) {
+                        it.replace("java ", when (file.extension) {
+                            "bat" -> "%JAVA_EXECUTABLE% "
+                            else -> "\$JAVA_EXECUTABLE "
+                        })
+                    }
+                }
+
         // Ensure that 'logs' directory exists
         logsDir.mkdirs()
     }
@@ -306,7 +318,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     private fun expandFiles() {
-        val propertiesAll = mapOf("instance" to this) + properties + localManager.expandProperties.get()
+        val propertiesAll = mapOf(
+                "instance" to this,
+                "java" to aem.commonOptions.java
+        ) + properties + localManager.expandProperties.get()
+
         aem.project.fileTree(dir)
                 .matching { it.include(localManager.expandFiles.get()) }
                 .forEach { file ->
@@ -332,7 +348,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun makeFilesExecutable() {
         aem.project.fileTree(dir)
-                .matching { it.include(localManager.executableFiles.get()) }
+                .matching { it.include(localManager.executableFiles.get()).exclude("**/*.bat") }
                 .forEach { FileOperations.makeExecutable(it) }
     }
 

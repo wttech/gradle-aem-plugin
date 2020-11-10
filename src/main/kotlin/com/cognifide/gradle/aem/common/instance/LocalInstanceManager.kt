@@ -104,9 +104,9 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     /**
      * System service related options.
      */
-    val service by lazy { Service(aem) }
+    val service by lazy { ServiceOptions(aem) }
 
-    fun service(options: Service.() -> Unit) = service.using(options)
+    fun service(options: ServiceOptions.() -> Unit) = service.using(options)
 
     fun resolveFiles() {
         logger.info("Resolving local instance files")
@@ -158,12 +158,15 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      */
     val expandFiles = aem.obj.strings {
         convention(listOf(
-                "start.bat",
-                "stop.bat",
-                "start.sh",
-                "stop.sh",
+                "*.sh",
+                "*.bat",
+                "service/*.sh",
                 "service/*.conf",
-                "service/*.sh"
+                "crx-quickstart/bin/*.sh",
+                "crx-quickstart/bin/*.bat",
+                "crx-quickstart/bin/start",
+                "crx-quickstart/bin/status",
+                "crx-quickstart/bin/stop"
         ))
     }
 
@@ -173,7 +176,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     val executableFiles = aem.obj.strings {
         convention(listOf(
                 "*.sh",
-                "service/*.sh"
+                "*.bat",
+                "service/*.sh",
+                "crx-quickstart/bin/*.sh",
+                "crx-quickstart/bin/*.bat",
+                "crx-quickstart/bin/start",
+                "crx-quickstart/bin/status",
+                "crx-quickstart/bin/stop"
         ))
     }
 
@@ -570,7 +579,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         try {
             logger.debug("Examining Java properly installed")
 
-            val result = ProcBuilder("java", "-version")
+            val result = ProcBuilder(aem.commonOptions.java.executablePath, "-version")
                     .withWorkingDirectory(rootDir.get().asFile.apply { mkdirs() })
                     .withTimeoutMillis(statusTimeout.get())
                     .withExpectedExitStatuses(0)

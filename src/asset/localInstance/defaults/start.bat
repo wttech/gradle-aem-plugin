@@ -1,3 +1,5 @@
+set JAVA_EXECUTABLE={{ java.executablePath }}
+
 set CQ_PORT={{instance.httpPort}}
 set CQ_RUNMODE={{instance.runModesString}}
 set CQ_JVM_OPTS={{instance.jvmOptsString}}

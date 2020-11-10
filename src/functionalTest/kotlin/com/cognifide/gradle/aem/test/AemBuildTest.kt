@@ -75,18 +75,18 @@ open class AemBuildTest {
             
             import org.junit.jupiter.api.Test;
             import org.junit.jupiter.api.extension.ExtendWith;
-            import io.wcm.testing.mock.aem.junit5.AemContext;
-            import io.wcm.testing.mock.aem.junit5.AemContextExtension;
+            //import io.wcm.testing.mock.aem.junit5.AemContext;
+            //import io.wcm.testing.mock.aem.junit5.AemContextExtension;
             
-            @ExtendWith(AemContextExtension.class)
+            //@ExtendWith(AemContextExtension.class)
             class HelloServiceTest {
                 
-                private final AemContext context = new AemContext();
+                //private final AemContext context = new AemContext();
                     
                 @Test
                 void shouldUseService() {
-                    context.registerInjectActivateService(new HelloService());
-                    assertNotNull(context.getService(HelloService.class));
+                    //context.registerInjectActivateService(new HelloService());
+                    //assertNotNull(context.getService(HelloService.class));
                 }
             }
         """)

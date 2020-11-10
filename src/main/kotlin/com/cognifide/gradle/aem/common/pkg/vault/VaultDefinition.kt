@@ -238,7 +238,9 @@ open class VaultDefinition(private val aem: AemExtension) {
         val filters get() = base.filters
     }
 
-    override fun toString(): String = "VaultDefinition(group=$group, name=$name, version=$version, description=$description)"
+    override fun toString(): String {
+        return "VaultDefinition(group=${group.get()}, name=${name.get()}, version=${version.get()}, description=${description.get()})"
+    }
 
     companion object {
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")

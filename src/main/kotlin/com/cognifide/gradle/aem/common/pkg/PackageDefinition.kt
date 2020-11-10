@@ -81,14 +81,10 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         aem.assetManager.copyDir(AssetManager.META_PATH, metaDir, !skipExisting)
     }
 
-    fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
-        expandFiles(metaDir, filePatterns)
-    }
-
     val expandProperties = aem.obj.map<String, Any> { convention(aem.obj.provider { fileProperties }) }
 
-    fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
-        aem.project.fileTree(dir).matching { it.include(filePatterns) }.forEach { file ->
+    fun expandFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
+        aem.project.fileTree(pkgDir).matching { it.include(filePatterns) }.forEach { file ->
             FileOperations.amendFile(file) { content -> common.prop.expand(content, expandProperties.get(), file.absolutePath) }
         }
     }
@@ -104,7 +100,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
 
         copyMetaFiles()
         content()
-        expandMetaFiles()
+        expandFiles()
 
         ZipFile(archivePath.get().asFile).packAll(pkgDir)
         pkgDir.deleteRecursively()
