@@ -246,7 +246,7 @@ githubRelease {
     tagName(project.version.toString())
     releaseName(project.version.toString())
     draft((findProperty("github.draft") ?: "false").toString().toBoolean())
-    prerelease((findProperty("github.prerelease") ?: "false").toString().toBoolean())
+    prerelease((findProperty("github.prerelease") ?: "true").toString().toBoolean())
     overwrite((findProperty("github.override") ?: "true").toString().toBoolean())
 
     gradle.projectsEvaluated {
