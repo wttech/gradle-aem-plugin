@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.AemExtension
 /**
  * System service related options.
  */
-class Service(private val aem: AemExtension) {
+class ServiceOptions(private val aem: AemExtension) {
 
     val user = aem.obj.string {
         convention("aem")

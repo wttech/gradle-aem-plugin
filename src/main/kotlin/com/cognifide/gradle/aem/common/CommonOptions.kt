@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.JavaOptions
 import com.cognifide.gradle.aem.common.utils.LineSeparator
+import com.cognifide.gradle.common.utils.using
 import org.gradle.internal.os.OperatingSystem
 
 open class CommonOptions(private val aem: AemExtension) {
@@ -55,4 +57,11 @@ open class CommonOptions(private val aem: AemExtension) {
         convention(aem.project.provider { if (OperatingSystem.current().isWindows) ".bat" else "" })
         aem.prop.string("executableExtension")?.let { set(it) }
     }
+
+    /**
+     * Configure Java for running AEM instance.
+     */
+    val java by lazy { JavaOptions(aem) }
+
+    fun java(options: JavaOptions.() -> Unit) = java.using(options)
 }
