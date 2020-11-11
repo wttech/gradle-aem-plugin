@@ -26,7 +26,7 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
             if (!status.runnable) {
                 statusLogger.error(
                         "Awaiting not running",
-                        "Unexpected instance status '$status'. Waiting for status '${Status.Type.RUNNABLE}' of $instance"
+                        "Unexpected instance status '$status'. Waiting for status '${Status.Type.RUNNABLE.map { it.name }}' of $instance"
                 )
             }
         } else {

@@ -50,7 +50,8 @@ class ControlTrigger(aem: AemExtension) {
                 val verifyResult = try {
                     verifyFuture.get(verifyTimeout.get(), TimeUnit.MILLISECONDS)
                 } catch (e: Exception) {
-                    logger.error("Cannot run control trigger verification properly!", e)
+                    logger.error("Cannot run control trigger verification properly!")
+                    logger.debug("Control trigger verification error", e)
                     false
                 }
 
