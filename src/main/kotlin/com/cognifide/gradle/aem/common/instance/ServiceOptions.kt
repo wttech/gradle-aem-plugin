@@ -1,18 +1,23 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import org.gradle.api.provider.Property
 
 /**
  * System service related options.
  */
 class ServiceOptions(private val aem: AemExtension) {
 
+    /**
+     * System user used to run instance.
+     */
     val user = aem.obj.string {
         convention("aem")
         aem.prop.string("localInstance.service.user")?.let { set(it) }
     }
 
+    /**
+     * System group of user used to run instance.
+     */
     val group = aem.obj.string {
         convention("aem")
         aem.prop.string("localInstance.service.group")?.let { set(it) }
@@ -26,40 +31,48 @@ class ServiceOptions(private val aem: AemExtension) {
         aem.prop.int("localInstance.service.limitNoFile")?.let { set(it) }
     }
 
+    /**
+     * Environment variables loader command.
+     */
+    val environmentCommand = aem.obj.string {
+        convention(". /etc/profile")
+        aem.prop.string("localInstance.service.environmentCommand")?.let { set(it) }
+    }
+
+    /**
+     * Build command relative to root project used to start process which runs AEM instance as a system service.
+     */
     val startCommand = aem.obj.string {
         convention("sh gradlew -i --console=plain instanceUp")
         aem.prop.string("localInstance.service.startCommand")?.let { set(it) }
     }
 
+    /**
+     * Build command relative to root project used to stop process which runs AEM instance as a system service.
+     */
     val stopCommand = aem.obj.string {
         convention("sh gradlew -i --console=plain instanceDown")
         aem.prop.string("localInstance.service.stopCommand")?.let { set(it) }
     }
 
+    /**
+     * Build command relative to root project used to describe status of  AEM instance running as a system service.
+     */
     val statusCommand = aem.obj.string {
         convention("sh gradlew -q --console=plain instanceStatus")
         aem.prop.string("localInstance.service.statusCommand")?.let { set(it) }
     }
 
-    val profileCommand = aem.obj.string {
-        convention(". /etc/profile")
-        aem.prop.string("localInstance.service.profileCommand")?.let { set(it) }
-    }
-
-    private fun combineProfileCommand(command: Property<String>) = profileCommand.map { profileValue ->
-        val commandValue = command.orNull
-        mutableListOf<String>().apply {
-            if (!profileValue.isNullOrBlank()) add(profileValue)
-            if (!commandValue.isNullOrBlank()) add(commandValue)
-        }.joinToString(" && ").ifBlank { null }
-    }
-
+    /**
+     * Effective values (shorthand)
+     */
     val opts get() = mapOf(
             "user" to user.orNull,
             "group" to group.orNull,
             "limitNoFile" to limitNoFile.orNull,
-            "startCommand" to combineProfileCommand(startCommand),
-            "stopCommand" to combineProfileCommand(stopCommand),
-            "statusCommand" to combineProfileCommand(statusCommand)
+            "profileCommand" to environmentCommand.orNull,
+            "startCommand" to startCommand.orNull,
+            "stopCommand" to stopCommand.orNull,
+            "statusCommand" to statusCommand.orNull
     )
 }
