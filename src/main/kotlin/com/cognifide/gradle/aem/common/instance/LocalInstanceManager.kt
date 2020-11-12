@@ -158,8 +158,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      */
     val expandFiles = aem.obj.strings {
         convention(listOf(
-                "*.sh",
-                "*.bat",
+                "control/*.sh",
+                "control/*.bat",
                 "service/*.sh",
                 "service/*.conf",
                 "crx-quickstart/bin/*.sh",
@@ -175,8 +175,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      */
     val executableFiles = aem.obj.strings {
         convention(listOf(
-                "*.sh",
-                "*.bat",
+                "control/*.sh",
+                "control/*.bat",
                 "service/*.sh",
                 "crx-quickstart/bin/*.sh",
                 "crx-quickstart/bin/*.bat",

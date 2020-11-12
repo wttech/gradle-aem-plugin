@@ -87,6 +87,9 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val dir get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
+    val controlDir get() = dir.resolve("control")
+
+    @get:JsonIgnore
     val overridesDirs get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
 
     @get:JsonIgnore
@@ -144,7 +147,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             ?.let { AemVersion(it.removePrefix("cq-quickstart-").removePrefix("cloudready-").substringBefore("-")) }
             ?: AemVersion.UNKNOWN
 
-    private val startScript: Script get() = binScript("start")
+    private val startScript: Script get() = script("start")
 
     internal fun executeStartScript() {
         try {
@@ -154,7 +157,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         }
     }
 
-    private val stopScript: Script get() = binScript("stop")
+    private val stopScript: Script get() = script("stop")
 
     internal fun executeStopScript() {
         val pidOrigin = pid
@@ -165,7 +168,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         }
     }
 
-    private val statusScript: Script get() = binScript("status")
+    private val statusScript: Script get() = script("status")
 
     @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
@@ -179,12 +182,10 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val installDir get() = quickstartDir.resolve("install")
 
-    private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
-        return if (os.isWindows) {
-            Script(this, listOf("cmd", "/C"), dir.resolve("$name.bat"), quickstartDir.resolve("bin/$name.bat"))
-        } else {
-            Script(this, listOf("sh"), dir.resolve("$name.sh"), quickstartDir.resolve("bin/$name"))
-        }
+    private fun script(name: String, os: OperatingSystem = OperatingSystem.current()) = if (os.isWindows) {
+        Script(this, listOf("cmd", "/C"), controlDir.resolve("$name.bat"), quickstartDir.resolve("bin/$name.bat"))
+    } else {
+        Script(this, listOf("sh"), controlDir.resolve("$name.sh"), quickstartDir.resolve("bin/$name"))
     }
 
     @get:JsonIgnore
@@ -223,7 +224,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     private fun correctFiles() {
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
+        FileOperations.amendFile(script("start", OperatingSystem.forName("windows")).bin) { origin ->
             var result = origin
 
             // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
@@ -251,7 +252,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             result
         }
 
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin) { origin ->
+        FileOperations.amendFile(script("start", OperatingSystem.forName("unix")).bin) { origin ->
             var result = origin
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
