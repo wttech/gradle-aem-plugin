@@ -104,9 +104,9 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     /**
      * System service related options.
      */
-    val service by lazy { ServiceOptions(aem) }
+    val serviceOptions by lazy { ServiceOptions(aem) }
 
-    fun service(options: ServiceOptions.() -> Unit) = service.using(options)
+    fun service(options: ServiceOptions.() -> Unit) = serviceOptions.using(options)
 
     fun resolveFiles() {
         logger.info("Resolving local instance files")

@@ -81,7 +81,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val runModesString: String get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
-    val serviceOpts: Map<String, Any?> get() = localManager.service.opts
+    val serviceOpts: Map<String, Any?> get() = localManager.serviceOptions.opts
 
     @get:JsonIgnore
     val dir get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)

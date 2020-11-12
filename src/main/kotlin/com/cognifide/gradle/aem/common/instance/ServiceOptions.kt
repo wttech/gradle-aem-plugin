@@ -70,7 +70,7 @@ class ServiceOptions(private val aem: AemExtension) {
             "user" to user.orNull,
             "group" to group.orNull,
             "limitNoFile" to limitNoFile.orNull,
-            "profileCommand" to environmentCommand.orNull,
+            "environmentCommand" to environmentCommand.orNull,
             "startCommand" to startCommand.orNull,
             "stopCommand" to stopCommand.orNull,
             "statusCommand" to statusCommand.orNull
