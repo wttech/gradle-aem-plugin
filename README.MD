@@ -256,7 +256,7 @@ aem {
                 // ...
             }
         }   
-        rootDir.set(prop.string("localInstance.root"))
+        rootDir.set(prop.string("localInstance.rootDir"))
         // ...
     }
 
