@@ -621,7 +621,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
         logger.debug("Examining Java compatibility for configuration: ${javaCompatibility.get()}")
 
-        val versionCurrent = JavaVersion.current()
+        val versionCurrent = JavaVersion.toVersion(javaLauncher.get().metadata.languageVersion)
         val errors = instances.fold(mutableListOf<String>()) { result, instance ->
             val aemVersion = instance.version
             javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
