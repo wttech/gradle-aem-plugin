@@ -106,6 +106,14 @@ Still all features are **fully configurable**.
 | 7.2.0 up to 8.1.1 | 5.1 up to 5.6     | 6.x and up                | 8,11 |
 | 8.1.2 up to 13.x  | 6.0 and up        | 6.x and up                | 8,11 |
 | 14.1.0 and up     | 6.0 and up        | 6.x and up, Cloud Service | 8,11 |
+| 14.4.22 and up    | 6.7 and up        | 6.x and up, Cloud Service | 8,11 |
+
+Note that since GAP 14.4.22 default Java version used to compile and run AEM instances is Java 11.
+To instruct GAP to use Java 8, consider setting property:
+
+```ini
+javaSupport.version=8
+```
 
 ## Getting started
 
