@@ -14,6 +14,7 @@ import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
 import org.buildobjects.process.ProcBuilder
 import org.gradle.api.JavaVersion
+import org.gradle.jvm.toolchain.JavaLauncher
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.CopyOnWriteArrayList
@@ -80,6 +81,12 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun source(name: String) {
         source.set(Source.of(name))
     }
+
+    val javaLauncher = aem.obj.typed<JavaLauncher> {
+        convention(aem.commonOptions.javaSupport.launcher())
+    }
+
+    val javaExecutablePath get() = javaLauncher.get().executablePath.asFile.absolutePath
 
     /**
      * Automatically open a web browser when instances are up.
@@ -579,7 +586,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         try {
             logger.debug("Examining Java properly installed")
 
-            val result = ProcBuilder(aem.commonOptions.java.executablePath, "-version")
+            val result = ProcBuilder(javaLauncher.get().executablePath.asFile.absolutePath, "-version")
                     .withWorkingDirectory(rootDir.get().asFile.apply { mkdirs() })
                     .withTimeoutMillis(statusTimeout.get())
                     .withExpectedExitStatuses(0)

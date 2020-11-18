@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
@@ -10,7 +11,6 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.configureApply
-import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
@@ -37,16 +37,24 @@ class BundlePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupJavaDefaults() {
+        val support by lazy { extensions.getByType(AemExtension::class.java).commonOptions.javaSupport }
+
         with(convention.getPlugin(JavaPluginConvention::class.java)) {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
+            sourceCompatibility = support.compatibilityVersion.get()
+            targetCompatibility = support.compatibilityVersion.get()
         }
 
         tasks {
             typed<JavaCompile> {
-                options.encoding = "UTF-8"
-                options.compilerArgs = options.compilerArgs + "-Xlint:deprecation"
-                options.isIncremental = true
+                javaCompiler.set(support.compiler())
+                options.apply {
+                    encoding = "UTF-8"
+                    compilerArgs = compilerArgs + "-Xlint:deprecation"
+                    isIncremental = true
+                }
+            }
+            typed<Test> {
+                javaLauncher.set(support.launcher())
             }
         }
     }
