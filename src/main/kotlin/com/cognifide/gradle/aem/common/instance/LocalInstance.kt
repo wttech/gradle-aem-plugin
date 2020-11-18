@@ -13,7 +13,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
+import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.process.internal.streams.SafeStreams
 
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
@@ -64,6 +66,9 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonProperty("jvmOpts")
     val jvmOptsString: String get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
+
+    @get:JsonIgnore
+    val javaExecutablePath: String get() = localManager.javaExecutablePath
 
     @get:JsonIgnore
     var startOpts: List<String> = listOf()
@@ -285,11 +290,13 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
         common.progressIndicator {
             message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
-            aem.project.javaexec { spec ->
-                spec.workingDir = dir
-                spec.main = "-jar"
-                spec.args = listOf(jar.name, "-unpack")
-            }
+
+            ProcBuilder(localManager.javaExecutablePath, "-jar", jar.name, "-unpack")
+                    .withWorkingDirectory(dir)
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemErr())
+                    .withExpectedExitStatuses(0)
+                    .run()
         }
     }
 
@@ -319,10 +326,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     private fun expandFiles() {
-        val propertiesAll = mapOf(
-                "instance" to this,
-                "java" to aem.commonOptions.java
-        ) + properties + localManager.expandProperties.get()
+        val propertiesAll = mapOf("instance" to this) + properties + localManager.expandProperties.get()
 
         aem.project.fileTree(dir)
                 .matching { it.include(localManager.expandFiles.get()) }

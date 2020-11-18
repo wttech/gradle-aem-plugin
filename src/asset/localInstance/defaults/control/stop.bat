@@ -1,3 +1,3 @@
-set JAVA_EXECUTABLE={{ java.executablePath }}
+set JAVA_EXECUTABLE={{ instance.javaExecutablePath }}
 
 call crx-quickstart\bin\stop.bat

@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.instance.JavaOptions
 import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.common.utils.using
 import org.gradle.internal.os.OperatingSystem
@@ -59,9 +58,9 @@ open class CommonOptions(private val aem: AemExtension) {
     }
 
     /**
-     * Configure Java for running AEM instance.
+     * Configure Java for running AEM instance and compilation.
      */
-    val java by lazy { JavaOptions(aem) }
+    val javaSupport by lazy { JavaSupport(aem) }
 
-    fun java(options: JavaOptions.() -> Unit) = java.using(options)
+    fun java(options: JavaSupport.() -> Unit) = javaSupport.using(options)
 }
