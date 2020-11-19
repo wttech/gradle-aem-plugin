@@ -13,9 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
-import org.buildobjects.process.ProcBuilder
 import org.gradle.internal.os.OperatingSystem
-import org.gradle.process.internal.streams.SafeStreams
 
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
