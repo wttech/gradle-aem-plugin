@@ -290,13 +290,12 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
         common.progressIndicator {
             message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
-
-            ProcBuilder(localManager.javaExecutablePath, "-jar", jar.name, "-unpack")
-                    .withWorkingDirectory(dir)
-                    .withOutputStream(SafeStreams.systemOut())
-                    .withErrorStream(SafeStreams.systemErr())
-                    .withExpectedExitStatuses(0)
-                    .run()
+            aem.project.javaexec { spec ->
+                spec.executable(localManager.javaExecutablePath)
+                spec.workingDir = dir
+                spec.main = "-jar"
+                spec.args = listOf(jar.name, "-unpack")
+            }
         }
     }
 

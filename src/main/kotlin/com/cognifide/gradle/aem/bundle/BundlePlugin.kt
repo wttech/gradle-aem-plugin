@@ -46,7 +46,7 @@ class BundlePlugin : CommonDefaultPlugin() {
 
         tasks {
             typed<JavaCompile> {
-                javaCompiler.set(support.compiler())
+                javaCompiler.set(support.compiler)
                 options.apply {
                     encoding = "UTF-8"
                     compilerArgs = compilerArgs + "-Xlint:deprecation"
@@ -54,7 +54,7 @@ class BundlePlugin : CommonDefaultPlugin() {
                 }
             }
             typed<Test> {
-                javaLauncher.set(support.launcher())
+                javaLauncher.set(support.launcher)
             }
         }
     }

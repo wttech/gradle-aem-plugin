@@ -10,6 +10,7 @@ import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.RuntimePlugin
 import com.cognifide.gradle.common.tasks.runtime.*
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaBasePlugin
 
 class LocalInstancePlugin : CommonDefaultPlugin() {
 
@@ -25,6 +26,7 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
 
         plugins.apply(InstancePlugin::class.java)
         plugins.apply(RuntimePlugin::class.java)
+        plugins.apply(JavaBasePlugin::class.java)
     }
 
     @Suppress("LongMethod")
