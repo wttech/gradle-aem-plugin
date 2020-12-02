@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.java.JavaSupport
 import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.common.utils.using
 import org.gradle.internal.os.OperatingSystem

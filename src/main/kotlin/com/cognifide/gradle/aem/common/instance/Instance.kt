@@ -300,23 +300,26 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             }.distinct()
 
             return instanceNames.mapNotNull { name ->
-                val props = allProps.filterKeys {
-                    Patterns.wildcard(it, "instance.$name.*")
-                }.entries.fold(mutableMapOf<String, String>()) { result, e ->
-                    val (key, value) = e
-                    val prop = key.substringAfter("instance.$name.")
-                    result.apply { put(prop, value as String) }
-                }
+                val defaultProps = prefixedProperties(allProps, "instance.default")
+                val props = defaultProps + prefixedProperties(allProps, "instance.$name")
                 if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
                     aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")
                     null
                 } else {
-                    singlefromProperties(aem, name, props)
+                    singleFromProperties(aem, name, props)
                 }
             }.sortedBy { it.name }
         }
 
-        private fun singlefromProperties(aem: AemExtension, name: String, props: Map<String, String>) = when (typeProperty(props)) {
+        private fun prefixedProperties(allProps: Map<String, *>, prefix: String) = allProps.filterKeys {
+            Patterns.wildcard(it, "$prefix.*")
+        }.entries.fold(mutableMapOf<String, String>()) { result, e ->
+            val (key, value) = e
+            val prop = key.substringAfter("$prefix.")
+            result.apply { put(prop, value as String) }
+        }
+
+        private fun singleFromProperties(aem: AemExtension, name: String, props: Map<String, String>) = when (typeProperty(props)) {
             PhysicalType.LOCAL -> localFromProperties(aem, name, props)
             PhysicalType.REMOTE -> remoteFromProperties(aem, name, props)
         }
