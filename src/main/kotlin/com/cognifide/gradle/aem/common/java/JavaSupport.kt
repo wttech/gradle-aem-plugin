@@ -60,7 +60,8 @@ class JavaSupport(private val aem: AemExtension) {
             toolchainService.launcherFor { it.languageVersion.set(languageVersion) }
         } catch (e: GradleException) {
             if (fallback.get()) {
-                logger.warn("Using fallback Java launcher!", e)
+                logger.warn("Using fallback Java launcher!")
+                logger.debug("Cannot determine Java launcher using toolchains service!", e)
                 toolchainService.launcherFor(toolchainDefault)
             } else {
                 throw JavaException("Cannot determine Java launcher via toolchains!", e)
@@ -72,7 +73,8 @@ class JavaSupport(private val aem: AemExtension) {
             toolchainService.compilerFor { it.languageVersion.set(languageVersion) }
         } catch (e: GradleException) {
             if (fallback.get()) {
-                logger.warn("Using fallback Java compiler!", e)
+                logger.warn("Using fallback Java compiler!")
+                logger.debug("Cannot determine Java compiler using toolchains service!", e)
                 toolchainService.compilerFor(toolchainDefault)
             } else {
                 throw JavaException("Cannot determine Java compiler via toolchains!", e)
