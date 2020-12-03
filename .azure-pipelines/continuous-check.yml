@@ -23,5 +23,7 @@ steps:
     tasks: 'build functionalTest'
 - task: PublishTestResults@2
   inputs:
+    testRunTitle: 'Tests'
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
+    mergeTestResults: true
