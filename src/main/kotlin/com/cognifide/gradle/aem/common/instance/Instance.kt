@@ -261,6 +261,8 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             }
         }
 
+        const val NAME_DEFAULT = "instance.default"
+
         const val FILTER_ANY = "*"
 
         const val ENV_CMD = "cmd"
@@ -268,6 +270,8 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         const val USER_DEFAULT = "admin"
 
         const val PASSWORD_DEFAULT = "admin"
+
+        val CREDENTIALS_DEFAULT = USER_DEFAULT to PASSWORD_DEFAULT
 
         val LOCAL_PROPS = listOf("httpUrl", "enabled", "type", "password", "jvmOpts", "startOpts", "runModes",
                 "debugPort", "debugAddress", "openPath")
@@ -287,8 +291,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         fun properties(aem: AemExtension): List<Instance> {
             val allProps = aem.project.rootProject.properties
 
-            val instanceNames = allProps.filterKeys {
-                Patterns.wildcard(it, "instance.*.httpUrl") || Patterns.wildcard(it, "instance.*.type")
+            val instanceNames = allProps.filterKeys { prop ->
+                !prop.startsWith("$NAME_DEFAULT.") &&
+                        (Patterns.wildcard(prop, "instance.*.httpUrl") || Patterns.wildcard(prop, "instance.*.type"))
             }.keys.mapNotNull { p ->
                 val name = p.split(".")[1]
                 val nameParts = name.split("-")
@@ -300,7 +305,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             }.distinct()
 
             return instanceNames.mapNotNull { name ->
-                val defaultProps = prefixedProperties(allProps, "instance.default")
+                val defaultProps = prefixedProperties(allProps, NAME_DEFAULT)
                 val props = defaultProps + prefixedProperties(allProps, "instance.$name")
                 if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
                     aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")

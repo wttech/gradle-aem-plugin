@@ -390,9 +390,16 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     sync {
                         http.connectionTimeout.set(1000)
                         http.connectionRetries.set(false)
+
+                        instance.whenLocal {
+                            if (!initialized) {
+                                http.basicCredentials = Instance.CREDENTIALS_DEFAULT
+                            }
+                        }
+
                         controlTrigger.trigger(
                                 action = { triggerUp() },
-                                verify = { !osgi.determineBundleState().unknown },
+                                verify = { this@sync.status.available },
                                 fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
                         )
                     }

@@ -6,12 +6,15 @@ import com.cognifide.gradle.common.http.ResponseException
 import org.apache.http.HttpResponse
 
 @Suppress("MagicNumber")
-open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpClient(aem.common) {
+open class InstanceHttpClient(private val aem: AemExtension, val instance: Instance) : HttpClient(aem.common) {
+
+    override fun throwStatusException(response: HttpResponse) {
+        throw ResponseException("Instance error. Unexpected response from $instance: ${response.statusLine}")
+    }
 
     init {
         baseUrl.set(instance.httpUrl)
-        basicUser.set(instance.user)
-        basicPassword.set(instance.password)
+        basicCredentials = instance.credentials
         authorizationPreemptive.set(true)
 
         connectionTimeout.apply {
@@ -35,9 +38,5 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
         proxyScheme.apply {
             aem.prop.string("instance.http.proxyScheme")?.let { set(it) }
         }
-    }
-
-    override fun throwStatusException(response: HttpResponse) {
-        throw ResponseException("Instance error. Unexpected response from $instance: ${response.statusLine}")
     }
 }
