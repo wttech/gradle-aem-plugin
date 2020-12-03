@@ -26,8 +26,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     var sync: InstanceSync = instance.sync.apply {
         http.connectionTimeout.convention(1000)
         http.connectionRetries.convention(false)
-
-        applyInstanceInitialized()
+        toggleBasicCredentialsWhenInitialized()
     }
 
     fun sync(callback: InstanceSync.() -> Unit) = sync.using(callback)
@@ -53,28 +52,25 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
         }
     }
 
-    private fun InstanceSync.applyInstanceInitialized() {
+    private fun InstanceSync.toggleBasicCredentialsWhenInitialized() {
         if (instance !is LocalInstance || instance.initialized) {
             return
         }
 
-        val authInit: Boolean = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: false
+        val authInit: Boolean = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
         if (authInit) {
-            http.basicUser.set(Instance.USER_DEFAULT)
-            http.basicPassword.set(Instance.PASSWORD_DEFAULT)
+            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
         }
 
         http.responseHandler { response ->
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: false
-                if (!authInitCurrent) {
+                val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
+                if (authInitCurrent) {
                     logger.info("Switching instance '${instance.name}' credentials from customized to defaults.")
-                    http.basicUser.set(Instance.USER_DEFAULT)
-                    http.basicPassword.set(Instance.PASSWORD_DEFAULT)
+                    http.basicCredentials = Instance.CREDENTIALS_DEFAULT
                 } else {
                     logger.info("Switching instance '${instance.name}' credentials from defaults to customized.")
-                    http.basicUser.set(instance.user)
-                    http.basicPassword.set(instance.password)
+                    http.basicCredentials = instance.credentials
                 }
                 progress.stateData[STATE_AUTH_INIT] = !authInitCurrent
             }
