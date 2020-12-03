@@ -69,7 +69,7 @@ class PackagePluginTest : AemBuildTest() {
                 </properties>
             """)
 
-            assertZipEntryMatching(pkg, "META-INF/MANIFEST.MF", """
+            assertZipEntryMatchingOrdered(pkg, "META-INF/MANIFEST.MF", """
                 Manifest-Version: 1.0
                 Build-Jdk: *
                 Built-By: ${System.getProperty("user.name")}

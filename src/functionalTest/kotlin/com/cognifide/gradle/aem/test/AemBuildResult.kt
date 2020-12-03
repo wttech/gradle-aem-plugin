@@ -67,6 +67,15 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
                         "==> expected content pattern:\n\n$expectedNormalized\n\n==> actual content:\n\n$actualNormalized\n\n")
     }
 
+    fun assertZipEntryMatchingOrdered(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
+        val expectedOrdered = normalizeString(expectedContent).lines().sorted().joinToString("\n")
+        val actualOrdered = normalizeString(actual).lines().sorted().joinToString("\n")
+
+        assertTrue(FilenameUtils.wildcardMatch(actualOrdered, expectedOrdered),
+                "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
+                        "==> expected content pattern:\n\n$expectedOrdered\n\n==> actual content:\n\n$actualOrdered\n\n")
+    }
+
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
         val task = result.task(taskPath)
         assertNotNull(task, "Build result does not contain task with path '$taskPath'")
