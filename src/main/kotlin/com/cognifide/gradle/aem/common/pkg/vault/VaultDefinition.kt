@@ -204,7 +204,9 @@ open class VaultDefinition(private val aem: AemExtension) {
                 "definition" to Delegate(this),
                 "manifest" to Manifest().run {
                     mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0")
-                    manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
+                    manifestProperties.get()
+                            .toSortedMap()
+                            .forEach { (k, v) -> mainAttributes.putValue(k, v) }
 
                     val output = ByteArrayOutputStream()
                     write(output)
