@@ -46,10 +46,6 @@ class BundlePluginTest : AemBuildTest() {
     @Test
     fun `should build bundle using extended configuration`() {
         val projectDir = prepareProject("bundle-extended") {
-            /**
-             * This is not required here but it proves that there is some issue with Gradle TestKit;
-             * This generated project works when running using Gradle Wrapper.
-             */
             settingsGradle("")
 
             buildGradle("""

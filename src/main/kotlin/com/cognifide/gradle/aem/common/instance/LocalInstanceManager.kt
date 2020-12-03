@@ -586,7 +586,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         try {
             logger.debug("Examining Java properly installed")
 
-            val result = ProcBuilder(javaLauncher.get().executablePath.asFile.absolutePath, "-version")
+            val result = ProcBuilder(javaExecutablePath, "-version")
                     .withWorkingDirectory(rootDir.get().asFile.apply { mkdirs() })
                     .withTimeoutMillis(statusTimeout.get())
                     .withExpectedExitStatuses(0)

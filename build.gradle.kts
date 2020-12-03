@@ -43,7 +43,7 @@ dependencies {
     implementation("commons-io:commons-io:2.6")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.3")
     implementation("org.apache.httpcomponents:httpclient:4.5.12")
-    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.1")
+    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.2.0")
     implementation("net.lingala.zip4j:zip4j:2.5.1")
     implementation("org.osgi:org.osgi.core:6.0.0")
 
