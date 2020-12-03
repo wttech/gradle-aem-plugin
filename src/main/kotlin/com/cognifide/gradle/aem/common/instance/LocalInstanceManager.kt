@@ -356,6 +356,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     fun up(instance: LocalInstance, awaitUpOptions: AwaitUpAction.() -> Unit = {}) = up(listOf(instance), awaitUpOptions).isNotEmpty()
 
+    @Suppress("LongMethod")
     fun up(instances: Collection<LocalInstance> = aem.localInstances, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
         val downInstances = instances.filter { it.runnable }
         if (downInstances.isEmpty()) {
