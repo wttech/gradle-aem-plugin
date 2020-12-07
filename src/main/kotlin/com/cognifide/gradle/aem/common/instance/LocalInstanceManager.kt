@@ -46,11 +46,19 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     /**
-     * Path in which local AEM instances will be stored.
+     * Path in which local AEM instance related files will be stored.
      */
     val rootDir = aem.obj.dir {
-        convention(projectDir.dir(".gradle/aem/localInstance/instance"))
+        convention(projectDir.dir(".gradle/aem/localInstance"))
         aem.prop.file("localInstance.rootDir")?.let { set(it) }
+    }
+
+    /**
+     * Path in which local AEM instances will be stored.
+     */
+    val instanceDir = aem.obj.dir {
+        convention(rootDir.dir("instance"))
+        aem.prop.file("localInstance.instanceDir")?.let { set(it) }
     }
 
     /**
@@ -111,9 +119,9 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     /**
      * System service related options.
      */
-    val serviceOptions by lazy { ServiceOptions(aem) }
+    val serviceComposer by lazy { ServiceComposer(this) }
 
-    fun service(options: ServiceOptions.() -> Unit) = serviceOptions.using(options)
+    fun service(options: ServiceComposer.() -> Unit) = serviceComposer.using(options)
 
     fun resolveFiles() {
         logger.info("Resolving local instance files")
@@ -250,6 +258,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         logger.info("Creating instances: ${uncreatedInstances.names}")
         createBySource(uncreatedInstances)
 
+        serviceComposer.compose()
+
         return uncreatedInstances.filter { it.created }
     }
 
@@ -284,7 +294,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun createFromBackup(instances: Collection<LocalInstance> = aem.localInstances, backupZip: File) {
-        backup.restore(backupZip, rootDir.get().asFile, instances)
+        backup.restore(backupZip, instanceDir.get().asFile, instances)
 
         val missingInstances = instances.filter { !it.created }
         if (missingInstances.isNotEmpty()) {
@@ -572,7 +582,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun examinePaths() {
-        val rootPath = FileUtil.systemPath(rootDir.get().asFile.path)
+        val rootPath = FileUtil.systemPath(instanceDir.get().asFile.path)
         val sanitizedPath = FileUtil.systemPath(FileUtil.sanitizePath(rootPath))
         if (sanitizedPath != rootPath) {
             throw LocalInstanceException(

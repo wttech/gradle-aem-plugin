@@ -84,10 +84,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val runModesString: String get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
-    val serviceOpts: Map<String, Any?> get() = localManager.serviceOptions.opts
-
-    @get:JsonIgnore
-    val dir get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)
+    val dir get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
     val controlDir get() = dir.resolve("control")
@@ -323,7 +320,10 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     private fun expandFiles() {
-        val propertiesAll = mapOf("instance" to this) + properties + localManager.expandProperties.get()
+        val propertiesAll = mapOf(
+                "instance" to this,
+                "service" to localManager.serviceComposer
+        ) + properties + localManager.expandProperties.get()
 
         aem.project.fileTree(dir)
                 .matching { it.include(localManager.expandFiles.get()) }
@@ -413,6 +413,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     companion object {
 
         const val FILES_PATH = "localInstance/defaults"
+
+        const val SERVICE_PATH = "localInstance/service"
 
         const val ENVIRONMENT = "local"
 
