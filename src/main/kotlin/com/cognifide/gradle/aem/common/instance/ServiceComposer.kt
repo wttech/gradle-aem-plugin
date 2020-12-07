@@ -23,6 +23,13 @@ class ServiceComposer(val manager: LocalInstanceManager) {
         aem.prop.file("localInstance.service.overrideDir")?.let { set(it) }
     }
 
+    val executableFiles = aem.obj.strings {
+        set(listOf(
+                "*.sh",
+                "*.bat"
+        ))
+    }
+
     /**
      * System user used to run instance.
      */
@@ -107,6 +114,9 @@ class ServiceComposer(val manager: LocalInstanceManager) {
             FileOperations.amendFile(file) { content ->
                 aem.prop.expand(content, props, file.absolutePath)
             }
+        }
+        aem.project.fileTree(dir).matching { it.include(executableFiles.get()) }.forEach {
+            FileOperations.makeExecutable(it)
         }
     }
 }

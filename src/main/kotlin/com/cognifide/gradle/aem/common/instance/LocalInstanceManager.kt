@@ -172,7 +172,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Determines files in which properties can be injected.
      */
     val expandFiles = aem.obj.strings {
-        convention(listOf(
+        set(listOf(
                 "control/*.sh",
                 "control/*.bat",
                 "service/*.sh",
@@ -189,7 +189,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Determines files which executable rights will be applied.
      */
     val executableFiles = aem.obj.strings {
-        convention(listOf(
+        set(listOf(
                 "control/*.sh",
                 "control/*.bat",
                 "service/*.sh",
