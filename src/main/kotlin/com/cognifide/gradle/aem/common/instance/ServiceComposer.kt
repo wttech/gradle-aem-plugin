@@ -1,11 +1,27 @@
 package com.cognifide.gradle.aem.common.instance
 
-import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.FileOperations
+import org.apache.commons.io.FileUtils
 
 /**
  * System service related options.
  */
-class ServiceOptions(private val aem: AemExtension) {
+class ServiceComposer(val manager: LocalInstanceManager) {
+
+    private val aem = manager.aem
+
+    /**
+     * Path in which local service config files and scripts will be generated.
+     */
+    val configDir = aem.obj.dir {
+        convention(manager.rootDir.dir("service"))
+        aem.prop.file("localInstance.service.configDir")?.let { set(it) }
+    }
+
+    val overrideDir = aem.obj.dir {
+        convention(manager.configDir.dir("service"))
+        aem.prop.file("localInstance.service.overrideDir")?.let { set(it) }
+    }
 
     /**
      * System user used to run instance.
@@ -67,6 +83,7 @@ class ServiceOptions(private val aem: AemExtension) {
      * Effective values (shorthand)
      */
     val opts get() = mapOf(
+            "dir" to configDir.get().asFile,
             "user" to user.orNull,
             "group" to group.orNull,
             "limitNoFile" to limitNoFile.orNull,
@@ -75,4 +92,21 @@ class ServiceOptions(private val aem: AemExtension) {
             "stopCommand" to stopCommand.orNull,
             "statusCommand" to statusCommand.orNull
     )
+
+    fun compose() {
+        val dir = configDir.get().asFile.apply {
+            deleteRecursively()
+            mkdirs()
+        }
+        aem.assetManager.copyDir(LocalInstance.SERVICE_PATH, dir)
+        if (overrideDir.get().asFile.exists()) {
+            FileUtils.copyDirectory(overrideDir.get().asFile, dir)
+        }
+        val props = mapOf("service" to this)
+        aem.project.fileTree(dir).forEach { file ->
+            FileOperations.amendFile(file) { content ->
+                aem.prop.expand(content, props, file.absolutePath)
+            }
+        }
+    }
 }

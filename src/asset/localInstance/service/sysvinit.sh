@@ -1,22 +1,22 @@
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:          aem_{{ instance.id }}
+# Provides:          aem
 # Required-Start:    $local_fs $remote_fs $network $syslog $named
 # Required-Stop:     $local_fs $remote_fs $network $syslog $named
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Start AEM instance
-# Description:       Init script for AEM instance {{ instance.id }}
+# Short-Description: Start AEM instances
+# Description:       Init script for AEM instances
 ### END INIT INFO
 
 . /lib/lsb/init-functions
 
-NAME=aem_{{ instance.id }}
+NAME=aem
 AEM_USER={{ service.opts['user'] }}
 
-START={{ instance.dir }}/service/start.sh
-STOP={{ instance.dir }}/service/stop.sh
-STATUS={{ instance.dir }}/service/status.sh
+START={{ service.opts['dir'] }}/start.sh
+STOP={{ service.opts['dir'] }}/stop.sh
+STATUS={{ service.opts['dir'] }}/status.sh
 
 aem_start() {
   su - "${AEM_USER}" -c "sh ${START}"
