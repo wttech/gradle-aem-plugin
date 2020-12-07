@@ -258,6 +258,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         logger.info("Creating instances: ${uncreatedInstances.names}")
         createBySource(uncreatedInstances)
 
+        logger.info("Composing system service configuration")
         serviceComposer.compose()
 
         return uncreatedInstances.filter { it.created }
