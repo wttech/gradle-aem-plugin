@@ -195,7 +195,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         Script(this, listOf("sh"), controlDir.resolve("$name.sh"), quickstartDir.resolve("bin/$name"))
     }
 
-    private val quickstartJar = localManager.quickstart.jar?.takeIf { it.exists() }
+    private val quickstartJar get() = localManager.quickstart.jar?.takeIf { it.exists() }
             ?: throw LocalInstanceException("Instance JAR file not found! Is instance JAR URL configured?")
 
     private val quickstartLicense get() = localManager.quickstart.license?.takeIf { it.exists() }
