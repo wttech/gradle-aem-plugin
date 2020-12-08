@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
@@ -643,13 +644,18 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         val versionCurrent = JavaVersion.toVersion(javaLauncher.get().metadata.languageVersion)
         val errors = instances.fold(mutableListOf<String>()) { result, instance ->
             val aemVersion = instance.version
-            javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
-                val versions = versionList.javaVersions("|")
-                if ((aemVersion.inRange(aemVersionValue) || Patterns.wildcard(aemVersion.value, aemVersionValue)) && versionCurrent !in versions) {
-                    result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
-                            " and requires Java ${versions.joinToString("|")}!")
+            if (aemVersion == AemVersion.UNKNOWN) {
+                logger.info("Cannot examine Java compatibility because AEM version is unknown for $instance")
+            } else {
+                javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
+                    val versions = versionList.javaVersions("|")
+                    if ((aemVersion.inRange(aemVersionValue) || Patterns.wildcard(aemVersion.value, aemVersionValue)) && versionCurrent !in versions) {
+                        result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
+                                " and requires Java ${versions.joinToString("|")}!")
+                    }
                 }
             }
+
             result
         }
         if (errors.isNotEmpty()) {

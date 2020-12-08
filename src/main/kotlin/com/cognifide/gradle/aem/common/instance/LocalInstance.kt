@@ -14,7 +14,10 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.SystemUtils
 import org.gradle.internal.os.OperatingSystem
+import java.io.File
+import java.io.FileFilter
 
+@Suppress("TooManyFunctions")
 class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     override var user: String = USER
@@ -30,32 +33,29 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         else -> "${httpUrl}$openPath"
     }
 
-    private val debugSocketAddress: String
-        get() = when (debugAddress) {
-            "*" -> "0.0.0.0:$debugPort"
-            "" -> "$debugPort"
-            else -> "$debugAddress:$debugPort"
-        }
+    private val debugSocketAddress: String get() = when (debugAddress) {
+        "*" -> "0.0.0.0:$debugPort"
+        "" -> "$debugPort"
+        else -> "$debugAddress:$debugPort"
+    }
 
     @get:JsonIgnore
-    val jvmOptsDefaults: List<String>
-        get() = mutableListOf<String>().apply {
-            if (debugPort in 1..65535) {
-                add(jvmDebugOpt)
-            }
-            if (password != Instance.PASSWORD_DEFAULT) {
-                add("-Dadmin.password=$password")
-            }
+    val jvmOptsDefaults: List<String> get() = mutableListOf<String>().apply {
+        if (debugPort in 1..65535) {
+            add(jvmDebugOpt)
         }
+        if (password != PASSWORD_DEFAULT) {
+            add("-Dadmin.password=$password")
+        }
+    }
 
     @get:JsonIgnore
-    private val jvmDebugOpt: String
-        get() = when {
-            SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) ->
-                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
-            else ->
-                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
-        }
+    private val jvmDebugOpt: String get() = when {
+        SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) ->
+            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
+        else ->
+            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
+    }
 
     @get:JsonIgnore
     var jvmOpts: List<String> = listOf(
@@ -84,48 +84,48 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val runModesString: String get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
-    val dir get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
+    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
-    val controlDir get() = dir.resolve("control")
+    val controlDir: File get() = dir.resolve("control")
 
     @get:JsonIgnore
-    val overridesDirs get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
+    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
 
     @get:JsonIgnore
-    val jar get() = dir.resolve("aem-quickstart.jar")
+    val jar: File? get() = quickstartDir.resolve("app").takeIf { it.exists() }?.listFiles(FileFilter { it.extension == "jar" })?.firstOrNull()
 
     @get:JsonIgnore
-    val quickstartDir get() = dir.resolve("crx-quickstart")
+    val license: File get() = dir.resolve("license.properties")
 
     @get:JsonIgnore
-    val bundlesDir get() = quickstartDir.resolve("launchpad/felix")
+    val quickstartDir: File get() = dir.resolve("crx-quickstart")
+
+    @get:JsonIgnore
+    val bundlesDir: File get() = quickstartDir.resolve("launchpad/felix")
 
     fun bundleDir(bundle: Bundle) = bundleDir(bundle.id.toInt())
 
     fun bundleDir(no: Int) = bundlesDir.resolve("bundle$no")
 
     @get:JsonIgnore
-    val license get() = dir.resolve("license.properties")
-
-    @get:JsonIgnore
-    val pidFile get() = quickstartDir.resolve("conf/cq.pid")
+    val pidFile: File get() = quickstartDir.resolve("conf/cq.pid")
 
     @get:JsonIgnore
     val pid: Int get() = pidFile.takeIf { it.exists() }?.readText()
             ?.trim()?.ifBlank { null }?.toInt() ?: 0
 
     @get:JsonIgnore
-    val logsDir get() = quickstartDir.resolve("logs")
+    val logsDir: File get() = quickstartDir.resolve("logs")
 
     @get:JsonIgnore
-    val stdoutLog get() = logsDir.resolve("stdout.log")
+    val stdoutLog: File get() = logsDir.resolve("stdout.log")
 
     @get:JsonIgnore
-    val errorLog get() = logsDir.resolve("error.log")
+    val errorLog: File get() = logsDir.resolve("error.log")
 
     @get:JsonIgnore
-    val requestLog get() = logsDir.resolve("request.log")
+    val requestLog: File get() = logsDir.resolve("request.log")
 
     override val version: AemVersion
         get() {
@@ -133,19 +133,26 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             if (remoteVersion != AemVersion.UNKNOWN) {
                 return remoteVersion
             }
-            val standaloneVersion = readStandaloneVersion()
-            if (standaloneVersion != AemVersion.UNKNOWN) {
-                return standaloneVersion
+            val jarVersion = readVersionFromJar()
+            if (jarVersion != AemVersion.UNKNOWN) {
+                return jarVersion
             }
             return AemVersion.UNKNOWN
         }
 
-    private fun readStandaloneVersion(): AemVersion = jar.takeIf { it.exists() }
-            ?.let { ZipFile(it).listDir("static/app") }
-            ?.map { it.substringAfterLast("/") }
-            ?.firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
-            ?.let { AemVersion(it.removePrefix("cq-quickstart-").removePrefix("cloudready-").substringBefore("-")) }
-            ?: AemVersion.UNKNOWN
+    private fun readVersionFromJar() = readVersionFromExtractedJar() ?: readVersionFromQuickstartJar() ?: AemVersion.UNKNOWN
+
+    private fun readVersionFromExtractedJar() = jar?.name?.let { readVersionFromJarFileName(it) }
+
+    private fun readVersionFromQuickstartJar() = quickstartJar
+            .let { ZipFile(it).listDir("static/app") }
+            .map { it.substringAfterLast("/") }
+            .firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
+            ?.let { readVersionFromJarFileName(it) }
+
+    private fun readVersionFromJarFileName(fileName: String) = fileName
+            .removePrefix("cq-quickstart-").removePrefix("cloudready-")
+            .substringBefore("-").let { AemVersion(it) }
 
     private val startScript: Script get() = script("start")
 
@@ -188,6 +195,12 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         Script(this, listOf("sh"), controlDir.resolve("$name.sh"), quickstartDir.resolve("bin/$name"))
     }
 
+    private val quickstartJar = localManager.quickstart.jar?.takeIf { it.exists() }
+            ?: throw LocalInstanceException("Instance JAR file not found! Is instance JAR URL configured?")
+
+    private val quickstartLicense get() = localManager.quickstart.license?.takeIf { it.exists() }
+            ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
+
     @get:JsonIgnore
     val localManager: LocalInstanceManager get() = aem.localInstanceManager
 
@@ -195,32 +208,10 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     internal fun prepare() {
         cleanDir(true)
-        copyFiles()
-        validateFiles()
         unpackFiles()
         correctFiles()
         customize()
         lock(LOCK_CREATE)
-    }
-
-    private fun copyFiles() {
-        dir.mkdirs()
-
-        logger.info("Copying quickstart JAR '$jar' to directory '$quickstartDir'")
-        localManager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
-
-        logger.info("Copying quickstart license '$license' to directory '$quickstartDir'")
-        localManager.quickstart.license?.let { FileUtils.copyFile(it, license) }
-    }
-
-    private fun validateFiles() {
-        if (!jar.exists()) {
-            throw LocalInstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
-        }
-
-        if (!license.exists()) {
-            throw LocalInstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
-        }
     }
 
     private fun correctFiles() {
@@ -281,17 +272,19 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     }
 
     private fun unpackFiles() {
-        logger.info("Unpacking quickstart from JAR '$jar' to directory '$quickstartDir'")
-
+        logger.info("Unpacking quickstart from JAR '$quickstartJar' to directory '$quickstartDir'")
         common.progressIndicator {
-            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
+            message = "Unpacking quickstart JAR: ${quickstartJar.name}, size: ${Formats.fileSize(quickstartJar)}"
             aem.project.javaexec { spec ->
                 spec.executable(localManager.javaExecutablePath)
                 spec.workingDir = dir
                 spec.main = "-jar"
-                spec.args = listOf(jar.name, "-unpack")
+                spec.args = listOf(quickstartJar.absolutePath, "-unpack")
             }
         }
+
+        logger.info("Copying quickstart license from '$quickstartLicense' to '$license'")
+        FileUtils.copyFile(quickstartLicense, license)
     }
 
     internal fun delete() = cleanDir(create = false)
