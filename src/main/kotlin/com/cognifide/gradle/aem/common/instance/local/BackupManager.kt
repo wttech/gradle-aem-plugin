@@ -34,7 +34,7 @@ class BackupManager(private val aem: AemExtension) {
     /**
      * Backup file from any source (local & remote sources).
      */
-    val any: File? get() = resolve(localSources + remoteSources)
+    val any: File? get() = resolve(localSources + remoteSources)?.file
 
     /**
      * Directory storing locally created backup files.
@@ -45,9 +45,18 @@ class BackupManager(private val aem: AemExtension) {
     }
 
     /**
+     * Determines the number of local backup ZIP files stored.
+     * After creating new backups, old ones are auto-removed.
+     */
+    val localCount = aem.obj.int {
+        convention(2)
+        aem.prop.int("localInstance.backup.localCount")?.let { set(it) }
+    }
+
+    /**
      * Backup file from local source.
      */
-    val local: File? get() = resolve(localSources)
+    val local: File? get() = resolve(localSources)?.file
 
     /**
      * Directory storing downloaded remote backup files.
@@ -60,7 +69,7 @@ class BackupManager(private val aem: AemExtension) {
     /**
      * Backup file from remote source.
      */
-    val remote: File? get() = resolve(remoteSources)
+    val remote: File? get() = resolve(remoteSources)?.file
 
     /**
      * File suffix indicating instance backup file.
@@ -114,10 +123,10 @@ class BackupManager(private val aem: AemExtension) {
         }
     }
 
-    private fun resolve(sources: List<BackupSource>): File? = sources
+    private fun resolve(sources: List<BackupSource>): BackupSource? = sources
             .filter { it.fileEntry.name.endsWith(suffix.get()) }
             .sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
-            .run { selector(this) }?.file
+            .run { selector(this) }
 
     private val localSources: List<BackupSource>
         get() = (localDir.get().asFile.listFiles { _, name -> name.endsWith(suffix.get()) } ?: arrayOf()).map { file ->
@@ -223,6 +232,31 @@ class BackupManager(private val aem: AemExtension) {
                 increment("Restoring instance '$name'") {
                     ZipFile(backupZip).unpackDir(id, rootDir)
                 }
+            }
+        }
+    }
+
+    fun clean() {
+        val preservedMax = localCount.get()
+        if (preservedMax <= 0) {
+            logger.info("Backups cleaning is disabled!")
+            return
+        }
+
+        val cleanable = localSources.toMutableList()
+        var preserved = 0
+        while (cleanable.isNotEmpty() && preserved < preservedMax) {
+            val recent = resolve(cleanable) ?: break
+            cleanable.remove(recent)
+            preserved++
+        }
+
+        if (cleanable.isEmpty()) {
+            logger.info("No backups to clean!")
+        } else {
+            cleanable.forEach { source ->
+                logger.info("Cleaning backup file ${source.file}")
+                source.file.delete()
             }
         }
     }
