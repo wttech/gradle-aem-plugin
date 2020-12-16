@@ -49,7 +49,7 @@ class BackupManager(private val aem: AemExtension) {
      * After creating new backups, old ones are auto-removed.
      */
     val localCount = aem.obj.int {
-        convention(2)
+        convention(3)
         aem.prop.int("localInstance.backup.localCount")?.let { set(it) }
     }
 
