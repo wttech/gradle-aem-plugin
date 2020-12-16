@@ -138,28 +138,40 @@ open class PackageSync : AemDefaultTask() {
             instance.get().examine()
         }
 
-        try {
-            contentDir.get().asFile.mkdirs()
+        common.progress {
+            step = "Initializing"
 
-            if (mode.get() != Mode.COPY_ONLY) {
-                prepareContent()
-            }
+            try {
+                contentDir.get().asFile.mkdirs()
 
-            if (mode.get() != Mode.CLEAN_ONLY) {
-                when (transfer.get()) {
-                    Transfer.VLT_CHECKOUT -> vaultClient.run()
-                    Transfer.PACKAGE_DOWNLOAD -> downloader.download()
-                    else -> {}
+                if (mode.get() != Mode.COPY_ONLY) {
+                    step = "Preparing content"
+                    prepareContent()
                 }
-            }
 
-            common.notifier.notify(
+                if (mode.get() != Mode.CLEAN_ONLY) {
+                    when (transfer.get()) {
+                        Transfer.VLT_CHECKOUT -> {
+                            step = "Checking out content"
+                            vaultClient.run()
+                        }
+                        Transfer.PACKAGE_DOWNLOAD -> {
+                            step = "Downloading content"
+                            downloader.download()
+                        }
+                        else -> {}
+                    }
+                }
+
+                common.notifier.notify(
                     "Synchronized JCR content",
                     "Instance: ${instance.get().name}. Directory: ${Formats.rootProjectPath(contentDir.get().asFile, project)}"
-            )
-        } finally {
-            if (mode.get() != Mode.COPY_ONLY) {
-                cleanContent()
+                )
+            } finally {
+                step = "Cleaning content"
+                if (mode.get() != Mode.COPY_ONLY) {
+                    cleanContent()
+                }
             }
         }
     }
