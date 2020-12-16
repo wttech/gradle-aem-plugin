@@ -412,7 +412,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
                         controlTrigger.trigger(
                                 action = { triggerUp() },
-                                verify = { this@sync.status.available },
+                                verify = { !osgi.determineBundleState().unknown },
                                 fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
                         )
                     }
