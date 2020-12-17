@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.status
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.utils.Formats
@@ -18,15 +19,24 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Check if instance was available at least once across whole build, fail-safe.
      */
-    val available: Boolean get() = systemProperties.isNotEmpty()
+    val available: Boolean
+        get() {
+            if (aem.commonOptions.offline.get()) {
+                return false
+            }
+
+            return common.buildScope.tryGetOrPut("${instance.httpUrl}${OsgiFramework.BUNDLES_PATH}") {
+                if (checkAvailable()) true else null
+            } ?: false
+        }
 
     /**
      * On-demand checks instance availability.
      */
     fun checkAvailable(): Boolean = try {
-        readProperties(SYSTEM_PROPERTIES_PATH).isNotEmpty()
+        !sync.osgiFramework.determineBundleState().unknown
     } catch (e: CommonException) {
-        logger.debug("Seems that instance is not available: $instance", e)
+        aem.logger.debug("Cannot check availability of $instance!")
         false
     }
 

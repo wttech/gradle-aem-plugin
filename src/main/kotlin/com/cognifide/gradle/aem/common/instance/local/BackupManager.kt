@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.instance.LocalInstanceException
+import com.cognifide.gradle.aem.common.instance.LocalInstanceManager
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.common.file.FileException
 import com.cognifide.gradle.common.file.transfer.FileEntry
@@ -11,7 +11,9 @@ import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.zip.ZipFile
 import java.io.File
 
-class BackupManager(private val aem: AemExtension) {
+class BackupManager(private val manager: LocalInstanceManager) {
+
+    private val aem = manager.aem
 
     private val common = aem.common
 
@@ -40,7 +42,7 @@ class BackupManager(private val aem: AemExtension) {
      * Directory storing locally created backup files.
      */
     val localDir = aem.obj.dir {
-        convention(aem.project.layout.projectDirectory.dir("$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
+        convention(manager.rootDir.dir("$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
         aem.prop.file("localInstance.backup.localDir")?.let { set(it) }
     }
 
@@ -62,7 +64,7 @@ class BackupManager(private val aem: AemExtension) {
      * Directory storing downloaded remote backup files.
      */
     val remoteDir = aem.obj.dir {
-        convention(aem.project.layout.projectDirectory.dir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
+        convention(manager.rootDir.dir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
         aem.prop.file("localInstance.backup.remoteDir")?.let { set(it) }
     }
 
@@ -262,7 +264,7 @@ class BackupManager(private val aem: AemExtension) {
     }
 
     companion object {
-        const val OUTPUT_DIR = ".gradle/aem/localInstance/backup"
+        const val OUTPUT_DIR = "backup"
 
         const val SUFFIX_DEFAULT = ".backup.zip"
     }

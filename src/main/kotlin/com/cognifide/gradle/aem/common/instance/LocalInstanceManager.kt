@@ -217,7 +217,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     /**
      * Configure AEM backup sources.
      */
-    val backup by lazy { BackupManager(aem) }
+    val backup by lazy { BackupManager(this) }
 
     fun backup(options: BackupManager.() -> Unit) = backup.using(options)
 
@@ -412,7 +412,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
                         controlTrigger.trigger(
                                 action = { triggerUp() },
-                                verify = { !osgi.determineBundleState().unknown },
+                                verify = { this@sync.status.available },
                                 fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
                         )
                     }
