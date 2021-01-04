@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.common.file.FileOperations
 import org.apache.commons.io.FileUtils
+import org.gradle.internal.os.OperatingSystem
+import java.io.File
 
 /**
  * System service related options.
@@ -9,6 +11,8 @@ import org.apache.commons.io.FileUtils
 class ServiceComposer(val manager: LocalInstanceManager) {
 
     private val aem = manager.aem
+
+    private val logger = aem.logger
 
     /**
      * Path in which local service config files and scripts will be generated.
@@ -24,10 +28,7 @@ class ServiceComposer(val manager: LocalInstanceManager) {
     }
 
     val executableFiles = aem.obj.strings {
-        set(listOf(
-                "*.sh",
-                "*.bat"
-        ))
+        set(listOf("*.sh"))
     }
 
     /**
@@ -115,8 +116,23 @@ class ServiceComposer(val manager: LocalInstanceManager) {
                 aem.prop.expand(content, props, file.absolutePath)
             }
         }
-        aem.project.fileTree(dir).matching { it.include(executableFiles.get()) }.forEach {
-            FileOperations.makeExecutable(it)
+        makeExecutable(dir)
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun makeExecutable(dir: File) {
+        if (OperatingSystem.current().isWindows) {
+            return
         }
+
+        aem.project.fileTree(dir)
+            .matching { it.include(executableFiles.get()) }
+            .forEach { file ->
+                try {
+                    FileOperations.makeExecutable(file)
+                } catch (e: Exception) {
+                    logger.warn("Cannot make file '$file' executable!", e)
+                }
+            }
     }
 }

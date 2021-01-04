@@ -341,10 +341,21 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun makeFilesExecutable() {
+        if (OperatingSystem.current().isWindows) {
+            return
+        }
+
         aem.project.fileTree(dir)
-                .matching { it.include(localManager.executableFiles.get()).exclude("**/*.bat") }
-                .forEach { FileOperations.makeExecutable(it) }
+            .matching { it.include(localManager.executableFiles.get()).exclude("**/*.bat") }
+            .forEach { file ->
+                try {
+                    FileOperations.makeExecutable(file)
+                } catch (e: Exception) {
+                    logger.info("Cannot make file '$file' executable!", e)
+                }
+            }
     }
 
     fun up() = localManager.up(this)
