@@ -8,7 +8,9 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceUp : LocalInstanceTask() {
 
-    private var awaitOptions: AwaitUpAction.() -> Unit = {}
+    private var awaitOptions: AwaitUpAction.() -> Unit = {
+        unchanged { enabled.set(false) }
+    }
 
     /**
      * Controls instance awaiting.
@@ -22,7 +24,7 @@ open class InstanceUp : LocalInstanceTask() {
      */
     @Internal
     val ensured = aem.obj.boolean {
-        convention(false)
+        convention(true)
         aem.prop.boolean("instance.up.ensured")?.let { set(it) }
     }
 
