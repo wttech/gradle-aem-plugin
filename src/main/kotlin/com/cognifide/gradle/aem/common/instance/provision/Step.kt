@@ -42,7 +42,12 @@ interface Step {
     /**
      * Allows to redo step action after delay if exception is thrown.
      */
-    val retry: Retry
+    val actionRetry: Retry
+
+    /**
+     * Allows to redo step condition after delay if exception is thrown.
+     */
+    val conditionRetry: Retry
 
     /**
      * Controls is after running step on all instances, checking for up instances need to be done.
@@ -59,7 +64,7 @@ interface Step {
 
     fun init()
 
-    fun condition(condition: Condition): Boolean
+    fun isPerformable(condition: Condition): Boolean
 
     fun action(instance: Instance)
 

@@ -18,7 +18,10 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
 
     override var version = aem.obj.string { convention(InstanceStep.VERSION_DEFAULT) }
 
-    override fun condition(condition: Condition) = conditionCallback(condition)
+    override fun isPerformable(condition: Condition): Boolean {
+        val operation = "condition provision step '${id.get()}' for '${condition.instance.name}'"
+        return conditionRetry.withCountdown<Boolean, Exception>(operation) { conditionCallback(condition) }
+    }
 
     override fun condition(callback: Condition.() -> Boolean) {
         this.conditionCallback = callback
@@ -36,7 +39,9 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
         aem.prop.boolean("instance.provision.step.rerunOnFail")?.let { set(it) }
     }
 
-    override val retry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.retry") ?: 0L) }
+    override val actionRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.actionRetry") ?: 0L) }
+
+    override val conditionRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.conditionRetry") ?: 2L) }
 
     override val awaitUp = aem.obj.boolean {
         convention(true)

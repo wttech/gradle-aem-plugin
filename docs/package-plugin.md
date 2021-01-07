@@ -428,12 +428,13 @@ Use any of the below properties to customize CRX package deployment behavior:
 
 *   `package.deploy.awaited=false` - disable stability & health checks after deploying the CRX package.
 *   `package.deploy.distributed=true` - use an alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of the CRX package so that it will be installed also on publish instances.
-*   `package.manager.deployAvoidance=false` - disable skipping of deploying package when a locally built package does not differ to package currently deployed on AEM instance,
-*   `package.manager.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-*   `package.manager.installRecursive=false` - disable automatic installation of sub-packages located inside the CRX package being deployed.
-*   `package.manager.uploadRetry=n` - customize the number of retries being performed after failed CRX package upload.
-*   `package.manager.installRetry=n` - customize the number of retries being performed after failed CRX package install.
-*   `package.manager.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when the CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID _dam\_asset_ is a shorthand alias for all workflows related to DAM asset processing.
+
+*   `instance.packageManager.deployAvoidance=false` - disable skipping of deploying package when a locally built package does not differ to package currently deployed on AEM instance,
+*   `instance.packageManager.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+*   `instance.packageManager.installRecursive=false` - disable automatic installation of sub-packages located inside the CRX package being deployed.
+*   `instance.packageManager.uploadRetry=n` - customize the number of retries being performed after failed CRX package upload.
+*   `instance.packageManager.installRetry=n` - customize the number of retries being performed after failed CRX package install.
+*   `instance.packageManager.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when the CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID _dam\_asset_ is a shorthand alias for all workflows related to DAM asset processing.
 
 ## Task `packageUpload`
 

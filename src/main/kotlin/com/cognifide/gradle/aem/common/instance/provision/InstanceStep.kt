@@ -47,7 +47,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         return marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
     }
 
-    val performable by lazy { definition.condition(Condition(this)) }
+    val performable by lazy { definition.isPerformable(Condition(this)) }
 
     fun perform(): Action {
         if (!performable) {
@@ -111,9 +111,8 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
         try {
             with(definition) {
-                retry.withCountdown<Unit, Exception>("perform provision step '${id.get()}' for '${instance.name}'") {
-                    definition.action(instance)
-                }
+                val operation = "perform provision step '${id.get()}' for '${instance.name}'"
+                actionRetry.withCountdown<Unit, Exception>(operation) { definition.action(instance) }
             }
             marker.save(mapOf(
                     VERSION_PROP to definition.version.get(),

@@ -61,25 +61,25 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val uploadForce = aem.obj.boolean {
         convention(true)
-        aem.prop.boolean("package.manager.uploadForce")?.let { set(it) }
+        aem.prop.boolean("instance.packageManager.uploadForce")?.let { set(it) }
     }
 
     /**
      * Repeat upload when failed (brute-forcing).
      */
-    var uploadRetry = common.retry { afterSquaredSecond(aem.prop.long("package.manager.uploadRetry") ?: 3) }
+    var uploadRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.uploadRetry") ?: 3) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
-    var installRetry = common.retry { afterSquaredSecond(aem.prop.long("package.manager.installRetry") ?: 2) }
+    var installRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.installRetry") ?: 2) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     val installRecursive = aem.obj.boolean {
         convention(true)
-        aem.prop.boolean("package.manager.installRecursive")?.let { set(it) }
+        aem.prop.boolean("instance.packageManager.installRecursive")?.let { set(it) }
     }
 
     /**
@@ -87,7 +87,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val deployAvoidance = aem.obj.boolean {
         convention(true)
-        aem.prop.boolean("package.manager.deployAvoidance")?.let { set(it) }
+        aem.prop.boolean("instance.packageManager.deployAvoidance")?.let { set(it) }
     }
 
     /**
@@ -95,13 +95,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val workflowToggle = aem.obj.map<String, Boolean> {
         convention(mapOf())
-        aem.prop.map("package.manager.workflowToggle")?.let { m -> set(m.mapValues { it.value.toBoolean() }) }
+        aem.prop.map("instance.packageManager.workflowToggle")?.let { m -> set(m.mapValues { it.value.toBoolean() }) }
     }
 
     /**
      * Repeat listing package when failed (brute-forcing).
      */
-    var listRetry = common.retry { afterSquaredSecond(aem.prop.long("package.manager.listRetry") ?: 3) }
+    var listRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.listRetry") ?: 3) }
 
     /**
      * Packages are installed lazy which means already installed will no be installed again.
@@ -112,13 +112,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     @Input
     val listRefresh = aem.obj.boolean {
         convention(false)
-        aem.prop.boolean("package.manager.listRefresh")?.let { set(it) }
+        aem.prop.boolean("instance.packageManager.listRefresh")?.let { set(it) }
     }
 
     /**
      * Repeat download when failed (brute-forcing).
      */
-    var downloadRetry = common.retry { afterSquaredSecond(aem.prop.long("package.manager.downloadRetry") ?: 3) }
+    var downloadRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.downloadRetry") ?: 3) }
 
     /**
      * Define patterns for known exceptions which could be thrown during package installation
@@ -134,7 +134,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 "org.apache.jackrabbit.vault.packaging.*Exception",
                 "org.xml.sax.*Exception"
         ))
-        aem.prop.list("package.manager.errors")?.let { set(it) }
+        aem.prop.list("instance.packageManager.errors")?.let { set(it) }
     }
 
     /**
@@ -143,7 +143,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val snapshots = aem.obj.strings {
         convention(listOf())
-        aem.prop.list("package.manager.snapshots")?.let { set(it) }
+        aem.prop.list("instance.packageManager.snapshots")?.let { set(it) }
     }
 
     /**
@@ -154,7 +154,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val responseBuffer = aem.obj.int {
         convention(4096)
-        aem.prop.int("package.manager.responseBuffer")?.let { set(it) }
+        aem.prop.int("instance.packageManager.responseBuffer")?.let { set(it) }
     }
 
     /**
@@ -164,7 +164,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val responseDumping = aem.obj.boolean {
         convention(false)
-        aem.prop.boolean("package.manager.responseDumping")?.let { set(it) }
+        aem.prop.boolean("instance.packageManager.responseDumping")?.let { set(it) }
     }
 
     /**
@@ -172,7 +172,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val responseDir = aem.obj.dir {
         convention((project.pluginProject(InstancePlugin.ID) ?: project.rootProject).layout.buildDirectory.dir("package/install"))
-        aem.prop.file("package.manager.responseDir")?.let { set(it) }
+        aem.prop.file("instance.packageManager.responseDir")?.let { set(it) }
     }
 
     fun get(file: File): Package {
