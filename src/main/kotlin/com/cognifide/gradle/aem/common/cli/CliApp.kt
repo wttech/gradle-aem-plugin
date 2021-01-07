@@ -25,7 +25,6 @@ open class CliApp(protected val aem: AemExtension) {
 
     val executableExtension = aem.obj.boolean { convention(true) }
 
-
     fun exec(vararg args: Any) = exec(args.asIterable())
 
     fun exec(args: Iterable<Any>) = exec { args(args) }
