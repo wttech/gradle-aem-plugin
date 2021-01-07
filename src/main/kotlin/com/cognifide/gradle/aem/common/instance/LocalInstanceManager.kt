@@ -412,7 +412,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
                         controlTrigger.trigger(
                                 action = { triggerUp() },
-                                verify = { this@sync.status.available },
+                                verify = { this@sync.status.reachable },
                                 fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
                         )
                     }
@@ -447,7 +447,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()
 
     fun down(instances: Collection<LocalInstance> = aem.localInstances, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
-        val upInstances = instances.filter { it.running || it.checkAvailable() }
+        val upInstances = instances.filter { it.running || it.available }
         if (upInstances.isEmpty()) {
             logger.lifecycle("No instances to turn off.")
             return listOf()
@@ -460,10 +460,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         http.connectionTimeout.set(1000)
                         http.connectionRetries.set(false)
 
-                        val initState = osgi.determineBundleState()
+                        val initReachableStatus = status.checkReachableStatus()
                         controlTrigger.trigger(
                                 action = { triggerDown() },
-                                verify = { initState != osgi.determineBundleState() },
+                                verify = { initReachableStatus != status.checkReachableStatus() },
                                 fail = { throw LocalInstanceException("Instance cannot be triggered down: $instance!") }
                         )
                     }
@@ -477,17 +477,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     private fun LocalInstance.triggerDown() {
-        if (!created) {
-            sync.osgi.stop()
-            logger.warn("Instance not created, but available. Stopping OSGi on: $this")
-        } else {
+        if (created) {
             val status = checkStatus()
             if (status.running) {
                 executeStopScript()
-            } else {
+            } else if (available) {
                 logger.warn("Instance not running (reports status '$status'), but available. Stopping OSGi on: $this")
                 sync.osgi.stop()
             }
+        } else if (available) {
+            sync.osgi.stop()
+            logger.warn("Instance not created, but available. Stopping OSGi on: $this")
         }
     }
 

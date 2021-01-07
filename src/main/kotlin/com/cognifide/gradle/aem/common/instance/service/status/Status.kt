@@ -10,11 +10,48 @@ import com.cognifide.gradle.common.utils.Patterns
 import java.util.*
 
 /**
- * Allows to read statuses available at Apache Felix Web Console.
+ * Allows to obtain instance status.
+ * Uses statuses available at Apache Felix Web Console.
  *
  * @see <https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html>
  */
 class Status(sync: InstanceSync) : InstanceService(sync) {
+
+    /**
+     * Path used to check instance reachability.
+     */
+    val reachablePath = aem.obj.string {
+        convention("/")
+        aem.prop.string("instance.status.reachablePath")?.let { set(it) }
+    }
+
+    /**
+     * Check if instance was reachable at least once across whole build, fail-safe.
+     */
+    val reachable: Boolean get() {
+        if (aem.commonOptions.offline.get()) {
+            return false
+        }
+        return common.buildScope.tryGetOrPut("${instance.httpUrl}${reachablePath.get()}") {
+            if (checkReachable()) true else null
+        } ?: false
+    }
+
+    fun checkReachable(): Boolean = checkReachableStatus() >= 0
+
+    /**
+     * Check instance reachable status code.
+     */
+    fun checkReachableStatus(): Int = try {
+        instance.sync {
+            http.basicCredentials = null to null
+            http.authorizationPreemptive.set(false)
+            http.get(reachablePath.get()) { it.statusLine.statusCode }
+        }
+    } catch (e: CommonException) {
+        logger.debug("Cannot check reachable status of $instance!", e)
+        -1
+    }
 
     /**
      * Check if instance was available at least once across whole build, fail-safe.
@@ -24,7 +61,6 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             if (aem.commonOptions.offline.get()) {
                 return false
             }
-
             return common.buildScope.tryGetOrPut("${instance.httpUrl}${OsgiFramework.BUNDLES_PATH}") {
                 if (checkAvailable()) true else null
             } ?: false
@@ -36,7 +72,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     fun checkAvailable(): Boolean = try {
         !sync.osgiFramework.determineBundleState().unknown
     } catch (e: CommonException) {
-        aem.logger.debug("Cannot check availability of $instance!")
+        logger.debug("Cannot check availability of $instance!")
         false
     }
 
@@ -137,7 +173,6 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         }
 
     companion object {
-
         const val SYSTEM_PROPERTIES_PATH = "/system/console/status-System Properties.txt"
 
         const val SLING_SETTINGS_PATH = "/system/console/status-slingsettings.txt"

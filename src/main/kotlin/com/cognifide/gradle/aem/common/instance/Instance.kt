@@ -32,11 +32,16 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
     lateinit var httpUrl: String
 
-    @get:JsonIgnore
-    val httpPort: Int get() = InstanceUrl.parse(httpUrl).httpPort
+    private val httpUrlDetails get() = InstanceUrl.parse(httpUrl)
 
     @get:JsonIgnore
-    val httpBasicAuthUrl: String get() = InstanceUrl.parse(httpUrl).basicAuth(user, password)
+    val httpPort get() = httpUrlDetails.httpPort
+
+    @get:JsonIgnore
+    val httpHost get() = httpUrlDetails.httpHost
+
+    @get:JsonIgnore
+    val httpBasicAuthUrl: String get() = httpUrlDetails.basicAuth(user, password)
 
     open lateinit var user: String
 
@@ -117,9 +122,10 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             ?: slingSettings[key]
 
     @get:JsonIgnore
-    val available: Boolean get() = sync.status.available
+    val reachable: Boolean get() = sync.status.reachable
 
-    fun checkAvailable(): Boolean = sync.status.checkAvailable()
+    @get:JsonIgnore
+    val available: Boolean get() = sync.status.available
 
     @get:JsonIgnore
     val zoneId: ZoneId get() = systemProperties["user.timezone"]?.let { ZoneId.of(it) }

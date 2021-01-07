@@ -23,8 +23,8 @@ class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
     val constantTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(30)) }
 
     override fun check() {
-        if (!instance.available && progress.stateTime >= unavailableTime.get()) {
-            val error = "Instance unavailable timeout reached '${Formats.duration(progress.stateTime)}' for $instance!"
+        if (!instance.reachable && progress.stateTime >= unavailableTime.get()) {
+            val error = "Instance is unreachable! Timeout occurred after '${Formats.duration(progress.stateTime)}' for $instance!"
             if (instance is LocalInstance) {
                 throw InstanceException("$error\n\n" +
                         "Troubleshoot by investigating log files:\n${instance.stdoutLog}\n${instance.errorLog}\n\n" +
