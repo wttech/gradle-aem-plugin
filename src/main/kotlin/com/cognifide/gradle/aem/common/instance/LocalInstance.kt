@@ -416,11 +416,11 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun locked(name: String): Boolean = lockFile(name).exists()
 
-    fun resetPassword() {
+    fun resetPassword(force: Boolean = false) {
         if (running) {
             throw LocalInstanceException("Instance is running so resetting password on $this is not possible!")
         }
-        if (initialized) {
+        if (force || initialized) {
             oakRun.resetPassword(user, password)
         } else {
             logger.debug("Instance is not initialized so resetting password is not needed on $this")
