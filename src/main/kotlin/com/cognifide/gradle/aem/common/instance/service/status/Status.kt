@@ -10,7 +10,8 @@ import com.cognifide.gradle.common.utils.Patterns
 import java.util.*
 
 /**
- * Allows to read statuses available at Apache Felix Web Console.
+ * Allows to obtain instance status.
+ * Uses statuses available at Apache Felix Web Console.
  *
  * @see <https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html>
  */
