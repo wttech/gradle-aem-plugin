@@ -36,7 +36,9 @@ open class InstanceUp : LocalInstanceTask() {
 
         if (ensured.get()) {
             val alreadyUpInstances = instances.get() - upInstances
-            localInstanceManager.base.awaitUp(alreadyUpInstances, awaitOptions)
+            if (alreadyUpInstances.isNotEmpty()) {
+                localInstanceManager.base.awaitUp(alreadyUpInstances, awaitOptions)
+            }
         }
 
         if (upInstances.isNotEmpty()) {

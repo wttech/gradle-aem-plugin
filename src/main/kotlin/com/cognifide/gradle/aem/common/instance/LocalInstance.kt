@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
+import com.cognifide.gradle.aem.common.instance.oak.OakRun
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.zip.ZipFile
@@ -189,6 +190,9 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val installDir get() = quickstartDir.resolve("install")
 
+    @get:JsonIgnore
+    val oakRun get() = OakRun(aem, this)
+
     private fun script(name: String, os: OperatingSystem = OperatingSystem.current()) = if (os.isWindows) {
         Script(this, listOf("cmd", "/C"), controlDir.resolve("$name.bat"), quickstartDir.resolve("bin/$name.bat"))
     } else {
@@ -304,8 +308,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         expandFiles()
         copyInstallFiles()
         makeFilesExecutable()
+        resetPassword()
     }
-
     private fun copyOverrideFiles() {
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)
@@ -411,6 +415,17 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     private fun lock(name: String) = FileOperations.lock(lockFile(name))
 
     private fun locked(name: String): Boolean = lockFile(name).exists()
+
+    fun resetPassword() {
+        if (running) {
+            throw LocalInstanceException("Instance is running so resetting password on $this is not possible!")
+        }
+        if (initialized) {
+            oakRun.resetPassword(user, password)
+        } else {
+            logger.debug("Instance is not initialized so resetting password is not needed on $this")
+        }
+    }
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"
 

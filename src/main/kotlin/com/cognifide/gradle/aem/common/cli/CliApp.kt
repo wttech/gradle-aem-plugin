@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.cli
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.common.build.DependencyFile
 import com.cognifide.gradle.common.utils.Formats
 import org.gradle.api.provider.Provider
 import org.gradle.process.ExecResult
@@ -24,9 +25,16 @@ open class CliApp(protected val aem: AemExtension) {
 
     val executableExtension = aem.obj.boolean { convention(true) }
 
-    fun exec(workingDir: File, command: String) = exec {
+
+    fun exec(vararg args: Any) = exec(args.asIterable())
+
+    fun exec(args: Iterable<Any>) = exec { args(args) }
+
+    fun exec(workingDir: File, command: String) = exec(workingDir, command.split(" "))
+
+    fun exec(workingDir: File, args: Iterable<Any>) = exec {
         workingDir(workingDir)
-        args(command.split(" "))
+        args(args)
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -55,11 +63,7 @@ open class CliApp(protected val aem: AemExtension) {
         }
     }
 
-    private fun downloadArchive(dependency: Provider<String>): Provider<File> = dependency.map { notation ->
-        aem.project.configurations.detachedConfiguration(aem.project.dependencies.create(notation)).apply {
-            isTransitive = false
-        }.singleFile
-    }
+    private fun downloadArchive(dependency: Provider<String>): Provider<File> = dependency.map { DependencyFile(aem.project, it).file }
 
     private fun extractArchive() = aem.common.buildScope.doOnce("extracting archive '${dependencyNotation.get()}'") {
         if (dependencyDir.get().asFile.exists()) {
