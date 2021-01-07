@@ -17,13 +17,21 @@ import java.util.*
 class Status(sync: InstanceSync) : InstanceService(sync) {
 
     /**
+     * Path used to check instance reachability.
+     */
+    val reachablePath = aem.obj.string {
+        convention("/")
+        aem.prop.string("instance.status.reachablePath")?.let { set(it) }
+    }
+
+    /**
      * Check if instance was reachable at least once across whole build, fail-safe.
      */
     val reachable: Boolean get() {
         if (aem.commonOptions.offline.get()) {
             return false
         }
-        return common.buildScope.tryGetOrPut("${instance.httpUrl}${REACHABLE_PATH}") {
+        return common.buildScope.tryGetOrPut("${instance.httpUrl}${reachablePath.get()}") {
             if (checkReachable()) true else null
         } ?: false
     }
@@ -37,7 +45,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         instance.sync {
             http.basicCredentials = null to null
             http.authorizationPreemptive.set(false)
-            http.get(REACHABLE_PATH) { it.statusLine.statusCode }
+            http.get(reachablePath.get()) { it.statusLine.statusCode }
         }
     } catch (e: CommonException) {
         logger.debug("Cannot check reachable status of $instance!", e)
@@ -164,8 +172,6 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         }
 
     companion object {
-        const val REACHABLE_PATH = "/"
-
         const val SYSTEM_PROPERTIES_PATH = "/system/console/status-System Properties.txt"
 
         const val SLING_SETTINGS_PATH = "/system/console/status-slingsettings.txt"
