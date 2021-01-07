@@ -12,13 +12,24 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
     val utilisationTime = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(15)) }
 
     override fun check() {
-        val bundleState = state(sync.osgiFramework.determineBundleState())
-        if (!bundleState.unknown) {
-            statusLogger.error(
+        if (instance.available) {
+            val bundleState = state(sync.osgiFramework.determineBundleState())
+            if (!bundleState.unknown) {
+                statusLogger.error(
                     "Bundles stable (${bundleState.stablePercent})",
                     "Bundles stable (${bundleState.stablePercent}). HTTP server still responding on $instance"
-            )
-            return
+                )
+                return
+            }
+        } else {
+            val reachableStatus = state(sync.status.checkReachableStatus())
+            if (reachableStatus >= 0) {
+                statusLogger.error(
+                    "Reachable ($reachableStatus)",
+                    "Reachable - status code ($reachableStatus). HTTP server still responding on $instance"
+                )
+                return
+            }
         }
 
         if (instance is LocalInstance) {

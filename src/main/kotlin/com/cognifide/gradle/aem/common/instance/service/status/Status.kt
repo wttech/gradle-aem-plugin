@@ -17,6 +17,34 @@ import java.util.*
 class Status(sync: InstanceSync) : InstanceService(sync) {
 
     /**
+     * Check if instance was reachable at least once across whole build, fail-safe.
+     */
+    val reachable: Boolean get() {
+        if (aem.commonOptions.offline.get()) {
+            return false
+        }
+        return common.buildScope.tryGetOrPut("${instance.httpUrl}${REACHABLE_PATH}") {
+            if (checkReachable()) true else null
+        } ?: false
+    }
+
+    fun checkReachable(): Boolean = checkReachableStatus() >= 0
+
+    /**
+     * Check instance reachable status code.
+     */
+    fun checkReachableStatus(): Int = try {
+        instance.sync {
+            http.basicCredentials = null to null
+            http.authorizationPreemptive.set(false)
+            http.get(REACHABLE_PATH) { it.statusLine.statusCode }
+        }
+    } catch (e: CommonException) {
+        logger.debug("Cannot check reachable status of $instance!", e)
+        -1
+    }
+
+    /**
      * Check if instance was available at least once across whole build, fail-safe.
      */
     val available: Boolean
@@ -24,7 +52,6 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             if (aem.commonOptions.offline.get()) {
                 return false
             }
-
             return common.buildScope.tryGetOrPut("${instance.httpUrl}${OsgiFramework.BUNDLES_PATH}") {
                 if (checkAvailable()) true else null
             } ?: false
@@ -36,7 +63,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     fun checkAvailable(): Boolean = try {
         !sync.osgiFramework.determineBundleState().unknown
     } catch (e: CommonException) {
-        aem.logger.debug("Cannot check availability of $instance!")
+        logger.debug("Cannot check availability of $instance!")
         false
     }
 
@@ -137,6 +164,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         }
 
     companion object {
+        const val REACHABLE_PATH = "/"
 
         const val SYSTEM_PROPERTIES_PATH = "/system/console/status-System Properties.txt"
 

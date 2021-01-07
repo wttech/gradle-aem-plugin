@@ -31,16 +31,17 @@ class InstanceUrl(raw: String) {
         }
     }
 
-    val httpPort: Int
-        get() = when {
-            config.port != -1 -> config.port
-            else -> {
-                when (config.protocol) {
-                    "https" -> HTTPS_PORT
-                    else -> HTTP_PORT
-                }
+    val httpHost: String get() = config.host
+
+    val httpPort: Int get() = when {
+        config.port != -1 -> config.port
+        else -> {
+            when (config.protocol) {
+                "https" -> HTTPS_PORT
+                else -> HTTP_PORT
             }
         }
+    }
 
     val id: String get() = type.name.toLowerCase()
 
