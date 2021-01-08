@@ -420,10 +420,10 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         if (running) {
             throw LocalInstanceException("Instance is running so resetting password on $this is not possible!")
         }
-        if (force || initialized) {
+        if (force || (localManager.resetPassword.get() && initialized)) {
             oakRun.resetPassword(user, password)
         } else {
-            logger.debug("Instance is not initialized so resetting password is not needed on $this")
+            logger.debug("Skipping resetting password on $this (not yet initialized or feature is disabled)")
         }
     }
 

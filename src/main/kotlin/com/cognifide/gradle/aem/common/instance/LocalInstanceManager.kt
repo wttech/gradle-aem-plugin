@@ -98,6 +98,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     val javaExecutablePath get() = javaLauncher.get().executablePath.asFile.absolutePath
 
     /**
+     * Automatically enforce current admin password before turning on instance.
+     */
+    val resetPassword = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("localInstance.resetPassword")?.let { set(it) }
+    }
+
+    /**
      * Automatically open a web browser when instances are up.
      */
     val openMode = aem.obj.typed<OpenMode> {
