@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.cli.JarApp
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.common.utils.using
+import java.io.File
 
 class OakRun(val aem: AemExtension, val instance: LocalInstance) {
 
@@ -27,11 +28,16 @@ class OakRun(val aem: AemExtension, val instance: LocalInstance) {
                 "user" to user,
                 "password" to password
             ))
-            val script = OakRunScript(this, content)
-
-            script.exec()
+            runGroovyScript(content)
         } catch (e: OakRunException) {
             throw OakRunException("Cannot reset password for '$instance'!", e)
         }
     }
+
+    fun runGroovyScript(content: String) {
+        val script = OakRunScript(this, content)
+        script.exec()
+    }
+
+    fun runGroovyScript(file: File) = runGroovyScript(file.bufferedReader().readText())
 }
