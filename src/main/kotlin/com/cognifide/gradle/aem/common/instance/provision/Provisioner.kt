@@ -278,7 +278,10 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     fun configureCrypto(options: ConfigureCryptoStep.() -> Unit) {
-        steps.add(ConfigureCryptoStep(this).apply(options))
+        steps.add(ConfigureCryptoStep(this).apply {
+            condition { instance.local && once() }
+            options()
+        })
     }
 
     fun configureCrypto(hmac: Any, master: Any, options: ConfigureCryptoStep.() -> Unit = {}) = configureCrypto {
@@ -293,11 +296,11 @@ class Provisioner(val manager: InstanceManager) {
 
     fun configureCryptos(authorDirUrl: String, publishDirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) {
         configureCrypto(authorDirUrl) {
-            condition { onceOnAuthor() }
+            condition { instance.local && onceOnAuthor() }
             options()
         }
         configureCrypto(publishDirUrl) {
-            condition { onceOnPublish() }
+            condition { instance.local && onceOnPublish() }
             options()
         }
     }
