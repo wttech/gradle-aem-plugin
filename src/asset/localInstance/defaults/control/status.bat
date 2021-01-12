@@ -1,3 +1,3 @@
-set JAVA_EXECUTABLE={{ instance.javaExecutablePath }}
+set JAVA_EXECUTABLE="{{ instance.javaExecutablePath }}"
 
 call crx-quickstart\bin\status.bat
