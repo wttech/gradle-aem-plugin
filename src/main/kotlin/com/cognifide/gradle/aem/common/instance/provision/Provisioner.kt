@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoSt
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
+import com.cognifide.gradle.aem.common.instance.service.workflow.Workflow
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
@@ -299,5 +300,11 @@ class Provisioner(val manager: InstanceManager) {
             condition { onceOnPublish() }
             options()
         }
+    }
+
+    fun configureWorkflow(name: String, configurer: Workflow.() -> Unit, options: Step.() -> Unit = {}) = step("configureWorkflow/$name") {
+        description.set("Configuring workflow named '$name'")
+        sync { workflowManager.workflow(name).apply(configurer) }
+        options()
     }
 }
