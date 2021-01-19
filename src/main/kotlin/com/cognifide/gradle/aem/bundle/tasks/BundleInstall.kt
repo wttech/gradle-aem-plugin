@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.tasks.BundleTask
+import com.cognifide.gradle.aem.common.tasks.Bundle
 import com.cognifide.gradle.aem.common.utils.fileNames
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class BundleInstall : BundleTask() {
+open class BundleInstall : Bundle() {
 
     /**
      * Controls if bundle after installation should be immediatelly started.
@@ -44,13 +44,13 @@ open class BundleInstall : BundleTask() {
 
     @TaskAction
     open fun install() {
-        sync { osgiFramework.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
-        common.notifier.notify("Bundle installed", "${files.files.fileNames} on ${instances.get().names}")
+        sync.action { osgi.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
+        common.notifier.notify("Bundle installed", "${files.fileNames} on ${instances.names}")
     }
 
     init {
         description = "Installs OSGi bundle on instance(s)."
-        aem.prop.boolean("bundle.install.awaited")?.let { awaited.set(it) }
+        aem.prop.boolean("bundle.install.awaited")?.let { sync.awaited.set(it) }
     }
 
     companion object {

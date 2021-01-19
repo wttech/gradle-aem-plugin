@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import org.gradle.api.tasks.Internal
 
-open class InstanceTask : AemDefaultTask() {
+open class Instance : AemDefaultTask() {
 
     @Internal
     val instances = aem.obj.list<Instance> {

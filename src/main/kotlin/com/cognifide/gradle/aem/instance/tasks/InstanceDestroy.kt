@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
+import com.cognifide.gradle.aem.common.tasks.LocalInstance
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceDestroy : LocalInstanceTask() {
+open class InstanceDestroy : LocalInstance() {
 
     @TaskAction
     fun destroy() {
