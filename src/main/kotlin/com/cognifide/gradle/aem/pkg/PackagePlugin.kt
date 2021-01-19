@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.tasks.PackageTask
+import com.cognifide.gradle.aem.common.tasks.Package
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
@@ -93,8 +93,8 @@ class PackagePlugin : CommonDefaultPlugin() {
             named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
                 dependsOn(validate)
             }
-            typed<PackageTask> {
-                files.from(compose.map { it.archiveFile })
+            typed<Package> {
+                files(compose.map { it.archiveFile })
             }
         }
     }

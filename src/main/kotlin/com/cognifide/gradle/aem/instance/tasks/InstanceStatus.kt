@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.tasks.InstanceTask
+import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceStatus : InstanceTask() {
+open class InstanceStatus : Instance() {
 
     @Suppress("MagicNumber")
     @TaskAction

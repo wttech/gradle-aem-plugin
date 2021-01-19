@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.tasks.InstanceTask
+import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceReload : InstanceTask() {
+open class InstanceReload : Instance() {
 
     private var reloadOptions: ReloadAction.() -> Unit = {}
 

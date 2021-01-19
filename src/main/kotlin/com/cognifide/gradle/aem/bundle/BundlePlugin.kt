@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.tasks.BundleTask
+import com.cognifide.gradle.aem.common.tasks.Bundle
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
@@ -74,8 +74,8 @@ class BundlePlugin : CommonDefaultPlugin() {
             register<BundleUninstall>(BundleUninstall.NAME) {
                 dependsOn(jar)
             }
-            typed<BundleTask> {
-                files.from(jar)
+            typed<Bundle> {
+                files(jar)
             }
         }
     }

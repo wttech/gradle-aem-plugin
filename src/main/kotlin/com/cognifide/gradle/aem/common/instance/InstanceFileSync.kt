@@ -1,49 +1,23 @@
-package com.cognifide.gradle.aem.common.tasks
+package com.cognifide.gradle.aem.common.instance
 
-import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
 import java.io.File
 
-open class SyncFileTask : AemDefaultTask() {
+class InstanceFileSync(private val aem: AemExtension) {
 
-    @get:Internal
-    val instanceManager get() = aem.instanceManager
+    val common = aem.common
 
-    @Internal
+    val instanceManager by lazy { aem.instanceManager }
+
     val instances = aem.obj.list<Instance> { convention(aem.obj.provider { aem.instances }) }
 
-    @InputFiles
     val files = aem.obj.files()
 
-    /**
-     * Hook for preparing instance before deploying packages
-     */
-    @Internal
-    var initializer: InstanceSync.() -> Unit = {}
-
-    /**
-     * Hook for cleaning instance after deploying packages
-     */
-    @Internal
-    var finalizer: InstanceSync.() -> Unit = {}
-
-    /**
-     * Hook after deploying all packages to all instances.
-     */
-    @Internal
-    var completer: () -> Unit = { awaitUp() }
-
-    /**
-     * Check instance(s) condition after performing action related with synced file(s).
-     */
-    @Internal
     val awaited = aem.obj.boolean {
         convention(true)
-        aem.prop.boolean("syncFile.awaited")?.let { set(it) }
+        aem.prop.boolean("instanceFileSync.awaited")?.let { set(it) }
     }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
@@ -72,7 +46,19 @@ open class SyncFileTask : AemDefaultTask() {
         }
     }
 
-    fun sync(action: InstanceSync.(File) -> Unit) {
+    fun action(action: InstanceSync.(File) -> Unit) {
+        this.action = action
+    }
+
+    private var action: InstanceSync.(File) -> Unit = { throw AemException("Instance file sync action is not defined!") }
+
+    fun actionAwaited(action: InstanceSync.(File) -> Boolean) = action { file ->
+        awaitIf {
+            action(file)
+        }
+    }
+
+    fun sync() {
         instanceManager.examine(instances.get())
 
         val actions = instances.get().size * files.files.size
@@ -80,16 +66,23 @@ open class SyncFileTask : AemDefaultTask() {
             common.progress(actions) {
                 aem.syncFiles(instances.get(), files.files) { file ->
                     increment("${file.name} -> ${instance.name}") {
-                        initializer()
                         action(file)
-                        finalizer()
                     }
                 }
             }
-
-            completer()
+            awaitUp()
         }
     }
 
-    fun syncFile(action: InstanceSync.(File) -> Unit) = doLast { sync(action) }
+    // Predefined actions
+
+    fun deployPackage(vararg paths: Any) {
+        files.from(paths)
+        actionAwaited { packageManager.deploy(it) }
+    }
+
+    fun installBundle(vararg paths: Any) {
+        files.from(paths)
+        actionAwaited { osgi.installBundle(it); true }
+    }
 }

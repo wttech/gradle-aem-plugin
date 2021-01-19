@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.*
-import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
+import com.cognifide.gradle.aem.common.tasks.LocalInstance
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceCreate : LocalInstanceTask() {
+open class InstanceCreate : LocalInstance() {
 
     @TaskAction
     fun create() {

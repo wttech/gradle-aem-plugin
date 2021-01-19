@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.tasks.InstanceTask
+import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceAwait : InstanceTask() {
+open class InstanceAwait : Instance() {
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 

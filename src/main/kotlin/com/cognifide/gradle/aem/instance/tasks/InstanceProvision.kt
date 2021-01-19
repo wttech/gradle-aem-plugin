@@ -2,11 +2,11 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.provision.Status
-import com.cognifide.gradle.aem.common.tasks.InstanceTask
+import com.cognifide.gradle.aem.common.tasks.Instance
 import com.cognifide.gradle.common.utils.Formats
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceProvision : InstanceTask() {
+open class InstanceProvision : Instance() {
 
     private val provisioner by lazy {
         val urls = aem.prop.list("instance.provision.deployPackage.urls")

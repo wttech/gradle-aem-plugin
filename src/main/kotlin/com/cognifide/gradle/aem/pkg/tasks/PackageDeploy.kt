@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.tasks.PackageTask
+import com.cognifide.gradle.aem.common.tasks.Package
 import com.cognifide.gradle.aem.common.utils.fileNames
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
-open class PackageDeploy : PackageTask() {
+open class PackageDeploy : Package() {
 
     /**
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
@@ -19,14 +19,14 @@ open class PackageDeploy : PackageTask() {
 
     @TaskAction
     open fun deploy() {
-        sync { awaitIf { packageManager.deploy(it, distributed.get()) } }
-        common.notifier.notify("Package deployed", "${files.files.fileNames} on ${instances.get().names}")
+        sync.actionAwaited { packageManager.deploy(it, distributed.get()) }
+        common.notifier.notify("Package deployed", "${files.fileNames} on ${instances.names}")
     }
 
     init {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
 
-        instances.convention(aem.obj.provider {
+        sync.instances.convention(aem.obj.provider {
             if (distributed.get()) {
                 aem.authorInstances
             } else {
@@ -34,7 +34,7 @@ open class PackageDeploy : PackageTask() {
             }
         })
 
-        aem.prop.boolean("package.deploy.awaited")?.let { awaited.set(it) }
+        aem.prop.boolean("package.deploy.awaited")?.let { sync.awaited.set(it) }
     }
 
     companion object {

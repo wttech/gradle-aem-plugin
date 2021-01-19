@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
+import com.cognifide.gradle.aem.common.tasks.LocalInstance
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceDown : LocalInstanceTask() {
+open class InstanceDown : LocalInstance() {
 
     private var awaitDownOptions: AwaitDownAction.() -> Unit = {}
 
