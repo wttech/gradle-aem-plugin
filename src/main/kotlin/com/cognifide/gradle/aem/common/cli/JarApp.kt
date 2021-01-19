@@ -27,6 +27,7 @@ open class JarApp(val aem: AemExtension) {
         return try {
             aem.project.javaexec {
                 it.apply {
+                    executable(aem.commonOptions.javaSupport.launcherPath)
                     standardInput = SafeStreams.emptyInput()
                     standardOutput = SafeStreams.systemOut()
                     errorOutput = SafeStreams.systemErr()

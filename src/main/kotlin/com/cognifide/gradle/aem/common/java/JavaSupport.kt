@@ -68,6 +68,8 @@ class JavaSupport(private val aem: AemExtension) {
             }
         }
 
+    val launcherPath get() = launcher.get().executablePath.asFile.absolutePath
+
     val compiler: Provider<JavaCompiler>
         get() = try {
             toolchainService.compilerFor { it.languageVersion.set(languageVersion) }
@@ -80,6 +82,8 @@ class JavaSupport(private val aem: AemExtension) {
                 throw JavaException("Cannot determine Java compiler via toolchains!", e)
             }
         }
+
+    val compilerPath get() = compiler.get().executablePath.asFile.absolutePath
 
     companion object {
         const val TOOLCHAINS_EXTENSION = "aemJavaToolchains"
