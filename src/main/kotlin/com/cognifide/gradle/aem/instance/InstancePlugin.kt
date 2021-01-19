@@ -63,6 +63,10 @@ class InstancePlugin : CommonDefaultPlugin() {
             mustRunAfter(provision)
         }
 
+        register<InstanceDeploy>(InstanceDeploy.NAME) {
+            mustRunAfter(provision)
+        }
+
         register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
             mustRunAfter(provision)
         }.apply(mustRunAfterPackageDeploy)

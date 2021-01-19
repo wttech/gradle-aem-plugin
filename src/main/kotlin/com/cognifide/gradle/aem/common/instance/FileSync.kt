@@ -18,7 +18,7 @@ class FileSync(private val manager: InstanceManager) {
 
     val awaited = aem.obj.boolean {
         convention(true)
-        aem.prop.boolean("instanceFileSync.awaited")?.let { set(it) }
+        aem.prop.boolean("instance.fileSync.awaited")?.let { set(it) }
     }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
@@ -86,7 +86,8 @@ class FileSync(private val manager: InstanceManager) {
 
     fun installBundle(vararg paths: Any) {
         files.from(paths)
+        installBundle()
     }
 
-    fun installBundle() = actionAwaited { osgi.installBundle(it); true }
+    fun installBundle() = action { osgi.installBundle(it) }
 }

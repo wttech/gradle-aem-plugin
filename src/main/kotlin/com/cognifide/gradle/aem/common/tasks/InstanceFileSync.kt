@@ -11,7 +11,10 @@ import java.io.File
 open class InstanceFileSync : AemDefaultTask() {
 
     @get:Internal
-    val sync by lazy { Base(aem.instanceManager) }
+    val instanceManager get() = aem.instanceManager
+
+    @get:Internal
+    val sync by lazy { Base(instanceManager) }
 
     fun sync(options: Base.() -> Unit) = sync.using(options)
 
