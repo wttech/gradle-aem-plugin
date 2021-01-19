@@ -3,21 +3,25 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.Instance
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceDeploy : Instance() {
 
+    @Internal
     val verbose = aem.obj.boolean {
         convention(true)
         common.prop.boolean("instance.deploy.verbose")?.let { set(it) }
     }
 
+    @Internal
     val pkgZip = aem.obj.file {
         common.prop.string("instance.deploy.packageUrl")?.let { url ->
             fileProvider(aem.obj.provider { common.resolveFile(url) })
         }
     }
 
+    @Internal
     val bundleJar = aem.obj.file {
         common.prop.string("instance.deploy.bundleUrl")?.let { url ->
             fileProvider(aem.obj.provider { common.resolveFile(url) })
