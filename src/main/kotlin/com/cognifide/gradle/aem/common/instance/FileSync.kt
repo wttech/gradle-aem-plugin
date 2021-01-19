@@ -1,11 +1,12 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import java.io.File
 
-class InstanceFileSync(private val aem: AemExtension) {
+class FileSync(private val manager: InstanceManager) {
+
+    val aem = manager.aem
 
     val common = aem.common
 
@@ -78,11 +79,14 @@ class InstanceFileSync(private val aem: AemExtension) {
 
     fun deployPackage(vararg paths: Any) {
         files.from(paths)
-        actionAwaited { packageManager.deploy(it) }
+        deployPackage()
     }
+
+    fun deployPackage() = actionAwaited { packageManager.deploy(it) }
 
     fun installBundle(vararg paths: Any) {
         files.from(paths)
-        actionAwaited { osgi.installBundle(it); true }
     }
+
+    fun installBundle() = actionAwaited { osgi.installBundle(it); true }
 }

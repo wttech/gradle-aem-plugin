@@ -373,11 +373,6 @@ class AemExtension(val project: Project) : Serializable {
     }
 
     /**
-     * Synchronize files with instances (interactively and with health checking).
-     */
-    fun instanceFileSync(options: InstanceFileSync.() -> Unit) = InstanceFileSync(this).apply(options).sync()
-
-    /**
      * Build minimal CRX package in-place / only via code.
      * All details like Vault properties, archive destination directory, file name are customizable.
      */

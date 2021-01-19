@@ -58,6 +58,13 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun statusReporter(options: StatusReporter.() -> Unit) = statusReporter.using(options)
 
+    /**
+     * Synchronize files with instances (interactively and with health checking).
+     */
+    val fileSync by lazy { FileSync(this) }
+
+    fun fileSync(options: FileSync.() -> Unit) = FileSync(this).apply(options).sync()
+
     // ===== Definition API =====
 
     /**
