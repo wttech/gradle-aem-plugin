@@ -113,6 +113,7 @@ class AemExtension(val project: Project) : Serializable {
      */
     val bundlesBuilt: List<Jar> get() = project.pluginProjects(BundlePlugin.ID)
             .flatMap { p -> p.common.tasks.getAll<Jar>() }
+            .filter { jar -> jar.convention.plugins.containsKey(BundlePlugin.CONVENTION_PLUGIN) }
 
     /**
      * Collection of Vault definitions from all packages from all projects applying package plugin.
