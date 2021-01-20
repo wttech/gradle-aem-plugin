@@ -18,14 +18,15 @@ open class PackageDeploy : Package() {
     }
 
     @TaskAction
-    open fun deploy() {
-        sync.actionAwaited { packageManager.deploy(it, distributed.get()) }
+    override fun doSync() {
+        super.doSync()
         common.notifier.notify("Package deployed", "${files.fileNames} on ${instances.names}")
     }
 
     init {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
 
+        sync.actionAwaited { packageManager.deploy(it, distributed.get()) }
         sync.instances.convention(aem.obj.provider {
             if (distributed.get()) {
                 aem.authorInstances

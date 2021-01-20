@@ -8,13 +8,15 @@ import org.gradle.api.tasks.TaskAction
 open class PackageInstall : Package() {
 
     @TaskAction
-    fun install() {
-        sync.action { packageManager.install(it) }
+    override fun doSync() {
+        super.doSync()
         common.notifier.notify("Package installed", "${files.fileNames} from ${instances.names}")
     }
 
     init {
         description = "Installs AEM package on instance(s)."
+
+        sync.action { packageManager.install(it) }
         aem.prop.boolean("package.install.awaited")?.let { sync.awaited.set(it) }
     }
 

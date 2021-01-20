@@ -8,13 +8,14 @@ import org.gradle.api.tasks.TaskAction
 open class PackageUninstall : Package() {
 
     @TaskAction
-    fun uninstall() {
-        sync.action { packageManager.uninstall(it) }
+    override fun doSync() {
+        super.doSync()
         common.notifier.notify("Package uninstalled", "${files.fileNames} from ${instances.names}")
     }
 
     init {
         description = "Uninstalls AEM package on instance(s)."
+        sync.action { packageManager.uninstall(it) }
         aem.prop.boolean("package.uninstall.awaited")?.let { sync.awaited.set(it) }
         checkForce()
     }

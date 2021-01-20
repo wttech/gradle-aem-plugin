@@ -43,13 +43,14 @@ open class BundleInstall : Bundle() {
     var retry = common.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
 
     @TaskAction
-    open fun install() {
-        sync.action { osgi.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
+    override fun doSync() {
+        super.doSync()
         common.notifier.notify("Bundle installed", "${files.fileNames} on ${instances.names}")
     }
 
     init {
         description = "Installs OSGi bundle on instance(s)."
+        sync.action { osgi.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
         aem.prop.boolean("bundle.install.awaited")?.let { sync.awaited.set(it) }
     }
 

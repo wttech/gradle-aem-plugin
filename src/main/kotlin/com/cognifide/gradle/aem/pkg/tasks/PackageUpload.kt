@@ -8,13 +8,14 @@ import org.gradle.api.tasks.TaskAction
 open class PackageUpload : Package() {
 
     @TaskAction
-    fun upload() {
-        sync.action { packageManager.upload(it) }
+    override fun doSync() {
+        super.doSync()
         common.notifier.notify("Package uploaded", "${files.fileNames} from ${instances.names}")
     }
 
     init {
         description = "Uploads AEM package to instance(s)."
+        sync.action { packageManager.upload(it) }
         sync.awaited.convention(false)
     }
 

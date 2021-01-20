@@ -8,13 +8,14 @@ import org.gradle.api.tasks.TaskAction
 open class PackageActivate : Package() {
 
     @TaskAction
-    fun activate() {
-        sync.action { packageManager.activate(it) }
+    override fun doSync() {
+        super.doSync()
         common.notifier.notify("Package activated", "${files.fileNames} on ${instances.names}")
     }
 
     init {
         description = "Activates CRX package on instance(s)."
+        sync.action { packageManager.activate(it) }
         aem.prop.boolean("package.activate.awaited")?.let { sync.awaited.set(it) }
     }
 

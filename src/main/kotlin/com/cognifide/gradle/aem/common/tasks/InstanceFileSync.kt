@@ -19,7 +19,7 @@ open class InstanceFileSync : AemDefaultTask() {
     fun sync(options: Base.() -> Unit) = sync.using(options)
 
     @TaskAction
-    protected fun doSync() {
+    protected open fun doSync() {
         sync.sync()
     }
 
