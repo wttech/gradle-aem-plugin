@@ -286,9 +286,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
         fun defaultPair(aem: AemExtension) = listOf(defaultAuthor(aem), defaultPublish(aem))
 
-        fun defaultAuthor(aem: AemExtension) = create(aem, InstanceUrl.AUTHOR_DEFAULT)
+        fun defaultAuthor(aem: AemExtension) = create(aem, InstanceUrl.HTTP_AUTHOR_DEFAULT)
 
-        fun defaultPublish(aem: AemExtension) = create(aem, InstanceUrl.PUBLISH_DEFAULT)
+        fun defaultPublish(aem: AemExtension) = create(aem, InstanceUrl.HTTP_PUBLISH_DEFAULT)
 
         fun parse(aem: AemExtension, str: String, configurer: Instance.() -> Unit = {}): List<Instance> {
             return (Formats.toList(str) ?: listOf()).map { create(aem, it, configurer) }
@@ -310,16 +310,16 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                 name
             }.distinct()
 
-            return instanceNames.mapNotNull { name ->
+            return instanceNames.sorted().fold(mutableListOf()) { result, name ->
                 val defaultProps = prefixedProperties(allProps, NAME_DEFAULT)
                 val props = defaultProps + prefixedProperties(allProps, "instance.$name")
                 if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
                     aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")
-                    null
                 } else {
-                    singleFromProperties(aem, name, props)
+                    result.add(singleFromProperties(aem, name, props, result))
                 }
-            }.sortedBy { it.name }
+                result
+            }
         }
 
         private fun prefixedProperties(allProps: Map<String, *>, prefix: String) = allProps.filterKeys {
@@ -330,37 +330,45 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             result.apply { put(prop, value as String) }
         }
 
-        private fun singleFromProperties(aem: AemExtension, name: String, props: Map<String, String>) = when (typeProperty(props)) {
-            PhysicalType.LOCAL -> localFromProperties(aem, name, props)
-            PhysicalType.REMOTE -> remoteFromProperties(aem, name, props)
+        private fun singleFromProperties(aem: AemExtension, name: String, props: Map<String, String>, others: List<Instance>): Instance {
+            return when (props["type"]?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE) {
+                PhysicalType.LOCAL -> localFromProperties(aem, name, props, others)
+                PhysicalType.REMOTE -> remoteFromProperties(aem, name, props, others)
+            }
         }
 
-        private fun localFromProperties(aem: AemExtension, name: String, props: Map<String, String>) = LocalInstance.create(aem, httpUrlProperty(name, props)) {
-            this.name = name
-            props["enabled"]?.let { this.enabled = it.toBoolean() }
-            props["password"]?.let { this.password = it }
-            props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
-            props["startOpts"]?.let { this.startOpts = it.split(" ") }
-            props["runModes"]?.let { this.runModes = it.split(",") }
-            props["debugPort"]?.let { this.debugPort = it.toInt() }
-            props["debugAddress"]?.let { this.debugAddress = it }
-            props["openPath"]?.let { this.openPath = it }
-            this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
+        private fun localFromProperties(aem: AemExtension, name: String, props: Map<String, String>, others: List<Instance>): LocalInstance {
+            val httpUrl = props["httpUrl"] ?: httpUrlProperty(name, others)
+            return LocalInstance.create(aem, httpUrl) {
+                this.name = name
+                props["enabled"]?.let { this.enabled = it.toBoolean() }
+                props["password"]?.let { this.password = it }
+                props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
+                props["startOpts"]?.let { this.startOpts = it.split(" ") }
+                props["runModes"]?.let { this.runModes = it.split(",") }
+                props["debugPort"]?.let { this.debugPort = it.toInt() }
+                props["debugAddress"]?.let { this.debugAddress = it }
+                props["openPath"]?.let { this.openPath = it }
+                this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
+            }
         }
 
-        private fun remoteFromProperties(aem: AemExtension, name: String, props: Map<String, String>) = create(aem, httpUrlProperty(name, props)) {
-            this.name = name
-            props["enabled"]?.let { this.enabled = it.toBoolean() }
-            props["user"]?.let { this.user = it }
-            props["password"]?.let { this.password = it }
-            this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
+        private fun remoteFromProperties(aem: AemExtension, name: String, props: Map<String, String>, others: List<Instance>): Instance {
+            val httpUrl = props["httpUrl"] ?: httpUrlProperty(name, others)
+            return create(aem, httpUrl) {
+                this.name = name
+                props["enabled"]?.let { this.enabled = it.toBoolean() }
+                props["user"]?.let { this.user = it }
+                props["password"]?.let { this.password = it }
+                this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
+            }
         }
 
-        private fun typeProperty(props: Map<String, String>) = props["type"]
-                ?.let { PhysicalType.of(it) } ?: PhysicalType.REMOTE
-
-        private fun httpUrlProperty(name: String, props: Map<String, String>) = props["httpUrl"]
-                ?: IdType.byId(name.split("-")[1]).httpUrlDefault
+        private fun httpUrlProperty(name: String, others: List<Instance>): String {
+            val type = IdType.byId(name.split("-")[1])
+            val port = others.filter { it.type == type }.map { it.httpPort }.max()?.let { it + 1 } ?: type.httpPortDefault
+            return "${InstanceUrl.HTTP_HOST_DEFAULT}:$port"
+        }
     }
 }
 

@@ -395,7 +395,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
 
         common.progress(downInstances.size) {
-            common.parallel.with(downInstances) {
+            downInstances.onEachApply {
                 increment("Starting instance '$name'") {
                     if (!created) {
                         logger.info("Instance not created, so it could not be up: $this")
@@ -462,7 +462,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
 
         common.progress(upInstances.size) {
-            common.parallel.with(upInstances) {
+            upInstances.onEachApply {
                 increment("Stopping instance '$name'") {
                     sync {
                         http.connectionTimeout.set(1000)

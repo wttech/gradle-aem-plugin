@@ -12,8 +12,7 @@ import com.cognifide.gradle.common.zip.ZipFile
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.JavaVersion
-import org.apache.commons.lang3.SystemUtils
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.internal.os.OperatingSystem
 import java.io.File
 import java.io.FileFilter
@@ -52,7 +51,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     private val jvmDebugOpt: String get() = when {
-        SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) ->
+          localManager.javaLauncher.get().metadata.languageVersion >= JavaLanguageVersion.of(9) ->
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
         else ->
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
