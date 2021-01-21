@@ -10,8 +10,13 @@ enum class IdType {
     val type: String get() = name.toLowerCase()
 
     val httpUrlDefault: String get() = when (this) {
-        AUTHOR -> InstanceUrl.AUTHOR_DEFAULT
-        PUBLISH -> InstanceUrl.PUBLISH_DEFAULT
+        AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
+        PUBLISH -> InstanceUrl.HTTP_PUBLISH_DEFAULT
+    }
+
+    val httpPortDefault: Int get() = when (this) {
+        AUTHOR -> InstanceUrl.HTTP_AUTHOR_PORT_DEFAULT
+        PUBLISH -> InstanceUrl.HTTP_PUBLISH_PORT_DEFAULT
     }
 
     companion object {

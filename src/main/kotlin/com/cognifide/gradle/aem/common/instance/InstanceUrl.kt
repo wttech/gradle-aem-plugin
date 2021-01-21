@@ -74,9 +74,15 @@ class InstanceUrl(raw: String) {
 
     companion object {
 
-        const val AUTHOR_DEFAULT = "http://localhost:4502"
+        const val HTTP_HOST_DEFAULT = "http://localhost"
 
-        const val PUBLISH_DEFAULT = "http://localhost:4503"
+        const val HTTP_AUTHOR_PORT_DEFAULT = 4502
+
+        const val HTTP_PUBLISH_PORT_DEFAULT = 4503
+
+        const val HTTP_AUTHOR_DEFAULT = "$HTTP_HOST_DEFAULT:$HTTP_AUTHOR_PORT_DEFAULT"
+
+        const val HTTP_PUBLISH_DEFAULT = "$HTTP_HOST_DEFAULT:$HTTP_PUBLISH_PORT_DEFAULT"
 
         const val HTTPS_PORT = 443
 
