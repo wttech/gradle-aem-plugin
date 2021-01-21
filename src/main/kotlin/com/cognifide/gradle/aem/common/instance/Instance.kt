@@ -310,7 +310,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                 name
             }.distinct()
 
-            return instanceNames.fold(mutableListOf<Instance>()) { result, name ->
+            return instanceNames.sorted().fold(mutableListOf()) { result, name ->
                 val defaultProps = prefixedProperties(allProps, NAME_DEFAULT)
                 val props = defaultProps + prefixedProperties(allProps, "instance.$name")
                 if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
@@ -319,7 +319,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
                     result.add(singleFromProperties(aem, name, props, result))
                 }
                 result
-            }.sortedBy { it.name }
+            }
         }
 
         private fun prefixedProperties(allProps: Map<String, *>, prefix: String) = allProps.filterKeys {
