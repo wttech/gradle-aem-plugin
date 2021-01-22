@@ -180,7 +180,7 @@ class AemExtension(val project: Project) : Serializable {
                 return instance(cmdInstanceArg)
             }
 
-            return findInstance(Instance.FILTER_ANY) ?: Instance.defaultAuthor(this)
+            return findInstance(Instance.FILTER_ANY) ?: instanceManager.factory.defaultAuthor()
         }
 
     /**

@@ -18,7 +18,7 @@ import java.io.File
 import java.io.FileFilter
 
 @Suppress("TooManyFunctions")
-class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
+class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     override var user: String = USER
 
@@ -441,23 +441,5 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         const val LOCK_CREATE = "create"
 
         const val LOCK_INIT = "init"
-
-        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit = {}): LocalInstance {
-            return LocalInstance(aem).apply {
-                val instanceUrl = InstanceUrl.parse(httpUrl)
-                if (instanceUrl.user != USER) {
-                    throw LocalInstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
-                }
-
-                this.httpUrl = instanceUrl.httpUrl
-                this.password = instanceUrl.password
-                this.id = instanceUrl.id
-                this.debugPort = instanceUrl.debugPort
-                this.env = instanceUrl.env
-
-                configurer()
-                validate()
-            }
-        }
     }
 }
