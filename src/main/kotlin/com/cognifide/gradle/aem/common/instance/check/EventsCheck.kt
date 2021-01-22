@@ -21,18 +21,11 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
     val unstableAgeMillis = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
 
     val ignoredDetails = aem.obj.strings {
-        convention(aem.obj.provider {
-            when {
-                // TODO to be removed when AEM will fix: https://github.com/Cognifide/gradle-aem-plugin/issues/726
-                instance.version.cloud -> listOf(
-                        "org.apache.jackrabbit.oak.api.jmx.SessionMBean",
-                        "org.osgi.service.component.runtime.ServiceComponentRuntime"
-                )
-                else -> listOf(
-                        "org.apache.jackrabbit.oak.api.jmx.SessionMBean"
-                )
-            }
-        })
+        convention(listOf(
+                "org.apache.jackrabbit.oak.api.jmx.SessionMBean",
+                "org.osgi.service.component.runtime.ServiceComponentRuntime",
+                "java.util.ResourceBundle"
+        ))
     }
 
     init {
