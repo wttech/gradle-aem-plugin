@@ -16,6 +16,8 @@ open class InstanceManager(val aem: AemExtension) {
 
     val local by lazy { aem.localInstanceManager }
 
+    val factory by lazy { InstanceFactory(aem) }
+
     /**
      * Using remote AEM instances is acceptable in any project, so that lookup for project applying local instance plugin is required
      * Needed to determine common directory storing instance related resources (tailer incident filter, Groovy scripts etc).
@@ -74,10 +76,10 @@ open class InstanceManager(val aem: AemExtension) {
     val defined = aem.obj.list<Instance> {
         convention(aem.obj.provider {
             val fromCmd = aem.prop.string("instance.list")?.let {
-                Instance.parse(aem, it) { env = Instance.ENV_CMD }
+                factory.parse(it) { env = Instance.ENV_CMD }
             } ?: listOf()
-            val fromProperties = Instance.properties(aem)
-            (fromCmd + fromProperties).ifEmpty { Instance.defaultPair(aem) }
+            val fromProperties = factory.parseProperties()
+            (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }
         })
     }
 
@@ -109,7 +111,7 @@ open class InstanceManager(val aem: AemExtension) {
      * Define local instance (created on local file system).
      */
     fun local(httpUrl: String, options: LocalInstance.() -> Unit) {
-        defined.add(aem.obj.provider { LocalInstance.create(aem, httpUrl, options) })
+        defined.add(aem.obj.provider { factory.local(httpUrl, options) })
     }
 
     /**
@@ -126,7 +128,7 @@ open class InstanceManager(val aem: AemExtension) {
      * Define remote instance (available on any host).
      */
     fun remote(httpUrl: String, options: Instance.() -> Unit) {
-        defined.add(aem.obj.provider { Instance.create(aem, httpUrl, options) })
+        defined.add(aem.obj.provider { factory.remote(httpUrl, options) })
     }
 
     fun find(name: String) = defined.get().firstOrNull { it.name == name }
@@ -136,7 +138,7 @@ open class InstanceManager(val aem: AemExtension) {
     /**
      * Get defined instance by name or create temporary definition if URL provided.
      */
-    fun parse(url: String): Instance = Instance.parse(aem, url).ifEmpty {
+    fun parse(url: String): Instance = factory.parse(url).ifEmpty {
         throw InstanceException("Instance URL cannot be parsed properly '$url'!")
     }.single()
 

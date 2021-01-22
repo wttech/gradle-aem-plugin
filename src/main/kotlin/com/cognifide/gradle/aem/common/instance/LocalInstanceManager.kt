@@ -101,7 +101,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Automatically enforce current admin password before turning on instance.
      */
     val resetPassword = aem.obj.boolean {
-        convention(true)
+        convention(aem.commonOptions.env.map { it != LocalInstance.ENVIRONMENT })
         aem.prop.boolean("localInstance.resetPassword")?.let { set(it) }
     }
 
