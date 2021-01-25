@@ -22,7 +22,7 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
 
     val ignoredDetails = aem.obj.strings {
         convention(listOf(
-                "org.apache.jackrabbit.oak.*.*MBean",
+                "*.*MBean",
                 "org.osgi.service.component.runtime.ServiceComponentRuntime",
                 "java.util.ResourceBundle"
         ))
