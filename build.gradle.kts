@@ -212,8 +212,8 @@ gradlePlugin {
 }
 
 pluginBundle {
-    website = "https://github.com/Cognifide/gradle-aem-plugin"
-    vcsUrl = "https://github.com/Cognifide/gradle-aem-plugin.git"
+    website = "https://github.com/wttech/gradle-aem-plugin"
+    vcsUrl = "https://github.com/wttech/gradle-aem-plugin.git"
     description = "Gradle AEM Plugin"
     tags = listOf("aem", "cq", "vault", "scr")
 }
@@ -225,9 +225,9 @@ bintray {
     with(pkg) {
         repo = "maven-public"
         name = "gradle-aem-plugin"
-        userOrg = "cognifide"
+        userOrg = "wttech"
         setLicenses("Apache-2.0")
-        vcsUrl = "https://github.com/Cognifide/gradle-aem-plugin.git"
+        vcsUrl = "https://github.com/wttech/gradle-aem-plugin.git"
         setLabels("aem", "cq", "vault", "scr")
         with(version) {
             name = project.version.toString()
@@ -240,7 +240,7 @@ bintray {
 }
 
 githubRelease {
-    owner("Cognifide")
+    owner("wttech")
     repo("gradle-aem-plugin")
     token((findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())

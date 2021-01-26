@@ -1,9 +1,8 @@
-[![Cognifide logo](docs/cognifide-logo.png)](http://cognifide.com)
+[![WTT logo](docs/wtt-logo.png)](https://www.wundermanthompson.com/service/technology)
 
-[![Gitter](https://badges.gitter.im/Cognifide/gradle-aem-plugin.svg)](https://gitter.im/Cognifide/gradle-aem-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
 [![Build Status](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_apis/build/status/Continuous%20Check?branchName=master)](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_build/latest?definitionId=6&branchName=master)
-[![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
+[![Gradle Status](https://gradleupdate.appspot.com/wttech/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/wttech/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 
 <p>
@@ -48,11 +47,11 @@ Be inspired by:
     * [Sling AdaptTo 2018 Conference](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html),
  
 * reading blog articles:
-    * [Gradle-powered AEM archetypes](https://tech.cognifide.com/blog/2020/gradle-powered-aem-project-archetypes/) by [Krystian Panek](https://github.com/pun-ky),
-    * [AEM Dispatcher with ease - Gradle AEM Plugins](https://tech.cognifide.com/blog/2020/aem-dispacher-with-ease-gradle-aem-plugins/) by [Damian Mierzwiński](https://github.com/mierzwid),
-    * [&amp; more...](https://tech.cognifide.com/tag/gradle-aem-plugin/).
+    * [Gradle-powered AEM archetypes](https://wttech.blog/blog/2020/gradle-powered-aem-project-archetypes/) by [Krystian Panek](https://github.com/pun-ky),
+    * [AEM Dispatcher with ease - Gradle AEM Plugins](https://wttech.blog/blog/2020/aem-dispacher-with-ease-gradle-aem-plugins/) by [Damian Mierzwiński](https://github.com/mierzwid),
+    * [&amp; more...](https://wttech.blog/tag/gradle-aem-plugin/).
 
-Looking for a dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
+Looking for a dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/wttech/gradle-sling-plugin)!
 
 ### Screenshot
 
@@ -77,7 +76,7 @@ Only changed parts of application are processed again:
 * Java code is recompiled only when code in *\*.java* files is changed.
 * Front-end / Webpack build is run again only when code in *\*.scss* and *\*.js* etc files is changed.
 
-Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
+Want to see it in action? Follow [here](https://github.com/wttech/gradle-aem-multi)!
 
 ### Features 
 
@@ -118,9 +117,9 @@ javaSupport.version=8
 ## Getting started
 
 Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
-  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application/library** development,
-  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
-  * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
+  * [AEM Single-Project Example](https://github.com/wttech/gradle-aem-single#quickstart) - recommended for **application/library** development,
+  * [AEM Multi-Project Example](https://github.com/wttech/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
+  * [AEM Boot](https://github.com/wttech/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
   
 The only software needed on your machine to start using plugin is Java 8 or newer (also to setup local native AEM instances).
 Optionally, [Docker](https://www.docker.com/) is needed (when using automatic AEM dispatcher setup).
@@ -273,7 +272,7 @@ aem {
             bundle {
                 // customizing OSGi bundle manifest
                 description = "Example application built by GAP"
-                docUrl = "https://github.com/Cognifide/gradle-aem-example"
+                docUrl = "https://github.com/wttech/gradle-aem-example"
                 exportPackage("com.company.example.aem.*") 
                 slingModelPackages = "com.company.example.aem"
         
@@ -322,8 +321,8 @@ Each plugin has its own documentation:
 * [Bundle Plugin](docs/bundle-plugin.md) - building and deploying OSGi bundle(s),
 * [Instance Plugin](docs/instance-plugin.md) - managing remote AEM instance(s), automatic installation of service packs, performing provisioning actions,
 * [Local Instance Plugin](docs/local-instance-plugin.md) - setting up local AEM instance(s),
-* [Environment Plugin](https://github.com/Cognifide/gradle-environment-plugin) - standalone plugin for setting AEM dispatcher running on Docker,
-* [Common Plugin](https://github.com/Cognifide/gradle-common-plugin) - standalone plugin for transferring files over protocols SFTP/SMB/HTTP, e.g downloading AEM files, uploading AEM backups.
+* [Environment Plugin](https://github.com/wttech/gradle-environment-plugin) - standalone plugin for setting AEM dispatcher running on Docker,
+* [Common Plugin](https://github.com/wttech/gradle-common-plugin) - standalone plugin for transferring files over protocols SFTP/SMB/HTTP, e.g downloading AEM files, uploading AEM backups.
 
 ## How to's
 
@@ -399,7 +398,7 @@ Later during development process, building and deploying to AEM should be done u
 ### Customize convention for CRX package and OSGi bundle names and paths
 
 Because of [bug](https://github.com/gradle/gradle/issues/8401) related with regresion introduced in Gradle 5.1, there are some difficulties with setting archives base names.
-AEM Plugin is overriding default Gradle convention for not only having project name in archive base name, but also to having prefix - root project name when project is one of subprojects (multi-project build case as in [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/)).
+AEM Plugin is overriding default Gradle convention for not only having project name in archive base name, but also to having prefix - root project name when project is one of subprojects (multi-project build case as in [Gradle AEM Multi](https://github.com/wttech/gradle-aem-multi/)).
 However overriding this convention might not be trivial and is not recommended as of AEM Plugin in most cases proposes **good enough battle-tested convention**. 
 
 Still, if it is really needed to be done - setting customized name for CRX packages and OSGi bundles built, use snippet:
@@ -432,7 +431,7 @@ subprojects {
 
 ## Building
 
-1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
+1. Clone this project using command `git clone https://github.com/wttech/gradle-aem-plugin.git`
 2. To build plugin, simply enter cloned directory run command: `gradlew`
 3. To debug plugin under development in tests, use commands:
     * For functional tests: `sh gradlew functionalTest --debug-jvm`
