@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
@@ -9,6 +8,7 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.Bundle
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
+import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.configureApply
 import org.gradle.api.Project
@@ -37,7 +37,7 @@ class BundlePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupJavaDefaults() {
-        val support by lazy { extensions.getByType(AemExtension::class.java).commonOptions.javaSupport }
+        val support by lazy { extensions.getByType(CommonExtension::class.java).javaSupport }
 
         with(convention.getPlugin(JavaPluginConvention::class.java)) {
             sourceCompatibility = support.compatibilityVersion.get()

@@ -15,7 +15,9 @@ class CommonPlugin : CommonDefaultPlugin() {
         AemPlugin.apply { once { logger.info("Using: $NAME_WITH_VERSION") } }
 
         plugins.apply(BasePlugin::class.java)
-        extensions.add(AemExtension.NAME, AemExtension(this))
+        extensions.add(AemExtension.NAME, AemExtension(this).apply {
+            common.javaSupport.version.convention("11") // valid for instance creation and bundle compilation
+        })
     }
 
     companion object {

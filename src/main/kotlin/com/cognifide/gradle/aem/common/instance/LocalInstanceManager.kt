@@ -92,7 +92,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     val javaLauncher = aem.obj.typed<JavaLauncher> {
-        convention(aem.commonOptions.javaSupport.launcher)
+        convention(aem.common.javaSupport.launcher)
     }
 
     val javaExecutablePath get() = javaLauncher.get().executablePath.asFile.absolutePath
