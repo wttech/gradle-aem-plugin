@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.common.file.FileOperations
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
 import org.gradle.internal.os.OperatingSystem
 import java.io.File
 
@@ -63,11 +64,13 @@ class ServiceComposer(val manager: LocalInstanceManager) {
         aem.prop.string("localInstance.service.environmentCommand")?.let { set(it) }
     }
 
+    val projectPath get() = StringUtils.appendIfMissing(aem.project.path, ":")
+
     /**
      * Build command relative to root project used to start process which runs AEM instance as a system service.
      */
     val startCommand = aem.obj.string {
-        convention("sh gradlew -i --console=plain instanceUp")
+        convention("sh gradlew -i --console=plain ${projectPath}instanceUp")
         aem.prop.string("localInstance.service.startCommand")?.let { set(it) }
     }
 
@@ -75,7 +78,7 @@ class ServiceComposer(val manager: LocalInstanceManager) {
      * Build command relative to root project used to stop process which runs AEM instance as a system service.
      */
     val stopCommand = aem.obj.string {
-        convention("sh gradlew -i --console=plain instanceDown")
+        convention("sh gradlew -i --console=plain ${projectPath}instanceDown")
         aem.prop.string("localInstance.service.stopCommand")?.let { set(it) }
     }
 
@@ -83,7 +86,7 @@ class ServiceComposer(val manager: LocalInstanceManager) {
      * Build command relative to root project used to describe status of  AEM instance running as a system service.
      */
     val statusCommand = aem.obj.string {
-        convention("sh gradlew -q --console=plain instanceStatus")
+        convention("sh gradlew -q --console=plain ${projectPath}instanceStatus")
         aem.prop.string("localInstance.service.statusCommand")?.let { set(it) }
     }
 
