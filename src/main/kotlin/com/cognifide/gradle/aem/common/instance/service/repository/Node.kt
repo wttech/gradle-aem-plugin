@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.utils.JcrUtil
+import com.cognifide.gradle.aem.common.utils.filterNotNull
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -120,7 +121,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
                     else listOf()
                 }
                 .map { child -> Formats.toMapFromJson(child) }
-                .map { props -> Node(repository, "$path/${props[Property.NAME.value]}", props) }
+                .map { props -> Node(repository, "$path/${props[Property.NAME.value]}", props.filterNotNull()) }
                 .asSequence()
         } catch (e: CommonException) {
             throw RepositoryException("Cannot read children of node '$path' on $instance. Cause: ${e.message}", e)
@@ -382,7 +383,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         return try {
             http.get("$path.json") { response ->
                 val props = asMapFromJson(response)
-                Properties(this@Node, props).apply { propertiesLoaded = this }
+                Properties(this@Node, props.filterNotNull()).apply { propertiesLoaded = this }
             }
         } catch (e: CommonException) {
             throw RepositoryException("Cannot read properties of node '$path' on $instance. Cause: ${e.message}", e)

@@ -27,3 +27,6 @@ fun String.shortenClass(maxLength: Int = 32): String {
     }
     return StringUtils.abbreviateMiddle(result, "*", maxLength)
 }
+
+@Suppress("UNCHECKED_CAST")
+fun <K, V> Map<K, V?>.filterNotNull(): Map<K, V> = filterValues { it != null } as Map<K, V>

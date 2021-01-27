@@ -23,7 +23,7 @@ configurations.getByName("functionalTestImplementation").apply {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.gradle:gradle-tooling-api:6.3")
+    implementation("org.gradle:gradle-tooling-api:6.8")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
 
     "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.3.2")
