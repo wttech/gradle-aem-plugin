@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
-import com.cognifide.gradle.aem.common.utils.FileUtil
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
@@ -584,23 +583,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             return
         }
 
-        examinePaths()
         examineJavaAvailable()
         examineJavaCompatibility(instances)
         examineStatusUncorecognized(instances)
         examineRunningOther(instances)
-    }
-
-    fun examinePaths() {
-        val rootPath = FileUtil.systemPath(instanceDir.get().asFile.path)
-        val sanitizedPath = FileUtil.systemPath(FileUtil.sanitizePath(rootPath))
-        if (sanitizedPath != rootPath) {
-            throw LocalInstanceException(
-                    "Local instances root path contains problematic characters!\n" +
-                    "AEM control scripts could run improperly with such paths.\n" +
-                    "Consider updating the path from '$rootPath' to '$sanitizedPath'."
-            )
-        }
     }
 
     /**
