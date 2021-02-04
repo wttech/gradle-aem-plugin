@@ -53,8 +53,8 @@ class InstanceFactory(val aem: AemExtension) {
 
     fun parseProperties(allProps: Map<String, *>): List<Instance> {
         val instanceNames = allProps.filterKeys { prop ->
-            !prop.startsWith("$NAME_DEFAULT.") &&
-                    (Patterns.wildcard(prop, "instance.*.httpUrl") || Patterns.wildcard(prop, "instance.*.type"))
+            !prop.startsWith("$NAME_DEFAULT.") && (ALL_PROPS.any {
+                Regex("^instance.$NAME_REGEX.$it\$").matches(prop) })
         }.keys.mapNotNull { p ->
             val name = p.split(".")[1]
             val nameParts = name.split("-")
@@ -68,11 +68,7 @@ class InstanceFactory(val aem: AemExtension) {
         return instanceNames.sorted().fold(mutableListOf()) { result, name ->
             val defaultProps = prefixedProperties(allProps, NAME_DEFAULT)
             val props = defaultProps + prefixedProperties(allProps, "instance.$name")
-            if (props["httpUrl"].isNullOrBlank() && props["type"].isNullOrBlank()) {
-                aem.logger.warn("Instance named '$name' must have property 'httpUrl' or 'type' defined!")
-            } else {
-                result.add(singleFromProperties(name, props, result))
-            }
+            result.add(singleFromProperties(name, props, result))
             result
         }
     }
@@ -128,9 +124,13 @@ class InstanceFactory(val aem: AemExtension) {
     companion object {
         const val NAME_DEFAULT = "instance.default"
 
+        const val NAME_REGEX = "[\\w_]+-[\\w_]+"
+
         val LOCAL_PROPS = listOf("httpUrl", "enabled", "type", "password", "jvmOpts", "startOpts", "runModes",
             "debugPort", "debugAddress", "openPath")
 
         val REMOTE_PROPS = listOf("httpUrl", "enabled", "type", "user", "password")
+
+        val ALL_PROPS = (LOCAL_PROPS + REMOTE_PROPS).toSet()
     }
 }
