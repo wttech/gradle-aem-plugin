@@ -408,7 +408,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     }
 
                     sync {
-                        http.connectionTimeout.set(1000)
+                        http.connectionTimeout.set(10_000)
                         http.connectionRetries.set(false)
 
                         instance.whenLocal {

@@ -24,7 +24,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
-        http.connectionTimeout.convention(1000)
+        http.connectionTimeout.convention(5_000)
         http.connectionRetries.convention(false)
         toggleBasicCredentialsWhenInitialized()
     }
@@ -38,6 +38,11 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
         aem.prop.boolean("instance.check.$name.enabled")?.let { set(it) }
     }
 
+    val logValuesCount = aem.obj.int {
+        convention(5)
+        aem.prop.int("instance.check.$name.logValuesCount")?.let { set(it) }
+    }
+
     override val status: String get() = statusLogger.entries.firstOrNull()?.summary ?: "Check passed"
 
     override val success: Boolean get() = statusLogger.entries.none { it.level == LogLevel.ERROR }
@@ -45,10 +50,10 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     fun <T : Any> state(value: T) = value.also { group.state(it) }
 
     fun logValues(values: Collection<Any>): String {
-        val other = values.size - LOG_VALUES_COUNT
+        val other = values.size - logValuesCount.get()
         return when {
-            other > 0 -> values.take(LOG_VALUES_COUNT).joinToString("\n") + "\n... and other ($other)"
-            else -> values.take(LOG_VALUES_COUNT).joinToString("\n")
+            other > 0 -> values.take(logValuesCount.get()).joinToString("\n") + "\n... and other ($other)"
+            else -> values.take(logValuesCount.get()).joinToString("\n")
         }
     }
 
@@ -78,8 +83,6 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     }
 
     companion object {
-        const val LOG_VALUES_COUNT = 10
-
         private const val STATE_AUTH_INIT = "authInit"
     }
 }

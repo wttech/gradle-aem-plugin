@@ -19,7 +19,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
     init {
         sync.apply {
-            http.connectionTimeout.convention(10_000)
+            http.connectionTimeout.convention(15_000)
         }
     }
 

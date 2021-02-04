@@ -9,7 +9,7 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
 
     init {
         sync.apply {
-            http.connectionTimeout.convention(750)
+            http.connectionTimeout.convention(1_500)
             http.connectionRetries.convention(false)
         }
     }
