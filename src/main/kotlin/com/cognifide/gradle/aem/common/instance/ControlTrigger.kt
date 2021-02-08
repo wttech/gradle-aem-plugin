@@ -10,23 +10,23 @@ class ControlTrigger(aem: AemExtension) {
 
     private val logger = aem.logger
 
-    val repeatAfter = aem.obj.long {
-        convention(90_000L)
-        aem.prop.long("localInstance.controlTrigger.repeatAfter")?.let { set(it) }
-    }
-
     val repeatTimes = aem.obj.int {
         convention(2)
         aem.prop.int("localInstance.controlTrigger.repeatTimes")?.let { set(it) }
     }
 
+    val repeatAfter = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(180))
+        aem.prop.long("localInstance.controlTrigger.repeatAfter")?.let { set(it) }
+    }
+
     val poolInterval = aem.obj.long {
-        convention(1000L)
+        convention(TimeUnit.SECONDS.toMillis(5))
         aem.prop.long("localInstance.controlTrigger.poolInterval")?.let { set(it) }
     }
 
     val verifyTimeout = aem.obj.long {
-        convention(1_000L)
+        convention(TimeUnit.SECONDS.toMillis(10))
         aem.prop.long("localInstance.controlTrigger.verifyTimeout")?.let { set(it) }
     }
 
@@ -39,7 +39,6 @@ class ControlTrigger(aem: AemExtension) {
         try {
             while (true) {
                 if (time <= 0L || (System.currentTimeMillis() - time) >= repeatAfter.get()) {
-
                     action()
                     time = System.currentTimeMillis()
                     no++

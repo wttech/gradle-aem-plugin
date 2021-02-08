@@ -89,7 +89,7 @@ class CheckRunner(internal val aem: AemExtension) {
         progresses = instances.map { CheckProgress(it) }
         updater {
             update(progresses.sortedBy { it.instance.name }.joinToString(" | ") {
-                if (instances.size <= 2) it.summary else it.abbreviatedSummary
+                if (instances.size <= 2) it.summary else it.summaryAbbreviated
             })
         }
 

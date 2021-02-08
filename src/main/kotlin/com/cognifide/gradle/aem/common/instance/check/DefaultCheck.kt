@@ -39,7 +39,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     }
 
     val logValuesCount = aem.obj.int {
-        convention(5)
+        convention(3)
         aem.prop.int("instance.check.$name.logValuesCount")?.let { set(it) }
     }
 

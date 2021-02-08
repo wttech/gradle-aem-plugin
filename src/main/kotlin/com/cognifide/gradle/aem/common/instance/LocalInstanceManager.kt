@@ -408,15 +408,11 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     }
 
                     sync {
-                        http.connectionTimeout.set(10_000)
-                        http.connectionRetries.set(false)
-
                         instance.whenLocal {
                             if (!initialized) {
                                 http.basicCredentials = Instance.CREDENTIALS_DEFAULT
                             }
                         }
-
                         controlTrigger.trigger(
                                 action = { triggerUp() },
                                 verify = { this@sync.status.reachable },
@@ -464,9 +460,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             upInstances.onEachApply {
                 increment("Stopping instance '$name'") {
                     sync {
-                        http.connectionTimeout.set(1000)
-                        http.connectionRetries.set(false)
-
                         val initReachableStatus = status.checkReachableStatus()
                         controlTrigger.trigger(
                                 action = { triggerDown() },

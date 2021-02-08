@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.utils.shortenClass
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.toLowerSnakeCase
 import org.apache.commons.lang3.time.StopWatch
 
 class CheckProgress(val instance: Instance) {
@@ -28,22 +30,32 @@ class CheckProgress(val instance: Instance) {
 
     val summary: String get() = "${instance.name}: ${currentCheck?.summary ?: "In progress"}"
 
-    val abbreviatedSummary: String get() {
+    val summaryAbbreviated: String get() {
         val sign = currentCheck?.let { if (it.done) "+" else "-" } ?: "~"
         val parts = mutableListOf<String>()
 
         currentCheck?.summary?.let { summary ->
-            if (Patterns.wildcard(summary, "* (*)")) {
-                val text = summary.substringBefore(" (")
-                val number = summary.substringAfter(" (").removeSuffix(")")
-                parts.add("$sign${text.firstLetters()}")
-                parts.add(number)
-            } else {
-                parts.add("$sign${summary.firstLetters()}")
+            when {
+                Patterns.wildcard(summary, "* (*)") -> {
+                    val text = summary.substringBefore(" (")
+                    val number = summary.substringAfter(" (").removeSuffix(")")
+                    parts.add("$sign${text.firstLetters()}")
+                    parts.add(number)
+                }
+                Patterns.wildcard(summary, "* '*'") -> {
+                    val text = summary.substringBefore(" '")
+                    val subText = summary.substringAfter(" '").removeSuffix("'")
+                    parts.add("$sign${text.firstLetters()}")
+                    parts.add(subText.shortenClass())
+                }
+                else -> parts.add("$sign${summary.firstLetters()}")
             }
         }
 
-        return "${instance.name}: ${parts.joinToString(" ")}"
+        val instanceName = (instance.env.toLowerSnakeCase().replace("_", " ") + " " +
+                instance.id.toLowerSnakeCase().replace("_", " ")).firstLetters()
+
+        return "$instanceName: ${parts.joinToString(" ")}"
     }
 
     private fun String.firstLetters() = this.split(" ").mapNotNull { it.firstOrNull() }.joinToString("")
