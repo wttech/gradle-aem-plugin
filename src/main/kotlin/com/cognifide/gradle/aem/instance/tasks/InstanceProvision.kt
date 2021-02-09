@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.provision.Status
 import com.cognifide.gradle.aem.common.tasks.Instance
@@ -16,11 +17,21 @@ open class InstanceProvision : Instance() {
         }
     }
 
+    private var awaitUpOptions: AwaitUpAction.() -> Unit = {
+        unchanged { enabled.set(false) }
+    }
+
+    fun awaitUp(options: AwaitUpAction.() -> Unit) {
+        this.awaitUpOptions = options
+    }
+
     @TaskAction
     fun provision() {
-        instanceManager.examine(instances.get())
+        instanceManager.examinePrerequisites(instances.get())
+        instanceManager.awaitUp(instances.get(), awaitUpOptions)
 
         val allActions = provisioner.provision(instances.get())
+
         val performedActions = allActions.filter { it.status != Status.SKIPPED }
         val skippedActions = allActions - performedActions
         val instances = performedActions.map { it.step.instance }.toSet()

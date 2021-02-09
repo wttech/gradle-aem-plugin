@@ -20,8 +20,6 @@ class Provisioner(val manager: InstanceManager) {
 
     internal val aem = manager.aem
 
-    private val project = aem.project
-
     private val common = aem.common
 
     private val logger = aem.logger
@@ -107,8 +105,6 @@ class Provisioner(val manager: InstanceManager) {
 
         val steps = stepsFor(instances)
         steps.keys.forEach { it.validate() }
-
-        manager.awaitUp(instances, awaitUpOptions)
 
         val actions = provisionActions(steps)
         if (actions.none { it.status != Status.SKIPPED }) {
