@@ -12,6 +12,7 @@ open class Instance : AemDefaultTask() {
         convention(aem.obj.provider { aem.instances })
     }
 
+    @get:Internal
     val anyInstances: List<Instance> get() = instances.get().apply {
         if (aem.commonOptions.verbose.get() && isEmpty()) {
             throw InstanceException("No instances defined!\nMost probably there are no instances matching filter '${aem.commonOptions.envFilter}'.")

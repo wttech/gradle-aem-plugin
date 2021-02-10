@@ -12,6 +12,7 @@ open class LocalInstance : AemDefaultTask() {
         convention(aem.obj.provider { aem.localInstances })
     }
 
+    @get:Internal
     val anyInstances: List<LocalInstance> get() = instances.get().apply {
         if (aem.commonOptions.verbose.get() && isEmpty()) {
             throw LocalInstanceException("No local instances defined!\nMost probably there are no instances matching filter '${aem.commonOptions.envFilter}'.")
