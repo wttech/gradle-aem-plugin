@@ -31,12 +31,22 @@ open class CommonOptions(private val aem: AemExtension) {
     val offline = aem.obj.boolean { convention(aem.prop.flag("offline")) }
 
     /**
+     * Throw exceptions instead of logging errors when e.g there are no necessary input values provided.
+     */
+    val verbose = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("verbose")?.let { set(it) }
+    }
+
+    /**
      * Determines current environment name to be used in e.g package deployment.
      */
     val env = aem.obj.string {
         convention(System.getenv("ENV") ?: "local")
         aem.prop.string("env")?.let { set(it) }
     }
+
+    val envFilter get() = "${env.get()}-*"
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.

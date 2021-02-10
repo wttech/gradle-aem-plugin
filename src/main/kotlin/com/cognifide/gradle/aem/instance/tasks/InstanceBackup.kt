@@ -1,23 +1,22 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.tasks.LocalInstance
 import com.cognifide.gradle.common.utils.Formats
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceBackup : AemDefaultTask() {
+open class InstanceBackup : LocalInstance() {
 
-    private val manager get() = aem.localInstanceManager.backup
+    private val manager get() = localInstanceManager.backup
 
     /**
      * Determines what need to be done (backup zipped and uploaded or something else).
      */
     @Internal
-    var mode: Mode = Mode.of(aem.prop.string("instance.backup.mode")
-            ?: Mode.ZIP_AND_UPLOAD.name)
+    var mode: Mode = Mode.of(aem.prop.string("instance.backup.mode") ?: Mode.ZIP_AND_UPLOAD.name)
 
     @TaskAction
     fun backup() {
@@ -35,7 +34,7 @@ open class InstanceBackup : AemDefaultTask() {
     }
 
     private fun zip(): File {
-        val file = manager.create(aem.localInstances)
+        val file = manager.create(anyInstances)
         manager.clean()
         common.notifier.lifecycle("Instance(s) backed up", "File: ${file.name}, Size: ${Formats.fileSize(file)}")
         return file

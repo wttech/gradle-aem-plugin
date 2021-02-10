@@ -9,10 +9,10 @@ open class InstanceTail : Instance() {
 
     @TaskAction
     fun tail() {
-        logger.lifecycle("Tailing logs from:\n${instances.get().joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" }}")
+        logger.lifecycle("Tailing logs from:\n${anyInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" }}")
         logger.lifecycle("Filter incidents using file: ${instanceManager.tailer.incidentFilter.get()}")
 
-        instanceManager.tailer.tail(instances.get())
+        instanceManager.tailer.tail(anyInstances)
     }
 
     init {

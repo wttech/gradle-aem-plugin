@@ -8,7 +8,7 @@ open class InstanceDestroy : LocalInstance() {
 
     @TaskAction
     fun destroy() {
-        val destroyedInstances = localInstanceManager.destroy(instances.get())
+        val destroyedInstances = localInstanceManager.destroy(anyInstances)
         if (destroyedInstances.isNotEmpty()) {
             common.notifier.notify("Instance(s) destroyed", "Which: ${destroyedInstances.names}")
         }

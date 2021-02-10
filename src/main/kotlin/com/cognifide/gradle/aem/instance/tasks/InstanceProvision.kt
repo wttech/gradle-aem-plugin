@@ -27,10 +27,10 @@ open class InstanceProvision : Instance() {
 
     @TaskAction
     fun provision() {
-        instanceManager.examinePrerequisites(instances.get())
-        instanceManager.awaitUp(instances.get(), awaitUpOptions)
+        instanceManager.examinePrerequisites(anyInstances)
+        instanceManager.awaitUp(anyInstances, awaitUpOptions)
 
-        val allActions = provisioner.provision(instances.get())
+        val allActions = provisioner.provision(anyInstances)
 
         val performedActions = allActions.filter { it.status != Status.SKIPPED }
         val skippedActions = allActions - performedActions

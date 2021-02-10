@@ -10,7 +10,7 @@ open class InstanceCreate : LocalInstance() {
     fun create() {
         localInstanceManager.examineJavaAvailable()
 
-        val createdInstances = localInstanceManager.create(instances.get())
+        val createdInstances = localInstanceManager.create(anyInstances)
         if (createdInstances.isNotEmpty()) {
             common.notifier.lifecycle("Instance(s) created", "Which: ${createdInstances.names}")
         }

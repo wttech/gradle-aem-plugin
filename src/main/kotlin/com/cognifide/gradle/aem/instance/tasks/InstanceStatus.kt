@@ -8,17 +8,12 @@ open class InstanceStatus : Instance() {
     @Suppress("MagicNumber")
     @TaskAction
     fun status() {
-        if (instances.get().isEmpty()) {
-            println("No instances defined!")
-            return
-        }
-
-        common.progress(instances.get().size) {
+        common.progress(anyInstances.size) {
             step = "Initializing"
             instanceManager.statusReporter.init()
 
             step = "Checking statuses"
-            common.parallel.map(instances.get()) { instance ->
+            common.parallel.map(anyInstances) { instance ->
                 increment("Instance '${instance.name}'") {
                     instance to instanceManager.statusReporter.report(instance)
                 }

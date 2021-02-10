@@ -8,9 +8,9 @@ open class InstanceKill : LocalInstance() {
 
     @TaskAction
     fun kill() {
-        localInstanceManager.base.examinePrerequisites(instances.get())
+        localInstanceManager.base.examinePrerequisites(anyInstances)
 
-        val killedInstances = localInstanceManager.kill(instances.get())
+        val killedInstances = localInstanceManager.kill(anyInstances)
         if (killedInstances.isNotEmpty()) {
             common.notifier.lifecycle("Instance(s) killed", "Which: ${killedInstances.names}")
         }

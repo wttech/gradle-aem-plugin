@@ -30,12 +30,12 @@ open class InstanceUp : LocalInstance() {
 
     @TaskAction
     fun up() {
-        localInstanceManager.base.examinePrerequisites(instances.get())
+        localInstanceManager.base.examinePrerequisites(anyInstances)
 
-        val upInstances = localInstanceManager.up(instances.get(), awaitOptions)
+        val upInstances = localInstanceManager.up(anyInstances, awaitOptions)
 
         if (ensured.get()) {
-            val alreadyUpInstances = instances.get() - upInstances
+            val alreadyUpInstances = anyInstances - upInstances
             if (alreadyUpInstances.isNotEmpty()) {
                 localInstanceManager.base.awaitUp(alreadyUpInstances, awaitOptions)
             }

@@ -9,12 +9,6 @@ import org.gradle.api.tasks.TaskAction
 open class InstanceDeploy : Instance() {
 
     @Internal
-    val verbose = aem.obj.boolean {
-        convention(true)
-        common.prop.boolean("instance.deploy.verbose")?.let { set(it) }
-    }
-
-    @Internal
     val pkgZip = aem.obj.file {
         common.prop.string("instance.deploy.packageUrl")?.let { url ->
             fileProvider(aem.obj.provider { common.resolveFile(url) })
@@ -30,22 +24,22 @@ open class InstanceDeploy : Instance() {
 
     @TaskAction
     fun deploy() {
-        instanceManager.examine(instances.get())
+        instanceManager.examine(anyInstances)
 
         when {
             pkgZip.isPresent -> {
                 val zip = pkgZip.get().asFile
                 instanceManager.fileSync { deployPackage(zip) }
-                common.notifier.notify("Package deployed", "${zip.name} on ${instances.get().names}")
+                common.notifier.notify("Package deployed", "${zip.name} on ${anyInstances.names}")
             }
             bundleJar.isPresent -> {
                 val jar = bundleJar.get().asFile
                 instanceManager.fileSync { installBundle(jar) }
-                common.notifier.notify("Bundle deployed", "${jar.name} on ${instances.get().names}")
+                common.notifier.notify("Bundle deployed", "${jar.name} on ${anyInstances.names}")
             }
             else -> {
                 val msg = "Neither URL of package nor bundle provided so nothing to deploy to instance(s)!"
-                if (verbose.get()) {
+                if (aem.commonOptions.verbose.get()) {
                     throw InstanceException(msg)
                 } else {
                     logger.info(msg)

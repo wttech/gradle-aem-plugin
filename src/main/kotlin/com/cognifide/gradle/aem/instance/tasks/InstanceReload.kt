@@ -22,8 +22,8 @@ open class InstanceReload : Instance() {
 
     @TaskAction
     fun reload() {
-        instanceManager.awaitReloaded(instances.get(), reloadOptions, awaitUpOptions)
-        common.notifier.lifecycle("Instance(s) reloaded", "Which: ${instances.get().names}")
+        instanceManager.awaitReloaded(anyInstances, reloadOptions, awaitUpOptions)
+        common.notifier.lifecycle("Instance(s) reloaded", "Which: ${anyInstances.names}")
     }
 
     init {

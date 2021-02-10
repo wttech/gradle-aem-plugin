@@ -15,9 +15,9 @@ open class InstanceDown : LocalInstance() {
 
     @TaskAction
     fun down() {
-        localInstanceManager.base.examinePrerequisites(instances.get())
+        localInstanceManager.base.examinePrerequisites(anyInstances)
 
-        val downInstances = localInstanceManager.down(instances.get(), awaitDownOptions)
+        val downInstances = localInstanceManager.down(anyInstances, awaitDownOptions)
         if (downInstances.isNotEmpty()) {
             common.notifier.notify("Instance(s) down", "Which: ${downInstances.names}")
         }

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.common.instance.FileSync as Base
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -31,7 +32,11 @@ open class InstanceFileSync : AemDefaultTask() {
     }
 
     @get:Internal
-    val instances: List<Instance> get() = sync.instances.get()
+    val instances: List<Instance> get() = sync.instances.get().apply {
+        if (aem.commonOptions.verbose.get() && isEmpty()) {
+            throw InstanceException("No instances defined!\nMost probably there are no instances matching filter '${aem.commonOptions.envFilter}'.")
+        }
+    }
 
     fun instances(vararg instances: Instance) {
         sync.instances.set(instances.asIterable())
