@@ -14,8 +14,8 @@ open class InstanceAwait : Instance() {
 
     @TaskAction
     fun await() {
-        instanceManager.examinePrerequisites(instances.get())
-        instanceManager.awaitUp(instances.get(), awaitUpOptions)
+        instanceManager.examinePrerequisites(anyInstances)
+        instanceManager.awaitUp(anyInstances, awaitUpOptions)
     }
 
     init {

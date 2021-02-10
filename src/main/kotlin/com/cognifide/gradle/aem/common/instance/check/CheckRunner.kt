@@ -49,7 +49,7 @@ class CheckRunner(internal val aem: AemExtension) {
     /**
      * Controls if aborted running should fail build.
      */
-    val verbose = aem.obj.boolean { convention(true) }
+    val verbose = aem.obj.boolean { convention(aem.commonOptions.verbose) }
 
     /**
      * Time since running started.

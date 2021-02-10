@@ -192,7 +192,7 @@ class AemExtension(val project: Project) : Serializable {
      * Find instance which name is matching wildcard filter specified via command line parameter 'instance.name'.
      * By default, this method respects current environment which is used to work only with instances running locally.
      */
-    fun findInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "${commonOptions.env.get()}-*"): Instance? {
+    fun findInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = commonOptions.envFilter): Instance? {
         return filterInstances(desiredName ?: defaultName).firstOrNull()
     }
 
@@ -202,7 +202,7 @@ class AemExtension(val project: Project) : Serializable {
      *
      * If instance not found, throws exception.
      */
-    fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "${commonOptions.env.get()}-*"): Instance {
+    fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = commonOptions.envFilter): Instance {
         return findInstance(desiredName, defaultName)
                 ?: throw AemException("Instance named '${desiredName ?: defaultName}' is not defined.")
     }
@@ -210,7 +210,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
-    fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "${commonOptions.env.get()}-*"): List<Instance> {
+    fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: commonOptions.envFilter): List<Instance> {
         val all = instanceManager.defined.get().filter { it.enabled }
 
         // Specified by command line should not be filtered

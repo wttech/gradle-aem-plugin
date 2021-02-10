@@ -46,7 +46,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
      */
     @Input
     val verbose = aem.obj.boolean {
-        convention(true)
+        convention(aem.commonOptions.verbose)
         aem.prop.boolean("package.validator.verbose")?.let { set(it) }
     }
 

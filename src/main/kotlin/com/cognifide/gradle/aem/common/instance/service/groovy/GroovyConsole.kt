@@ -17,7 +17,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      * Controls throwing exception on script execution error.
      */
     val verbose = aem.obj.boolean {
-        convention(true)
+        convention(aem.commonOptions.verbose)
         aem.prop.boolean("instance.groovyConsole.verbose")?.let { set(it) }
     }
 
