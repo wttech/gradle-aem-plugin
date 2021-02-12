@@ -419,10 +419,10 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         if (running) {
             throw LocalInstanceException("Instance is running so resetting password on $this is not possible!")
         }
-        if (force || (localManager.resetPassword.get() && initialized)) {
+        if (force || localManager.resetPassword.get()) {
             oakRun.resetPassword(user, password)
         } else {
-            logger.debug("Skipping resetting password on $this (not yet initialized or feature is disabled)")
+            logger.debug("Skipping resetting password on $this (feature is disabled)")
         }
     }
 
