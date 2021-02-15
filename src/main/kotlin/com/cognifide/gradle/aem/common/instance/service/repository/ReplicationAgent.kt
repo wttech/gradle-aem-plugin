@@ -23,7 +23,7 @@ class ReplicationAgent(val page: Node) {
 
     fun configure(
         enabled: Boolean = true,
-        transportUri: String,
+        transportUri: String? = null,
         transportUser: String? = null,
         transportPassword: String? = null,
         userId: String? = null
