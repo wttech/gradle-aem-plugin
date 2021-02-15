@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.utils.filterNotNull
 
 class ReplicationAgent(val page: Node) {
 
@@ -20,18 +21,21 @@ class ReplicationAgent(val page: Node) {
 
     fun disable() = toggle(false)
 
-    fun enable(transportUri: String, props: Map<String, Any?> = mapOf()) = configure(mapOf(
-            "enabled" to true,
-            "transportUri" to transportUri
-    ) + props)
+    fun configure(
+        enabled: Boolean = true,
+        transportUri: String,
+        transportUser: String? = null,
+        transportPassword: String? = null,
+        userId: String? = null
+    ) = configure(mapOf(
+            "enabled" to enabled,
+            "transportUri" to transportUri,
+            "transportUser" to transportUser,
+            "transportPassword" to transportPassword,
+            "userId" to userId
+    ).filterNotNull())
 
-    fun enable(instance: Instance, props: Map<String, Any?> = mapOf()) = configure(mapOf(
-            "enabled" to true,
-            "transportUri" to "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
-            "transportUser" to instance.user,
-            "transportPassword" to instance.password,
-            "userId" to instance.user
-    ) + props)
+    fun configure(instance: Instance, enabled: Boolean = true) = configure(enabled, "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1", instance.user, instance.password, instance.user)
 
     fun configure(propName: String, propValue: Any?) = configure(mapOf(propName to propValue))
 
