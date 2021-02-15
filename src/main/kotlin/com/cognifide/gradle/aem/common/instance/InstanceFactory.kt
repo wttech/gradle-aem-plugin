@@ -117,7 +117,7 @@ class InstanceFactory(val aem: AemExtension) {
 
     private fun httpUrlProperty(name: String, others: List<Instance>): String {
         val type = IdType.byId(name.split("-")[1])
-        val port = others.filter { it.type == type }.map { it.httpPort }.max()?.let { it + 1 } ?: type.httpPortDefault
+        val port = others.filter { it.type == type }.map { it.httpPort }.maxOrNull()?.let { it + 1 } ?: type.httpPortDefault
         return "${InstanceUrl.HTTP_HOST_DEFAULT}:$port"
     }
 

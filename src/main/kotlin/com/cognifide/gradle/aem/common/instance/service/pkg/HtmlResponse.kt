@@ -65,7 +65,7 @@ abstract class HtmlResponse(private val rawHtml: String) {
                 var currentLine = 0
 
                 input.bufferedReader().forEachLine { line ->
-                    chunk.appendln(line)
+                    chunk.appendLine(line)
                     currentLine++
                     if (currentLine % bufferSize == 0) {
                         extractErrors(chunk, resultBuilder, errorPatterns, statusTags)

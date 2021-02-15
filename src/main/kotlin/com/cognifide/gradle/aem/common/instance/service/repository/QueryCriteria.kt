@@ -20,7 +20,7 @@ class QueryCriteria : QueryParams(false) {
     private val groupIndex: Int get() = (params.keys
             .filter { it.matches(Regex("^\\d+_group\\..*")) }
             .map { it.split("_")[0].toInt() }
-            .max() ?: 0) + 1
+            .maxOrNull() ?: 0) + 1
 
     // Multi-value shorthands
 

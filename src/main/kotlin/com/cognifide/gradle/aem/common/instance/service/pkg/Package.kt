@@ -58,7 +58,7 @@ class Package private constructor() {
     val installedDate: Date? get() = lastUnpacked?.let { instance.date(it) }
 
     @get:JsonIgnore
-    val lastTouched: Long get() = listOfNotNull(created, lastModified, lastWrapped).max() ?: 0L
+    val lastTouched: Long get() = listOfNotNull(created, lastModified, lastWrapped).maxOrNull() ?: 0L
 
     @get:JsonIgnore
     val touchDate: Date get() = instance.date(lastTouched)
