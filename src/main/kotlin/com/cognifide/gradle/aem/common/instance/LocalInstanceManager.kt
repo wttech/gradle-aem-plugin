@@ -97,6 +97,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     val javaExecutablePath get() = javaLauncher.get().executablePath.asFile.absolutePath
 
     /**
+     * Automatically delete Quickstart JAR after unpacking.
+     */
+    val cleanJar = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("localInstance.cleanJar")?.let { set(it) }
+    }
+
+    /**
      * Automatically enforce current admin password before turning on instance.
      */
     val resetPassword = aem.obj.boolean {

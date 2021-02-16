@@ -277,12 +277,21 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     private fun unpackFiles() {
         logger.info("Unpacking quickstart from JAR '$quickstartJar' to directory '$quickstartDir'")
         common.progressIndicator {
-            message = "Unpacking quickstart JAR: ${quickstartJar.name}, size: ${Formats.fileSize(quickstartJar)}"
+            step = "Copying quickstart JAR"
+            val tmpJar = dir.resolve(quickstartJar.name)
+            quickstartJar.copyTo(tmpJar, true)
+
+            step = "Unpacking quickstart JAR: ${tmpJar.name} (${Formats.fileSize(tmpJar)})"
             aem.project.javaexec { spec ->
                 spec.executable(localManager.javaExecutablePath)
                 spec.workingDir = dir
                 spec.main = "-jar"
-                spec.args = listOf(quickstartJar.absolutePath, "-unpack")
+                spec.args = listOf(tmpJar.absolutePath, "-unpack")
+            }
+
+            if (localManager.cleanJar.get()) {
+                step = "Cleaning quickstart JAR"
+                tmpJar.delete()
             }
         }
 
