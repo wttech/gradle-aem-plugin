@@ -71,6 +71,10 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
         }
     }
 
+    override fun init() {
+        // nothing to do
+    }
+
     override fun validate() {
         // nothing to do
     }

@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
+import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureReplicationAgentStep
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
@@ -243,31 +244,19 @@ class Provisioner(val manager: InstanceManager) {
         options()
     }
 
-    fun configureReplicationAgent(location: String, name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit = {}) {
-        step("configureReplicationAgent/$location/$name") {
-            description.set("Configuring replication agent on '$location' named '$name'")
-            sync { repository.replicationAgent(location, name).apply(configurer) }
-            options()
-        }
+    fun configureReplicationAgent(location: String, name: String, options: ConfigureReplicationAgentStep.() -> Unit = {}) {
+        steps.add(ConfigureReplicationAgentStep(this, location, name).apply(options))
     }
 
-    fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit) {
-        configureReplicationAgentAuthor(name, configurer) {}
-    }
-
-    fun configureReplicationAgentAuthor(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
-        configureReplicationAgent(ReplicationAgent.LOCATION_AUTHOR, name, configurer) {
+    fun configureReplicationAgentAuthor(name: String, options: ConfigureReplicationAgentStep.() -> Unit = {}) {
+        configureReplicationAgent(ReplicationAgent.LOCATION_AUTHOR, name) {
             condition { onceOnAuthor() }
             options()
         }
     }
 
-    fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit) {
-        configureReplicationAgentPublish(name, configurer) {}
-    }
-
-    fun configureReplicationAgentPublish(name: String, configurer: ReplicationAgent.() -> Unit, options: Step.() -> Unit) {
-        configureReplicationAgent(ReplicationAgent.LOCATION_PUBLISH, name, configurer) {
+    fun configureReplicationAgentPublish(name: String, options: ConfigureReplicationAgentStep.() -> Unit = {}) {
+        configureReplicationAgent(ReplicationAgent.LOCATION_PUBLISH, name) {
             condition { onceOnPublish() }
             options()
         }
