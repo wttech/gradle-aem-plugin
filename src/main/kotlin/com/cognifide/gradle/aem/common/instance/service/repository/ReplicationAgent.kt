@@ -24,9 +24,9 @@ class ReplicationAgent(val page: Node) {
     fun configure(
         enabled: Boolean = true,
         transportUri: String? = null,
-        transportUser: String? = "admin",
-        transportPassword: String? = "admin",
-        userId: String? = "admin"
+        transportUser: String? = null,
+        transportPassword: String? = null,
+        userId: String? = null
     ) = configure(mapOf(
             "enabled" to enabled,
             "transportUri" to transportUri,
