@@ -22,13 +22,25 @@ class Condition(val step: InstanceStep) {
 
     fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
 
+    fun onEnv(env: String) = Patterns.wildcard(instance.env, env)
+
+    fun onImage() = step.definition.provisioner.aem.commonOptions.envImage
+
     fun onInstance(name: String) = Patterns.wildcard(instance.name, name)
 
-    fun onEnv(env: String) = Patterns.wildcard(instance.env, env)
+    fun onAuthor() = instance.author
+
+    fun onPublish() = instance.publish
+
+    fun onLocal() = instance.local
+
+    fun onRemote() = !onLocal()
 
     fun onRunMode(vararg modes: String) = onRunMode(modes.asIterable())
 
-    fun onRunMode(modes: Iterable<String>) = instance.runningModes.containsAll(modes.toList())
+    fun onRunMode(modes: Iterable<String>, except: Iterable<String> = listOf()) = instance.runningModes.run {
+        containsAll(modes.toList()) && none { except.contains(it) }
+    }
 
     // Complete conditions
 
@@ -36,16 +48,6 @@ class Condition(val step: InstanceStep) {
      * Perform step only once, but try again if it fails.
      */
     fun once() = greedy() || failSafeOnce()
-
-    fun onceOnInstance(name: String) = onInstance(name) && once()
-
-    fun onceOnEnv(env: String) = onEnv(env) && once()
-
-    fun onceOnRunMode(modes: String) = onRunMode(modes) && once()
-
-    fun onceOnAuthor() = instance.author && once()
-
-    fun onceOnPublish() = instance.publish && once()
 
     /**
      * Perform step only once, but try again if it fails.

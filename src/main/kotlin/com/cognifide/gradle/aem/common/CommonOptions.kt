@@ -42,11 +42,13 @@ open class CommonOptions(private val aem: AemExtension) {
      * Determines current environment name to be used in e.g package deployment.
      */
     val env = aem.obj.string {
-        convention(System.getenv("ENV") ?: "local")
+        convention(System.getenv("ENV") ?: ENVIRONMENT_LOCAL)
         aem.prop.string("env")?.let { set(it) }
     }
 
     val envFilter get() = "${env.get()}-*"
+
+    val envImage get() = env.get() == ENVIRONMENT_IMAGE
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
@@ -64,5 +66,11 @@ open class CommonOptions(private val aem: AemExtension) {
     val executableExtension = aem.obj.string {
         convention(aem.project.provider { if (OperatingSystem.current().isWindows) ".bat" else "" })
         aem.prop.string("executableExtension")?.let { set(it) }
+    }
+
+    companion object {
+        const val ENVIRONMENT_IMAGE = "image"
+
+        const val ENVIRONMENT_LOCAL = "local"
     }
 }

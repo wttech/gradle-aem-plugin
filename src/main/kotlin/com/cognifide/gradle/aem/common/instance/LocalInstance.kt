@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
+import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
@@ -443,7 +444,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
         const val SERVICE_PATH = "localInstance/service"
 
-        const val ENVIRONMENT = "local"
+        const val ENVIRONMENT = CommonOptions.ENVIRONMENT_LOCAL
 
         const val USER = "admin"
 

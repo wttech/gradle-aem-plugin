@@ -3,12 +3,8 @@ package com.cognifide.gradle.aem.common.instance.provision
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
-import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureReplicationAgentStep
-import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
-import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
+import com.cognifide.gradle.aem.common.instance.provision.step.*
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
-import com.cognifide.gradle.aem.common.instance.service.workflow.Workflow
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
@@ -250,21 +246,21 @@ class Provisioner(val manager: InstanceManager) {
 
     fun configureReplicationAgentAuthor(name: String, options: ConfigureReplicationAgentStep.() -> Unit = {}) {
         configureReplicationAgent(ReplicationAgent.LOCATION_AUTHOR, name) {
-            condition { onceOnAuthor() }
+            condition { onAuthor() && once() }
             options()
         }
     }
 
     fun configureReplicationAgentPublish(name: String, options: ConfigureReplicationAgentStep.() -> Unit = {}) {
         configureReplicationAgent(ReplicationAgent.LOCATION_PUBLISH, name) {
-            condition { onceOnPublish() }
+            condition { onPublish() && once() }
             options()
         }
     }
 
     fun configureCrypto(options: ConfigureCryptoStep.() -> Unit) {
         steps.add(ConfigureCryptoStep(this).apply {
-            condition { instance.local && once() }
+            condition { onLocal() && once() }
             options()
         })
     }
@@ -281,18 +277,16 @@ class Provisioner(val manager: InstanceManager) {
 
     fun configureCryptos(authorDirUrl: String, publishDirUrl: String, options: ConfigureCryptoStep.() -> Unit = {}) {
         configureCrypto(authorDirUrl) {
-            condition { instance.local && onceOnAuthor() }
+            condition { onLocal() && onAuthor() && once() }
             options()
         }
         configureCrypto(publishDirUrl) {
-            condition { instance.local && onceOnPublish() }
+            condition { onLocal() && onPublish() && once() }
             options()
         }
     }
 
-    fun configureWorkflow(name: String, configurer: Workflow.() -> Unit, options: Step.() -> Unit = {}) = step("configureWorkflow/$name") {
-        description.set("Configuring workflow named '$name'")
-        sync { workflowManager.workflow(name).apply(configurer) }
-        options()
+    fun configureWorkflow(id: String, options: ConfigureWorkflowStep.() -> Unit) {
+        steps.add(ConfigureWorkflowStep(this, id).apply(options))
     }
 }
