@@ -73,6 +73,14 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
+     * Shorthand method for importing content using specified JSON.
+     */
+    fun import(path: String, json: String): RepositoryResult {
+        val (dir, name) = splitPath(path)
+        return node(dir).import(json, name, replace = true, replaceProperties = true)
+    }
+
+    /**
      * Execute repository query to find desired nodes.
      */
     fun query(criteria: QueryCriteria.() -> Unit): Query = query(QueryCriteria().apply(criteria))

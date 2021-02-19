@@ -13,11 +13,14 @@ class ConfigureWorkflowStep(provisioner: Provisioner, val wid: String) : Abstrac
         this.workflowAction = action
     }
 
+    override fun validate() {
+        if (!::workflowAction.isInitialized) {
+            throw ProvisionException("Step '${id.get()}' has no workflow action defined!")
+        }
+    }
+
     override fun action(instance: Instance) {
         instance.sync {
-            if (!::workflowAction.isInitialized) {
-                throw ProvisionException("Step '${id.get()}' has no workflow action defined!")
-            }
             workflowManager.workflow(wid).apply(workflowAction)
         }
     }

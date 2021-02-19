@@ -182,14 +182,26 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     /**
      * Import node into repository.
      *
-     * Effectively it is an alternative method for saving node supporting dots in node names.
+     * Effectively may be an alternative method for saving node supporting dots in node names.
      */
     fun import(
         properties: Map<String, Any?>,
         name: String? = null,
         replace: Boolean = false,
         replaceProperties: Boolean = false
-    ) = importInternal(importParams(properties, null, name, replace, replaceProperties))
+    ) = import(Formats.toJson(properties), name, replace, replaceProperties)
+
+    /**
+     * Import node into repository.
+     *
+     * Effectively may be an alternative method for saving node supporting dots in node names.
+     */
+    fun import(
+        json: String,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ) = importInternal(importParams(json, null, name, replace, replaceProperties))
 
     /**
      * Import content structure defined in JSON file into repository.
@@ -218,7 +230,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     }
 
     private fun importParams(
-        properties: Map<String, Any?>? = null,
+        json: String? = null,
         file: File? = null,
         name: String? = null,
         replace: Boolean = false,
@@ -232,7 +244,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
                     ":contentType" to "json"
             ))
             name?.let { put(":name", it) }
-            properties?.let { put(":content", Formats.toJson(properties)) }
+            json?.let { put(":content", json) }
             file?.let { put(":contentFile", file) }
         }
     }

@@ -9,16 +9,38 @@ class ConfigureReplicationAgentStep(provisioner: Provisioner, val location: Stri
 
     lateinit var agentAction: ReplicationAgent.() -> Unit
 
+    val bundleToggle = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.provision.configureReplicationAgent.bundleToggle")?.let { set(it) }
+    }
+
+    val bundleSymbolicName = aem.obj.string {
+        convention("com.day.cq.cq-replication")
+        aem.prop.string("instance.provision.configureReplicationAgent.bundleSymbolicName")?.let { set(it) }
+    }
+
     fun agent(action: ReplicationAgent.() -> Unit) {
         this.agentAction = action
     }
 
+    override fun validate() {
+        if (!::agentAction.isInitialized) {
+            throw ProvisionException("Step '${id.get()}' has no replication agent action defined!")
+        }
+    }
+
     override fun action(instance: Instance) {
         instance.sync {
-            if (!::agentAction.isInitialized) {
-                throw ProvisionException("Step '${id.get()}' has no replication agent action defined!")
+            if (bundleToggle.get()) {
+                try {
+                    osgi.stopBundle(bundleSymbolicName.get())
+                    repository.replicationAgent(location, name).apply(agentAction)
+                } finally {
+                    osgi.startBundle(bundleSymbolicName.get())
+                }
+            } else {
+                repository.replicationAgent(location, name).apply(agentAction)
             }
-            repository.replicationAgent(location, name).apply(agentAction)
         }
     }
 
