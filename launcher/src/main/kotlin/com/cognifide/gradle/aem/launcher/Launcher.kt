@@ -75,7 +75,6 @@ class Launcher {
                 writeText("""
                             plugins {
                                 id("com.cognifide.aem.instance.local") version "$pluginVersion"
-                                id("com.cognifide.aem.package.sync") version "$pluginVersion"
                             }
                         """.trimIndent())
             }

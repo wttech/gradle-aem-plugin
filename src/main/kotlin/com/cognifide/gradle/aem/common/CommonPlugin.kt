@@ -17,6 +17,10 @@ class CommonPlugin : CommonDefaultPlugin() {
         plugins.apply(BasePlugin::class.java)
         extensions.add(AemExtension.NAME, AemExtension(this).apply {
             common.javaSupport.version.convention("11") // valid for instance creation and bundle compilation
+
+            if (prop.boolean("mvn.discover") == true) {
+                mvn(projectDir) { discover() }
+            }
         })
     }
 
