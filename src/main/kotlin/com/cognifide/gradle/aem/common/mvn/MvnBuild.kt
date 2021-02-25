@@ -20,8 +20,6 @@ class MvnBuild(val aem: AemExtension) {
         set(aem.project.projectDir)
     }
 
-    val rootModule get() = module(MvnModule.NAME_ROOT)
-
     val version get() = rootModule.get().gav.get().version
 
     val archetypePropertiesFile = aem.obj.file {
@@ -51,9 +49,7 @@ class MvnBuild(val aem: AemExtension) {
 
     val repositoryDir = userDir.map { it.dir(".m2/repository") }
 
-    val modules = aem.obj.list<MvnModule> { convention(listOf()) }.apply {
-        // TODO module(MvnModule.NAME_ROOT) { dir.set(rootDir) }
-    }
+    val modules = aem.obj.list<MvnModule> { convention(listOf()) }
 
     fun module(name: String, options: MvnModule.() -> Unit) {
         val dirSubPath = name.replace(":", "/")
@@ -72,6 +68,10 @@ class MvnBuild(val aem: AemExtension) {
     fun module(name: String) = modules.map {
         it.firstOrNull { m -> m.name == name } ?: throw MvnException("Maven module named '$name' is not defined!")
     }
+
+    fun rootModule(options: MvnModule.() -> Unit) = module(MvnModule.NAME_ROOT, options)
+
+    val rootModule get() = module(MvnModule.NAME_ROOT)
 
     fun discover() {
         try {
