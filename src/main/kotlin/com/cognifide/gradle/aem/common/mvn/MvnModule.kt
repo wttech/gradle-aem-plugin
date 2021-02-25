@@ -3,8 +3,6 @@ package com.cognifide.gradle.aem.common.mvn
 import com.cognifide.gradle.common.common
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.file.RegularFile
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
@@ -17,10 +15,6 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     val tasks get() = project.common.tasks
 
     val dir = aem.obj.dir()
-
-    val artifactFiles = aem.obj.map<String, Provider<RegularFile>> { set(mapOf()) }
-
-    val artifactTasks = aem.obj.map<String, TaskProvider<Exec>> { set(mapOf()) }
 
     val pom = aem.obj.file { set(dir.file("pom.xml")) }
 
@@ -65,23 +59,26 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         outputs.dir(repositoryDir)
     }
 
-    fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}) = exec(extension) {
-        moreArgs(frontendProfiles.get().map { "-P$it" })
-        inputs.property("profiles", frontendProfiles.get())
-        inputs.files(inputFiles)
-        outputArtifact(extension)
-        options()
-    }.also { artifactTasks.put(extension, it) }
+    fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}): TaskProvider<Exec> =
+        exec(extension) {
+            moreArgs(frontendProfiles.get().map { "-P$it" })
+            inputs.property("profiles", frontendProfiles.get())
+            inputs.files(inputFiles)
+            outputs.file(targetFile(extension))
+            options()
+        }
 
     fun buildJar(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_JAR, options)
 
     fun buildZip(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_ZIP, options)
 
-    fun buildArtifact(extension: String, options: Task.() -> Unit = {}) = exec(extension) {
+    fun buildArtifact(extension: String, options: Task.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
+        val outputFile = targetFile(extension)
         inputs.files(inputFiles)
-        outputArtifact(extension)
+        outputs.file(outputFile)
+        doLast { aem.common.checksumFile(outputFile.get().asFile) }
         options()
-    }.also { artifactTasks.put(extension, it) }
+    }
 
     fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
         executable("mvn")
@@ -96,12 +93,6 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     val commonArgs = aem.obj.strings {
         convention(listOf("-B", "-T", "2C"))
         aem.prop.string("mvn.commonArgs")?.let { set(it.split(" ")) }
-    }
-
-    fun Exec.outputArtifact(extension: String) {
-        val file = targetFile(extension)
-        artifactFiles.put(extension, file)
-        outputs.file(file)
     }
 
     fun Exec.moreArgs(args: Iterable<String>) {

@@ -102,9 +102,13 @@ class MvnBuild(val aem: AemExtension) {
 
         project.gradle.projectsEvaluated {
             depGraph.artifactDependencies.get().forEach { (dep1, dep2) ->
-                val task1 = tasks.pathed<Task>("$projectPathPrefix${dep1}")
-                val task2 = tasks.pathed<Task>("$projectPathPrefix${dep2}")
-                task1.configure { it.dependsOn(task2) }
+                val tp1 = tasks.pathed<Task>("$projectPathPrefix${dep1}")
+                val tp2 = tasks.pathed<Task>("$projectPathPrefix${dep2}")
+
+                tp1.configure { t1 ->
+                    t1.dependsOn(tp2)
+                    t1.inputs.files(tp2.map { it.outputs.files })
+                }
             }
         }
     }
