@@ -23,4 +23,3 @@ data class MvnGav(
         } ?: throw MvnException("Cannot read Maven GAV file '$pomFile!")
     }
 }
-

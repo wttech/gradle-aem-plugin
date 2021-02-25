@@ -28,6 +28,7 @@ import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.pluginProjects
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
@@ -431,9 +432,14 @@ class AemExtension(val project: Project) : Serializable {
     fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern.set(scriptPattern); eval() }
 
     /**
-     * Wrap Maven build with adding capability to execute it incrementally.
+     * Wrapped Maven build with added capability to execute it incrementally.
      */
-    fun mvn(rootDir: File, options: MvnBuild.() -> Unit) = MvnBuild(this, project.objects.directoryProperty().apply { set(rootDir) }).apply(options)
+    val mvnBuild by lazy { MvnBuild(this) }
+
+    /**
+     * Configure wrapped Maven build with added capability to execute it incrementally.
+     */
+    fun mvnBuild(options: MvnBuild.() -> Unit) = mvnBuild.using(options)
 
     companion object {
 

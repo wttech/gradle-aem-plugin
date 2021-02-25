@@ -3,15 +3,26 @@ package com.cognifide.gradle.aem.common.mvn
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
-import com.cognifide.gradle.common.utils.Patterns
-import org.gradle.api.file.DirectoryProperty
-import java.io.File
-import java.io.FileFilter
+import com.cognifide.gradle.common.common
+import org.gradle.api.Task
+import org.gradle.api.UnknownProjectException
 import java.util.*
 
-class MvnBuild(val aem: AemExtension, val rootDir: DirectoryProperty) {
+class MvnBuild(val aem: AemExtension) {
 
     val project = aem.project
+
+    val tasks get() = project.common.tasks
+
+    val projectPathPrefix get() = if (project.rootProject == project) ":" else "${project.path}:"
+
+    val rootDir = aem.obj.dir {
+        set(aem.project.projectDir)
+    }
+
+    val rootModule get() = module(MvnModule.NAME_ROOT)
+
+    val version get() = rootModule.get().gav.get().version
 
     val archetypePropertiesFile = aem.obj.file {
         set(rootDir.file("archetype.properties"))
@@ -30,51 +41,70 @@ class MvnBuild(val aem: AemExtension, val rootDir: DirectoryProperty) {
         set(archetypeProperties.getting("appId"))
     }
 
+    val groupId = aem.obj.string {
+        set(archetypeProperties.getting("groupId"))
+    }
+
+    val depGraph by lazy { MvnDepGraph(this) }
+
     val userDir = project.objects.directoryProperty().dir(System.getProperty("user.home"))
 
     val repositoryDir = userDir.map { it.dir(".m2/repository") }
 
-    val modules = aem.obj.list<MvnModule> { convention(listOf()) }
+    val modules = aem.obj.list<MvnModule> { convention(listOf()) }.apply {
+        // TODO module(MvnModule.NAME_ROOT) { dir.set(rootDir) }
+    }
 
-    fun module(dir: File, options: MvnModule.() -> Unit) {
-        val name = dir.name // TODO support nested modules
-        val projectPath = if (project.rootProject == project) ":$name" else "${project.path}:$name"
-        val dirProp = project.objects.directoryProperty().apply { set(dir) }
+    fun module(name: String, options: MvnModule.() -> Unit) {
+        val dirSubPath = name.replace(":", "/")
+        val projectSubPath = dirSubPath.replace("/", ":").replace("\\", ":")
+        val projectPath = "$projectPathPrefix${projectSubPath}"
 
         project.project(projectPath) { subproject ->
             subproject.plugins.apply(CommonPlugin::class.java)
-            MvnModule(this, name, dirProp, subproject).apply(options).also { modules.add(it) }
+            MvnModule(this, name, subproject).apply {
+                dir.set(rootDir.dir(dirSubPath))
+                options()
+            }.also { modules.add(it) }
         }
     }
 
     fun module(name: String) = modules.map {
-        it.firstOrNull { m -> m .name == name } ?: throw MvnException("Maven module named '$name' is not defined!")
+        it.firstOrNull { m -> m.name == name } ?: throw MvnException("Maven module named '$name' is not defined!")
     }
 
-    val zipModuleNames = aem.obj.strings {
-        convention(listOf("ui.apps", "ui.content", "ui.content.*", "dispatcher", "dispatcher.*"))
-    }
-
-    val jarModuleNames = aem.obj.strings {
-        convention(listOf("core", "bundle.*"))
-    }
-
-    val frontendModuleNames = aem.obj.strings {
-        convention(listOf("ui.frontend", "ui.frontend.*"))
-    }
-
-    // TODO maybe discover using *.dot file and by transforming it
     fun discover() {
-        rootDir.get().asFile.listFiles(FileFilter { it.isDirectory })?.forEach { dir ->
-            when {
-                Patterns.wildcard(dir.name, zipModuleNames.get()) -> module(dir) { buildZip() }
-                Patterns.wildcard(dir.name, jarModuleNames.get()) -> module(dir) { buildJar() }
-                Patterns.wildcard(dir.name, frontendModuleNames.get()) -> module(dir) { buildFrontend() }
+        try {
+            depGraph.moduleArtifacts.get().forEach { (name, extensions) ->
+                module(name) {
+                    extensions.forEach { extension ->
+                        when {
+                            extension == "zip" && frontendIndicator.get() -> buildFrontend(extension)
+                            else -> buildArtifact(extension)
+                        }
+                    }
+                }
             }
+        } catch (e: UnknownProjectException) {
+            val settingsFile = project.rootProject.file("settings.gradle.kts")
+            val settingsLines = depGraph.projectPaths.get().joinToString("\n") { """include("$it")""" }
+            throw MvnException(
+                listOf(
+                    "Maven build powered by Gradle AEM Plugin needs to have defined subprojects in Gradle settings file as prerequisite.",
+                    "Ensure having following lines in file: $settingsFile",
+                    "",
+                    settingsLines,
+                    ""
+                ).joinToString("\n")
+            )
         }
 
-        // TODO calculate dependencies between tasks
-        // mvn com.github.ferstl:depgraph-maven-plugin:aggregate -Dincludes=com.mysite
-        // mvn com.github.ferstl:depgraph-maven-plugin:aggregate -Dincludes=com.mysite -DgraphFormat=json
+        project.gradle.projectsEvaluated {
+            depGraph.artifactDependencies.get().forEach { (dep1, dep2) ->
+                val task1 = project.common.tasks.named<Task>("$projectPathPrefix${dep1}")
+                val task2 = project.common.tasks.named<Task>("$projectPathPrefix${dep2}")
+                task1.configure { it.dependsOn(task2) }
+            }
+        }
     }
 }
