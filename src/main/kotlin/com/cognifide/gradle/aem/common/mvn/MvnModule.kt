@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.mvn
 
+import com.cognifide.gradle.common.common
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.RegularFile
@@ -12,6 +13,8 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     val aem = build.aem
+
+    val tasks get() = project.common.tasks
 
     val dir = aem.obj.dir()
 
@@ -62,7 +65,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         })
     }
 
-    fun buildFrontend(extension: String = "zip", options: Task.() -> Unit = {}) = exec("frontend") {
+    fun buildFrontend(extension: String = "zip", options: Task.() -> Unit = {}) = exec(extension) {
         moreArgs(frontendProfiles.get().map { "-P$it" })
         inputs.property("profiles", frontendProfiles.get())
         inputs.files(inputFiles)
@@ -80,14 +83,14 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }.also { artifactTasks.put(extension, it) }
 
-    fun exec(name: String, options: Exec.() -> Unit) = build.tasks.register<Exec>(name) {
+    fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
         executable("mvn")
         moreArgs(listOf())
         workingDir(dir)
         options()
     }.also { task ->
-        build.tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
-        build.tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
+        tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
+        tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
     }
 
     val commonArgs = aem.obj.strings {

@@ -101,8 +101,8 @@ class MvnBuild(val aem: AemExtension) {
 
         project.gradle.projectsEvaluated {
             depGraph.artifactDependencies.get().forEach { (dep1, dep2) ->
-                val task1 = project.common.tasks.named<Task>("$projectPathPrefix${dep1}")
-                val task2 = project.common.tasks.named<Task>("$projectPathPrefix${dep2}")
+                val task1 = project.common.tasks.pathed<Task>("$projectPathPrefix${dep1}")
+                val task2 = project.common.tasks.pathed<Task>("$projectPathPrefix${dep2}")
                 task1.configure { it.dependsOn(task2) }
             }
         }
