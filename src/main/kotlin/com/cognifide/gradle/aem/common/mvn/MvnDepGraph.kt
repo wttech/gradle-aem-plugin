@@ -44,7 +44,11 @@ class MvnDepGraph(val build: MvnBuild) {
         set(aem.obj.provider { build() })
     }
 
-    val artifactDependencies = dependencies.map { it.map { (d1, d2) -> normalizeArtifact(d1) to normalizeArtifact(d2) } }
+    val artifactDependencies = dependencies.map { deps ->
+        val result = deps.map { (d1, d2) -> normalizeArtifact(d1) to normalizeArtifact(d2) }
+        val unique = result.flatMap { listOf(it.first, it.second) }.toSet()
+        result + unique.map { "${MvnModule.NAME_ROOT}:${MvnModule.ARTIFACT_POM}" to it }
+    }
 
     private fun normalizeArtifact(value: String) = value
         .removePrefix("${build.groupId.get()}:")
@@ -53,13 +57,13 @@ class MvnDepGraph(val build: MvnBuild) {
         .replace(":jar:compile", ":jar")
         .replace(":zip:compile", ":zip")
 
-    val artifacts = artifactDependencies.map { deps -> deps.flatMap { listOf(it.first, it.second) } }
+    val artifacts = artifactDependencies.map { deps -> deps.flatMap { listOf(it.first, it.second) }.toSet() }
 
     val moduleArtifacts = artifacts.map { deps ->
         deps.fold(mutableMapOf<String, MutableSet<String>>()) { result, dep ->
             val name = dep.substringBefore(":")
             val extension = dep.substringAfter(":")
-            result.getOrPut(name, { mutableSetOf() }).add(extension)
+            result.getOrPut(name) { mutableSetOf() }.add(extension)
             result
         }
     }

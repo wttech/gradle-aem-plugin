@@ -63,7 +63,7 @@ class MvnBuild(val aem: AemExtension) {
         project.project(projectPath) { subproject ->
             subproject.plugins.apply(CommonPlugin::class.java)
             MvnModule(this, name, subproject).apply {
-                dir.set(rootDir.dir(dirSubPath))
+                dir.set(if (name == MvnModule.NAME_ROOT) rootDir else rootDir.dir(dirSubPath))
                 options()
             }.also { modules.add(it) }
         }
@@ -79,7 +79,8 @@ class MvnBuild(val aem: AemExtension) {
                 module(name) {
                     extensions.forEach { extension ->
                         when {
-                            extension == "zip" && frontendIndicator.get() -> buildFrontend(extension)
+                            extension == MvnModule.ARTIFACT_POM -> buildPom()
+                            extension == MvnModule.ARTIFACT_ZIP && frontendIndicator.get() -> buildFrontend(extension)
                             else -> buildArtifact(extension)
                         }
                     }
@@ -101,8 +102,8 @@ class MvnBuild(val aem: AemExtension) {
 
         project.gradle.projectsEvaluated {
             depGraph.artifactDependencies.get().forEach { (dep1, dep2) ->
-                val task1 = project.common.tasks.pathed<Task>("$projectPathPrefix${dep1}")
-                val task2 = project.common.tasks.pathed<Task>("$projectPathPrefix${dep2}")
+                val task1 = tasks.pathed<Task>("$projectPathPrefix${dep1}")
+                val task2 = tasks.pathed<Task>("$projectPathPrefix${dep2}")
                 task1.configure { it.dependsOn(task2) }
             }
         }

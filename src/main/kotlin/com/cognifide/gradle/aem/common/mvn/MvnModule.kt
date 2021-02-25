@@ -43,13 +43,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         set(dir.dir("target"))
     }
 
-    fun targetFile(extension: String) = targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.rootModule.get().gav.get().version!!}.$extension") }
-
-    fun installPom() = exec("pom") {
-        moreArgs(listOf("-N"))
-        inputs.file(pom)
-        outputs.dir(repositoryDir)
-    }
+    fun targetFile(extension: String) = targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.version}.$extension") }
 
     val frontendIndicator = aem.obj.boolean {
         set(dir.map { it.file("clientlib.config.js").asFile.exists() })
@@ -65,7 +59,13 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         })
     }
 
-    fun buildFrontend(extension: String = "zip", options: Task.() -> Unit = {}) = exec(extension) {
+    fun buildPom() = exec(ARTIFACT_POM) {
+        moreArgs(listOf("-N"))
+        inputs.file(pom)
+        outputs.dir(repositoryDir)
+    }
+
+    fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}) = exec(extension) {
         moreArgs(frontendProfiles.get().map { "-P$it" })
         inputs.property("profiles", frontendProfiles.get())
         inputs.files(inputFiles)
@@ -73,9 +73,9 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }.also { artifactTasks.put(extension, it) }
 
-    fun buildJar(options: Task.() -> Unit = {}) = buildArtifact("jar", options)
+    fun buildJar(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_JAR, options)
 
-    fun buildZip(options: Task.() -> Unit = {}) = buildArtifact("zip", options)
+    fun buildZip(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_ZIP, options)
 
     fun buildArtifact(extension: String, options: Task.() -> Unit = {}) = exec(extension) {
         inputs.files(inputFiles)
@@ -110,5 +110,11 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     companion object {
         const val NAME_ROOT = "root"
+
+        const val ARTIFACT_POM = "pom"
+
+        const val ARTIFACT_ZIP = "zip"
+
+        const val ARTIFACT_JAR = "jar"
     }
 }
