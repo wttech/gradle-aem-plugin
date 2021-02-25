@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.mvn
 
+import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
 import com.cognifide.gradle.common.common
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -39,20 +40,6 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun targetFile(extension: String) = targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.version}.$extension") }
 
-    val frontendIndicator = aem.obj.boolean {
-        set(dir.map { it.file("clientlib.config.js").asFile.exists() })
-    }
-
-    val frontendProfiles = aem.obj.strings {
-        set(project.provider {
-            mutableListOf<String>().apply {
-                if (aem.prop.boolean("mvn.frontend.dev") == true) {
-                    add("fedDev")
-                }
-            }
-        })
-    }
-
     fun buildPom() = exec(ARTIFACT_POM) {
         moreArgs(listOf("-N"))
         inputs.file(pom)
@@ -61,8 +48,8 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}): TaskProvider<Exec> =
         exec(extension) {
-            moreArgs(frontendProfiles.get().map { "-P$it" })
-            inputs.property("profiles", frontendProfiles.get())
+            moreArgs(build.frontendProfiles.get().map { "-P$it" })
+            inputs.property("profiles", build.frontendProfiles.get())
             inputs.files(inputFiles)
             outputs.file(targetFile(extension))
             options()
@@ -88,6 +75,13 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     }.also { task ->
         tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
         tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
+    }
+
+    fun deployPackage(artifactTask: TaskProvider<Exec>, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>("deploy") {
+        sync.deployPackage(artifactTask)
+        dependsOn(artifactTask)
+        apply(build.packageDeployOptions)
+        options()
     }
 
     val commonArgs = aem.obj.strings {

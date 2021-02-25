@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.mvn
 
+import com.cognifide.gradle.common.pathPrefix
+
 typealias Dependency = Pair<String, String>
 
 class DependencyGraph(val build: MvnBuild) {
@@ -94,5 +96,5 @@ class DependencyGraph(val build: MvnBuild) {
         }
     }
 
-    val projectPaths = moduleArtifacts.map { ma -> ma.keys.map { "${build.projectPathPrefix}$it" }.sorted() }
+    val projectPaths = moduleArtifacts.map { ma -> ma.keys.map { "${build.project.pathPrefix}$it" }.sorted() }
 }

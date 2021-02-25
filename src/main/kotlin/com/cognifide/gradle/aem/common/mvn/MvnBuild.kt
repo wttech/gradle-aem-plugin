@@ -2,8 +2,15 @@ package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
 import com.cognifide.gradle.aem.common.utils.filterNotNull
+import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.LocalInstancePlugin
+import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.pluginProject
+import com.cognifide.gradle.common.pathPrefix
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
@@ -14,8 +21,6 @@ class MvnBuild(val aem: AemExtension) {
     val project = aem.project
 
     val tasks get() = project.common.tasks
-
-    val projectPathPrefix get() = if (project.rootProject == project) ":" else "${project.path}:"
 
     val rootDir = aem.obj.dir {
         set(aem.project.projectDir)
@@ -61,7 +66,7 @@ class MvnBuild(val aem: AemExtension) {
     fun module(name: String, options: MvnModule.() -> Unit) {
         val dirSubPath = name.replace(":", "/")
         val projectSubPath = dirSubPath.replace("/", ":").replace("\\", ":")
-        val projectPath = "$projectPathPrefix${projectSubPath}"
+        val projectPath = "${project.pathPrefix}$projectSubPath"
 
         project.project(projectPath) { subproject ->
             subproject.plugins.apply(CommonPlugin::class.java)
@@ -87,7 +92,11 @@ class MvnBuild(val aem: AemExtension) {
                     extensions.forEach { extension ->
                         when {
                             extension == MvnModule.ARTIFACT_POM -> buildPom()
-                            extension == MvnModule.ARTIFACT_ZIP && frontendIndicator.get() -> buildFrontend(extension)
+                            extension == MvnModule.ARTIFACT_ZIP && frontendIndicator(this) -> buildFrontend(extension)
+                            extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> {
+                                val buildTask = buildArtifact(extension)
+                                deployPackage(buildTask, packageDeployOptions)
+                            }
                             else -> buildArtifact(extension)
                         }
                     }
@@ -109,8 +118,8 @@ class MvnBuild(val aem: AemExtension) {
 
         project.gradle.projectsEvaluated {
             depGraph.all.get().forEach { (dep1, dep2) ->
-                val tp1 = tasks.pathed<Task>("$projectPathPrefix${dep1}")
-                val tp2 = tasks.pathed<Task>("$projectPathPrefix${dep2}")
+                val tp1 = tasks.pathed<Task>("${project.pathPrefix}$dep1")
+                val tp2 = tasks.pathed<Task>("${project.pathPrefix}$dep2")
 
                 tp1.configure { t1 ->
                     t1.dependsOn(tp2)
@@ -118,5 +127,36 @@ class MvnBuild(val aem: AemExtension) {
                 }
             }
         }
+    }
+
+    var packageIndicator: MvnModule.() -> Boolean = {
+        dir.get().dir("src/main/content").asFile.exists() ||
+                pom.get().asFile.readText().contains("-package-maven-plugin")
+    }
+
+    var packageDeployOptions: InstanceFileSync.() -> Unit = {
+        val localInstanceProject = project.pluginProject(LocalInstancePlugin.ID)
+        if (localInstanceProject != null) {
+            mustRunAfter(listOf(InstanceUp.NAME, InstanceProvision.NAME).map { "${localInstanceProject.pathPrefix}$it" })
+        } else {
+            val instanceProject = project.pluginProject(InstancePlugin.ID)
+            if (instanceProject != null) {
+                mustRunAfter(listOf(InstanceProvision.NAME).map { "${instanceProject.pathPrefix}$it" })
+            }
+        }
+    }
+
+    var frontendIndicator: MvnModule.() -> Boolean = {
+        dir.get().file("clientlib.config.js").asFile.exists()
+    }
+
+    val frontendProfiles = aem.obj.strings {
+        set(project.provider {
+            mutableListOf<String>().apply {
+                if (aem.prop.boolean("mvn.frontend.dev") == true) {
+                    add("fedDev")
+                }
+            }
+        })
     }
 }
