@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.mvn
 
-typealias MvnDependency = Pair<String, String>
+typealias Dependency = Pair<String, String>
 
-class MvnDepGraph(val build: MvnBuild) {
+class DependencyGraph(val build: MvnBuild) {
 
     val aem = build.aem
 
@@ -26,7 +26,7 @@ class MvnDepGraph(val build: MvnBuild) {
         }
     }
 
-    private fun parse(): List<MvnDependency> {
+    private fun parse(): List<Dependency> {
         val dotContents = dotFile.get().asFile.readText()
         return dotContents.lineSequence().mapNotNull { line ->
             line.takeIf { it.contains(" -> ") }?.trim()?.split(" -> ")?.let {
@@ -35,19 +35,15 @@ class MvnDepGraph(val build: MvnBuild) {
         }.toList()
     }
 
-    private fun build(): List<MvnDependency> {
+    private fun build(): List<Dependency> {
         generate()
         return parse()
     }
 
-    val dependencies = aem.obj.list<MvnDependency> {
-        set(aem.obj.provider { build() })
-    }
-
-    val artifactDependencies = dependencies.map { deps ->
-        val result = deps.map { (d1, d2) -> normalizeArtifact(d1) to normalizeArtifact(d2) }
-        val unique = result.flatMap { listOf(it.first, it.second) }.toSet()
-        result + unique.map { "${MvnModule.NAME_ROOT}:${MvnModule.ARTIFACT_POM}" to it }
+    val origins = aem.obj.list<Dependency> {
+        set(aem.obj.provider {
+            build().map { (d1, d2) -> normalizeArtifact(d1) to normalizeArtifact(d2) }
+        })
     }
 
     private fun normalizeArtifact(value: String) = value
@@ -57,7 +53,37 @@ class MvnDepGraph(val build: MvnBuild) {
         .replace(":jar:compile", ":jar")
         .replace(":zip:compile", ":zip")
 
-    val artifacts = artifactDependencies.map { deps -> deps.flatMap { listOf(it.first, it.second) }.toSet() }
+    val defaults = aem.obj.list<Dependency> {
+        set(origins.map { deps ->
+            val unique = deps.flatMap { listOf(it.first, it.second) }.toSet()
+            unique.map { "${MvnModule.NAME_ROOT}:${MvnModule.ARTIFACT_POM}" to it }
+        })
+        aem.prop.map("mvn.depGraph.defaults")?.let { deps -> set(deps.map { it.toPair() }) }
+    }
+
+    val extras = aem.obj.list<Dependency> {
+        convention(listOf())
+        aem.prop.map("mvn.depGraph.extras")?.let { deps -> set(deps.map { it.toPair() }) }
+    }
+
+    fun extras(vararg dependencies: Pair<String, String>) {
+        extras.addAll(dependencies.asIterable())
+    }
+
+    val redundants = aem.obj.list<Dependency> {
+        convention(listOf())
+        aem.prop.map("mvn.depGraph.redundants")?.let { deps -> set(deps.map { it.toPair() }) }
+    }
+
+    fun redundant(vararg dependencies: Pair<String, String>) {
+        redundants.addAll(dependencies.asIterable())
+    }
+
+    val all = origins.map { deps ->
+        (deps + defaults.get() + extras.get()) - redundants.get()
+    }
+
+    val artifacts = all.map { deps -> deps.flatMap { listOf(it.first, it.second) }.toSet() }
 
     val moduleArtifacts = artifacts.map { deps ->
         deps.fold(mutableMapOf<String, MutableSet<String>>()) { result, dep ->

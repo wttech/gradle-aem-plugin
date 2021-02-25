@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
 import java.util.*
@@ -18,6 +19,10 @@ class MvnBuild(val aem: AemExtension) {
 
     val rootDir = aem.obj.dir {
         set(aem.project.projectDir)
+    }
+
+    fun rootDir(path: String) {
+        rootDir.set(aem.project.file(path))
     }
 
     val version get() = rootModule.get().gav.get().version
@@ -43,7 +48,9 @@ class MvnBuild(val aem: AemExtension) {
         set(archetypeProperties.getting("groupId"))
     }
 
-    val depGraph by lazy { MvnDepGraph(this) }
+    val depGraph by lazy { DependencyGraph(this) }
+
+    fun depGraph(options: DependencyGraph.() -> Unit) = depGraph.using(options)
 
     val userDir = project.objects.directoryProperty().dir(System.getProperty("user.home"))
 
@@ -101,7 +108,7 @@ class MvnBuild(val aem: AemExtension) {
         }
 
         project.gradle.projectsEvaluated {
-            depGraph.artifactDependencies.get().forEach { (dep1, dep2) ->
+            depGraph.all.get().forEach { (dep1, dep2) ->
                 val tp1 = tasks.pathed<Task>("$projectPathPrefix${dep1}")
                 val tp2 = tasks.pathed<Task>("$projectPathPrefix${dep2}")
 
