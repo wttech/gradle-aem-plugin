@@ -137,8 +137,8 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun syncConfig(options: PackageConfig.() -> Unit = {}) = tasks.register<PackageConfig>("config") {
         commonOptions()
-        saveDir.set(dir.map { it.dir("${build.packageContentPath.get()}/apps/${build.appId.get()}/osgiconfig/config") })
-        pid.set(build.groupId.map { "$it.*" })
+        saveDir.convention(dir.map { it.dir("${build.packageContentPath.get()}/jcr_root/apps/${build.appId.get()}/osgiconfig/config") })
+        pid.convention(build.groupId.map { "$it.*" })
         apply(build.packageConfigOptions)
         options()
     }
