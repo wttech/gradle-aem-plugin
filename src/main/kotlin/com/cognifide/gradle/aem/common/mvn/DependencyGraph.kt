@@ -24,7 +24,7 @@ class DependencyGraph(val build: MvnBuild) {
                 aem.project.exec { spec ->
                     spec.workingDir(build.rootDir)
                     spec.executable("mvn")
-                    spec.args("com.github.ferstl:depgraph-maven-plugin:aggregate", "-Dincludes=${build.groupId}")
+                    spec.args("com.github.ferstl:depgraph-maven-plugin:aggregate", "-Dincludes=${build.groupId.get()}")
                 }
             } catch (e: Exception) {
                 throw MvnException("Cannot generate Maven DepGraph properly! Error: '${e.message}'", e)
