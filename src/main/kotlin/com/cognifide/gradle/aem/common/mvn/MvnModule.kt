@@ -32,7 +32,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     val inputFiles get() = project.fileTree(dir).matching(inputFilter)
 
-    var inputFilter: PatternFilterable.() -> Unit = { exclude(inputPatterns.get())  }
+    var inputFilter: PatternFilterable.() -> Unit = { exclude(inputPatterns.get()) }
 
     val inputPatterns = aem.obj.strings {
         set(listOf(

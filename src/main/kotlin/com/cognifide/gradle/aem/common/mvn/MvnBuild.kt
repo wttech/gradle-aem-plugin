@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
 import com.cognifide.gradle.aem.common.utils.filterNotNull
@@ -85,51 +86,6 @@ class MvnBuild(val aem: AemExtension) {
 
     val rootModule get() = module(MvnModule.NAME_ROOT)
 
-    fun discover() {
-        try {
-            depGraph.moduleArtifacts.get().forEach { (name, extensions) ->
-                module(name) {
-                    extensions.forEach { extension ->
-                        when {
-                            extension == MvnModule.ARTIFACT_POM -> buildPom()
-                            extension == MvnModule.ARTIFACT_ZIP && frontendIndicator(this) -> buildFrontend(extension)
-                            extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> {
-                                val buildTask = buildArtifact(extension)
-                                deployPackage(buildTask, packageDeployOptions)
-                                syncPackage()
-                            }
-                            else -> buildArtifact(extension)
-                        }
-                    }
-                }
-            }
-        } catch (e: UnknownProjectException) {
-            val settingsFile = project.rootProject.file("settings.gradle.kts")
-            val settingsLines = depGraph.projectPaths.get().joinToString("\n") { """include("$it")""" }
-            throw MvnException(
-                listOf(
-                    "Maven build powered by Gradle AEM Plugin needs to have defined subprojects in Gradle settings file as prerequisite.",
-                    "Ensure having following lines in file: $settingsFile",
-                    "",
-                    settingsLines,
-                    ""
-                ).joinToString("\n")
-            )
-        }
-
-        project.gradle.projectsEvaluated {
-            depGraph.all.get().forEach { (dep1, dep2) ->
-                val tp1 = tasks.pathed<Task>("${project.pathPrefix}$dep1")
-                val tp2 = tasks.pathed<Task>("${project.pathPrefix}$dep2")
-
-                tp1.configure { t1 ->
-                    t1.dependsOn(tp2)
-                    t1.inputs.files(tp2.map { it.outputs.files })
-                }
-            }
-        }
-    }
-
     var packageIndicator: MvnModule.() -> Boolean = {
         dir.get().dir(packageContentPath.get()).asFile.exists() ||
                 pom.get().asFile.readText().contains(packagePluginName.get())
@@ -167,5 +123,57 @@ class MvnBuild(val aem: AemExtension) {
                 }
             }
         })
+    }
+
+    fun discover() {
+        try {
+            defineGraphModules()
+        } catch (e: UnknownProjectException) {
+            val settingsFile = project.rootProject.file("settings.gradle.kts")
+            val settingsLines = depGraph.projectPaths.get().joinToString("\n") { """include("$it")""" }
+            throw MvnException(
+                listOf(
+                    "Maven build powered by ${AemPlugin.NAME} needs to have defined subprojects in Gradle settings file as prerequisite.",
+                    "Ensure having following lines in file: $settingsFile",
+                    "",
+                    settingsLines,
+                    ""
+                ).joinToString("\n")
+            )
+        }
+        project.gradle.projectsEvaluated {
+            defineGraphDependencies()
+        }
+    }
+
+    private fun defineGraphModules() {
+        depGraph.moduleArtifacts.get().forEach { (name, extensions) ->
+            module(name) {
+                extensions.forEach { extension ->
+                    when {
+                        extension == MvnModule.ARTIFACT_POM -> buildPom()
+                        extension == MvnModule.ARTIFACT_ZIP && frontendIndicator(this) -> buildFrontend(extension)
+                        extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> {
+                            val buildTask = buildArtifact(extension)
+                            deployPackage(buildTask, packageDeployOptions)
+                            syncPackage()
+                        }
+                        else -> buildArtifact(extension)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun defineGraphDependencies() {
+        depGraph.all.get().forEach { (dep1, dep2) ->
+            val tp1 = tasks.pathed<Task>("${project.pathPrefix}$dep1")
+            val tp2 = tasks.pathed<Task>("${project.pathPrefix}$dep2")
+
+            tp1.configure { t1 ->
+                t1.dependsOn(tp2)
+                t1.inputs.files(tp2.map { it.outputs.files })
+            }
+        }
     }
 }
