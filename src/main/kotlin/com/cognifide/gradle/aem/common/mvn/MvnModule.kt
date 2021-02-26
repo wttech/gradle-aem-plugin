@@ -127,11 +127,6 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     fun syncPackage(options: PackageSync.() -> Unit = {}) = tasks.register<PackageSync>("sync") {
         commonOptions()
         contentDir(dir.dir(build.packageContentPath.get()).get())
-        downloader {
-            definition {
-                destinationDirectory.set(build.rootDir.dir("build/sync/$name"))
-            }
-        }
         options()
     }
 

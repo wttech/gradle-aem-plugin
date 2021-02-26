@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
 import com.cognifide.gradle.aem.common.utils.filterNotNull
@@ -72,6 +73,9 @@ class MvnBuild(val aem: AemExtension) {
 
         project.project(projectPath) { subproject ->
             subproject.plugins.apply(CommonPlugin::class.java)
+            subproject.aem.common {
+                tmpDir.set(project.layout.buildDirectory.dir("mvnBuild/$name"))
+            }
             MvnModule(this, name, subproject).apply {
                 dir.set(if (name == MvnModule.NAME_ROOT) rootDir else rootDir.dir(dirSubPath))
                 options()
