@@ -96,6 +96,7 @@ class MvnBuild(val aem: AemExtension) {
                             extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> {
                                 val buildTask = buildArtifact(extension)
                                 deployPackage(buildTask, packageDeployOptions)
+                                syncPackage()
                             }
                             else -> buildArtifact(extension)
                         }
@@ -130,8 +131,16 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     var packageIndicator: MvnModule.() -> Boolean = {
-        dir.get().dir("src/main/content").asFile.exists() ||
-                pom.get().asFile.readText().contains("-package-maven-plugin")
+        dir.get().dir(packageContentPath.get()).asFile.exists() ||
+                pom.get().asFile.readText().contains(packagePluginName.get())
+    }
+
+    val packageContentPath = aem.obj.string {
+        convention("src/main/content")
+    }
+
+    val packagePluginName = aem.obj.string {
+        convention("-package-maven-plugin")
     }
 
     var packageDeployOptions: InstanceFileSync.() -> Unit = {

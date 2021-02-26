@@ -17,34 +17,43 @@ class DependencyGraph(val build: MvnBuild) {
         aem.prop.boolean("mvn.depGraph.generateForce")?.let { set(it) }
     }
 
-    private fun generate() {
-        if (!generateForce.get() && dotFile.get().asFile.exists()) {
-            return
-        }
-        aem.project.exec { spec ->
-            spec.workingDir(build.rootDir)
-            spec.executable("mvn")
-            spec.args("com.github.ferstl:depgraph-maven-plugin:aggregate", "-Dincludes=${build.groupId}")
-        }
-    }
-
-    private fun parse(): List<Dependency> {
-        val dotContents = dotFile.get().asFile.readText()
-        return dotContents.lineSequence().mapNotNull { line ->
-            line.takeIf { it.contains(" -> ") }?.trim()?.split(" -> ")?.let {
-                it[0].removeSurrounding("\"") to it[1].removeSurrounding("\"")
+    @Suppress("TooGenericExceptionCaught")
+    private fun generateDotFile(): String {
+        if (generateForce.get() || !dotFile.get().asFile.exists()) {
+            try {
+                aem.project.exec { spec ->
+                    spec.workingDir(build.rootDir)
+                    spec.executable("mvn")
+                    spec.args("com.github.ferstl:depgraph-maven-plugin:aggregate", "-Dincludes=${build.groupId}")
+                }
+            } catch (e: Exception) {
+                throw MvnException("Cannot generate Maven DepGraph properly! Error: '${e.message}'", e)
             }
-        }.toList()
+        }
+
+        val file = dotFile.get().asFile
+        if (!file.exists()) {
+            throw MvnException("Maven DepGraph file does not exist: '$file'!")
+        }
+
+        return file.readText()
     }
 
-    private fun build(): List<Dependency> {
-        generate()
-        return parse()
-    }
-
-    val origins = aem.obj.list<Dependency> {
+    val dotDependencies = aem.obj.list<Dependency> {
         set(aem.obj.provider {
-            build().map { (d1, d2) -> normalizeArtifact(d1) to normalizeArtifact(d2) }
+            generateDotFile().lineSequence().mapNotNull { line ->
+                line.takeIf { it.contains(" -> ") }?.trim()?.split(" -> ")?.let {
+                    it[0].removeSurrounding("\"") to it[1].removeSurrounding("\"")
+                }
+            }.map { normalizeArtifact(it.first) to normalizeArtifact(it.second) }.toList()
+        })
+    }
+
+    val dotArtifacts = aem.obj.list<String> {
+        set(aem.obj.provider {
+            generateDotFile().lineSequence().mapNotNull { line ->
+                line.takeIf { it.contains("[label=") }?.trim()?.substringBefore("[label=")?.removeSurrounding("\"")
+            }.map { normalizeArtifact(it) }.toList()
         })
     }
 
@@ -55,13 +64,7 @@ class DependencyGraph(val build: MvnBuild) {
         .replace(":jar:compile", ":jar")
         .replace(":zip:compile", ":zip")
 
-    val defaults = aem.obj.list<Dependency> {
-        set(origins.map { deps ->
-            val unique = deps.flatMap { listOf(it.first, it.second) }.toSet()
-            unique.map { "${MvnModule.NAME_ROOT}:${MvnModule.ARTIFACT_POM}" to it }
-        })
-        aem.prop.map("mvn.depGraph.defaults")?.let { deps -> set(deps.map { it.toPair() }) }
-    }
+    val defaults = dotArtifacts.map { da -> da.map { MvnModule.ARTIFACT_ROOT_POM to it } }
 
     val extras = aem.obj.list<Dependency> {
         convention(listOf())
@@ -81,11 +84,11 @@ class DependencyGraph(val build: MvnBuild) {
         redundants.addAll(dependencies.asIterable())
     }
 
-    val all = origins.map { deps ->
-        (deps + defaults.get() + extras.get()) - redundants.get()
-    }
+    // === Effective values ===
 
-    val artifacts = all.map { deps -> deps.flatMap { listOf(it.first, it.second) }.toSet() }
+    val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }
+
+    val artifacts = dotArtifacts.map { da -> listOf(MvnModule.ARTIFACT_ROOT_POM) + da }
 
     val moduleArtifacts = artifacts.map { deps ->
         deps.fold(mutableMapOf<String, MutableSet<String>>()) { result, dep ->
@@ -96,5 +99,5 @@ class DependencyGraph(val build: MvnBuild) {
         }
     }
 
-    val projectPaths = moduleArtifacts.map { ma -> ma.keys.map { "${build.project.pathPrefix}$it" }.sorted() }
+    val projectPaths = artifacts.map { ma -> ma.map { "${build.project.pathPrefix}$it" }.sorted() }
 }

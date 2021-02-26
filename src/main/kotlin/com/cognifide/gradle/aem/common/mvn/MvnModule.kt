@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.common.mvn
 
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
+import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.common.common
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -27,9 +29,38 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         set(build.repositoryDir.map { it.dir("${gav.get().groupId}/${gav.get().artifactId}") })
     }
 
-    val inputFiles get() = project.fileTree(dir).matching { pf ->
-        pf.excludeTypicalOutputs()
-        pf.exclude("**/package-lock.json")
+    val inputFiles get() = project.fileTree(dir).matching { it.exclude(inputPatterns.get()) }
+
+    val inputPatterns = aem.obj.strings {
+        set(listOf(
+            "**/.idea/**",
+            "**/.idea",
+            "**/.gradle/**",
+            "**/.gradle",
+            "**/gradle.user.properties",
+            "**/gradle/user/**",
+
+            // outputs
+            "**/target/**",
+            "**/target",
+            "**/build/**",
+            "**/build",
+            "**/dist/**",
+            "**/dist",
+            "**/generated",
+            "**/generated/**",
+
+            // temporary files
+            "**/node_modules/**",
+            "**/node_modules",
+            "**/node/**",
+            "**/node",
+            "**/*.log",
+            "**/*.tmp",
+
+            // generated files
+            "**/package-lock.json"
+        ))
     }
 
     val outputFiles get() = project.fileTree(targetDir)
@@ -41,25 +72,27 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     fun targetFile(extension: String) = targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.version}.$extension") }
 
     fun buildPom() = exec(ARTIFACT_POM) {
+        description = "Installs POM to local repository"
         moreArgs(listOf("-N"))
         inputs.file(pom)
         outputs.dir(repositoryDir)
     }
 
-    fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}): TaskProvider<Exec> =
-        exec(extension) {
-            moreArgs(build.frontendProfiles.get().map { "-P$it" })
-            inputs.property("profiles", build.frontendProfiles.get())
-            inputs.files(inputFiles)
-            outputs.file(targetFile(extension))
-            options()
-        }
+    fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
+        description = "Builds frontend"
+        moreArgs(build.frontendProfiles.get().map { "-P$it" })
+        inputs.property("profiles", build.frontendProfiles.get())
+        inputs.files(inputFiles)
+        outputs.file(targetFile(extension))
+        options()
+    }
 
     fun buildJar(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_JAR, options)
 
     fun buildZip(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_ZIP, options)
 
     fun buildArtifact(extension: String, options: Task.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
+        description = "Builds artifact '$extension'"
         val outputFile = targetFile(extension)
         inputs.files(inputFiles)
         outputs.file(outputFile)
@@ -68,6 +101,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     }
 
     fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
+        commonOptions()
         executable("mvn")
         moreArgs(listOf())
         workingDir(dir)
@@ -78,15 +112,32 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     }
 
     fun deployPackage(artifactTask: TaskProvider<Exec>, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>("deploy") {
+        commonOptions()
+        description = "Deploys AEM package to instance"
         sync.deployPackage(artifactTask)
         dependsOn(artifactTask)
         apply(build.packageDeployOptions)
         options()
     }
 
+    fun syncPackage(options: PackageSync.() -> Unit = {}) = tasks.register<PackageSync>("sync") {
+        commonOptions()
+        contentDir(dir.dir(build.packageContentPath.get()).get())
+        downloader {
+            definition {
+                destinationDirectory.set(build.rootDir.dir("build/sync/$name"))
+            }
+        }
+        options()
+    }
+
     val commonArgs = aem.obj.strings {
         convention(listOf("-B", "-T", "2C"))
         aem.prop.string("mvn.commonArgs")?.let { set(it.split(" ")) }
+    }
+
+    fun Task.commonOptions() {
+        group = AemTask.GROUP
     }
 
     fun Exec.moreArgs(args: Iterable<String>) {
@@ -97,6 +148,8 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         const val NAME_ROOT = "root"
 
         const val ARTIFACT_POM = "pom"
+
+        const val ARTIFACT_ROOT_POM = "$NAME_ROOT:$ARTIFACT_POM"
 
         const val ARTIFACT_ZIP = "zip"
 
