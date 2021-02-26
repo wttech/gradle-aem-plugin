@@ -9,6 +9,7 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
@@ -29,7 +30,9 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         set(build.repositoryDir.map { it.dir("${gav.get().groupId}/${gav.get().artifactId}") })
     }
 
-    val inputFiles get() = project.fileTree(dir).matching { it.exclude(inputPatterns.get()) }
+    val inputFiles get() = project.fileTree(dir).matching(inputFilter)
+
+    var inputFilter: PatternFilterable.() -> Unit = { exclude(inputPatterns.get())  }
 
     val inputPatterns = aem.obj.strings {
         set(listOf(
