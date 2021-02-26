@@ -99,5 +99,5 @@ class DependencyGraph(val build: MvnBuild) {
         }
     }
 
-    val projectPaths = artifacts.map { ma -> ma.map { "${build.project.pathPrefix}$it" }.sorted() }
+    val projectPaths = moduleArtifacts.map { ma -> ma.keys.map { "${build.project.pathPrefix}$it" }.sorted() }
 }
