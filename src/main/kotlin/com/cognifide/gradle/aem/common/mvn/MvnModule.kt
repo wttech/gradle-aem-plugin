@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
+import com.cognifide.gradle.aem.pkg.tasks.PackageConfig
 import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.common.common
 import org.gradle.api.Project
@@ -134,9 +135,12 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
-    val commonArgs = aem.obj.strings {
-        convention(listOf("-B", "-T", "2C"))
-        aem.prop.string("mvn.commonArgs")?.let { set(it.split(" ")) }
+    fun syncConfig(options: PackageConfig.() -> Unit = {}) = tasks.register<PackageConfig>("config") {
+        commonOptions()
+        saveDir.set(dir.map { it.dir("${build.packageContentPath.get()}/apps/${build.appId.get()}/osgiconfig/config") })
+        pid.set(build.groupId.map { "$it.*" })
+        apply(build.packageConfigOptions)
+        options()
     }
 
     fun Task.commonOptions() {
@@ -144,7 +148,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     }
 
     fun Exec.moreArgs(args: Iterable<String>) {
-        args(commonArgs.get() + listOf("clean", "install") + args)
+        args(build.execArgs.get() + listOf("clean", "install") + args)
     }
 
     companion object {

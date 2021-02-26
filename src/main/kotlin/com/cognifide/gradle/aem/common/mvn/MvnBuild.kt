@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
+import com.cognifide.gradle.aem.pkg.tasks.PackageConfig
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.pathPrefix
@@ -111,6 +112,8 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
+    var packageConfigOptions: PackageConfig.() -> Unit = {}
+
     var frontendIndicator: MvnModule.() -> Boolean = {
         dir.get().file("clientlib.config.js").asFile.exists()
     }
@@ -123,6 +126,11 @@ class MvnBuild(val aem: AemExtension) {
                 }
             }
         })
+    }
+
+    val execArgs = aem.obj.strings {
+        convention(listOf("-B", "-T", "2C"))
+        aem.prop.string("mvn.execArgs")?.let { set(it.split(" ")) }
     }
 
     fun discover() {
@@ -156,6 +164,7 @@ class MvnBuild(val aem: AemExtension) {
                         val buildTask = buildArtifact(extension)
                         deployPackage(buildTask, packageDeployOptions)
                         syncPackage()
+                        syncConfig()
                     }
                     else -> buildArtifact(extension)
                 }
