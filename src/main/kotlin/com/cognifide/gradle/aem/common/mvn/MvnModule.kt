@@ -46,7 +46,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     }
 
     val repositoryPom = aem.obj.file {
-        set(repositoryDir.map { it.file("$groupId.$artifactId-$version.xml") })
+        set(repositoryDir.map { it.file("$artifactId-$version.pom") })
     }
 
     val inputFiles get() = project.fileTree(dir).matching(inputFilter)
