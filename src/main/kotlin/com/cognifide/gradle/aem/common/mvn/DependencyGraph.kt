@@ -92,7 +92,7 @@ class DependencyGraph(val build: MvnBuild) {
         }
         ?.let { Artifact(it) }
 
-    val defaults = dotArtifacts.map { da -> da.map { Dependency(MvnModule.ARTIFACT_ROOT_POM.toArtifact(), it) } }
+    val defaults = dotArtifacts.map { da -> da.map { Dependency(it, MvnModule.ARTIFACT_ROOT_POM.toArtifact()) } }
 
     val extras = aem.obj.list<Dependency> {
         convention(listOf())

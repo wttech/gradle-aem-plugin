@@ -61,7 +61,7 @@ class MvnBuild(val aem: AemExtension) {
 
     fun depGraph(options: DependencyGraph.() -> Unit) = depGraph.using(options)
 
-    val userDir = project.objects.directoryProperty().dir(System.getProperty("user.home"))
+    val userDir = aem.obj.dir { set(project.file(System.getProperty("user.home"))) }
 
     val repositoryDir = userDir.map { it.dir(".m2/repository") }
 
@@ -167,12 +167,7 @@ class MvnBuild(val aem: AemExtension) {
                 when {
                     extension == MvnModule.ARTIFACT_POM -> buildPom()
                     extension == MvnModule.ARTIFACT_ZIP && frontendIndicator(this) -> buildFrontend()
-                    extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> {
-                        val buildTask = buildPackage()
-                        deployPackage(buildTask, packageDeployOptions)
-                        syncPackage()
-                        syncConfig()
-                    }
+                    extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> configurePackage()
                     extension == MvnModule.ARTIFACT_JAR -> buildJar()
                     else -> buildModule()
                 }

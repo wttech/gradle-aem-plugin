@@ -105,6 +105,16 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
+    fun configurePackage() {
+        val buildPackage = buildPackage()
+        deployPackage(targetFile(ARTIFACT_ZIP)) {
+            dependsOn(buildPackage)
+            apply(build.packageDeployOptions)
+        }
+        syncPackage()
+        syncConfig()
+    }
+
     fun buildPackage(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
         description = "Builds AEM package"
         val outputFile = targetFile(ARTIFACT_ZIP)
@@ -114,11 +124,10 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
-    fun deployPackage(artifactTask: TaskProvider<Exec>, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>("deploy") {
+    fun deployPackage(zip: Any, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>("deploy") {
         commonOptions()
         description = "Deploys AEM package to instance"
-        sync.deployPackage(artifactTask)
-        dependsOn(artifactTask)
+        sync.deployPackage(zip)
         apply(build.packageDeployOptions)
         options()
     }
