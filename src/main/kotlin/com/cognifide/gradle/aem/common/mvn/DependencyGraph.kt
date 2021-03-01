@@ -112,6 +112,16 @@ class DependencyGraph(val build: MvnBuild) {
         redundants.addAll(dependencies.map { it.toDependency() }.asIterable())
     }
 
+    fun redundantEffectively(dependency: Pair<String, String>) {
+        redundants.addAll(build.modules.map { modules ->
+            val dep = dependency.toDependency()
+            val moduleName = dep.to.module
+            val module = modules.firstOrNull { it.name == moduleName }
+                ?: throw MvnException("Cannot find module '$moduleName' effectively redundant for dependency '$dependency'!")
+            if (module.repositoryPom.get().asFile.exists()) { listOf(dep) } else listOf()
+        })
+    }
+
     // === Effective values ===
 
     val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }

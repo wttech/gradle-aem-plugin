@@ -4,20 +4,12 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
 import com.cognifide.gradle.aem.common.utils.filterNotNull
-import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.LocalInstancePlugin
-import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
-import com.cognifide.gradle.aem.instance.tasks.InstanceUp
-import com.cognifide.gradle.aem.pkg.tasks.PackageConfig
 import com.cognifide.gradle.common.common
-import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.pathPrefix
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
-import org.gradle.api.tasks.Exec
 import java.util.*
 
 class MvnBuild(val aem: AemExtension) {
@@ -33,8 +25,6 @@ class MvnBuild(val aem: AemExtension) {
     fun rootDir(path: String) {
         rootDir.set(aem.project.file(path))
     }
-
-    val version get() = rootModule.get().gav.get().version
 
     val archetypePropertiesFile = aem.obj.file {
         set(rootDir.file("archetype.properties"))
@@ -56,6 +46,10 @@ class MvnBuild(val aem: AemExtension) {
     val groupId = aem.obj.string {
         set(archetypeProperties.getting("groupId"))
     }
+
+    val version get() = rootModule.get().gav.get().version
+        ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
+
 
     val depGraph by lazy { DependencyGraph(this) }
 
@@ -112,39 +106,8 @@ class MvnBuild(val aem: AemExtension) {
         convention("-package-maven-plugin")
     }
 
-    var packageDeployOptions: InstanceFileSync.() -> Unit = {
-        val localInstanceProject = project.pluginProject(LocalInstancePlugin.ID)
-        if (localInstanceProject != null) {
-            mustRunAfter(listOf(InstanceUp.NAME, InstanceProvision.NAME).map { "${localInstanceProject.pathPrefix}$it" })
-        } else {
-            val instanceProject = project.pluginProject(InstancePlugin.ID)
-            if (instanceProject != null) {
-                mustRunAfter(listOf(InstanceProvision.NAME).map { "${instanceProject.pathPrefix}$it" })
-            }
-        }
-    }
-
-    var packageConfigOptions: PackageConfig.() -> Unit = {}
-
     var frontendIndicator: MvnModule.() -> Boolean = {
         dir.get().file("clientlib.config.js").asFile.exists()
-    }
-
-    val frontendProfiles = aem.obj.strings {
-        set(project.provider {
-            mutableListOf<String>().apply {
-                if (aem.prop.boolean("mvn.frontend.dev") == true) {
-                    add("fedDev")
-                }
-            }
-        })
-    }
-
-    var execOptions: Exec.() -> Unit = {}
-
-    val execArgs = aem.obj.strings {
-        convention(listOf("-B", "-T", "2C"))
-        aem.prop.string("mvn.execArgs")?.let { set(it.split(" ")) }
     }
 
     fun discover() {
