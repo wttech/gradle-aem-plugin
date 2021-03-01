@@ -7,6 +7,8 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.common.common
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
@@ -54,6 +56,8 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
             "**/generated",
             "**/generated/**",
 
+            "**/package-lock.json",
+
             // temporary files
             "**/node_modules/**",
             "**/node_modules",
@@ -61,9 +65,6 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
             "**/node",
             "**/*.log",
             "**/*.tmp",
-
-            // generated files
-            "**/package-lock.json"
         ))
     }
 
@@ -73,46 +74,44 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         set(dir.dir("target"))
     }
 
-    fun targetFile(extension: String) = targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.version}.$extension") }
+    var targetFileLocator: MvnModule.(String) -> Provider<RegularFile> = { extension ->
+        targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.version}.$extension") }
+    }
+
+    fun targetFile(extension: String) = targetFileLocator(extension)
 
     fun buildPom() = exec(ARTIFACT_POM) {
         description = "Installs POM to local repository"
-        moreArgs(listOf("-N"))
         inputs.file(pom)
         outputs.dir(repositoryDir)
     }
 
-    fun buildFrontend(extension: String = ARTIFACT_ZIP, options: Task.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
-        description = "Builds frontend"
-        moreArgs(build.frontendProfiles.get().map { "-P$it" })
-        inputs.property("profiles", build.frontendProfiles.get())
-        inputs.files(inputFiles)
-        outputs.file(targetFile(extension))
+    fun buildJar(options: Exec.() -> Unit = {}) = buildArtifact(ARTIFACT_JAR) {
+        description = "Builds JAR file"
         options()
     }
 
-    fun buildJar(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_JAR, options)
+    fun buildZip(options: Exec.() -> Unit = {}) = buildArtifact(ARTIFACT_ZIP) {
+        description = "Builds ZIP archive"
+        options()
+    }
 
-    fun buildZip(options: Task.() -> Unit = {}) = buildArtifact(ARTIFACT_ZIP, options)
+    fun buildFrontend(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
+        description = "Builds AEM frontend"
+        moreArgs(build.frontendProfiles.get().map { "-P$it" })
+        inputs.property("profiles", build.frontendProfiles)
+        inputs.files(inputFiles)
+        outputs.file(targetFile(ARTIFACT_ZIP))
+        options()
+    }
 
-    fun buildArtifact(extension: String, options: Task.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
-        description = "Builds artifact '$extension'"
-        val outputFile = targetFile(extension)
+    fun buildPackage(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
+        description = "Builds AEM package"
+        val outputFile = targetFile(ARTIFACT_ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
-        doLast { aem.common.checksumFile(outputFile.get().asFile) }
+        doLast { aem.common.checksumFile(outputFile.get().asFile, true) }
         options()
-    }
-
-    fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
-        commonOptions()
-        executable("mvn")
-        moreArgs(listOf())
-        workingDir(dir)
-        options()
-    }.also { task ->
-        tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
-        tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
     }
 
     fun deployPackage(artifactTask: TaskProvider<Exec>, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>("deploy") {
@@ -138,13 +137,42 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
+    fun buildArtifact(extension: String, options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
+        description = "Builds artifact '$extension'"
+        val outputFile = targetFile(extension)
+        inputs.files(inputFiles)
+        outputs.file(outputFile)
+        options()
+    }
+
+    fun buildModule(options: Exec.() -> Unit = {}) = exec("module") {
+        description = "Builds module"
+        inputs.files(inputFiles)
+        outputs.files(outputFiles)
+        options()
+    }
+
+    fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
+        commonOptions()
+        executable("mvn")
+        moreArgs(listOf())
+        workingDir(dir)
+        apply(build.execOptions)
+        options()
+    }.also { task ->
+        tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
+        tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
+    }
+
+    fun Exec.moreArgs(args: Iterable<String>) {
+        args(build.execArgs.get() + listOf("clean", "install", "-N") + args)
+    }
+
     fun Task.commonOptions() {
         group = AemTask.GROUP
     }
 
-    fun Exec.moreArgs(args: Iterable<String>) {
-        args(build.execArgs.get() + listOf("clean", "install") + args)
-    }
+    override fun toString() = "MvnModule(name='$name', dir=${dir.get().asFile}"
 
     companion object {
         const val NAME_ROOT = "root"

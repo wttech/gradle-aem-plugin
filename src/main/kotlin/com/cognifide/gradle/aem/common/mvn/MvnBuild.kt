@@ -17,6 +17,7 @@ import com.cognifide.gradle.common.pathPrefix
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
+import org.gradle.api.tasks.Exec
 import java.util.*
 
 class MvnBuild(val aem: AemExtension) {
@@ -132,6 +133,8 @@ class MvnBuild(val aem: AemExtension) {
         })
     }
 
+    var execOptions: Exec.() -> Unit = {}
+
     val execArgs = aem.obj.strings {
         convention(listOf("-B", "-T", "2C"))
         aem.prop.string("mvn.execArgs")?.let { set(it.split(" ")) }
@@ -158,31 +161,34 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    private fun defineGraphModules() = depGraph.moduleArtifacts.get().forEach { (name, extensions) ->
-        module(name) {
-            extensions.forEach { extension ->
+    private fun defineGraphModules() = depGraph.moduleArtifacts.get().forEach { (moduleName, artifactExtensions) ->
+        module(moduleName) {
+            artifactExtensions.forEach { extension ->
                 when {
                     extension == MvnModule.ARTIFACT_POM -> buildPom()
-                    extension == MvnModule.ARTIFACT_ZIP && frontendIndicator(this) -> buildFrontend(extension)
+                    extension == MvnModule.ARTIFACT_ZIP && frontendIndicator(this) -> buildFrontend()
                     extension == MvnModule.ARTIFACT_ZIP && packageIndicator(this) -> {
-                        val buildTask = buildArtifact(extension)
+                        val buildTask = buildPackage()
                         deployPackage(buildTask, packageDeployOptions)
                         syncPackage()
                         syncConfig()
                     }
-                    else -> buildArtifact(extension)
+                    extension == MvnModule.ARTIFACT_JAR -> buildJar()
+                    else -> buildModule()
                 }
             }
         }
     }
 
-    private fun defineGraphDependencies() = depGraph.all.get().forEach { (dep1, dep2) ->
-        val tp1 = tasks.pathed<Task>("${project.pathPrefix}$dep1")
-        val tp2 = tasks.pathed<Task>("${project.pathPrefix}$dep2")
+    private fun defineGraphDependencies() = depGraph.all.get().forEach { (a1, a2) ->
+        val tp1 = tasks.pathed<Task>("${project.pathPrefix}${a1.notation}")
+        val tp2 = tasks.pathed<Task>("${project.pathPrefix}${a2.notation}")
 
         tp1.configure { t1 ->
             t1.dependsOn(tp2)
             t1.inputs.files(tp2.map { it.outputs.files })
         }
     }
+
+    override fun toString() = "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
 }
