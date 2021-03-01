@@ -238,5 +238,9 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         const val ARTIFACT_ZIP = "zip"
 
         const val ARTIFACT_JAR = "jar"
+
+        const val NAME_DISPATCHER = "dispatcher"
+
+        const val ARTIFACT_DISPATCHER_POM = "$NAME_DISPATCHER:$ARTIFACT_POM"
     }
 }

@@ -32,7 +32,15 @@ class MvnBuild(val aem: AemExtension) {
 
     val archetypeProperties = aem.obj.map<String, String> {
         set(archetypePropertiesFile.map { rf ->
-            Properties().apply { rf.asFile.bufferedReader().use { load(it) } }
+            val rff = rf.asFile
+            if (!rff.exists()) {
+                throw MvnException(listOf(
+                    "Maven archetype properties file does not exist '$rff'!",
+                    "Consider creating it or specify 'appId' and 'groupId' in build script."
+                ).joinToString(" "))
+            }
+
+            Properties().apply { rff.bufferedReader().use { load(it) } }
                 .filterNotNull()
                 .entries.map { (k, v) -> k.toString() to v.toString() }
                 .toMap()
@@ -69,6 +77,11 @@ class MvnBuild(val aem: AemExtension) {
 
     fun module(name: String, options: MvnModule.() -> Unit) {
         val dirSubPath = name.replace(":", "/")
+        val dirObj = (if (name == MvnModule.NAME_ROOT) rootDir else rootDir.dir(dirSubPath)).get().asFile
+        if (!dirObj.exists()) { // TODO lookup module dir by 'groupID' and 'artifactId'
+            throw MvnException("Maven module '$name' directory does not exist '$dirObj'!")
+        }
+
         val projectSubPath = dirSubPath.replace("/", ":").replace("\\", ":")
         val projectPath = "${project.pathPrefix}$projectSubPath"
 
@@ -78,7 +91,7 @@ class MvnBuild(val aem: AemExtension) {
                 tmpDir.set(project.layout.buildDirectory.dir("mvnBuild/$name"))
             }
             MvnModule(this, name, subproject).apply {
-                dir.set(if (name == MvnModule.NAME_ROOT) rootDir else rootDir.dir(dirSubPath))
+                dir.set(dirObj)
                 moduleOptions()
                 options()
             }.also { modules.add(it) }

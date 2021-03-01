@@ -49,7 +49,7 @@ class DependencyGraph(val build: MvnBuild) {
                     dotFileSource.get().asFile.copyTo(dotFile.get().asFile, true)
                 }
             } catch (e: Exception) {
-                throw MvnException("Cannot generate Maven DepGraph properly! Error: '${e.message}'", e)
+                throw MvnException("Cannot generate Maven DepGraph properly!", e)
             }
         }
 
@@ -83,8 +83,23 @@ class DependencyGraph(val build: MvnBuild) {
         })
     }
 
+    val dotArtifactPrefixes = aem.obj.strings {
+        set(aem.project.provider {
+            listOf(
+                "${build.groupId.get()}:",
+                "${build.appId.get()}."
+            )
+        })
+    }
+
+    // TODO sure? maybe some lookup will be better
+    val predefinedArtifacts = aem.obj.list<Artifact> {
+        set(listOf(Artifact(MvnModule.ARTIFACT_DISPATCHER_POM)))
+        aem.prop.list("mvn.depGraph.predefinedArtifacts")?.let { it.map { Artifact(it) } }
+    }
+
     private fun normalizeArtifact(value: String) = value.takeIf { it.endsWith(":compile") }?.removeSuffix(":compile")
-        ?.removePrefix("${build.groupId.get()}:")?.removePrefix("${build.appId.get()}.")
+        ?.let { a -> dotArtifactPrefixes.get().fold(a) { r, i -> r.removePrefix(i) } }
         ?.let { dep ->
             packagingMap.get().entries.fold(dep) { depFolded, (packaging, extension) ->
                 depFolded.replace(":$packaging", ":$extension")
@@ -126,7 +141,7 @@ class DependencyGraph(val build: MvnBuild) {
 
     val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }
 
-    val artifacts = dotArtifacts.map { da -> listOf(MvnModule.ARTIFACT_ROOT_POM.toArtifact()) + da }
+    val artifacts = dotArtifacts.map { da -> listOf(MvnModule.ARTIFACT_ROOT_POM.toArtifact()) + predefinedArtifacts.get() + da }
 
     val moduleArtifacts = artifacts.map { list ->
         list.fold(mutableMapOf<String, MutableSet<String>>()) { result, artifact ->
