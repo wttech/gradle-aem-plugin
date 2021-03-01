@@ -6,8 +6,12 @@ class DependencyGraph(val build: MvnBuild) {
 
     val aem = build.aem
 
-    val dotFile = aem.obj.file {
+    val dotFileSource = aem.obj.file {
         set(build.rootDir.file("target/dependency-graph.dot"))
+    }
+
+    val dotFile = aem.obj.file {
+        set(aem.project.layout.projectDirectory.file("build.mvn.dot"))
     }
 
     val generateForce = aem.obj.boolean {
@@ -24,10 +28,25 @@ class DependencyGraph(val build: MvnBuild) {
     private fun generateDotFile(): String {
         if (generateForce.get() || !dotFile.get().asFile.exists()) {
             try {
-                aem.project.exec { spec ->
-                    spec.workingDir(build.rootDir)
-                    spec.executable("mvn")
-                    spec.args("com.github.ferstl:depgraph-maven-plugin:aggregate", "-Dincludes=${build.groupId.get()}")
+                aem.common.progress {
+                    step = "Performing full build for dependency graph"
+                    aem.project.exec { spec ->
+                        spec.workingDir(build.rootDir)
+                        spec.executable("mvn")
+                        spec.args("clean", "install", "-DskipTests")
+                    }
+
+                    step = "Generating dependency graph"
+                    aem.project.exec { spec ->
+                        spec.workingDir(build.rootDir)
+                        spec.executable("mvn")
+                        spec.args(
+                            "com.github.ferstl:depgraph-maven-plugin:aggregate",
+                            "-Dincludes=${build.groupId.get()}",
+                            "-Dscope=compile"
+                        )
+                    }
+                    dotFileSource.get().asFile.copyTo(dotFile.get().asFile, true)
                 }
             } catch (e: Exception) {
                 throw MvnException("Cannot generate Maven DepGraph properly! Error: '${e.message}'", e)
