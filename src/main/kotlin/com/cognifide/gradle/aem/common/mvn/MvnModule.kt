@@ -30,7 +30,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
     }
 
     val repositoryDir = aem.obj.dir {
-        set(build.repositoryDir.map { it.dir("${gav.get().groupId}/${gav.get().artifactId}") })
+        set(build.repositoryDir.map { it.dir("${(gav.get().groupId ?: build.groupId.get()).replace(".", "/")}/${gav.get().artifactId}") })
     }
 
     val inputFiles get() = project.fileTree(dir).matching(inputFilter)
@@ -74,7 +74,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         set(dir.dir("target"))
     }
 
-    var targetFileLocator: MvnModule.(String) -> Provider<RegularFile> = { extension ->
+    var targetFileLocator: (String) -> Provider<RegularFile> = { extension ->
         targetDir.map { it.file("${gav.get().artifactId}-${gav.get().version ?: build.version}.$extension") }
     }
 
@@ -82,6 +82,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun buildPom() = exec(ARTIFACT_POM) {
         description = "Installs POM to local repository"
+        combineArgs("clean", "install")
         inputs.file(pom)
         outputs.dir(repositoryDir)
     }
@@ -96,12 +97,22 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
+    fun buildArtifact(extension: String, options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
+        description = "Builds artifact '$extension'"
+        combineArgs("clean", "install")
+        inputs.files(inputFiles)
+        outputs.file(targetFile(extension))
+        outputs.dir(repositoryDir)
+        options()
+    }
+
     fun buildFrontend(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
         description = "Builds AEM frontend"
-        moreArgs(build.frontendProfiles.get().map { "-P$it" })
+        combineArgs(listOf("clean", "install") + build.frontendProfiles.get().map { "-P$it" })
         inputs.property("profiles", build.frontendProfiles)
         inputs.files(inputFiles)
         outputs.file(targetFile(ARTIFACT_ZIP))
+        outputs.dir(repositoryDir)
         options()
     }
 
@@ -117,9 +128,11 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun buildPackage(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
         description = "Builds AEM package"
+        combineArgs("clean", "install")
         val outputFile = targetFile(ARTIFACT_ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
+        outputs.dir(repositoryDir)
         doLast { aem.common.checksumFile(outputFile.get().asFile, true) }
         options()
     }
@@ -146,25 +159,19 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
-    fun buildArtifact(extension: String, options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
-        description = "Builds artifact '$extension'"
-        val outputFile = targetFile(extension)
-        inputs.files(inputFiles)
-        outputs.file(outputFile)
-        options()
-    }
-
     fun buildModule(options: Exec.() -> Unit = {}) = exec("module") {
         description = "Builds module"
+        combineArgs("clean", "install")
         inputs.files(inputFiles)
         outputs.files(outputFiles)
+        outputs.dir(repositoryDir)
         options()
     }
 
     fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
         commonOptions()
         executable("mvn")
-        moreArgs(listOf())
+        combineArgs()
         workingDir(dir)
         apply(build.execOptions)
         options()
@@ -173,8 +180,10 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
     }
 
-    fun Exec.moreArgs(args: Iterable<String>) {
-        args(build.execArgs.get() + listOf("clean", "install", "-N") + args)
+    fun Exec.combineArgs(vararg args: String) = combineArgs(args.asIterable())
+
+    fun Exec.combineArgs(extraArgs: Iterable<String>) {
+        setArgs(build.execArgs.get() + listOf("-N") + extraArgs)
     }
 
     fun Task.commonOptions() {

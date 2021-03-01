@@ -67,6 +67,12 @@ class MvnBuild(val aem: AemExtension) {
 
     val modules = aem.obj.list<MvnModule> { convention(listOf()) }
 
+    private var moduleOptions: MvnModule.() -> Unit = {}
+
+    fun module(options: MvnModule.() -> Unit) {
+        this.moduleOptions = options
+    }
+
     fun module(name: String, options: MvnModule.() -> Unit) {
         val dirSubPath = name.replace(":", "/")
         val projectSubPath = dirSubPath.replace("/", ":").replace("\\", ":")
@@ -79,6 +85,7 @@ class MvnBuild(val aem: AemExtension) {
             }
             MvnModule(this, name, subproject).apply {
                 dir.set(if (name == MvnModule.NAME_ROOT) rootDir else rootDir.dir(dirSubPath))
+                moduleOptions()
                 options()
             }.also { modules.add(it) }
         }
