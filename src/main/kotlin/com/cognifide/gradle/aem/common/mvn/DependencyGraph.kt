@@ -82,7 +82,7 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     private fun normalizeArtifact(value: String) = value.takeIf { it.endsWith(":compile") }?.removeSuffix(":compile")
-        ?.let { it.removePrefix("${build.groupId.get()}:") }
+        ?.removePrefix("${build.groupId.get()}:")
         ?.let { dep ->
             packagingMap.get().entries.fold(dep) { depFolded, (packaging, extension) ->
                 depFolded.replace(":$packaging", ":$extension")

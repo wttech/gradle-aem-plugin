@@ -60,6 +60,7 @@ class MvnBuild(val aem: AemExtension) {
 
     val outputPatterns = aem.obj.strings {
         set(listOf(
+            // ignored files
             "**/.idea/**",
             "**/.idea",
             "**/.gradle/**",
@@ -67,7 +68,7 @@ class MvnBuild(val aem: AemExtension) {
             "**/gradle.user.properties",
             "**/gradle/user/**",
 
-            // outputs
+            // build files
             "**/target/**",
             "**/target",
             "**/build/**",
@@ -105,15 +106,12 @@ class MvnBuild(val aem: AemExtension) {
 
     private var moduleOptions: MvnModule.() -> Unit = {}
 
-    fun module(options: MvnModule.() -> Unit) {
+    fun moduleOptions(options: MvnModule.() -> Unit) {
         this.moduleOptions = options
     }
 
-    fun module(artifactId: String, options: MvnModule.() -> Unit) {
-        val descriptor = moduleResolver.all.get().firstOrNull { it.artifactId == artifactId }
-            ?: throw MvnException("Maven module with artifactId '$artifactId' not found!")
-
-        module(descriptor, options)
+    fun module(name: String, options: MvnModule.() -> Unit) {
+        module(moduleResolver.byName(name), options)
     }
 
     private fun module(descriptor: ModuleDescriptor, options: MvnModule.() -> Unit) {
@@ -129,17 +127,6 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    fun module(artifactId: String) = modules.map {
-        it.firstOrNull { m -> m.descriptor.artifactId == artifactId }
-            ?: throw MvnException("Maven module with artifactId '$artifactId' is not defined!")
-    }
-
-    fun rootModule(options: MvnModule.() -> Unit) = module(moduleResolver.root.get().artifactId, options)
-
-    val rootModule = modules.map { m -> m.firstOrNull { it.descriptor.root }
-        ?: throw MvnException("Maven root module cannot be found!")
-    }
-
     fun discover() {
         try {
             defineModulesResolved()
@@ -148,7 +135,7 @@ class MvnBuild(val aem: AemExtension) {
             val settingsLines = moduleResolver.projectPaths.get().joinToString("\n") { """include("$it")""" }
             throw MvnException(
                 listOf(
-                    "Maven build powered by ${AemPlugin.NAME} needs to have defined subprojects in Gradle settings file as prerequisite.",
+                    "Maven build at path '${rootDir.get().asFile}' powered by ${AemPlugin.NAME} needs subprojects defined in Gradle settings as prerequisite.",
                     "Ensure having following lines in file: $settingsFile",
                     "",
                     settingsLines,
@@ -185,8 +172,7 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     private fun findModuleTask(artifact: Artifact): TaskProvider<Task> {
-        val descriptor = moduleResolver.all.get().firstOrNull { it.artifact == artifact }
-            ?: throw MvnException("Cannot find task for artifact '${artifact.notation}'!")
+        val descriptor = moduleResolver.byArtifact(artifact)
         return tasks.pathed(descriptor.taskPath)
     }
 

@@ -7,18 +7,25 @@ class ModuleResolver(val build: MvnBuild) {
     val aem = build.aem
 
     val all = aem.obj.list<ModuleDescriptor> {
-        set(aem.project.fileTree(build.rootDir)
-            .matching { it.include("pom.xml", "**/pom.xml").exclude(build.outputPatterns.get()) }
-            .elements.map { e ->
-                e.mapNotNull { pom -> ModuleDescriptor(this@ModuleResolver, typeResolver(pom.asFile), pom.asFile) }
-            })
+        finalizeValueOnRead()
+        set(aem.project.provider {
+            aem.project.fileTree(build.rootDir)
+                .matching { it.include("pom.xml", "**/pom.xml").exclude(build.outputPatterns.get()) }
+                .files.map { pom -> ModuleDescriptor(this@ModuleResolver, typeResolver(pom), pom) }
+        })
     }
+
+    fun byName(name: String) = all.get().firstOrNull { it.name == name }
+        ?: throw MvnException("Cannot find module named '$name' in Maven build at path '$rootDir'!")
+
+    fun byArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifact == artifact }
+        ?: throw MvnException("Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!")
 
     val rootDir get() = build.rootDir.get().asFile
 
     val root = all.map { descriptors ->
         descriptors.firstOrNull { it.dir == rootDir }
-            ?: throw MvnException("Cannot determine root module descriptor for Maven build at path '$rootDir'!")
+            ?: throw MvnException("Cannot find root module in Maven build at path '$rootDir'!")
     }
 
     val artifactPrefixes = aem.obj.strings {
