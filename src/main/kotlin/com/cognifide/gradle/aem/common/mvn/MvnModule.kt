@@ -47,7 +47,11 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         set(descriptor.dir.resolve("target"))
     }
 
-    var targetFileLocator: (String) -> Provider<RegularFile> = { extension ->
+    fun targetFileLocator(locator: (extension: String) -> Provider<RegularFile>) {
+        this.targetFileLocator = locator
+    }
+
+    private var targetFileLocator: (String) -> Provider<RegularFile> = { extension ->
         targetDir.map { it.file("${descriptor.artifactId}-${descriptor.version}.$extension") }
     }
 
