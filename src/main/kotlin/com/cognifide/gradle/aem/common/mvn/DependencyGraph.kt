@@ -1,7 +1,5 @@
 package com.cognifide.gradle.aem.common.mvn
 
-import com.cognifide.gradle.common.pathPrefix
-
 class DependencyGraph(val build: MvnBuild) {
 
     val aem = build.aem
@@ -83,23 +81,8 @@ class DependencyGraph(val build: MvnBuild) {
         })
     }
 
-    val dotArtifactPrefixes = aem.obj.strings {
-        set(aem.project.provider {
-            listOf(
-                "${build.groupId.get()}:",
-                "${build.appId.get()}."
-            )
-        })
-    }
-
-    // TODO sure? maybe some lookup will be better
-    val predefinedArtifacts = aem.obj.list<Artifact> {
-        set(listOf(Artifact(MvnModule.ARTIFACT_DISPATCHER_POM)))
-        aem.prop.list("mvn.depGraph.predefinedArtifacts")?.let { it.map { Artifact(it) } }
-    }
-
     private fun normalizeArtifact(value: String) = value.takeIf { it.endsWith(":compile") }?.removeSuffix(":compile")
-        ?.let { a -> dotArtifactPrefixes.get().fold(a) { r, i -> r.removePrefix(i) } }
+        ?.let { it.removePrefix("${build.groupId.get()}:") }
         ?.let { dep ->
             packagingMap.get().entries.fold(dep) { depFolded, (packaging, extension) ->
                 depFolded.replace(":$packaging", ":$extension")
@@ -107,7 +90,7 @@ class DependencyGraph(val build: MvnBuild) {
         }
         ?.let { Artifact(it) }
 
-    val defaults = dotArtifacts.map { da -> da.map { Dependency(it, MvnModule.ARTIFACT_ROOT_POM.toArtifact()) } }
+    val defaults = dotArtifacts.map { da -> da.map { a -> Dependency(a, build.moduleResolver.root.map { it.artifact }.get()) } }
 
     val extras = aem.obj.list<Dependency> {
         convention(listOf())
@@ -130,26 +113,14 @@ class DependencyGraph(val build: MvnBuild) {
     fun redundantEffectively(dependency: Pair<String, String>) {
         redundants.addAll(build.modules.map { modules ->
             val dep = dependency.toDependency()
-            val moduleName = dep.to.module
-            val module = modules.firstOrNull { it.name == moduleName }
-                ?: throw MvnException("Cannot find module '$moduleName' effectively redundant for dependency '$dependency'!")
+            val artifactId = dep.to.id
+            val module = modules.firstOrNull { it.descriptor.artifactId == artifactId }
+                ?: throw MvnException("Cannot find module with artifactId '$artifactId' to determine effectively redundant dependency '$dependency'!")
             if (module.repositoryPom.get().asFile.exists()) { listOf(dep) } else listOf()
         })
     }
 
-    // === Effective values ===
-
     val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }
 
-    val artifacts = dotArtifacts.map { da -> listOf(MvnModule.ARTIFACT_ROOT_POM.toArtifact()) + predefinedArtifacts.get() + da }
-
-    val moduleArtifacts = artifacts.map { list ->
-        list.fold(mutableMapOf<String, MutableSet<String>>()) { result, artifact ->
-            result.also { it.getOrPut(artifact.module) { mutableSetOf() }.add(artifact.extension) }
-        }
-    }
-
-    val projectPaths = moduleArtifacts.map { ma -> ma.keys.map { "${build.project.pathPrefix}$it" }.sorted() }
-
-    override fun toString() = "DependencyGraph(dotFile=${dotFile.get().asFile}, artifacts=${artifacts.get()}, dependencies=${all.get()})"
+    override fun toString() = "DependencyGraph(dotFile=${dotFile.get().asFile}, dependencies=${all.get().map { it.notation }})"
 }

@@ -21,94 +21,51 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
+class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val project: Project) {
 
     val aem = build.aem
 
     val tasks get() = project.common.tasks
 
-    val dir = aem.obj.dir()
-
-    val pom = aem.obj.file { set(dir.file("pom.xml")) }
-
-    val gav = aem.obj.typed<MvnGav> {
-        set(pom.map { MvnGav.readFile(it.asFile) })
-    }
-
-    val groupId get() = gav.map { it.groupId ?: build.groupId.get() }.get()
-
-    val artifactId get() = gav.map { it.artifactId }.get()
-
-    val version get() = gav.map { it.version ?: build.version }.get()
-
     val repositoryDir = aem.obj.dir {
-        set(build.repositoryDir.map { it.dir("${groupId.replace(".", "/")}/$artifactId/$version") })
+        set(build.repositoryDir.map { it.dir("${descriptor.groupId.replace(".", "/")}/${descriptor.artifactId}/${descriptor.version}") })
     }
 
     val repositoryPom = aem.obj.file {
-        set(repositoryDir.map { it.file("$artifactId-$version.pom") })
+        set(repositoryDir.map { it.file("${descriptor.artifactId}-${descriptor.version}.pom") })
     }
 
-    val inputFiles get() = project.fileTree(dir).matching(inputFilter)
+    val inputFiles get() = project.fileTree(descriptor.dir).matching(inputFilter)
 
-    var inputFilter: PatternFilterable.() -> Unit = { exclude(inputPatterns.get()) }
+    var inputFilter: PatternFilterable.() -> Unit = { exclude(outputPatterns.get()) }
 
-    val inputPatterns = aem.obj.strings {
-        set(listOf(
-            "**/.idea/**",
-            "**/.idea",
-            "**/.gradle/**",
-            "**/.gradle",
-            "**/gradle.user.properties",
-            "**/gradle/user/**",
-
-            // outputs
-            "**/target/**",
-            "**/target",
-            "**/build/**",
-            "**/build",
-            "**/dist/**",
-            "**/dist",
-            "**/generated",
-            "**/generated/**",
-
-            "**/package-lock.json",
-
-            // temporary files
-            "**/node_modules/**",
-            "**/node_modules",
-            "**/node/**",
-            "**/node",
-            "**/*.log",
-            "**/*.tmp",
-        ))
-    }
+    val outputPatterns = aem.obj.strings { set(build.outputPatterns) }
 
     val outputFiles get() = project.fileTree(targetDir)
 
     val targetDir = aem.obj.dir {
-        set(dir.dir("target"))
+        set(descriptor.dir.resolve("target"))
     }
 
     var targetFileLocator: (String) -> Provider<RegularFile> = { extension ->
-        targetDir.map { it.file("$artifactId-$version.$extension") }
+        targetDir.map { it.file("${descriptor.artifactId}-${descriptor.version}.$extension") }
     }
 
     fun targetFile(extension: String) = targetFileLocator(extension)
 
-    fun buildPom() = exec(ARTIFACT_POM) {
+    fun buildPom() = exec(Artifact.POM) {
         description = "Installs POM to local repository"
         combineArgs("clean", "install")
-        inputs.file(pom)
+        inputs.file(descriptor.pom)
         outputs.dir(repositoryDir)
     }
 
-    fun buildJar(options: Exec.() -> Unit = {}) = buildArtifact(ARTIFACT_JAR) {
+    fun buildJar(options: Exec.() -> Unit = {}) = buildArtifact(Artifact.JAR) {
         description = "Builds JAR file"
         options()
     }
 
-    fun buildZip(options: Exec.() -> Unit = {}) = buildArtifact(ARTIFACT_ZIP) {
+    fun buildZip(options: Exec.() -> Unit = {}) = buildArtifact(Artifact.ZIP) {
         description = "Builds ZIP archive"
         options()
     }
@@ -122,12 +79,12 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         options()
     }
 
-    fun buildFrontend(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
+    fun buildFrontend(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(Artifact.ZIP) {
         description = "Builds AEM frontend"
         combineArgs(listOf("clean", "install") + frontendProfiles.get().map { "-P$it" })
         inputs.property("profiles", frontendProfiles)
         inputs.files(inputFiles)
-        outputs.file(targetFile(ARTIFACT_ZIP))
+        outputs.file(targetFile(Artifact.ZIP))
         outputs.dir(repositoryDir)
         options()
     }
@@ -144,15 +101,15 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun configurePackage() {
         val buildPackage = buildPackage()
-        deployPackage(targetFile(ARTIFACT_ZIP)) { dependsOn(buildPackage) }
+        deployPackage(targetFile(Artifact.ZIP)) { dependsOn(buildPackage) }
         syncPackage()
         syncConfig()
     }
 
-    fun buildPackage(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(ARTIFACT_ZIP) {
+    fun buildPackage(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(Artifact.ZIP) {
         description = "Builds AEM package"
         combineArgs("clean", "install")
-        val outputFile = targetFile(ARTIFACT_ZIP)
+        val outputFile = targetFile(Artifact.ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
         outputs.dir(repositoryDir)
@@ -180,13 +137,13 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
 
     fun syncPackage(options: PackageSync.() -> Unit = {}) = tasks.register<PackageSync>("sync") {
         commonOptions()
-        contentDir(dir.dir(build.packageContentPath.get()).get())
+        contentDir(descriptor.dir.resolve("src/main/content"))
         options()
     }
 
     fun syncConfig(options: PackageConfig.() -> Unit = {}) = tasks.register<PackageConfig>("config") {
         commonOptions()
-        saveDir.convention(dir.map { it.dir("${build.packageContentPath.get()}/jcr_root/apps/${build.appId.get()}/osgiconfig/config") })
+        saveDir.set(descriptor.dir.resolve("src/main/content/jcr_root/apps/${build.appId.get()}/osgiconfig/config"))
         pid.convention(build.groupId.map { "$it.*" })
         options()
     }
@@ -204,7 +161,7 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         commonOptions()
         executable("mvn")
         combineArgs()
-        workingDir(dir)
+        workingDir(descriptor.dir)
         options()
     }.also { task ->
         tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
@@ -226,21 +183,5 @@ class MvnModule(val build: MvnBuild, val name: String, val project: Project) {
         group = AemTask.GROUP
     }
 
-    override fun toString() = "MvnModule(name='$name', dir=${dir.get().asFile}"
-
-    companion object {
-        const val NAME_ROOT = "root"
-
-        const val ARTIFACT_POM = "pom"
-
-        const val ARTIFACT_ROOT_POM = "$NAME_ROOT:$ARTIFACT_POM"
-
-        const val ARTIFACT_ZIP = "zip"
-
-        const val ARTIFACT_JAR = "jar"
-
-        const val NAME_DISPATCHER = "dispatcher"
-
-        const val ARTIFACT_DISPATCHER_POM = "$NAME_DISPATCHER:$ARTIFACT_POM"
-    }
+    override fun toString() = "MvnModule(projectPath='${project.path}' descriptor=$descriptor)"
 }
