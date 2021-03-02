@@ -25,7 +25,7 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
 
     val projectPath get() = "${build.project.pathPrefix}$name"
 
-    val taskPath get() = "${projectPath}:${artifact.extension}"
+    val taskPath get() = "$projectPath:${artifact.extension}"
 
     override fun toString() = "ModuleDescriptor(name=$name, type=$type)"
 }
