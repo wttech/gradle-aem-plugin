@@ -115,7 +115,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         options()
     }
 
-    fun deployPackage(zip: Any, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>("deploy") {
+    fun deployPackage(zip: Any, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>(TASK_PACKAGE_DEPLOY) {
         commonOptions()
         description = "Deploys AEM package to instance"
         sync.deployPackage(zip)
@@ -133,20 +133,20 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         options()
     }
 
-    fun syncPackage(options: PackageSync.() -> Unit = {}) = tasks.register<PackageSync>("sync") {
+    fun syncPackage(options: PackageSync.() -> Unit = {}) = tasks.register<PackageSync>(TASK_PACKAGE_SYNC) {
         commonOptions()
         contentDir(descriptor.dir.resolve("src/main/content"))
         options()
     }
 
-    fun syncConfig(options: PackageConfig.() -> Unit = {}) = tasks.register<PackageConfig>("config") {
+    fun syncConfig(options: PackageConfig.() -> Unit = {}) = tasks.register<PackageConfig>(TASK_PACKAGE_CONFIG) {
         commonOptions()
         saveDir.set(descriptor.dir.resolve("src/main/content/jcr_root/apps/${build.appId.get()}/osgiconfig/config"))
         pid.convention(build.groupId.map { "$it.*" })
         options()
     }
 
-    fun buildModule(options: MvnExec.() -> Unit = {}) = exec("module") {
+    fun buildModule(options: MvnExec.() -> Unit = {}) = exec(TASK_MODULE) {
         description = "Builds module"
         args("clean", "install")
         inputs.files(inputFiles)
@@ -172,4 +172,14 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     }
 
     override fun toString() = "MvnModule(projectPath='${project.path}' descriptor=$descriptor)"
+
+    companion object {
+        const val TASK_PACKAGE_DEPLOY = "deploy"
+
+        const val TASK_PACKAGE_SYNC = "sync"
+
+        const val TASK_PACKAGE_CONFIG = "config"
+
+        const val TASK_MODULE = "module"
+    }
 }

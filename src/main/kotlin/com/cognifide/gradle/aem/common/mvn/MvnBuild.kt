@@ -9,7 +9,6 @@ import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
-import org.gradle.api.tasks.TaskProvider
 import java.util.*
 
 class MvnBuild(val aem: AemExtension) {
@@ -162,18 +161,27 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     private fun defineModuleTaskDependenciesFromGraph() = depGraph.all.get().forEach { (a1, a2) ->
-        val tp1 = findModuleTask(a1)
-        val tp2 = findModuleTask(a2)
+        val module1 = moduleResolver.byArtifact(a1)
+        val module2 = moduleResolver.byArtifact(a2)
 
-        tp1.configure { t1 ->
-            t1.dependsOn(tp2)
-            t1.inputs.files(tp2.map { it.outputs.files })
+        // Build ordering
+        val buildTask1 = tasks.pathed<Task>(module1.artifactTaskPath)
+        val buildTask2 = tasks.pathed<Task>(module2.artifactTaskPath)
+
+        buildTask1.configure { bt1 ->
+            bt1.dependsOn(buildTask2)
+            bt1.inputs.files(buildTask2.map { it.outputs.files })
         }
-    }
 
-    private fun findModuleTask(artifact: Artifact): TaskProvider<Task> {
-        val descriptor = moduleResolver.byArtifact(artifact)
-        return tasks.pathed(descriptor.taskPath)
+        // Package deploy ordering
+        if (module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
+            val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+            val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+
+            deployTask1.configure { dt1 ->
+                dt1.mustRunAfter(deployTask2)
+            }
+        }
     }
 
     override fun toString() = "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
