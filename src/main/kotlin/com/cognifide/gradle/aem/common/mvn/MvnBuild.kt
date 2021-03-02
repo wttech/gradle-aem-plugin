@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
@@ -33,10 +34,12 @@ class MvnBuild(val aem: AemExtension) {
         set(archetypePropertiesFile.map { rf ->
             val rff = rf.asFile
             if (!rff.exists()) {
-                throw MvnException(listOf(
-                    "Maven archetype properties file does not exist '$rff'!",
-                    "Consider creating it or specify 'appId' and 'groupId' in build script."
-                ).joinToString(" "))
+                throw MvnException(
+                    listOf(
+                        "Maven archetype properties file does not exist '$rff'!",
+                        "Consider creating it or specify 'appId' and 'groupId' in build script."
+                    ).joinToString(" ")
+                )
             }
 
             Properties().apply { rff.bufferedReader().use { load(it) } }
@@ -54,39 +57,42 @@ class MvnBuild(val aem: AemExtension) {
         set(archetypeProperties.getting("groupId"))
     }
 
-    val version get() = MvnGav.readFile(rootDir.get().asFile.resolve("pom.xml")).version
-        ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
+    val version
+        get() = MvnGav.readFile(rootDir.get().asFile.resolve("pom.xml")).version
+            ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
 
     val outputPatterns = aem.obj.strings {
-        set(listOf(
-            // ignored files
-            "**/.idea/**",
-            "**/.idea",
-            "**/.gradle/**",
-            "**/.gradle",
-            "**/gradle.user.properties",
-            "**/gradle/user/**",
+        set(
+            listOf(
+                // ignored files
+                "**/.idea/**",
+                "**/.idea",
+                "**/.gradle/**",
+                "**/.gradle",
+                "**/gradle.user.properties",
+                "**/gradle/user/**",
 
-            // build files
-            "**/target/**",
-            "**/target",
-            "**/build/**",
-            "**/build",
-            "**/dist/**",
-            "**/dist",
-            "**/generated",
-            "**/generated/**",
+                // build files
+                "**/target/**",
+                "**/target",
+                "**/build/**",
+                "**/build",
+                "**/dist/**",
+                "**/dist",
+                "**/generated",
+                "**/generated/**",
 
-            "**/package-lock.json",
+                "**/package-lock.json",
 
-            // temporary files
-            "**/node_modules/**",
-            "**/node_modules",
-            "**/node/**",
-            "**/node",
-            "**/*.log",
-            "**/*.tmp",
-        ))
+                // temporary files
+                "**/node_modules/**",
+                "**/node_modules",
+                "**/node/**",
+                "**/node",
+                "**/*.log",
+                "**/*.tmp",
+            )
+        )
     }
 
     val depGraph by lazy { DependencyGraph(this) }
@@ -142,12 +148,12 @@ class MvnBuild(val aem: AemExtension) {
                 ).joinToString("\n")
             )
         }
-        project.gradle.projectsEvaluated {
-            defineModuleTaskDependenciesFromGraph()
-        }
+
+        defineModuleTaskDependenciesFromGraph()
+        defineDeployPackageTask()
     }
 
-    private fun defineModulesResolved() = moduleResolver.all.get().forEach { descriptor ->
+    fun defineModulesResolved() = moduleResolver.all.get().forEach { descriptor ->
         module(descriptor) {
             when (descriptor.type) {
                 ModuleType.POM -> buildPom()
@@ -160,7 +166,7 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    private fun defineModuleTaskDependenciesFromGraph() = depGraph.all.get().forEach { (a1, a2) ->
+    fun defineModuleTaskDependenciesFromGraph() = depGraph.all.get().forEach { (a1, a2) ->
         val module1 = moduleResolver.byArtifact(a1)
         val module2 = moduleResolver.byArtifact(a2)
 
@@ -174,15 +180,63 @@ class MvnBuild(val aem: AemExtension) {
         }
 
         // Package deploy ordering
-        if (module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
-            val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
-            val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+        if (deployPackageOrder.get() == DeployPackageOrder.GRAPH) {
+            if (module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
+                val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+                val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
 
-            deployTask1.configure { dt1 ->
-                dt1.mustRunAfter(deployTask2)
+                deployTask1.configure { dt1 ->
+                    dt1.mustRunAfter(deployTask2)
+                }
             }
         }
     }
 
-    override fun toString() = "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
+    val deployPackageOrder = aem.obj.typed<DeployPackageOrder> {
+        convention(DeployPackageOrder.PRECEDENCE)
+        aem.prop.string("mvn.deployPackageOrder")?.let { set(DeployPackageOrder.of(it)) }
+    }
+
+    fun deployPackageOrder(type: String) {
+        deployPackageOrder.set(DeployPackageOrder.of(type))
+    }
+
+    val deployPackagePrecedence = aem.obj.strings {
+        convention(
+            listOf(
+                "ui.prereqs",
+                "ui.apps.prereqs",
+                "ui.apps",
+                "ui.apps.*",
+                "ui.*.apps",
+                "ui.config",
+                "ui.config.*",
+                "ui.*.config",
+                "ui.content",
+                "ui.content.*",
+                "ui.*.content",
+                "all.*",
+                "*.all",
+                "all"
+            )
+        )
+    }
+
+    fun defineDeployPackageTask() {
+        val packageModules = moduleResolver.all.get().filter { it.type == ModuleType.PACKAGE }
+        val taskOptions: Task.() -> Unit = { description = "Deploys AEM packages incrementally" }
+
+        if (deployPackageOrder.get() == DeployPackageOrder.PRECEDENCE) {
+            val deployTasks = packageModules.sortedBy { module ->
+                deployPackagePrecedence.get().indexOfFirst { Patterns.wildcard(module.name, it) }
+            }.map { tasks.pathed<Task>(it.taskPath(MvnModule.TASK_PACKAGE_DEPLOY)) }
+            tasks.registerSequence(MvnModule.TASK_PACKAGE_DEPLOY, taskOptions) { dependsOn(deployTasks) }
+        } else {
+            val deployTasks = packageModules.map { tasks.pathed<Task>(it.taskPath(MvnModule.TASK_PACKAGE_DEPLOY)) }
+            tasks.register(MvnModule.TASK_PACKAGE_DEPLOY) { taskOptions(); dependsOn(deployTasks) }
+        }
+    }
+
+    override fun toString() =
+        "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
 }
