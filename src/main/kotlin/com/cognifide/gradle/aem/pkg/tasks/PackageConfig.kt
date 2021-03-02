@@ -103,7 +103,7 @@ open class PackageConfig : AemDefaultTask() {
     }
 
     init {
-        description = "Synchronizes OSGi configuration as XML files put into JCR content."
+        description = "Check out OSGi configuration then save as JCR content."
     }
 
     companion object {

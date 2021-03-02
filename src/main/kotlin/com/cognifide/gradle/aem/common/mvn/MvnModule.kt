@@ -16,7 +16,6 @@ import org.gradle.api.Task
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Delete
-import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -47,11 +46,11 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         set(descriptor.dir.resolve("target"))
     }
 
-    fun targetFileLocator(locator: (extension: String) -> Provider<RegularFile>) {
+    fun targetFileLocator(locator: MvnModule.(extension: String) -> Provider<RegularFile>) {
         this.targetFileLocator = locator
     }
 
-    private var targetFileLocator: (String) -> Provider<RegularFile> = { extension ->
+    private var targetFileLocator: MvnModule.(String) -> Provider<RegularFile> = { extension ->
         targetDir.map { it.file("${descriptor.artifactId}-${descriptor.version}.$extension") }
     }
 
@@ -59,33 +58,33 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildPom() = exec(Artifact.POM) {
         description = "Installs POM to local repository"
-        combineArgs("clean", "install")
+        args("clean", "install")
         inputs.file(descriptor.pom)
         outputs.dir(repositoryDir)
     }
 
-    fun buildJar(options: Exec.() -> Unit = {}) = buildArtifact(Artifact.JAR) {
+    fun buildJar(options: MvnExec.() -> Unit = {}) = buildArtifact(Artifact.JAR) {
         description = "Builds JAR file"
         options()
     }
 
-    fun buildZip(options: Exec.() -> Unit = {}) = buildArtifact(Artifact.ZIP) {
+    fun buildZip(options: MvnExec.() -> Unit = {}) = buildArtifact(Artifact.ZIP) {
         description = "Builds ZIP archive"
         options()
     }
 
-    fun buildArtifact(extension: String, options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(extension) {
+    fun buildArtifact(extension: String, options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(extension) {
         description = "Builds artifact '$extension'"
-        combineArgs("clean", "install")
+        args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(extension))
         outputs.dir(repositoryDir)
         options()
     }
 
-    fun buildFrontend(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(Artifact.ZIP) {
+    fun buildFrontend(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
         description = "Builds AEM frontend"
-        combineArgs(listOf("clean", "install") + frontendProfiles.get().map { "-P$it" })
+        args(listOf("clean", "install") + frontendProfiles.get().map { "-P$it" })
         inputs.property("profiles", frontendProfiles)
         inputs.files(inputFiles)
         outputs.file(targetFile(Artifact.ZIP))
@@ -94,13 +93,8 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     }
 
     val frontendProfiles = aem.obj.strings {
-        set(project.provider {
-            mutableListOf<String>().apply {
-                if (aem.prop.boolean("mvn.frontend.dev") == true) {
-                    add("fedDev")
-                }
-            }
-        })
+        convention(listOf())
+        aem.prop.list("mvn.frontendProfiles")?.let { set(it) }
     }
 
     fun configurePackage() {
@@ -110,9 +104,9 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         syncConfig()
     }
 
-    fun buildPackage(options: Exec.() -> Unit = {}): TaskProvider<Exec> = exec(Artifact.ZIP) {
+    fun buildPackage(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
         description = "Builds AEM package"
-        combineArgs("clean", "install")
+        args("clean", "install")
         val outputFile = targetFile(Artifact.ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
@@ -152,19 +146,18 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         options()
     }
 
-    fun buildModule(options: Exec.() -> Unit = {}) = exec("module") {
+    fun buildModule(options: MvnExec.() -> Unit = {}) = exec("module") {
         description = "Builds module"
-        combineArgs("clean", "install")
+        args("clean", "install")
         inputs.files(inputFiles)
         outputs.files(outputFiles)
         outputs.dir(repositoryDir)
         options()
     }
 
-    fun exec(name: String, options: Exec.() -> Unit) = tasks.register<Exec>(name) {
+    fun exec(name: String, options: MvnExec.() -> Unit) = tasks.register<MvnExec>(name) {
         commonOptions()
         executable("mvn")
-        combineArgs()
         workingDir(descriptor.dir)
         options()
     }.also { task ->
@@ -172,16 +165,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
     }
 
-    val execArgs = aem.obj.strings {
-        convention(listOf("-B"))
-        aem.prop.string("mvn.execArgs")?.let { set(it.split(" ")) }
-    }
-
-    fun Exec.combineArgs(vararg args: String) = combineArgs(args.asIterable())
-
-    fun Exec.combineArgs(extraArgs: Iterable<String>) {
-        setArgs(execArgs.get() + listOf("-N") + extraArgs)
-    }
+    fun exec(options: MvnExec.() -> Unit) = tasks.typed(options)
 
     fun Task.commonOptions() {
         group = AemTask.GROUP
