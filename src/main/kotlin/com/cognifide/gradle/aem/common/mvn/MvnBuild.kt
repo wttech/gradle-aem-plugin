@@ -166,16 +166,19 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    fun defineModuleTaskDependenciesFromGraph() = depGraph.all.get().forEach { (a1, a2) ->
-        val module1 = moduleResolver.byArtifact(a1)
-        val module2 = moduleResolver.byArtifact(a2)
+    fun defineModuleTaskDependenciesFromGraph() = depGraph.all.get().forEach { dependency ->
+        val module1 = moduleResolver.byArtifact(dependency.from)
+        val module2 = moduleResolver.byArtifact(dependency.to)
+
 
         // Build ordering
         val buildTask1 = tasks.pathed<Task>(module1.artifactTaskPath)
         val buildTask2 = tasks.pathed<Task>(module2.artifactTaskPath)
 
         buildTask1.configure { bt1 ->
-            bt1.dependsOn(buildTask2)
+            if (!dependency.redundant) {
+                bt1.dependsOn(buildTask2)
+            }
             bt1.inputs.files(buildTask2.map { it.outputs.files })
         }
 
@@ -237,6 +240,5 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    override fun toString() =
-        "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
+    override fun toString() = "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
 }

@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.common.mvn
 
-data class Dependency(val from: Artifact, val to: Artifact) {
+class Dependency(val from: Artifact, val to: Artifact) {
 
-    val notation get() = "${from.notation} -> ${to.notation}"
+    val notation get() = "${from.notation} ${if (redundant) "~>" else "->"} ${to.notation}"
 
-    override fun toString() = "Dependency(from=$from, to=$to)"
+    var redundant = false
+
+    override fun toString() = "Dependency(from=$from, to=$to, redundant=$redundant)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -110,17 +110,26 @@ class DependencyGraph(val build: MvnBuild) {
         redundants.addAll(dependencies.map { it.toDependency() }.asIterable())
     }
 
-    fun redundantEffectively(dependency: Pair<String, String>) {
-        redundants.addAll(build.modules.map { modules ->
-            val dep = dependency.toDependency()
-            val artifactId = dep.to.id
-            val module = modules.firstOrNull { it.descriptor.artifactId == artifactId }
-                ?: throw MvnException("Cannot find module with artifactId '$artifactId' to determine effectively redundant dependency '$dependency'!")
-            if (module.repositoryPom.get().asFile.exists()) { listOf(dep) } else listOf()
-        })
+    val softRedundants = aem.obj.list<Dependency> {
+        aem.prop.map("mvn.depGraph.softRedundants")?.let { deps -> set(deps.map { it.toDependency() }) }
     }
 
-    val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }
+    fun softRedundant(vararg dependencies: Pair<String, String>) {
+        softRedundants.addAll(dependencies.map { it.toDependency() }.asIterable())
+    }
+
+    val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }.map { dd ->
+        dd.onEach { dep ->
+            if (softRedundants.get().contains(dep)) {
+                val artifactId = dep.to.id
+                val module = build.modules.get().firstOrNull { it.descriptor.artifactId == artifactId }
+                    ?: throw MvnException("Cannot find module with artifactId '$artifactId' to determine soft redundant dependency '$dep'!")
+                if (module.repositoryPom.get().asFile.exists()) {
+                    dep.redundant = true
+                }
+            }
+        }
+    }
 
     override fun toString() = "DependencyGraph(dotFile=${dotFile.get().asFile}, dependencies=${all.get().map { it.notation }})"
 }

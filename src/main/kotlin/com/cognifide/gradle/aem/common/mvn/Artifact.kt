@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.mvn
 
-data class Artifact(val notation: String) {
+class Artifact(val notation: String) {
 
     val id get() = notation.substringBeforeLast(":")
 
