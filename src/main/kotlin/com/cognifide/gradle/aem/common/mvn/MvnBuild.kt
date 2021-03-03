@@ -170,7 +170,6 @@ class MvnBuild(val aem: AemExtension) {
         val module1 = moduleResolver.byArtifact(dependency.from)
         val module2 = moduleResolver.byArtifact(dependency.to)
 
-
         // Build ordering
         val buildTask1 = tasks.pathed<Task>(module1.artifactTaskPath)
         val buildTask2 = tasks.pathed<Task>(module2.artifactTaskPath)
