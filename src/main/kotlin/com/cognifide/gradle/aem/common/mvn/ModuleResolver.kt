@@ -37,9 +37,22 @@ class ModuleResolver(val build: MvnBuild) {
         })
     }
 
-    fun normalizeArtifactId(id: String) = when {
-        id == root.get().artifactId -> ROOT_DESCRIPTOR_NAME
-        else -> artifactPrefixes.get().fold(id) { r, n -> r.removePrefix(n) }
+    fun normalizeArtifactId(id: String): String {
+        val prefixes = artifactPrefixes.get().toMutableList()
+
+        val separators = listOf(".", "-")
+        separators.forEach { separator ->
+            val rootPrefix = "${root.get().artifactId}${separator}"
+            val rootPrefixedOthers = all.get().filter { !it.root }.all { it.artifactId.startsWith(rootPrefix) }
+            if (rootPrefixedOthers) {
+                prefixes.add(rootPrefix)
+            }
+        }
+
+        return when (id) {
+            root.get().artifactId -> ROOT_DESCRIPTOR_NAME
+            else -> prefixes.fold(id) { r, n -> r.removePrefix(n) }
+        }
     }
 
     val projectPaths = all.map { descriptors -> descriptors.map { it.projectPath }.sorted() }

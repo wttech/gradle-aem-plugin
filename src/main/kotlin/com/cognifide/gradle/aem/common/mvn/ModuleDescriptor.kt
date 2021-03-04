@@ -11,7 +11,7 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
 
     val dir: File get() = pom.parentFile
 
-    val root get() = build.rootDir == dir
+    val root get() = build.rootDir.get().asFile == dir
 
     val gav: MvnGav get() = MvnGav.readFile(pom)
 

@@ -43,7 +43,7 @@ To add Gradle/GAP support to existing Maven build generated from Adobe AEM Arche
 ```shell
 curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
 && java -jar gap.jar wrapper -PmvnBuild.init \
-&& rm gap.jar \\
+&& rm gap.jar \
 && sh gradlew tasks --all
 ```
 
