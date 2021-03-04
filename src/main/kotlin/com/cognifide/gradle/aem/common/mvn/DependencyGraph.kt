@@ -17,6 +17,16 @@ class DependencyGraph(val build: MvnBuild) {
         aem.prop.boolean("mvn.depGraph.generateForce")?.let { set(it) }
     }
 
+    val generateCommand = aem.obj.string {
+        convention(build.groupId.map { "com.github.ferstl:depgraph-maven-plugin:aggregate -Dincludes=${build.groupId.get()} -Dscope=compile" })
+        aem.prop.string("mvn.depGraph.generateCommand")?.let { set(it) }
+    }
+
+    val buildCommand = aem.obj.string {
+        convention("clean install -DskipTests")
+        aem.prop.string("mvn.depGraph.buildCommand")?.let { set(it) }
+    }
+
     val packagingMap = aem.obj.map<String, String> {
         set(mapOf("content-package" to "zip"))
         aem.prop.map("mvn.depGraph.packagingMap")?.let { set(it) }
@@ -25,18 +35,23 @@ class DependencyGraph(val build: MvnBuild) {
     @Suppress("TooGenericExceptionCaught")
     private fun generateDotFile(): String {
         if (generateForce.get() || !dotFile.get().asFile.exists()) {
+            val buildDir = build.rootDir.get().asFile
+            if (!buildDir.exists()) {
+                throw MvnException("Maven build root directory does not exist: '$buildDir'!")
+            }
+
             try {
                 aem.common.progress {
-                    step = "Performing full build for dependency graph"
+                    step = "Performing Maven build for dependency graph"
                     aem.project.exec { spec ->
-                        spec.workingDir(build.rootDir)
+                        spec.workingDir(buildDir)
                         spec.executable("mvn")
-                        spec.args("clean", "install", "-DskipTests")
+                        spec.args(buildCommand.get().split(" "))
                     }
 
-                    step = "Generating dependency graph"
+                    step = "Generating Maven build dependency graph"
                     aem.project.exec { spec ->
-                        spec.workingDir(build.rootDir)
+                        spec.workingDir(buildDir)
                         spec.executable("mvn")
                         spec.args(
                             "com.github.ferstl:depgraph-maven-plugin:aggregate",

@@ -206,17 +206,23 @@ class MvnBuild(val aem: AemExtension) {
     val deployPackagePrecedence = aem.obj.strings {
         convention(
             listOf(
+                "prereqs",
+                "prereqs.*",
                 "ui.prereqs",
+                "ui.prereqs.*",
                 "ui.apps.prereqs",
                 "ui.apps",
                 "ui.apps.*",
                 "ui.*.apps",
                 "ui.config",
+                "config",
+                "config.*",
                 "ui.config.*",
                 "ui.*.config",
                 "ui.content",
                 "ui.content.*",
                 "ui.*.content",
+                "ui.*",
                 "all.*",
                 "*.all",
                 "all"

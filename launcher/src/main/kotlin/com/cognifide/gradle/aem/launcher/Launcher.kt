@@ -76,6 +76,12 @@ class Launcher {
                             plugins {
                                 id("com.cognifide.aem.instance.local") version "$pluginVersion"
                             }
+                            
+                            aem {
+                                mvnBuild {
+                                    discover()
+                                }
+                            }
                         """.trimIndent())
             }
         }
