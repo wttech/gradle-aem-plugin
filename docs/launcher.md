@@ -9,6 +9,7 @@
 * [About](#about)
 * [Downloads](#downloads)
 * [Usages](#usages)
+    * [Enhancing Maven Build](#enhancing-maven-build)
     * [Setting up local instance](#setting-up-local-instance)
     * [Deploying packages](#deploying-packages)
     * [Tailing logs](#tailing-logs)
@@ -35,12 +36,30 @@ The launcher on release asset list is a file named **gap.jar**.
 
 Below there are some sample usages of standalone launcher.
 
+### Enhancing Maven build
+
+To add Gradle/GAP support to existing Maven build generated from Adobe AEM Archetype, run command below:
+
+```shell
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
+&& java -jar gap.jar wrapper -PmvnBuild.init \
+&& rm gap.jar \\
+&& sh gradlew tasks --all
+```
+
+AEM build will gain new capabilities:
+
+- incrementally built Maven modules,
+- incrementally deployed in parallel AEM packages to AEM instances,
+- easy and fast JCR content synchronization for AEM packages,
+- synchronization of OSGi configuration XMLs to AEM packages.
+
 ### Setting up local instance
 
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
 && java -jar gap.jar --save-props up \
 -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
 -PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
@@ -61,7 +80,7 @@ java -jar gap.jar down
 For deploying to AEM instance CRX package from any source consider using command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
 && java -jar gap.jar instanceProvision -Pinstance.author -Pinstance.provision.deployPackage.urls=https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar
 ```
 
@@ -79,7 +98,7 @@ Also instead of URL, dependency notation could be used to resolve package from M
 To interactively monitor logs of any AEM instances using task [`instanceTail`](instance-plugin.md#task-instancetail), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
 && java -jar gap.jar --save-props instanceTail \
 -Pinstance.staging-author.httpUrl=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.staging-publish.httpUrl=http://foo:pass@10.11.12.2:4503
@@ -90,7 +109,7 @@ curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.
 To pull JCR content with content normalization from running instance using task [`packageSync`](package-sync-plugin.md), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
 && java -jar gap.jar packageSync -Pfilter.roots=[/content/example,/content/dam/example]
 ```
 
@@ -99,7 +118,7 @@ curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.
 To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.0.3/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
 && java -jar gap.jar instanceRcp \
 -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \

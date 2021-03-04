@@ -5,7 +5,124 @@ import java.io.File
 import java.util.*
 import kotlin.system.exitProcess
 
-class Launcher {
+class Launcher(private val args: Array<String>) {
+
+    val saveProps get() = args.contains(ARG_SAVE_PROPS)
+
+    val printStackTrace get() = args.contains(ARG_PRINT_STACKTRACE)
+
+    val colorOutput get() = !args.contains(ARG_NO_COLOR_OUTPUT)
+
+    val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
+
+    val gradleArgs get() = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
+
+    val buildConfig get() = Properties().apply {
+        load(Launcher::class.java.getResourceAsStream("/build.properties"))
+    }
+    val gradleVersion get() = buildConfig["gradleVersion"]?.toString()
+        ?: throw LauncherException("Gradle version info not available!")
+
+    val pluginVersion get() = buildConfig["pluginVersion"]?.toString()
+        ?: throw LauncherException("AEM Plugin version info not available!")
+
+    val currentDir get() = File(".")
+
+    val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
+
+    fun workFile(path: String, action: File.() -> Unit) {
+        workDir.resolve(path).apply {
+            if (exists()) return@apply
+            parentFile.mkdirs()
+            action()
+        }
+    }
+
+    fun saveBuildSrc() {
+        workFile("buildSrc/build.gradle.kts") {
+            writeText("""
+                repositories {
+                    mavenLocal()
+                    jcenter()
+                    gradlePluginPortal()
+                }
+                
+                dependencies {
+                    implementation("com.cognifide.gradle:aem-plugin:$pluginVersion")
+                    implementation("com.cognifide.gradle:environment-plugin:1.1.27")
+                    implementation("com.neva.gradle:fork-plugin:6.0.5")
+                }
+            """.trimIndent())
+        }
+    }
+
+    fun saveProperties() {
+        if (saveProps) {
+            workFile("gradle.properties") {
+                outputStream().use { output ->
+                    Properties().apply {
+                        val props = args.filter { it.startsWith(ARG_SAVE_PREFIX) }
+                            .map { it.removePrefix(ARG_SAVE_PREFIX) }
+                            .map { it.substringBefore("=") to it.substringAfter("=") }
+                            .toMap()
+                        putAll(props)
+                        store(output, null)
+                    }
+                }
+            }
+        }
+    }
+
+    fun saveRootBuildScript() = workFile("build.gradle.kts") {
+        writeText("""
+            plugins {
+                id("com.cognifide.aem.common")
+            }
+            
+            aem {
+                mvnBuild {
+                    discover()
+                }
+            }
+        """.trimIndent())
+    }
+
+    fun saveEnvBuildScript() = workFile("env/build.gradle.kts") {
+        writeText("""
+            plugins {
+                id("com.cognifide.aem.instance.local")
+            }
+        """.trimIndent())
+    }
+
+    fun saveSettings() = workFile("settings.gradle.kts") {
+        writeText("""
+            include(":env")
+            
+        """.trimIndent())
+    }
+
+    fun runBuild(): Unit = try {
+        GradleConnector.newConnector()
+            .useGradleVersion(gradleVersion)
+            .useBuildDistribution()
+            .forProjectDirectory(workDir)
+            .connect().use { connection ->
+                connection.newBuild()
+                    .withArguments(gradleArgs)
+                    .setColorOutput(colorOutput)
+                    .setStandardOutput(System.out)
+                    .setStandardError(System.err)
+                    .setStandardInput(System.`in`)
+                    .run()
+            }
+        exitProcess(0)
+    } catch (e: Exception) {
+        if (printStackTrace) {
+            e.printStackTrace(System.err)
+        }
+        exitProcess(1)
+    }
 
     companion object {
 
@@ -23,106 +140,15 @@ class Launcher {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            val saveProps = args.contains(ARG_SAVE_PROPS)
-            val printStackTrace = args.contains(ARG_PRINT_STACKTRACE)
-            val colorOutput = !args.contains(ARG_NO_COLOR_OUTPUT)
-            val workDirName = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
+            Launcher(args).apply {
+                saveBuildSrc()
+                saveProperties()
+                saveSettings()
+                saveRootBuildScript()
+                saveEnvBuildScript()
 
-            val gradleArgs = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
-            val buildConfig = Properties().apply {
-                load(Launcher::class.java.getResourceAsStream("/build.properties"))
+                runBuild()
             }
-            val gradleVersion = buildConfig["gradleVersion"]?.toString()
-                    ?: throw LauncherException("Gradle version info not available!")
-            val pluginVersion = buildConfig["pluginVersion"]?.toString()
-                    ?: throw LauncherException("AEM Plugin version info not available!")
-
-            val currentDir = File(".")
-            val workDir = if (workDirName != null) currentDir.resolve(workDirName) else currentDir
-            if (saveProps) {
-                saveProperties(workDir, gradleArgs)
-            }
-
-            saveSettings(workDir)
-            saveBuildScript(workDir, pluginVersion)
-
-            runBuild(workDir, gradleArgs, gradleVersion, colorOutput, printStackTrace)
-        }
-
-        private fun saveProperties(workDir: File, args: List<String>) {
-            workDir.resolve("gradle.properties").apply {
-                if (exists()) return@apply
-                parentFile.mkdirs()
-
-                outputStream().use { output ->
-                    Properties().apply {
-                        val props = args.filter { it.startsWith(ARG_SAVE_PREFIX) }
-                                .map { it.removePrefix(ARG_SAVE_PREFIX) }
-                                .map { it.substringBefore("=") to it.substringAfter("=") }
-                                .toMap()
-                        putAll(props)
-                        store(output, null)
-                    }
-                }
-            }
-        }
-
-        private fun saveBuildScript(workDir: File, pluginVersion: String?) {
-            workDir.resolve("build.gradle.kts").apply {
-                if (exists()) return@apply
-                parentFile.mkdirs()
-
-                writeText("""
-                            plugins {
-                                id("com.cognifide.aem.instance.local") version "$pluginVersion"
-                            }
-                            
-                            aem {
-                                mvnBuild {
-                                    discover()
-                                }
-                            }
-                        """.trimIndent())
-            }
-        }
-
-        private fun saveSettings(workDir: File) {
-            workDir.resolve("settings.gradle.kts").apply {
-                if (exists()) return@apply
-                parentFile.mkdirs()
-
-                writeText("""
-                            pluginManagement {
-                                repositories {
-                                    mavenLocal()
-                                    jcenter()
-                                    gradlePluginPortal()
-                                }
-                            }
-                        """.trimIndent())
-            }
-        }
-
-        private fun runBuild(workDir: File, args: List<String>, gradleVersion: String?, colorOutput: Boolean, printStackTrace: Boolean): Unit = try {
-            GradleConnector.newConnector()
-                    .useGradleVersion(gradleVersion)
-                    .useBuildDistribution()
-                    .forProjectDirectory(workDir)
-                    .connect().use { connection ->
-                        connection.newBuild()
-                                .withArguments(args)
-                                .setColorOutput(colorOutput)
-                                .setStandardOutput(System.out)
-                                .setStandardError(System.err)
-                                .setStandardInput(System.`in`)
-                                .run()
-                    }
-            exitProcess(0)
-        } catch (e: Exception) {
-            if (printStackTrace) {
-                e.printStackTrace(System.err)
-            }
-            exitProcess(1)
         }
     }
 }

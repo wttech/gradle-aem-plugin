@@ -16,6 +16,8 @@ class MvnBuild(val aem: AemExtension) {
 
     val project = aem.project
 
+    val logger = project.logger
+
     val tasks get() = project.common.tasks
 
     val rootDir = aem.obj.dir {
@@ -25,6 +27,8 @@ class MvnBuild(val aem: AemExtension) {
     fun rootDir(path: String) {
         rootDir.set(aem.project.file(path))
     }
+
+    val rootPom = rootDir.file("pom.xml")
 
     val archetypePropertiesFile = aem.obj.file {
         set(rootDir.file("archetype.properties"))
@@ -50,15 +54,17 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val appId = aem.obj.string {
-        set(archetypeProperties.getting("appId"))
+        convention(archetypeProperties.getting("appId"))
+        aem.prop.string("mvnBuild.appId")?.let { set(it) }
     }
 
     val groupId = aem.obj.string {
-        set(archetypeProperties.getting("groupId"))
+        convention(archetypeProperties.getting("groupId"))
+        aem.prop.string("mvnBuild.groupId")?.let { set(it) }
     }
 
     val version
-        get() = MvnGav.readFile(rootDir.get().asFile.resolve("pom.xml")).version
+        get() = MvnGav.readFile(rootPom.get().asFile).version
             ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
 
     val outputPatterns = aem.obj.strings {
@@ -99,7 +105,7 @@ class MvnBuild(val aem: AemExtension) {
 
     fun depGraph(options: DependencyGraph.() -> Unit) = depGraph.using(options)
 
-    val moduleResolver = ModuleResolver(this)
+    val moduleResolver by lazy { ModuleResolver(this) }
 
     fun moduleResolver(options: ModuleResolver.() -> Unit) = moduleResolver.using(options)
 
@@ -132,25 +138,36 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    fun discover() {
-        try {
-            defineModulesResolved()
-        } catch (e: UnknownProjectException) {
-            val settingsFile = project.rootProject.file("settings.gradle.kts")
-            val settingsLines = moduleResolver.projectPaths.get().joinToString("\n") { """include("$it")""" }
-            throw MvnException(
-                listOf(
-                    "Maven build at path '${rootDir.get().asFile}' powered by ${AemPlugin.NAME} needs subprojects defined in Gradle settings as prerequisite.",
-                    "Ensure having following lines in file: $settingsFile",
-                    "",
-                    settingsLines,
-                    ""
-                ).joinToString("\n")
-            )
-        }
+    val init = aem.obj.boolean {
+        set(aem.prop.flag("mvnBuild.init"))
+    }
 
-        defineModuleTaskDependenciesFromGraph()
-        defineDeployPackageTask()
+    fun discover() {
+        val projectPaths = moduleResolver.projectPaths.get()
+        val settingsFile = project.rootProject.file("settings.gradle.kts")
+        val settingsLines = projectPaths.joinToString("\n") { """include("$it")""" }
+
+        if (init.get()) {
+            logger.info("Updating Gradle settings due discovered Maven build projects (${projectPaths.size})")
+            settingsFile.appendText(settingsLines)
+        } else {
+            try {
+                defineModulesResolved()
+            } catch (e: UnknownProjectException) {
+                throw MvnException(
+                    listOf(
+                        "Maven build at path '${rootDir.get().asFile}' powered by ${AemPlugin.NAME} needs subprojects defined in Gradle settings as prerequisite.",
+                        "Ensure having following lines (${projectPaths.size}) in file: $settingsFile",
+                        "",
+                        settingsLines,
+                        ""
+                    ).joinToString("\n")
+                )
+            }
+
+            defineModuleTaskDependenciesFromGraph()
+            defineDeployPackageTask()
+        }
     }
 
     fun defineModulesResolved() = moduleResolver.all.get().forEach { descriptor ->
