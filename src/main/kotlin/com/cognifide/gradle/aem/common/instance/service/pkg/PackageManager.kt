@@ -72,7 +72,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Repeat install when failed (brute-forcing).
      */
-    var installRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.installRetry") ?: 2) }
+    var installRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.installRetry") ?: 3) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -118,7 +118,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Repeat download when failed (brute-forcing).
      */
-    var downloadRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.downloadRetry") ?: 3) }
+    var downloadRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.downloadRetry") ?: 2) }
 
     /**
      * Define patterns for known exceptions which could be thrown during package installation
