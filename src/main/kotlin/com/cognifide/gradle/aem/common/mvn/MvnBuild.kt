@@ -139,7 +139,7 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val init = aem.obj.boolean {
-        set(aem.prop.flag("mvnBuild.init"))
+        set(aem.prop.flag("launcher.wrapper"))
     }
 
     fun discover() {

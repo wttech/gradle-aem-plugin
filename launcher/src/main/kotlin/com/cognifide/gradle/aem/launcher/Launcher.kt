@@ -30,7 +30,9 @@ class Launcher(private val args: Array<String>) {
 
     val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
 
-    fun workFile(path: String, action: File.() -> Unit) {
+    val eol get() = System.lineSeparator()
+
+    fun workFileOnce(path: String, action: File.() -> Unit) {
         workDir.resolve(path).apply {
             if (exists()) return@apply
             parentFile.mkdirs()
@@ -38,8 +40,16 @@ class Launcher(private val args: Array<String>) {
         }
     }
 
+    fun workFile(path: String, action: File.() -> Unit) {
+        workDir.resolve(path).apply {
+            parentFile.mkdirs()
+            action()
+        }
+    }
+
     fun saveBuildSrc() {
-        workFile("buildSrc/build.gradle.kts") {
+        workFileOnce("buildSrc/build.gradle.kts") {
+            println("Saving Gradle build source script file '$this'")
             writeText("""
                 repositories {
                     mavenLocal()
@@ -58,7 +68,8 @@ class Launcher(private val args: Array<String>) {
 
     fun saveProperties() {
         if (saveProps) {
-            workFile("gradle.properties") {
+            workFileOnce("gradle.properties") {
+                println("Saving Gradle properties to file '$this'")
                 outputStream().use { output ->
                     Properties().apply {
                         val props = args.filter { it.startsWith(ARG_SAVE_PREFIX) }
@@ -73,7 +84,8 @@ class Launcher(private val args: Array<String>) {
         }
     }
 
-    fun saveRootBuildScript() = workFile("build.gradle.kts") {
+    fun saveRootBuildScript() = workFileOnce("build.gradle.kts") {
+        println("Saving main build script file '$this'")
         writeText("""
             plugins {
                 id("com.cognifide.aem.common")
@@ -87,7 +99,8 @@ class Launcher(private val args: Array<String>) {
         """.trimIndent())
     }
 
-    fun saveEnvBuildScript() = workFile("env/build.gradle.kts") {
+    fun saveEnvBuildScript() = workFileOnce("env/build.gradle.kts") {
+        println("Saving environment build script file '$this'")
         writeText("""
             plugins {
                 id("com.cognifide.aem.instance.local")
@@ -95,33 +108,60 @@ class Launcher(private val args: Array<String>) {
         """.trimIndent())
     }
 
-    fun saveSettings() = workFile("settings.gradle.kts") {
+    fun saveSettings() = workFileOnce("settings.gradle.kts") {
+        println("Saving settings file '$this'")
         writeText("""
             include(":env")
             
         """.trimIndent())
     }
 
-    fun runBuild(): Unit = try {
-        GradleConnector.newConnector()
-            .useGradleVersion(gradleVersion)
-            .useBuildDistribution()
-            .forProjectDirectory(workDir)
-            .connect().use { connection ->
-                connection.newBuild()
-                    .withArguments(gradleArgs)
-                    .setColorOutput(colorOutput)
-                    .setStandardOutput(System.out)
-                    .setStandardError(System.err)
-                    .setStandardInput(System.`in`)
-                    .run()
-            }
+    fun ensureWrapper() = workFile("gradle/wrapper") {
+        if (!exists()) {
+            println("Generating Gradle wrapper files")
+            runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))
+        }
+    }
+
+
+    fun appendGitIgnore() = workFile(".gitignore") {
+        val content = """
+            ### Gradle/GAP ###
+            .gradle/
+            build/
+            /gap.jar
+        """.trimIndent()
+
+        if (!readText().contains(content)) {
+            println("Appending lines to VCS ignore file '$this'")
+            appendText("$eol${content}$eol")
+        }
+    }
+
+    fun runBuildAndExit(): Unit = try {
+        runBuild(gradleArgs)
         exitProcess(0)
     } catch (e: Exception) {
         if (printStackTrace) {
             e.printStackTrace(System.err)
         }
         exitProcess(1)
+    }
+
+    private fun runBuild(args: List<String>) {
+        GradleConnector.newConnector()
+            .useGradleVersion(gradleVersion)
+            .useBuildDistribution()
+            .forProjectDirectory(workDir)
+            .connect().use { connection ->
+                connection.newBuild()
+                    .withArguments(args)
+                    .setColorOutput(colorOutput)
+                    .setStandardOutput(System.out)
+                    .setStandardError(System.err)
+                    .setStandardInput(System.`in`)
+                    .run()
+            }
     }
 
     companion object {
@@ -146,8 +186,9 @@ class Launcher(private val args: Array<String>) {
                 saveSettings()
                 saveRootBuildScript()
                 saveEnvBuildScript()
-
-                runBuild()
+                ensureWrapper()
+                appendGitIgnore()
+                runBuildAndExit()
             }
         }
     }

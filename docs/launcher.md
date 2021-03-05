@@ -41,10 +41,7 @@ Below there are some sample usages of standalone launcher.
 To add Gradle/GAP support to existing Maven build generated from Adobe AEM Archetype, run command below:
 
 ```shell
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
-&& java -jar gap.jar wrapper -PmvnBuild.init \
-&& rm gap.jar \
-&& sh gradlew tasks --all
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar && java -jar gap.jar && rm gap.jar
 ```
 
 AEM build will gain new capabilities:
@@ -54,34 +51,96 @@ AEM build will gain new capabilities:
 - easy and fast JCR content synchronization for AEM packages,
 - synchronization of OSGi configuration XMLs to AEM packages.
 
+The capabilities mentioned above are available by running dedicated Gradle tasks.
+To review available tasks, run command below and review tasks under 'AEM' group:
+
+```shell
+gradlew tasks --all 
+```
+
+Sample output (for [AEM Guides WKND](https://github.com/adobe/aem-guides-wknd))
+
+```
+AEM tasks
+---------
+all:config - Check out OSGi configuration then save as JCR content.
+ui.apps:config - Check out OSGi configuration then save as JCR content.
+ui.apps.structure:config - Check out OSGi configuration then save as JCR content.
+ui.config:config - Check out OSGi configuration then save as JCR content.
+ui.content:config - Check out OSGi configuration then save as JCR content.
+ui.content.sample:config - Check out OSGi configuration then save as JCR content.
+all:deploy - Deploys AEM package to instance
+ui.apps:deploy - Deploys AEM package to instance
+ui.apps.structure:deploy - Deploys AEM package to instance
+ui.config:deploy - Deploys AEM package to instance
+ui.content:deploy - Deploys AEM package to instance
+ui.content.sample:deploy - Deploys AEM package to instance
+env:instanceAwait - Await for healthy condition of all AEM instances.
+env:instanceBackup - Turns off local instance(s), archives to ZIP file, then turns on again.
+env:instanceCreate - Creates local AEM instance(s).
+env:instanceDeploy - Deploys to instances package or bundle by providing URL, path or dependency notation
+env:instanceDestroy - Destroys local AEM instance(s).
+env:instanceDown - Turns off local AEM instance(s).
+env:instanceGroovyEval - Evaluate Groovy script(s) on instance(s).
+env:instanceKill - Kill local AEM instance process(es)
+env:instanceProvision - Configures instances only in concrete circumstances (only once, after some time etc)
+env:instanceRcp - Copy JCR content from one instance to another.
+env:instanceReload - Reloads all AEM instance(s).
+env:instanceResetup - Destroys then sets up local AEM instance(s).
+env:instanceResolve - Resolves instance files from remote sources before running other tasks
+env:instanceRestart - Turns off then on local AEM instance(s).
+env:instanceSetup - Creates and turns on local AEM instance(s) with satisfied dependencies and application built.
+env:instanceStatus - Prints status of AEM instances and installed packages.
+env:instanceTail - Tails logs from all configured instances (local & remote) and notifies about unknown errors.
+env:instanceUp - Turns on local AEM instance(s).
+core:jar - Builds JAR file
+it.tests:jar - Builds JAR file
+ui.tests:module - Builds module
+root:pom - Installs POM to local repository
+all:sync - Check out then clean JCR content.
+ui.apps:sync - Check out then clean JCR content.
+ui.apps.structure:sync - Check out then clean JCR content.
+ui.config:sync - Check out then clean JCR content.
+ui.content:sync - Check out then clean JCR content.
+ui.content.sample:sync - Check out then clean JCR content.
+all:zip - Builds AEM package
+dispatcher.cloud:zip - Builds ZIP archive
+ui.apps:zip - Builds AEM package
+ui.apps.structure:zip - Builds AEM package
+ui.config:zip - Builds AEM package
+ui.content:zip - Builds AEM package
+ui.content.sample:zip - Builds AEM package
+ui.frontend:zip - Builds AEM frontend
+```
+
 ### Setting up local instance
 
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
 curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
-&& java -jar gap.jar --save-props up \
--PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
--PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
--PfileTransfer.user=foo \
--PfileTransfer.password=pass \
--Pinstance.local-author.httpUrl=http://localhost:4502 \
--Pinstance.local-author.type=local
+&& java -jar gap.jar --save-props \
+  -PfileTransfer.user=foo -PfileTransfer.password=pass \
+  -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
+  -PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
+  -Pinstance.local-author.type=local \
+&& rm gap.jar
 ```
 
-As of previously `--save-props` argument was specified, now to turn off AEM instance(s), simply run (rest of properties could be omitted):
+Once GAP is initialized, to control instance, run commands:
 
-```bash
-java -jar gap.jar down
+```shell
+sh gradlew up
+sh gradlew down
 ```
 
 ### Deploying packages
 
 For deploying to AEM instance CRX package from any source consider using command:
 
-```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
-&& java -jar gap.jar instanceProvision -Pinstance.author -Pinstance.provision.deployPackage.urls=https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar
+```shell
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar && java -jar gap.jar && rm gap.jar
+sh gradlew instanceDeploy -Pinstance.author -Pinstance.deploy.packageUrl=https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar
 ```
 
 Parameter `-Pinstance.author` is used to deploy only to default AEM author instance (available at *http://localhost:4502*), but any instances could be used, see [instance filtering](common-plugin.md#instance-filtering). 
@@ -99,18 +158,22 @@ To interactively monitor logs of any AEM instances using task [`instanceTail`](i
 
 ```bash
 curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
-&& java -jar gap.jar --save-props instanceTail \
--Pinstance.staging-author.httpUrl=http://foo:pass@10.11.12.1:4502 \
--Pinstance.staging-publish.httpUrl=http://foo:pass@10.11.12.2:4503
+&& java -jar gap.jar --save-props \
+  -Pinstance.dev-author.httpUrl=http://foo:pass@10.11.12.1:4502 \
+  -Pinstance.dev-publish.httpUrl=http://foo:pass@10.11.12.2:4503 \
+&& rm gap.jar
+sh gradlew instanceTail
 ```
 
 ### Syncing content
 
 To pull JCR content with content normalization from running instance using task [`packageSync`](package-sync-plugin.md), consider running command:
+Assuming instance running at URL *http://localhost:4502* or *http://localhost:4503*. 
+Consider appending parameter e.g `-Pinstance.list=http://admin:admin@localhost:4502` to customize the instance to work with.
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
-&& java -jar gap.jar packageSync -Pfilter.roots=[/content/example,/content/dam/example]
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar && java -jar gap.jar && rm gap.jar
+sh gradlew packageSync -Pfilter.roots=[/content/example,/content/dam/example]
 ```
 
 ### Copying content between instances
@@ -118,8 +181,8 @@ curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.
 To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar \
-&& java -jar gap.jar instanceRcp \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar && java -jar gap.jar && rm gap.jar \
+ instanceRcp \
 -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
 -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
 -Pinstance.rcp.paths=[/content/example,/content/dam/example]
