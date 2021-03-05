@@ -63,7 +63,7 @@ class Launcher(val args: Array<String>) {
         }
     }
 
-    fun ensureWrapper() = workFile("gradle/wrapper") {
+    fun ensureWrapper() = workFile("gradle-wrapper.properties") {
         if (!exists()) {
             println("Generating Gradle wrapper files")
             runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))
