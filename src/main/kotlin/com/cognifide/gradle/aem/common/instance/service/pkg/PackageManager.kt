@@ -429,7 +429,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             val pkgMeta = getMetadataNode(pkgPath)
             val checksumRemote = if (pkgMeta.exists) pkgMeta.properties.string(METADATA_CHECKSUM_PROP) else null
             val lastUnpackedPrevious = if (pkgMeta.exists) pkgMeta.properties.date(METADATA_LAST_UNPACKED_PROP) else null
-            val lastUnpackedCurrent = readLastUnpacked(pkgPath)
+            val lastUnpackedCurrent = readLastUnpackedOrUnwrapped(pkgPath)
 
             val checksumChanged = checksumLocal != checksumRemote
             val externallyUnpacked = lastUnpackedPrevious != lastUnpackedCurrent
@@ -452,8 +452,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun readLastUnpacked(pkgPath: String): Date {
-        return sync.repository.node(pkgPath).child(DEFINITION_PATH).properties.date(METADATA_LAST_UNPACKED_PROP)
+    private fun readLastUnpackedOrUnwrapped(pkgPath: String): Date {
+        val properties = sync.repository.node(pkgPath).child(DEFINITION_PATH).properties
+        return properties.date(METADATA_LAST_UNPACKED_PROP) ?: properties.date(METADATA_LAST_UNWRAPPED_PROP)
                 ?: throw PackageException("Cannot read package '$pkgPath' installation time on $instance!")
     }
 
@@ -463,7 +464,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             Node.TYPE_UNSTRUCTURED,
             METADATA_PATH_PROP to pkgPath,
             METADATA_CHECKSUM_PROP to checksum,
-            METADATA_LAST_UNPACKED_PROP to readLastUnpacked(pkgPath)
+            METADATA_LAST_UNPACKED_PROP to readLastUnpackedOrUnwrapped(pkgPath)
     ))
 
     private fun deployRegularly(file: File, activate: Boolean = false): String {
@@ -603,5 +604,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         const val METADATA_CHECKSUM_PROP = "checksumMd5"
 
         const val METADATA_LAST_UNPACKED_PROP = "lastUnpacked"
+
+        const val METADATA_LAST_UNWRAPPED_PROP = "lastUnwrapped"
     }
 }

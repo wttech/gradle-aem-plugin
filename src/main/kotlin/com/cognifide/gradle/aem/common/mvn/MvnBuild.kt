@@ -220,34 +220,44 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val deployPackagePrecedence = aem.obj.strings {
-        convention(
-            listOf(
-                "prereqs",
-                "prereqs.*",
-                "ui.prereqs",
-                "ui.prereqs.*",
-                "ui.apps.prereqs",
-                "ui.apps",
-                "ui.apps.*",
-                "ui.*.apps",
-                "ui.config",
-                "config",
-                "config.*",
-                "ui.config.*",
-                "ui.*.config",
-                "ui.content",
-                "ui.content.*",
-                "ui.*.content",
-                "ui.*",
-                "all.*",
-                "*.all",
-                "all"
-            )
-        )
+        convention(listOf(
+            "prereqs",
+            "prereqs.*",
+            "ui.prereqs",
+            "ui.prereqs.*",
+            "ui.apps.prereqs",
+            "ui.apps",
+            "ui.apps.*",
+            "ui.*.apps",
+            "ui.config",
+            "config",
+            "config.*",
+            "ui.config.*",
+            "ui.*.config",
+            "ui.content",
+            "ui.content.*",
+            "ui.*.content",
+            "ui.*",
+            "all.*",
+            "*.all",
+            "all"
+        ))
+        aem.prop.list("mvn.deployPackagePrecedence")?.let { set(it) }
+    }
+
+    val deployPackageNames = aem.obj.strings {
+        convention(listOf(
+            "*",
+            "!all.*",
+            "!*.all",
+            "!all"
+        ))
+        aem.prop.list("mvn.deployPackageNames")?.let { set(it) }
     }
 
     fun defineDeployPackageTask() {
-        val packageModules = moduleResolver.all.get().filter { it.type == ModuleType.PACKAGE }
+        val packageModules = moduleResolver.all.get()
+            .filter { it.type == ModuleType.PACKAGE && Patterns.wildcard(it.name, deployPackageNames.get()) }
         val taskOptions: Task.() -> Unit = { description = "Deploys AEM packages incrementally" }
 
         if (deployPackageOrder.get() == DeployPackageOrder.PRECEDENCE) {

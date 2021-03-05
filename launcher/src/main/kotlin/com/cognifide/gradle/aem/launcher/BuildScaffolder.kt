@@ -60,6 +60,9 @@ class BuildScaffolder(private val launcher: Launcher) {
             }
             
             apply(from = "gradle/fork/props.gradle.kts")
+            if (file("gradle.user.properties").exists()) {
+                defaultTasks(":env:setup")
+            }
             
             allprojects {
                 repositories {

@@ -17,7 +17,7 @@ open class MvnExec : Exec() {
     }
 
     init {
-        val overridableArgs = (aem.prop.string("mvn.execArgs")?.split(" ") ?: listOf())
+        val overridableArgs = (aem.prop.string("mvn.execArgs")?.split(" ") ?: listOf("-B"))
         val forcedArgs = listOf("-N")
         args = forcedArgs + overridableArgs
     }

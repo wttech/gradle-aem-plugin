@@ -27,7 +27,8 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.local-publish.httpUrl={{instancePublishHttpUrl}}
             instance.local-publish.openPath=/crx/packmgr
 
-            mvn.frontendProfiles={{mvnFrontendProfiles}}
+            mvn.execArgs={{mvnExecArgs}}
+            mvn.profiles={{mvnProfiles}}
 
             # === Gradle Environment Plugin ===
             {% if dockerSafeVolumes == 'true' %}
@@ -95,11 +96,16 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                     }
                     group("AEM Options") {
-                        define("mvnFrontendProfiles") {
-                            label = "Frontend Profile"
-                            description = "Controls optimization of front-end resources (CSS/JS/assets)"
-                            select("dev", "prod")
-                            select("fedDev", "")
+                        define("mvnProfiles") {
+                            label = "Maven Profiles"
+                            text("fedDev")
+                            description = "Comma delimited"
+                            optional()
+                        }
+                        define("mvnExecArgs") {
+                            label = "Maven Args"
+                            text("-B")
+                            description = "Added extra"
                             optional()
                         }
                         define("packageDeployAvoidance") {

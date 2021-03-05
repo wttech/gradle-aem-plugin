@@ -29,5 +29,9 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
 
     fun taskPath(name: String) = "$projectPath:$name"
 
+    fun hasProfile(name: String) = pom.readText()
+        .substringAfter("<profiles>").substringBefore("</profiles>")
+        .contains("<id>$name</id>")
+
     override fun toString() = "ModuleDescriptor(name=$name, type=$type)"
 }

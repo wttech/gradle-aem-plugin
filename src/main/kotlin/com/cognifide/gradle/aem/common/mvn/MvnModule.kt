@@ -56,6 +56,15 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun targetFile(extension: String) = targetFileLocator(extension)
 
+    val profiles = aem.obj.strings {
+        convention(listOf())
+        aem.prop.list("mvn.profiles")?.let { set(it) }
+    }
+
+    val profilesAvailable = profiles.map { ps ->
+        ps.filter { descriptor.hasProfile(it) }.map { "-P$it" }
+    }
+
     fun buildPom() = exec(Artifact.POM) {
         description = "Installs POM to local repository"
         args("clean", "install")
@@ -84,17 +93,11 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildFrontend(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
         description = "Builds AEM frontend"
-        args(listOf("clean", "install") + frontendProfiles.get().map { "-P$it" })
-        inputs.property("profiles", frontendProfiles)
+        args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(Artifact.ZIP))
         outputs.dir(repositoryDir)
         options()
-    }
-
-    val frontendProfiles = aem.obj.strings {
-        convention(listOf())
-        aem.prop.list("mvn.frontendProfiles")?.let { set(it) }
     }
 
     fun configurePackage() {
@@ -159,6 +162,8 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         commonOptions()
         executable("mvn")
         workingDir(descriptor.dir)
+        inputs.property("profiles", profilesAvailable)
+        doFirst { args(profilesAvailable.get()) }
         options()
     }.also { task ->
         tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
