@@ -36,7 +36,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
 
-    implementation("com.cognifide.gradle:common-plugin:1.0.17")
+    implementation("com.cognifide.gradle:common-plugin:1.0.21")
 
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.buildobjects:jproc:2.3.0")

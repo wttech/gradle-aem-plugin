@@ -58,6 +58,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                 id("com.neva.fork")
             }
             
+            defaultTasks(":env:setup")
             apply(from = "gradle/fork/props.gradle.kts")
             
             aem {
@@ -75,6 +76,10 @@ class BuildScaffolder(private val launcher: Launcher) {
                 id("com.cognifide.aem.instance.local")
             }
         """.trimIndent())
+    }
+
+    private fun saveEnvSrcFiles() {
+        // TODO ...
     }
 
     private fun saveSettings() = launcher.workFileOnce("settings.gradle.kts") {

@@ -62,11 +62,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
             return
         }
 
-        val authInit: Boolean = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
-        if (authInit) {
-            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
-        }
-
+        http.basicCredentials = Instance.CREDENTIALS_DEFAULT
         http.responseHandler { response ->
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
