@@ -42,7 +42,7 @@ class ModuleResolver(val build: MvnBuild) {
 
         val separators = listOf(".", "-")
         separators.forEach { separator ->
-            val rootPrefix = "${root.get().artifactId}${separator}"
+            val rootPrefix = "${root.get().artifactId}$separator"
             val rootPrefixedOthers = all.get().filter { !it.root }.all { it.artifactId.startsWith(rootPrefix) }
             if (rootPrefixedOthers) {
                 prefixes.add(rootPrefix)

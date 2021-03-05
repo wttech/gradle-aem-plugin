@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
@@ -55,12 +54,12 @@ class MvnBuild(val aem: AemExtension) {
 
     val appId = aem.obj.string {
         convention(archetypeProperties.getting("appId"))
-        aem.prop.string("mvnBuild.appId")?.let { set(it) }
+        aem.prop.string("mvn.appId")?.let { set(it) }
     }
 
     val groupId = aem.obj.string {
         convention(archetypeProperties.getting("groupId"))
-        aem.prop.string("mvnBuild.groupId")?.let { set(it) }
+        aem.prop.string("mvn.groupId")?.let { set(it) }
     }
 
     val version
@@ -156,7 +155,7 @@ class MvnBuild(val aem: AemExtension) {
             } catch (e: UnknownProjectException) {
                 throw MvnException(
                     listOf(
-                        "Maven build at path '${rootDir.get().asFile}' powered by ${AemPlugin.NAME} needs subprojects defined in Gradle settings as prerequisite.",
+                        "Maven build at path '${rootDir.get().asFile}' needs subprojects defined in Gradle settings as prerequisite.",
                         "Ensure having following lines (${projectPaths.size}) in file: $settingsFile",
                         "",
                         settingsLines,

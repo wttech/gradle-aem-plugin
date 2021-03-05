@@ -5,9 +5,7 @@ import java.io.File
 import java.util.*
 import kotlin.system.exitProcess
 
-class Launcher(private val args: Array<String>) {
-
-    val saveProps get() = args.contains(ARG_SAVE_PROPS)
+class Launcher(val args: Array<String>) {
 
     val printStackTrace get() = args.contains(ARG_PRINT_STACKTRACE)
 
@@ -32,6 +30,24 @@ class Launcher(private val args: Array<String>) {
 
     val eol get() = System.lineSeparator()
 
+    val buildScaffolder by lazy { BuildScaffolder(this) }
+
+    val forkScaffolder by lazy { ForkScaffolder(this) }
+
+    val miscScaffolder by lazy { MiscScaffolder(this) }
+
+    fun launch() {
+        scaffold()
+        ensureWrapper()
+        runBuildAndExit()
+    }
+
+    private fun scaffold() {
+        buildScaffolder.scaffold()
+        forkScaffolder.scaffold()
+        miscScaffolder.scaffold()
+    }
+
     fun workFileOnce(path: String, action: File.() -> Unit) {
         workDir.resolve(path).apply {
             if (exists()) return@apply
@@ -47,94 +63,10 @@ class Launcher(private val args: Array<String>) {
         }
     }
 
-    fun saveBuildSrc() {
-        workFileOnce("buildSrc/build.gradle.kts") {
-            println("Saving Gradle build source script file '$this'")
-            writeText("""
-                repositories {
-                    mavenLocal()
-                    jcenter()
-                    gradlePluginPortal()
-                }
-                
-                dependencies {
-                    implementation("com.cognifide.gradle:aem-plugin:$pluginVersion")
-                    implementation("com.cognifide.gradle:environment-plugin:1.1.27")
-                    implementation("com.neva.gradle:fork-plugin:6.0.5")
-                }
-            """.trimIndent())
-        }
-    }
-
-    fun saveProperties() {
-        if (saveProps) {
-            workFileOnce("gradle.properties") {
-                println("Saving Gradle properties to file '$this'")
-                outputStream().use { output ->
-                    Properties().apply {
-                        val props = args.filter { it.startsWith(ARG_SAVE_PREFIX) }
-                            .map { it.removePrefix(ARG_SAVE_PREFIX) }
-                            .map { it.substringBefore("=") to it.substringAfter("=") }
-                            .toMap()
-                        putAll(props)
-                        store(output, null)
-                    }
-                }
-            }
-        }
-    }
-
-    fun saveRootBuildScript() = workFileOnce("build.gradle.kts") {
-        println("Saving main build script file '$this'")
-        writeText("""
-            plugins {
-                id("com.cognifide.aem.common")
-            }
-            
-            aem {
-                mvnBuild {
-                    discover()
-                }
-            }
-        """.trimIndent())
-    }
-
-    fun saveEnvBuildScript() = workFileOnce("env/build.gradle.kts") {
-        println("Saving environment build script file '$this'")
-        writeText("""
-            plugins {
-                id("com.cognifide.aem.instance.local")
-            }
-        """.trimIndent())
-    }
-
-    fun saveSettings() = workFileOnce("settings.gradle.kts") {
-        println("Saving settings file '$this'")
-        writeText("""
-            include(":env")
-            
-        """.trimIndent())
-    }
-
     fun ensureWrapper() = workFile("gradle/wrapper") {
         if (!exists()) {
             println("Generating Gradle wrapper files")
             runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))
-        }
-    }
-
-
-    fun appendGitIgnore() = workFile(".gitignore") {
-        val content = """
-            ### Gradle/GAP ###
-            .gradle/
-            build/
-            /gap.jar
-        """.trimIndent()
-
-        if (!readText().contains(content)) {
-            println("Appending lines to VCS ignore file '$this'")
-            appendText("$eol${content}$eol")
         }
     }
 
@@ -179,18 +111,7 @@ class Launcher(private val args: Array<String>) {
         val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
 
         @JvmStatic
-        fun main(args: Array<String>) {
-            Launcher(args).apply {
-                saveBuildSrc()
-                saveProperties()
-                saveSettings()
-                saveRootBuildScript()
-                saveEnvBuildScript()
-                ensureWrapper()
-                appendGitIgnore()
-                runBuildAndExit()
-            }
-        }
+        fun main(args: Array<String>) = Launcher(args).launch()
     }
 }
 
