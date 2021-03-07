@@ -66,38 +66,36 @@ class MvnBuild(val aem: AemExtension) {
         get() = MvnGav.readFile(rootPom.get().asFile).version
             ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
 
-    val outputPatterns = aem.obj.strings {
-        set(
-            listOf(
-                // ignored files
-                "**/.idea/**",
-                "**/.idea",
-                "**/.gradle/**",
-                "**/.gradle",
-                "**/gradle.user.properties",
-                "**/gradle/user/**",
+    val outputExclusions = aem.obj.strings {
+        set(listOf(
+            // ignored files
+            "**/.idea/**",
+            "**/.idea",
+            "**/.gradle/**",
+            "**/.gradle",
+            "**/gradle.user.properties",
+            "**/gradle/user/**",
 
-                // build files
-                "**/target/**",
-                "**/target",
-                "**/build/**",
-                "**/build",
-                "**/dist/**",
-                "**/dist",
-                "**/generated",
-                "**/generated/**",
+            // build files
+            "**/target/**",
+            "**/target",
+            "**/build/**",
+            "**/build",
+            "**/dist/**",
+            "**/dist",
+            "**/generated",
+            "**/generated/**",
 
-                "**/package-lock.json",
+            "**/package-lock.json",
 
-                // temporary files
-                "**/node_modules/**",
-                "**/node_modules",
-                "**/node/**",
-                "**/node",
-                "**/*.log",
-                "**/*.tmp",
-            )
-        )
+            // temporary files
+            "**/node_modules/**",
+            "**/node_modules",
+            "**/node/**",
+            "**/node",
+            "**/*.log",
+            "**/*.tmp",
+        ))
     }
 
     val depGraph by lazy { DependencyGraph(this) }

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.mvn
 
+import org.gradle.api.tasks.util.PatternFilterable
 import java.io.File
 
 class ModuleResolver(val build: MvnBuild) {
@@ -10,15 +11,31 @@ class ModuleResolver(val build: MvnBuild) {
         finalizeValueOnRead()
         set(aem.project.provider {
             aem.project.fileTree(build.rootDir)
-                .matching { it.include("pom.xml", "**/pom.xml").exclude(build.outputPatterns.get()) }
+                .matching(pomFilter)
                 .files.map { pom -> ModuleDescriptor(this@ModuleResolver, typeResolver(pom), pom) }
         })
+    }
+
+    val pomExclusions = aem.obj.strings {
+        set(listOf(
+            "**/test/**",
+            "**/tests/**",
+            "**/pipeline/**",
+            "**/pipelines/**"
+        ))
+        aem.prop.list("mvn.moduleResolver.pomExclusions")?.let { set(it) }
+    }
+
+    val pomFilter: PatternFilterable.() -> Unit = {
+        include("pom.xml", "**/pom.xml")
+        exclude(build.outputExclusions.get())
+        exclude(pomExclusions.get())
     }
 
     fun byName(name: String) = all.get().firstOrNull { it.name == name }
         ?: throw MvnException("Cannot find module named '$name' in Maven build at path '$rootDir'!")
 
-    fun byArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifact == artifact }
+    fun byArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifactId == artifact.id }
         ?: throw MvnException("Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!")
 
     val rootDir get() = build.rootDir.get().asFile
@@ -77,7 +94,8 @@ class ModuleResolver(val build: MvnBuild) {
     fun isPackage(pom: File) = pom.parentFile.resolve("src/main/content").exists() ||
             pom.readText().contains("<packaging>content-package</packaging>")
 
-    fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists()
+    fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists() ||
+            pom.readText().contains("<packaging>bundle</packaging>")
 
     fun isFrontend(pom: File) = pom.parentFile.resolve("clientlib.config.js").exists()
 

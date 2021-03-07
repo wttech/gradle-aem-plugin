@@ -36,9 +36,9 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     val inputFiles get() = project.fileTree(descriptor.dir).matching(inputFilter)
 
-    var inputFilter: PatternFilterable.() -> Unit = { exclude(outputPatterns.get()) }
+    var inputFilter: PatternFilterable.() -> Unit = { exclude(outputExclusions.get()) }
 
-    val outputPatterns = aem.obj.strings { set(build.outputPatterns) }
+    val outputExclusions = aem.obj.strings { set(build.outputExclusions) }
 
     val outputFiles get() = project.fileTree(targetDir)
 
