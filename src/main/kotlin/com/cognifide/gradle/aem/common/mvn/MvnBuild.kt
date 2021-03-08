@@ -180,7 +180,7 @@ class MvnBuild(val aem: AemExtension) {
                 ModuleType.PACKAGE -> configurePackage()
                 ModuleType.FRONTEND -> buildFrontend()
                 ModuleType.DISPATCHER -> buildZip()
-                ModuleType.MODULE -> buildModule()
+                ModuleType.RUN -> runModule()
             }
         }
     }

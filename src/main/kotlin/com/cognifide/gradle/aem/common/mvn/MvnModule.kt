@@ -153,8 +153,8 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         options()
     }
 
-    fun buildModule(options: MvnExec.() -> Unit = {}) = exec(Artifact.MODULE) {
-        description = "Builds module"
+    fun runModule(options: MvnExec.() -> Unit = {}) = exec(Artifact.RUN) {
+        description = "Run module"
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.files(outputFiles)

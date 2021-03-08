@@ -63,7 +63,7 @@ class ModuleResolver(val build: MvnBuild) {
         isFrontend(pom) -> ModuleType.FRONTEND
         isDispatcher(pom) -> ModuleType.DISPATCHER
         isRoot(pom) -> ModuleType.POM
-        else -> ModuleType.MODULE
+        else -> ModuleType.RUN
     }
 
     fun isRoot(pom: File) = pom.parentFile == rootDir
