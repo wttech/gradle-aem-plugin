@@ -19,7 +19,7 @@ import java.io.File
  */
 class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
 
-    val destinationDirectory = aem.obj.buildDir("package")
+    val destinationDirectory = aem.obj.dir { convention(aem.commonOptions.tmpDir.dir("package")) }
 
     val archiveBaseName = aem.obj.string { convention(aem.commonOptions.baseName) }
 

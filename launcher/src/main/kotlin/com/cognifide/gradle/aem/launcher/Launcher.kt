@@ -5,7 +5,96 @@ import java.io.File
 import java.util.*
 import kotlin.system.exitProcess
 
-class Launcher {
+class Launcher(val args: Array<String>) {
+
+    val printStackTrace get() = args.contains(ARG_PRINT_STACKTRACE)
+
+    val colorOutput get() = !args.contains(ARG_NO_COLOR_OUTPUT)
+
+    val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
+
+    val gradleArgs get() = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
+
+    val buildConfig get() = Properties().apply {
+        load(Launcher::class.java.getResourceAsStream("/build.properties"))
+    }
+    val gradleVersion get() = buildConfig["gradleVersion"]?.toString()
+        ?: throw LauncherException("Gradle version info not available!")
+
+    val pluginVersion get() = buildConfig["pluginVersion"]?.toString()
+        ?: throw LauncherException("AEM Plugin version info not available!")
+
+    val currentDir get() = File(".")
+
+    val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
+
+    val eol get() = System.lineSeparator()
+
+    val buildScaffolder by lazy { BuildScaffolder(this) }
+
+    val forkScaffolder by lazy { ForkScaffolder(this) }
+
+    val miscScaffolder by lazy { MiscScaffolder(this) }
+
+    fun launch() {
+        scaffold()
+        ensureWrapper()
+        runBuildAndExit()
+    }
+
+    private fun scaffold() {
+        buildScaffolder.scaffold()
+        forkScaffolder.scaffold()
+        miscScaffolder.scaffold()
+    }
+
+    fun workFileOnce(path: String, action: File.() -> Unit) {
+        workDir.resolve(path).apply {
+            if (exists()) return@apply
+            parentFile.mkdirs()
+            action()
+        }
+    }
+
+    fun workFile(path: String, action: File.() -> Unit) {
+        workDir.resolve(path).apply {
+            parentFile.mkdirs()
+            action()
+        }
+    }
+
+    fun ensureWrapper() = workFile("gradle-wrapper.properties") {
+        if (!exists()) {
+            println("Generating Gradle wrapper files")
+            runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))
+        }
+    }
+
+    fun runBuildAndExit(): Unit = try {
+        runBuild(gradleArgs)
+        exitProcess(0)
+    } catch (e: Exception) {
+        if (printStackTrace) {
+            e.printStackTrace(System.err)
+        }
+        exitProcess(1)
+    }
+
+    private fun runBuild(args: List<String>) {
+        GradleConnector.newConnector()
+            .useGradleVersion(gradleVersion)
+            .useBuildDistribution()
+            .forProjectDirectory(workDir)
+            .connect().use { connection ->
+                connection.newBuild()
+                    .withArguments(args)
+                    .setColorOutput(colorOutput)
+                    .setStandardOutput(System.out)
+                    .setStandardError(System.err)
+                    .setStandardInput(System.`in`)
+                    .run()
+            }
+    }
 
     companion object {
 
@@ -22,103 +111,7 @@ class Launcher {
         val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
 
         @JvmStatic
-        fun main(args: Array<String>) {
-            val saveProps = args.contains(ARG_SAVE_PROPS)
-            val printStackTrace = args.contains(ARG_PRINT_STACKTRACE)
-            val colorOutput = !args.contains(ARG_NO_COLOR_OUTPUT)
-            val workDirName = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
-
-            val gradleArgs = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
-            val buildConfig = Properties().apply {
-                load(Launcher::class.java.getResourceAsStream("/build.properties"))
-            }
-            val gradleVersion = buildConfig["gradleVersion"]?.toString()
-                    ?: throw LauncherException("Gradle version info not available!")
-            val pluginVersion = buildConfig["pluginVersion"]?.toString()
-                    ?: throw LauncherException("AEM Plugin version info not available!")
-
-            val currentDir = File(".")
-            val workDir = if (workDirName != null) currentDir.resolve(workDirName) else currentDir
-            if (saveProps) {
-                saveProperties(workDir, gradleArgs)
-            }
-
-            saveSettings(workDir)
-            saveBuildScript(workDir, pluginVersion)
-
-            runBuild(workDir, gradleArgs, gradleVersion, colorOutput, printStackTrace)
-        }
-
-        private fun saveProperties(workDir: File, args: List<String>) {
-            workDir.resolve("gradle.properties").apply {
-                if (exists()) return@apply
-                parentFile.mkdirs()
-
-                outputStream().use { output ->
-                    Properties().apply {
-                        val props = args.filter { it.startsWith(ARG_SAVE_PREFIX) }
-                                .map { it.removePrefix(ARG_SAVE_PREFIX) }
-                                .map { it.substringBefore("=") to it.substringAfter("=") }
-                                .toMap()
-                        putAll(props)
-                        store(output, null)
-                    }
-                }
-            }
-        }
-
-        private fun saveBuildScript(workDir: File, pluginVersion: String?) {
-            workDir.resolve("build.gradle.kts").apply {
-                if (exists()) return@apply
-                parentFile.mkdirs()
-
-                writeText("""
-                            plugins {
-                                id("com.cognifide.aem.instance.local") version "$pluginVersion"
-                                id("com.cognifide.aem.package.sync") version "$pluginVersion"
-                            }
-                        """.trimIndent())
-            }
-        }
-
-        private fun saveSettings(workDir: File) {
-            workDir.resolve("settings.gradle.kts").apply {
-                if (exists()) return@apply
-                parentFile.mkdirs()
-
-                writeText("""
-                            pluginManagement {
-                                repositories {
-                                    mavenLocal()
-                                    jcenter()
-                                    gradlePluginPortal()
-                                }
-                            }
-                        """.trimIndent())
-            }
-        }
-
-        private fun runBuild(workDir: File, args: List<String>, gradleVersion: String?, colorOutput: Boolean, printStackTrace: Boolean): Unit = try {
-            GradleConnector.newConnector()
-                    .useGradleVersion(gradleVersion)
-                    .useBuildDistribution()
-                    .forProjectDirectory(workDir)
-                    .connect().use { connection ->
-                        connection.newBuild()
-                                .withArguments(args)
-                                .setColorOutput(colorOutput)
-                                .setStandardOutput(System.out)
-                                .setStandardError(System.err)
-                                .setStandardInput(System.`in`)
-                                .run()
-                    }
-            exitProcess(0)
-        } catch (e: Exception) {
-            if (printStackTrace) {
-                e.printStackTrace(System.err)
-            }
-            exitProcess(1)
-        }
+        fun main(args: Array<String>) = Launcher(args).launch()
     }
 }
 

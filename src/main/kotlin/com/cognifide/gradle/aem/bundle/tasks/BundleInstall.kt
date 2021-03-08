@@ -40,7 +40,7 @@ open class BundleInstall : Bundle() {
      * Repeat install when failed (brute-forcing).
      */
     @Internal
-    var retry = common.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
+    var retry = common.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 3) }
 
     @TaskAction
     override fun doSync() {

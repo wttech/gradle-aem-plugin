@@ -39,6 +39,11 @@ open class CommonOptions(private val aem: AemExtension) {
     }
 
     /**
+     * Temporary files directory
+     */
+    val tmpDir = aem.obj.buildDir("aem/tmp")
+
+    /**
      * Determines current environment name to be used in e.g package deployment.
      */
     val env = aem.obj.string {

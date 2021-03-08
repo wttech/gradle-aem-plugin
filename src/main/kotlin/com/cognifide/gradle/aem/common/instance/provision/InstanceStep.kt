@@ -125,7 +125,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to true
             ))
-            throw ProvisionException("Cannot perform provision step '${definition.id.get()}' on $instance! Cause: ${e.message}")
+            throw ProvisionException("Cannot perform provision step '${definition.id.get()}' on $instance! Cause: ${e.message}", e)
         } finally {
             marker.reload()
         }

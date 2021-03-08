@@ -18,6 +18,8 @@ import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
+import com.cognifide.gradle.aem.common.mvn.MvnBuild
+import com.cognifide.gradle.aem.common.mvn.MvnInvoker
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.common.utils.ProcessKiller
@@ -27,6 +29,7 @@ import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.pluginProjects
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
@@ -428,6 +431,21 @@ class AemExtension(val project: Project) : Serializable {
      * Execute Groovy script(s) matching file pattern on AEM instances.
      */
     fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern.set(scriptPattern); eval() }
+
+    /**
+     * Invoke Maven process.
+     */
+    fun mvnInvoke(options: MvnInvoker.() -> Unit) = MvnInvoker(this).apply(options).invoke()
+
+    /**
+     * Wrapped Maven build with added capability to execute it incrementally.
+     */
+    val mvnBuild by lazy { MvnBuild(this) }
+
+    /**
+     * Configure wrapped Maven build with added capability to execute it incrementally.
+     */
+    fun mvnBuild(options: MvnBuild.() -> Unit) = mvnBuild.using(options)
 
     companion object {
 

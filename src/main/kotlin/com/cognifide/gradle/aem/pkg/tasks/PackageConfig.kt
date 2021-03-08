@@ -36,7 +36,9 @@ open class PackageConfig : AemDefaultTask() {
      * Unique ID of OSGi config to be saved.
      */
     @Internal
-    val pid = aem.obj.string { convention(aem.prop.string("package.config.pid")) }
+    val pid = aem.obj.string {
+        aem.prop.string("package.config.pid")?.let { set(it) }
+    }
 
     @TaskAction
     fun sync() {
@@ -47,7 +49,9 @@ open class PackageConfig : AemDefaultTask() {
                 step = "Preparing"
 
                 val configPidPattern = pid.orNull ?: listOfNotNull(aem.javaPackage).ifEmpty { aem.javaPackages }.joinToString(",") { "$it.*" }
-                val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, configPidPattern) }
+                val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter {
+                    Patterns.wildcard(it, configPidPattern)
+                }
 
                 if (configPids.isEmpty()) {
                     logger.lifecycle("None of OSGi configuration XML files synchronized matching PID '$configPidPattern'!")
@@ -99,7 +103,7 @@ open class PackageConfig : AemDefaultTask() {
     }
 
     init {
-        description = "Synchronizes OSGi configuration as XML files put into JCR content."
+        description = "Check out OSGi configuration then save as JCR content."
     }
 
     companion object {
