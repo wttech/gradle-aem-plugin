@@ -115,10 +115,9 @@ ui.frontend:zip - Builds AEM frontend
 
 Next steps to do after creating Gradle/GAP configuration i.e steps just done:
 
-1. Running command `sh gradlew props` and specifying AEM instance source files,
-2. Running command `sh gradlew :env:setup` for setting up complete AEM environment with building & deploying AEM application incrementally,
-3. Appending line `defaultTasks(":env:setup"")` to file *build.gradle.kts*,
-4. Running command `sh gradlew` to see that incremental build powered by Gradle/GAP is detecting no changes to apply :)
+1. Run command `sh gradlew props` and specify AEM instance source files,
+2. Run command `sh gradlew :env:setup` to set up complete AEM environment with building & deploying AEM application incrementally,
+3. Run command `sh gradlew` (shorthand for `:env:setup`) to see that incremental build powered by Gradle/GAP is detecting no changes to apply :)
 
 ### Setting up local instance
 
