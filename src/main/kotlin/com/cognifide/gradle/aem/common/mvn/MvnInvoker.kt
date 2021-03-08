@@ -2,13 +2,14 @@ package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.ExecSpec
 import java.io.File
 
 class MvnInvoker(private val aem: AemExtension, private val forcedArgs: List<String> = listOf()) {
 
-    @Input
+    @Internal
     val workingDir = aem.obj.dir()
 
     fun workingDir(dir: File) {

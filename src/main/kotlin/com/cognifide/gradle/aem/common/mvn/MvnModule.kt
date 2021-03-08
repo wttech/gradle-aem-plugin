@@ -153,7 +153,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         options()
     }
 
-    fun buildModule(options: MvnExec.() -> Unit = {}) = exec(TASK_MODULE) {
+    fun buildModule(options: MvnExec.() -> Unit = {}) = exec(Artifact.MODULE) {
         description = "Builds module"
         invoker.args("clean", "install")
         inputs.files(inputFiles)
@@ -187,7 +187,5 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         const val TASK_PACKAGE_SYNC = "sync"
 
         const val TASK_PACKAGE_CONFIG = "config"
-
-        const val TASK_MODULE = "module"
     }
 }

@@ -26,7 +26,7 @@ class Artifact(val notation: String) {
 
         const val JAR = "jar"
 
-        const val OTHER = "other"
+        const val MODULE = "module"
     }
 }
 

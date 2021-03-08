@@ -6,5 +6,5 @@ enum class ModuleType(val extension: String) {
     PACKAGE(Artifact.ZIP),
     FRONTEND(Artifact.ZIP),
     DISPATCHER(Artifact.ZIP),
-    OTHER(Artifact.OTHER)
+    MODULE(Artifact.MODULE)
 }
