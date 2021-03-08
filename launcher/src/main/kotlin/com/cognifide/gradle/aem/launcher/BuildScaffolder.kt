@@ -96,7 +96,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                     provisioner {
                         enableCrxDe()
                         deployPackage("com.neva.felix:search-webconsole-plugin:1.3.0")
-                        deployPackage("com.adobe.cq:core.wcm.components.all:2.8.0@zip") {
+                        deployPackage("com.adobe.cq:core.wcm.components.all:2.11.0@zip") {
                             condition { !instance.version.cloud && once() }
                         }
                         configureReplicationAgentAuthor("publish") {
