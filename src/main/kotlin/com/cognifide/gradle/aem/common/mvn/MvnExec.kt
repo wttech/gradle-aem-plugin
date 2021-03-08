@@ -24,8 +24,8 @@ open class MvnExec : DefaultTask() {
     val forcedArgs get() = listOf("-N")
 
     val args = aem.obj.strings {
-        set(listOf())
-        aem.prop.string("mvn.execArgs")?.split(" ") ?: listOf("-B")
+        set(listOf("-B"))
+        aem.prop.string("mvn.execArgs")?.let { set(it.split(" ")) }
     }
 
     fun args(vararg values: String) = args(values.asIterable())
@@ -41,14 +41,26 @@ open class MvnExec : DefaultTask() {
     }
 
     @TaskAction
+    @SuppressWarnings("TooGenericExceptionCaught")
     fun exec() {
-        if (!workingDir.get().asFile.exists()) {
+        val dir = workingDir.get().asFile
+        if (!dir.exists()) {
             throw MvnException("Cannot run Maven build at non-existing directory: '$workingDir'!")
         }
-        project.exec { spec ->
-            spec.apply(specOptions)
-            spec.workingDir(workingDir)
-            spec.commandLine = executableArgs.get() + forcedArgs + args.get()
+        val clArgs = executableArgs.get() + forcedArgs + args.get()
+        try {
+            project.exec { spec ->
+                spec.apply(specOptions)
+                spec.workingDir(workingDir)
+                spec.commandLine = clArgs
+            }
+        } catch (e: Exception) {
+            throw MvnException(listOf(
+                "Cannot run Maven build properly!",
+                "Directory: $dir",
+                "Args: ${clArgs.joinToString(" ")}",
+                "Cause: ${e.message}"
+            ).joinToString("\n"))
         }
     }
 }
