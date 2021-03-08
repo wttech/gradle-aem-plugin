@@ -43,21 +43,15 @@ class DependencyGraph(val build: MvnBuild) {
             try {
                 aem.common.progress {
                     step = "Performing Maven build for dependency graph"
-                    aem.project.exec { spec ->
-                        spec.workingDir(buildDir)
-                        spec.executable("mvn")
-                        spec.args(buildCommand.get().split(" "))
+                    aem.mvnInvoke {
+                        workingDir(buildDir)
+                        args(buildCommand.get().split(" "))
                     }
 
                     step = "Generating Maven build dependency graph"
-                    aem.project.exec { spec ->
-                        spec.workingDir(buildDir)
-                        spec.executable("mvn")
-                        spec.args(
-                            "com.github.ferstl:depgraph-maven-plugin:aggregate",
-                            "-Dincludes=${build.groupId.get()}",
-                            "-Dscope=compile"
-                        )
+                    aem.mvnInvoke {
+                        workingDir(buildDir)
+                        args(generateCommand.get().split(" "))
                     }
                     dotFileSource.get().asFile.copyTo(dotFile.get().asFile, true)
                 }

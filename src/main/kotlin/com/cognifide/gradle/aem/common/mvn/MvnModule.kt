@@ -71,7 +71,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildPom() = exec(Artifact.POM) {
         description = "Installs POM to local repository"
-        args("clean", "install")
+        invoker.args("clean", "install")
         inputs.file(descriptor.pom)
         outputs.dir(repositoryDir)
     }
@@ -88,7 +88,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildArtifact(extension: String, options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(extension) {
         description = "Builds artifact '$extension'"
-        args("clean", "install")
+        invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(extension))
         outputs.dir(repositoryDir)
@@ -97,7 +97,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildFrontend(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
         description = "Builds AEM frontend"
-        args("clean", "install")
+        invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(Artifact.ZIP))
         outputs.dir(repositoryDir)
@@ -113,7 +113,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildPackage(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
         description = "Builds AEM package"
-        args("clean", "install")
+        invoker.args("clean", "install")
         val outputFile = targetFile(Artifact.ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
@@ -155,7 +155,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun buildModule(options: MvnExec.() -> Unit = {}) = exec(TASK_MODULE) {
         description = "Builds module"
-        args("clean", "install")
+        invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.files(outputFiles)
         outputs.dir(repositoryDir)
@@ -164,9 +164,9 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun exec(name: String, options: MvnExec.() -> Unit) = tasks.register<MvnExec>(name) {
         commonOptions()
-        workingDir.set(descriptor.dir)
+        invoker.workingDir.set(descriptor.dir)
+        invoker.args.addAll(profilesAvailable)
         inputs.property("profiles", profilesAvailable)
-        doFirst { args(profilesAvailable.get()) }
         options()
     }.also { task ->
         tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
