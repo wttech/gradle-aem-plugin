@@ -95,6 +95,9 @@ class BuildScaffolder(private val launcher: Launcher) {
                 instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/master/docs/instance-plugin.md
                     provisioner {
                         enableCrxDe()
+                        deployPackage("com.adobe.cq:core.wcm.components.all:latest.release@zip") {
+                            condition { instance.version.cloud && once() }
+                        }
                         configureReplicationAgentAuthor("publish") {
                             agent { configure(transportUri = "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1", transportUser = "admin", transportPassword = instancePassword, userId = "admin") }
                             version.set(publishHttpUrl)
