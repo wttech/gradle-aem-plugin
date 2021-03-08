@@ -2,16 +2,20 @@ package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.aem
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.ExecSpec
 
 open class MvnExec : DefaultTask() {
 
-    val aem = project.aem
+    private val aem = project.aem
 
+    @Input
     val workingDir = aem.obj.dir()
 
+    @Input
     val executableArgs = aem.obj.strings {
         set(project.provider {
             when {
@@ -21,8 +25,10 @@ open class MvnExec : DefaultTask() {
         })
     }
 
+    @get:Internal
     val forcedArgs get() = listOf("-N")
 
+    @Input
     val args = aem.obj.strings {
         set(listOf("-B"))
         aem.prop.string("mvn.execArgs")?.let { set(it.split(" ")) }
