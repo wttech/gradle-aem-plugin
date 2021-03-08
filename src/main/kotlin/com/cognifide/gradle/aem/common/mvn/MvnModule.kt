@@ -164,8 +164,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun exec(name: String, options: MvnExec.() -> Unit) = tasks.register<MvnExec>(name) {
         commonOptions()
-        executable("mvn")
-        workingDir(descriptor.dir)
+        workingDir.set(descriptor.dir)
         inputs.property("profiles", profilesAvailable)
         doFirst { args(profilesAvailable.get()) }
         options()
