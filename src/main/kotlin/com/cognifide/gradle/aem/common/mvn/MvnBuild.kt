@@ -66,6 +66,11 @@ class MvnBuild(val aem: AemExtension) {
         get() = MvnGav.readFile(rootPom.get().asFile).version
             ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
 
+    val contentPath = aem.obj.string {
+        convention("src/main/content")
+        aem.prop.string("mvn.contentPath")?.let { set(it) }
+    }
+
     val outputExclusions = aem.obj.strings {
         set(listOf(
             // ignored files
@@ -221,23 +226,35 @@ class MvnBuild(val aem: AemExtension) {
         convention(listOf(
             "prereqs",
             "prereqs.*",
+            "prereqs-*",
             "ui.prereqs",
             "ui.prereqs.*",
+            "ui.prereqs-*",
             "ui.apps.prereqs",
+            "ui.apps-prereqs",
             "ui.apps",
             "ui.apps.*",
+            "ui.apps-*",
             "ui.*.apps",
-            "ui.config",
+            "ui.*-apps",
             "config",
             "config.*",
+            "config-*",
+            "ui.config",
             "ui.config.*",
+            "ui.config-*",
             "ui.*.config",
+            "ui.*-config",
             "ui.content",
             "ui.content.*",
+            "ui.content-*",
             "ui.*.content",
+            "ui.*-content",
             "ui.*",
             "all.*",
+            "all-*",
             "*.all",
+            "*-all",
             "all"
         ))
         aem.prop.list("mvn.deployPackagePrecedence")?.let { set(it) }
@@ -247,7 +264,9 @@ class MvnBuild(val aem: AemExtension) {
         convention(listOf(
             "*",
             "!all.*",
+            "!all-*",
             "!*.all",
+            "!*-all",
             "!all"
         ))
         aem.prop.list("mvn.deployPackageNames")?.let { set(it) }

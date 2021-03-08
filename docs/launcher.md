@@ -185,14 +185,14 @@ sh gradlew packageSync -Pfilter.roots=[/content/example,/content/dam/example]
 
 ### Copying content between instances
 
-To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running command:
+To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running commands:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar && java -jar gap.jar && rm gap.jar \
- instanceRcp \
--Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
--Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
--Pinstance.rcp.paths=[/content/example,/content/dam/example]
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.0/gap.jar && java -jar gap.jar && rm gap.jar
+sh gradlew instanceRcp \
+  -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
+  -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
+  -Pinstance.rcp.paths=[/content/example,/content/dam/example]
 ```
 
 ## Options

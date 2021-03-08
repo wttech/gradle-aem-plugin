@@ -20,6 +20,10 @@ class ModuleResolver(val build: MvnBuild) {
         set(listOf(
             "**/test/**",
             "**/tests/**",
+            "**/*.test/**",
+            "**/*-test/**",
+            "**/*.tests/**",
+            "**/*-tests/**",
             "**/pipeline/**",
             "**/pipelines/**"
         ))
@@ -45,33 +49,6 @@ class ModuleResolver(val build: MvnBuild) {
             ?: throw MvnException("Cannot find root module in Maven build at path '$rootDir'!")
     }
 
-    val artifactPrefixes = aem.obj.strings {
-        set(aem.project.provider {
-            listOf(
-                "${build.groupId.get()}:",
-                "${build.appId.get()}."
-            )
-        })
-    }
-
-    fun normalizeArtifactId(id: String): String {
-        val prefixes = artifactPrefixes.get().toMutableList()
-
-        val separators = listOf(".", "-")
-        separators.forEach { separator ->
-            val rootPrefix = "${root.get().artifactId}$separator"
-            val rootPrefixedOthers = all.get().filter { !it.root }.all { it.artifactId.startsWith(rootPrefix) }
-            if (rootPrefixedOthers) {
-                prefixes.add(rootPrefix)
-            }
-        }
-
-        return when (id) {
-            root.get().artifactId -> ROOT_DESCRIPTOR_NAME
-            else -> prefixes.fold(id) { r, n -> r.removePrefix(n) }
-        }
-    }
-
     val projectPaths = all.map { descriptors -> descriptors.map { it.projectPath }.sorted() }
 
     fun typeResolver(resolver: (File) -> ModuleType) {
@@ -91,7 +68,7 @@ class ModuleResolver(val build: MvnBuild) {
 
     fun isRoot(pom: File) = pom.parentFile == rootDir
 
-    fun isPackage(pom: File) = pom.parentFile.resolve("src/main/content").exists() ||
+    fun isPackage(pom: File) = pom.parentFile.resolve(build.contentPath.get()).exists() ||
             pom.readText().contains("<packaging>content-package</packaging>")
 
     fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists() ||
@@ -100,8 +77,4 @@ class ModuleResolver(val build: MvnBuild) {
     fun isFrontend(pom: File) = pom.parentFile.resolve("clientlib.config.js").exists()
 
     fun isDispatcher(pom: File) = pom.parentFile.resolve("src/conf.dispatcher.d").exists()
-
-    companion object {
-        const val ROOT_DESCRIPTOR_NAME = "root"
-    }
 }

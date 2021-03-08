@@ -24,6 +24,10 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     val aem = build.aem
 
+    val appId = aem.obj.string {
+        set(build.appId)
+    }
+
     val tasks get() = project.common.tasks
 
     val repositoryDir = aem.obj.dir {
@@ -138,13 +142,13 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun syncPackage(options: PackageSync.() -> Unit = {}) = tasks.register<PackageSync>(TASK_PACKAGE_SYNC) {
         commonOptions()
-        contentDir(descriptor.dir.resolve("src/main/content"))
+        contentDir(descriptor.dir.resolve(build.contentPath.get()))
         options()
     }
 
     fun syncConfig(options: PackageConfig.() -> Unit = {}) = tasks.register<PackageConfig>(TASK_PACKAGE_CONFIG) {
         commonOptions()
-        saveDir.set(descriptor.dir.resolve("src/main/content/jcr_root/apps/${build.appId.get()}/osgiconfig/config"))
+        saveDir.fileProvider(appId.map { id -> descriptor.determineOsgiConfigPath(id) })
         pid.convention(build.groupId.map { "$it.*" })
         options()
     }
