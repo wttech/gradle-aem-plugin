@@ -30,16 +30,15 @@ class BuildScaffolder(private val launcher: Launcher) {
         """.trimIndent())
     }
 
-    private fun saveProperties() {
-        if (savePropsFlag) {
-            launcher.workFileOnce("gradle.properties") {
-                println("Saving Gradle properties file '$this'")
-                outputStream().use { output ->
-                    Properties().apply {
-                        putAll(saveProps)
-                        store(output, null)
-                    }
+    private fun saveProperties() = launcher.workFileOnce("gradle.properties") {
+        println("Saving Gradle properties file '$this'")
+        outputStream().use { output ->
+            Properties().apply {
+                putAll(defaultProps)
+                if (savePropsFlag) {
+                    putAll(saveProps)
                 }
+                store(output, null)
             }
         }
     }
@@ -50,6 +49,14 @@ class BuildScaffolder(private val launcher: Launcher) {
         .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
         .map { it.substringBefore("=") to it.substringAfter("=") }
         .toMap()
+
+    private val defaultProps get() = mapOf(
+        "org.gradle.logging.level" to "info",
+        "org.gradle.daemon" to true,
+        "org.gradle.parallel" to true,
+        "org.gradle.caching" to true,
+        "org.gradle.jvmargs" to "-Xmx2048m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8"
+    )
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
         println("Saving root Gradle build script file '$this'")
