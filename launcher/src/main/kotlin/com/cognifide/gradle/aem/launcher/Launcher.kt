@@ -83,7 +83,6 @@ class Launcher(val args: Array<String>) {
     private fun runBuild(args: List<String>) {
         GradleConnector.newConnector()
             .useGradleVersion(gradleVersion)
-            .useBuildDistribution()
             .forProjectDirectory(workDir)
             .connect().use { connection ->
                 connection.newBuild()
