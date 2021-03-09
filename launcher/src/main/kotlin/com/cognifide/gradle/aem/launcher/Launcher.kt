@@ -63,7 +63,7 @@ class Launcher(val args: Array<String>) {
         }
     }
 
-    fun ensureWrapper() = workFile("gradle-wrapper.properties") {
+    fun ensureWrapper() = workFile("gradle/wrapper/gradle-wrapper.properties") {
         if (!exists()) {
             println("Generating Gradle wrapper files")
             runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))
@@ -81,6 +81,7 @@ class Launcher(val args: Array<String>) {
     }
 
     private fun runBuild(args: List<String>) {
+        println("Running Gradle build: '${args.joinToString(" ")}'")
         GradleConnector.newConnector()
             .useGradleVersion(gradleVersion)
             .forProjectDirectory(workDir)
