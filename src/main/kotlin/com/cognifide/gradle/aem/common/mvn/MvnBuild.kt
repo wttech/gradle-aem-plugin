@@ -141,7 +141,8 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val init = aem.obj.boolean {
-        set(aem.prop.flag("launcher.wrapper"))
+        convention(aem.prop.flag("launcher.wrapper"))
+        aem.prop.boolean("mvnBuild.init")?.let { set(it) }
     }
 
     fun discover() {
