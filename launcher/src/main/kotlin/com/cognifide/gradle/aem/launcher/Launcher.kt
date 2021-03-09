@@ -38,7 +38,8 @@ class Launcher(val args: Array<String>) {
 
     fun launch() {
         scaffold()
-        ensureWrapper()
+        awaitFileSystem()
+        runBuildWrapperOnce()
         runBuildAndExit()
     }
 
@@ -46,6 +47,14 @@ class Launcher(val args: Array<String>) {
         buildScaffolder.scaffold()
         forkScaffolder.scaffold()
         miscScaffolder.scaffold()
+    }
+
+    /**
+     * On Windows later build execution might fail without it, because Gradle files might not be ready.
+     * Do not remove it!
+     */
+    private fun awaitFileSystem() {
+        Thread.sleep(1_000)
     }
 
     fun workFileOnce(path: String, action: File.() -> Unit) {
@@ -63,7 +72,7 @@ class Launcher(val args: Array<String>) {
         }
     }
 
-    fun ensureWrapper() = workFile("gradle/wrapper/gradle-wrapper.properties") {
+    fun runBuildWrapperOnce() = workFile("gradle/wrapper/gradle-wrapper.properties") {
         if (!exists()) {
             println("Generating Gradle wrapper files")
             runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))

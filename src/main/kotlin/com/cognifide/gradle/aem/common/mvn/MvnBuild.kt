@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
@@ -269,6 +270,8 @@ class MvnBuild(val aem: AemExtension) {
     val deployPackageNames = aem.obj.strings {
         convention(listOf(
             "*",
+            "!ui.*.structure",
+            "!ui.*-structure",
             "!all.*",
             "!all-*",
             "!*.all",
@@ -281,7 +284,15 @@ class MvnBuild(val aem: AemExtension) {
     fun defineDeployPackageTask() {
         val packageModules = moduleResolver.all.get()
             .filter { it.type == ModuleType.PACKAGE && Patterns.wildcard(it.name, deployPackageNames.get()) }
-        val taskOptions: Task.() -> Unit = { description = "Deploys AEM packages incrementally" }
+        val taskOptions: Task.() -> Unit = {
+            description = "Deploys AEM packages incrementally"
+            doLast {
+                logger.lifecycle(listOf(
+                    "Deployment of ${packageModules.size} AEM package(s) ended at ${Formats.date()}:",
+                    packageModules.joinToString(", ") { it.name }
+                ).joinToString("\n"))
+            }
+        }
 
         if (deployPackageOrder.get() == DeployPackageOrder.PRECEDENCE) {
             val deployTasks = packageModules.sortedBy { module ->

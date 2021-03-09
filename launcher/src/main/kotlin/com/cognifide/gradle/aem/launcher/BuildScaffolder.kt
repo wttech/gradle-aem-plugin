@@ -30,16 +30,15 @@ class BuildScaffolder(private val launcher: Launcher) {
         """.trimIndent())
     }
 
-    private fun saveProperties() {
-        if (savePropsFlag) {
-            launcher.workFileOnce("gradle.properties") {
-                println("Saving Gradle properties file '$this'")
-                outputStream().use { output ->
-                    Properties().apply {
-                        putAll(saveProps)
-                        store(output, null)
-                    }
+    private fun saveProperties() = launcher.workFileOnce("gradle.properties") {
+        println("Saving Gradle properties file '$this'")
+        outputStream().use { output ->
+            Properties().apply {
+                putAll(defaultProps)
+                if (savePropsFlag) {
+                    putAll(saveProps)
                 }
+                store(output, null)
             }
         }
     }
@@ -50,6 +49,14 @@ class BuildScaffolder(private val launcher: Launcher) {
         .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
         .map { it.substringBefore("=") to it.substringAfter("=") }
         .toMap()
+
+    private val defaultProps get() = mapOf(
+        "org.gradle.logging.level" to "info",
+        "org.gradle.daemon" to true,
+        "org.gradle.parallel" to true,
+        "org.gradle.caching" to true,
+        "org.gradle.jvmargs" to "-Xmx2048m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8"
+    )
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
         println("Saving root Gradle build script file '$this'")
@@ -87,17 +94,15 @@ class BuildScaffolder(private val launcher: Launcher) {
                 id("com.cognifide.environment")
             }
             
+            val instancePassword = common.prop.string("instance.default.password")
+            val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
+            val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
+            val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz"
+
             aem {
-                val instancePassword = common.prop.string("instance.default.password")
-                val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
-                val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
-            
                 instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/master/docs/instance-plugin.md
                     provisioner {
                         enableCrxDe()
-                        deployPackage("com.adobe.cq:core.wcm.components.all:2.13.0@zip") {
-                            condition { instance.version.cloud && once() }
-                        }
                         configureReplicationAgentAuthor("publish") {
                             agent { configure(transportUri = "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1", transportUser = "admin", transportPassword = instancePassword, userId = "admin") }
                             version.set(publishHttpUrl)
@@ -116,7 +121,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                         "httpd" {
                             resolve {
                                 resolveFiles {
-                                    download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz").use {
+                                    download(dispatcherTarUrl).use {
                                         copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
                                     }
                                 }
