@@ -62,10 +62,10 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     val profiles = aem.obj.strings {
         convention(listOf())
-        aem.prop.list("mvn.profiles")?.let { set(it) }
+        aem.prop.list("mvnBuild.profiles")?.let { set(it) }
     }
 
-    val profilesAvailable = profiles.map { ps ->
+    private val profileArgs = profiles.map { ps ->
         ps.filter { descriptor.hasProfile(it) }.map { "-P$it" }
     }
 
@@ -164,9 +164,12 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun exec(name: String, options: MvnExec.() -> Unit) = tasks.register<MvnExec>(name) {
         commonOptions()
-        invoker.workingDir.set(descriptor.dir)
-        invoker.args.addAll(profilesAvailable)
-        inputs.property("profiles", profilesAvailable)
+        invoker {
+            workingDir.set(build.rootDir.get())
+            args.addAll("-N", "-f", descriptor.pom.absolutePath)
+            args.addAll(profileArgs)
+            aem.prop.list("mvnBuild.args")?.let { args.addAll(it) }
+        }
         options()
     }.also { task ->
         tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }

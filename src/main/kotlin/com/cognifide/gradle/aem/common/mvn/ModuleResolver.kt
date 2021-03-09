@@ -27,7 +27,7 @@ class ModuleResolver(val build: MvnBuild) {
             "**/pipeline/**",
             "**/pipelines/**"
         ))
-        aem.prop.list("mvn.moduleResolver.pomExclusions")?.let { set(it) }
+        aem.prop.list("mvnBuild.moduleResolver.pomExclusions")?.let { set(it) }
     }
 
     val pomFilter: PatternFilterable.() -> Unit = {

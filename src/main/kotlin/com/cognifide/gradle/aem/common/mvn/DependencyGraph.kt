@@ -14,22 +14,22 @@ class DependencyGraph(val build: MvnBuild) {
 
     val generateForce = aem.obj.boolean {
         convention(false)
-        aem.prop.boolean("mvn.depGraph.generateForce")?.let { set(it) }
+        aem.prop.boolean("mvnBuild.depGraph.generateForce")?.let { set(it) }
     }
 
     val generateCommand = aem.obj.string {
         convention(build.groupId.map { "com.github.ferstl:depgraph-maven-plugin:aggregate -Dincludes=${build.groupId.get()} -Dscope=compile" })
-        aem.prop.string("mvn.depGraph.generateCommand")?.let { set(it) }
+        aem.prop.string("mvnBuild.depGraph.generateCommand")?.let { set(it) }
     }
 
     val buildCommand = aem.obj.string {
         convention("clean install -DskipTests")
-        aem.prop.string("mvn.depGraph.buildCommand")?.let { set(it) }
+        aem.prop.string("mvnBuild.depGraph.buildCommand")?.let { set(it) }
     }
 
     val packagingMap = aem.obj.map<String, String> {
         set(mapOf("content-package" to "zip"))
-        aem.prop.map("mvn.depGraph.packagingMap")?.let { set(it) }
+        aem.prop.map("mvnBuild.depGraph.packagingMap")?.let { set(it) }
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -43,13 +43,13 @@ class DependencyGraph(val build: MvnBuild) {
             try {
                 aem.common.progress {
                     step = "Performing Maven build for dependency graph"
-                    aem.mvnInvoke {
+                    aem.common.mvn {
                         workingDir(buildDir)
                         args(buildCommand.get().split(" "))
                     }
 
                     step = "Generating Maven build dependency graph"
-                    aem.mvnInvoke {
+                    aem.common.mvn {
                         workingDir(buildDir)
                         args(generateCommand.get().split(" "))
                     }
@@ -103,7 +103,7 @@ class DependencyGraph(val build: MvnBuild) {
 
     val extras = aem.obj.list<Dependency> {
         convention(listOf())
-        aem.prop.map("mvn.depGraph.extras")?.let { deps -> set(deps.map { it.toDependency() }) }
+        aem.prop.map("mvnBuild.depGraph.extras")?.let { deps -> set(deps.map { it.toDependency() }) }
     }
 
     fun extras(vararg dependencies: Pair<String, String>) {
@@ -112,7 +112,7 @@ class DependencyGraph(val build: MvnBuild) {
 
     val redundants = aem.obj.list<Dependency> {
         convention(listOf())
-        aem.prop.map("mvn.depGraph.redundants")?.let { deps -> set(deps.map { it.toDependency() }) }
+        aem.prop.map("mvnBuild.depGraph.redundants")?.let { deps -> set(deps.map { it.toDependency() }) }
     }
 
     fun redundant(vararg dependencies: Pair<String, String>) {
@@ -120,7 +120,7 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     val softRedundants = aem.obj.list<Dependency> {
-        aem.prop.map("mvn.depGraph.softRedundants")?.let { deps -> set(deps.map { it.toDependency() }) }
+        aem.prop.map("mvnBuild.depGraph.softRedundants")?.let { deps -> set(deps.map { it.toDependency() }) }
     }
 
     fun softRedundant(vararg dependencies: Pair<String, String>) {

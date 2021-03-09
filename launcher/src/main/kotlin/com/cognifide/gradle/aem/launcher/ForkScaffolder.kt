@@ -27,8 +27,8 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.local-publish.httpUrl={{instancePublishHttpUrl}}
             instance.local-publish.openPath=/crx/packmgr
 
-            mvn.execArgs={{mvnExecArgs}}
-            mvn.profiles={{mvnProfiles}}
+            mvnBuild.args={{mvnBuildArgs}}
+            mvnBuild.profiles={{mvnBuildProfiles}}
 
             # === Gradle Environment Plugin ===
             {% if dockerSafeVolumes == 'true' %}
@@ -96,13 +96,13 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                     }
                     group("AEM Options") {
-                        define("mvnProfiles") {
+                        define("mvnBuildProfiles") {
                             label = "Maven Profiles"
                             text("fedDev")
                             description = "Comma delimited"
                             optional()
                         }
-                        define("mvnExecArgs") {
+                        define("mvnBuildArgs") {
                             label = "Maven Args"
                             text("-B")
                             description = "Added extra"

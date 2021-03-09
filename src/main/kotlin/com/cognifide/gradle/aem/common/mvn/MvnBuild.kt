@@ -54,12 +54,12 @@ class MvnBuild(val aem: AemExtension) {
 
     val appId = aem.obj.string {
         convention(archetypeProperties.getting("appId"))
-        aem.prop.string("mvn.appId")?.let { set(it) }
+        aem.prop.string("mvnBuild.appId")?.let { set(it) }
     }
 
     val groupId = aem.obj.string {
         convention(archetypeProperties.getting("groupId"))
-        aem.prop.string("mvn.groupId")?.let { set(it) }
+        aem.prop.string("mvnBuild.groupId")?.let { set(it) }
     }
 
     val version
@@ -68,7 +68,7 @@ class MvnBuild(val aem: AemExtension) {
 
     val contentPath = aem.obj.string {
         convention("src/main/content")
-        aem.prop.string("mvn.contentPath")?.let { set(it) }
+        aem.prop.string("mvnBuild.contentPath")?.let { set(it) }
     }
 
     val outputExclusions = aem.obj.strings {
@@ -215,7 +215,7 @@ class MvnBuild(val aem: AemExtension) {
 
     val deployPackageOrder = aem.obj.typed<DeployPackageOrder> {
         convention(DeployPackageOrder.PRECEDENCE)
-        aem.prop.string("mvn.deployPackageOrder")?.let { set(DeployPackageOrder.of(it)) }
+        aem.prop.string("mvnBuild.deployPackageOrder")?.let { set(DeployPackageOrder.of(it)) }
     }
 
     fun deployPackageOrder(type: String) {
@@ -257,7 +257,7 @@ class MvnBuild(val aem: AemExtension) {
             "*-all",
             "all"
         ))
-        aem.prop.list("mvn.deployPackagePrecedence")?.let { set(it) }
+        aem.prop.list("mvnBuild.deployPackagePrecedence")?.let { set(it) }
     }
 
     val deployPackageNames = aem.obj.strings {
@@ -269,7 +269,7 @@ class MvnBuild(val aem: AemExtension) {
             "!*-all",
             "!all"
         ))
-        aem.prop.list("mvn.deployPackageNames")?.let { set(it) }
+        aem.prop.list("mvnBuild.deployPackageNames")?.let { set(it) }
     }
 
     fun defineDeployPackageTask() {

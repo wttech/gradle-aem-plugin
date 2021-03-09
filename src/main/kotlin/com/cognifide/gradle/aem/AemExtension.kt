@@ -19,7 +19,6 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.mvn.MvnBuild
-import com.cognifide.gradle.aem.common.mvn.MvnInvoker
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.common.utils.ProcessKiller
@@ -431,11 +430,6 @@ class AemExtension(val project: Project) : Serializable {
      * Execute Groovy script(s) matching file pattern on AEM instances.
      */
     fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern.set(scriptPattern); eval() }
-
-    /**
-     * Invoke Maven process.
-     */
-    fun mvnInvoke(options: MvnInvoker.() -> Unit) = MvnInvoker(this).apply(options).invoke()
 
     /**
      * Wrapped Maven build with added capability to execute it incrementally.
