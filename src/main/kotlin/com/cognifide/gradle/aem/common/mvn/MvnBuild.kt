@@ -151,8 +151,13 @@ class MvnBuild(val aem: AemExtension) {
         val settingsLines = projectPaths.joinToString("\n") { """include("$it")""" }
 
         if (init.get()) {
-            logger.info("Updating Gradle settings due discovered Maven build projects (${projectPaths.size})")
-            settingsFile.appendText(settingsLines)
+            val settingsFileLines = settingsFile.readLines().joinToString("\n") { it.trim() }
+            if (settingsFileLines.contains(settingsLines)) {
+                logger.info("Updating Gradle settings not needed for discovered Maven build projects (${projectPaths.size})")
+            } else {
+                logger.info("Updating Gradle settings due discovered Maven build projects (${projectPaths.size})")
+                settingsFile.appendText("\n$settingsLines\n")
+            }
         } else {
             try {
                 defineModulesResolved()
