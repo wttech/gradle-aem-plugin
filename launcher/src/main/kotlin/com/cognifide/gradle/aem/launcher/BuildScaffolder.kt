@@ -52,9 +52,9 @@ class BuildScaffolder(private val launcher: Launcher) {
 
     private val defaultProps get() = mapOf(
         "org.gradle.logging.level" to "info",
-        "org.gradle.daemon" to true,
-        "org.gradle.parallel" to true,
-        "org.gradle.caching" to true,
+        "org.gradle.daemon" to "true",
+        "org.gradle.parallel" to "true",
+        "org.gradle.caching" to "true",
         "org.gradle.jvmargs" to "-Xmx2048m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8"
     )
 
