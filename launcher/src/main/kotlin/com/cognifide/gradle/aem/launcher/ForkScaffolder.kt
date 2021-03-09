@@ -29,6 +29,8 @@ class ForkScaffolder(private val launcher: Launcher) {
 
             mvnBuild.args={{mvnBuildArgs}}
             mvnBuild.profiles={{mvnBuildProfiles}}
+            
+            dispatcher.tarUrl={{ dispatcherTarUri }}
 
             # === Gradle Environment Plugin ===
             {% if dockerSafeVolumes == 'true' %}
@@ -51,7 +53,7 @@ class ForkScaffolder(private val launcher: Launcher) {
 
             configure<ForkExtension> {
                 properties {
-                    group("AEM Instance") {
+                    group("Instances") {
                         define("instanceType") {
                             label = "Type"
                             select("local", "remote")
@@ -95,7 +97,20 @@ class ForkScaffolder(private val launcher: Launcher) {
                             select(OpenMode.values().map { it.name.toLowerCase() }, OpenMode.ALWAYS.name.toLowerCase())
                         }
                     }
-                    group("AEM Options") {
+                    group("Dispatcher") {
+                        define("dispatcherTarUri") {
+                            label = "Tar Archive URI"
+                            description = "Typically file named 'dispatcher-apache2.4-linux-x86_64-*.tar.gz'"
+                            text("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz")
+                        }
+                        define("dockerSafeVolumes") {
+                            label = "Docker Safe Volumes"
+                            description = "Enables volumes for easily previewing e.g cache and logs (requires WSL2)"
+                            checkbox(false)
+                            dynamic("props")
+                        }
+                    }
+                    group("Build") {
                         define("mvnBuildProfiles") {
                             label = "Maven Profiles"
                             text("fedDev")
@@ -121,6 +136,20 @@ class ForkScaffolder(private val launcher: Launcher) {
                             dynamic("props")
                         }
                     }
+                    group("Deploy") {
+                        define("packageDeployAvoidance") {
+                            label = "Avoidance"
+                            description = "Avoids uploading and installing package if identical is already deployed on instance."
+                            checkbox(true)
+                        }
+                        define("packageDamAssetToggle") {
+                            label = "Toggle DAM Worklows"
+                            description = "Turns on/off temporary disablement of assets processing for package deployment time.\n" +
+                                    "Useful to avoid redundant rendition generation when package contains renditions synchronized earlier."
+                            checkbox(true)
+                            dynamic("props")
+                        }
+                    }
                     group("Authorization") {
                         define("companyUser") {
                             label = "User"
@@ -137,14 +166,6 @@ class ForkScaffolder(private val launcher: Launcher) {
                             text(System.getenv("USERDOMAIN").orEmpty())
                             description = "For files resolved using SMB"
                             optional()
-                        }
-                    }
-                    group("Docker") {
-                        define("dockerSafeVolumes") {
-                            label = "Safe Volumes"
-                            description = "Enables volumes for easily previewing e.g cache and logs (requires WSL2)"
-                            checkbox(false)
-                            dynamic("props")
                         }
                     }
                 }

@@ -87,17 +87,15 @@ class BuildScaffolder(private val launcher: Launcher) {
                 id("com.cognifide.environment")
             }
             
+            val instancePassword = common.prop.string("instance.default.password")
+            val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
+            val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
+            val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz"
+
             aem {
-                val instancePassword = common.prop.string("instance.default.password")
-                val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
-                val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
-            
                 instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/master/docs/instance-plugin.md
                     provisioner {
                         enableCrxDe()
-                        deployPackage("com.adobe.cq:core.wcm.components.all:2.13.0@zip") {
-                            condition { instance.version.cloud && once() }
-                        }
                         configureReplicationAgentAuthor("publish") {
                             agent { configure(transportUri = "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1", transportUser = "admin", transportPassword = instancePassword, userId = "admin") }
                             version.set(publishHttpUrl)
@@ -116,7 +114,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                         "httpd" {
                             resolve {
                                 resolveFiles {
-                                    download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz").use {
+                                    download(dispatcherTarUrl).use {
                                         copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
                                     }
                                 }
