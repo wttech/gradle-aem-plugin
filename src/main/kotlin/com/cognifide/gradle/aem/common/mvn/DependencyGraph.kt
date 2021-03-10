@@ -106,8 +106,12 @@ class DependencyGraph(val build: MvnBuild) {
         aem.prop.map("mvnBuild.depGraph.extras")?.let { deps -> set(deps.map { it.toDependency() }) }
     }
 
-    fun extras(vararg dependencies: Pair<String, String>) {
+    fun extra(vararg dependencies: Pair<String, String>) {
         extras.addAll(dependencies.map { it.toDependency() }.asIterable())
+    }
+
+    fun extraModule(vararg names: Pair<String, String>) {
+        extras.addAll(namesToDependencies(names.asIterable()))
     }
 
     val redundants = aem.obj.list<Dependency> {
@@ -119,12 +123,20 @@ class DependencyGraph(val build: MvnBuild) {
         redundants.addAll(dependencies.map { it.toDependency() }.asIterable())
     }
 
+    fun redundantModule(vararg names: Pair<String, String>) {
+        redundants.addAll(namesToDependencies(names.asIterable()))
+    }
+
     val softRedundants = aem.obj.list<Dependency> {
         aem.prop.map("mvnBuild.depGraph.softRedundants")?.let { deps -> set(deps.map { it.toDependency() }) }
     }
 
     fun softRedundant(vararg dependencies: Pair<String, String>) {
         softRedundants.addAll(dependencies.map { it.toDependency() }.asIterable())
+    }
+
+    fun softRedundantModule(vararg names: Pair<String, String>) {
+        softRedundants.addAll(namesToDependencies(names.asIterable()))
     }
 
     val all = dotDependencies.map { dd -> (dd + defaults.get() + extras.get()) - redundants.get() }.map { dd ->
@@ -139,6 +151,8 @@ class DependencyGraph(val build: MvnBuild) {
             }
         }
     }
+
+    private fun namesToDependencies(names: Iterable<Pair<String, String>>) = names.map { (from, to) -> build.moduleResolver.dependency(from, to) }
 
     override fun toString() = "DependencyGraph(dotFile=${dotFile.get().asFile}, dependencies=${all.get().map { it.notation }})"
 }
