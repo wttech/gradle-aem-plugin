@@ -122,6 +122,9 @@ Next steps to do after creating Gradle/GAP configuration i.e steps just done:
  
 ### Setting up local instance
 
+The procedure above will also work at the empty directory and could be used to set up AEM instances only.
+It is using `sh gradlew props` task to provide AEM instance files details, however, such details could be also provided via the command line.
+
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
@@ -131,13 +134,13 @@ curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.
   -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
   -PlocalInstance.quickstart.licenseUrl=http://company-share.com/aem/license.properties \
   -Pinstance.local-author.type=local \
-&& rm gap.jar
+&& rm gap.jar \
+&& sh gradlew up
 ```
 
-Once GAP is initialized, to control instance, run commands:
+Once GAP is initialized and AEM instances are up, then to shut down instances use the command:
 
 ```shell
-sh gradlew up
 sh gradlew down
 ```
 
