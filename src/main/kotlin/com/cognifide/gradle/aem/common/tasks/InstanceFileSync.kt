@@ -32,9 +32,11 @@ open class InstanceFileSync : AemDefaultTask() {
     }
 
     @get:Internal
-    val instances: List<Instance> get() = sync.instances.get().apply {
-        if (aem.commonOptions.verbose.get() && isEmpty()) {
-            throw InstanceException("No instances defined!\nMost probably there are no instances matching filter '${aem.commonOptions.envFilter}'.")
+    val instances: List<Instance> by lazy {
+        sync.instances.get().apply {
+            if (aem.commonOptions.verbose.get() && isEmpty()) {
+                throw InstanceException("No instances defined or matching filter '${aem.commonOptions.envFilter}'!")
+            }
         }
     }
 

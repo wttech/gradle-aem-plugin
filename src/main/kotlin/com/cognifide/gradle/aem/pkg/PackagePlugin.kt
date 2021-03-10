@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.common.CommonDefaultPlugin
+import com.cognifide.gradle.common.checkForce
 import com.cognifide.gradle.common.tasks.configureApply
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -59,7 +60,7 @@ class PackagePlugin : CommonDefaultPlugin() {
             val uninstall = register<PackageUninstall>(PackageUninstall.NAME) {
                 dependsOn(compose, validate)
                 mustRunAfter(upload, install)
-            }
+            }.also { checkForce(it) }
             val activate = register<PackageActivate>(PackageActivate.NAME) {
                 dependsOn(compose, validate)
                 mustRunAfter(upload, install)
@@ -82,11 +83,11 @@ class PackagePlugin : CommonDefaultPlugin() {
             register<PackageDelete>(PackageDelete.NAME) {
                 dependsOn(compose, validate)
                 mustRunAfter(deploy, upload, install, activate, uninstall)
-            }
+            }.also { checkForce(it) }
             register<PackagePurge>(PackagePurge.NAME) {
                 dependsOn(compose, validate)
                 mustRunAfter(deploy, upload, install, activate, uninstall)
-            }
+            }.also { checkForce(it) }
             named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
                 dependsOn(compose)
             }

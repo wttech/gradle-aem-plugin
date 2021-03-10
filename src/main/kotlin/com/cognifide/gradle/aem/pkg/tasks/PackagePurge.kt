@@ -17,7 +17,6 @@ open class PackagePurge : Package() {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
         sync.actionAwaited { packageManager.purge(it) }
         aem.prop.boolean("package.purge.awaited")?.let { sync.awaited.set(it) }
-        checkForce()
     }
 
     companion object {

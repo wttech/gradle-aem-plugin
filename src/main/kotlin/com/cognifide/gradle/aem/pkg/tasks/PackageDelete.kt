@@ -17,7 +17,6 @@ open class PackageDelete : Package() {
         description = "Deletes AEM package on instance(s)."
         sync.action { packageManager.delete(it) }
         sync.awaited.convention(false)
-        checkForce()
     }
 
     companion object {

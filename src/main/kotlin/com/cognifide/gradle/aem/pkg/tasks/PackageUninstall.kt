@@ -17,7 +17,6 @@ open class PackageUninstall : Package() {
         description = "Uninstalls AEM package on instance(s)."
         sync.action { packageManager.uninstall(it) }
         aem.prop.boolean("package.uninstall.awaited")?.let { sync.awaited.set(it) }
-        checkForce()
     }
 
     companion object {

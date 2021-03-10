@@ -16,7 +16,6 @@ open class InstanceDestroy : LocalInstance() {
 
     init {
         description = "Destroys local AEM instance(s)."
-        checkForce()
     }
 
     companion object {

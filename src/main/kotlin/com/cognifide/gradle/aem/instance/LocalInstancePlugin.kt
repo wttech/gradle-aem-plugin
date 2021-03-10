@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.RuntimePlugin
+import com.cognifide.gradle.common.checkForce
 import com.cognifide.gradle.common.tasks.runtime.*
 import org.gradle.api.Project
 
@@ -35,7 +36,7 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
         val down = register<InstanceDown>(InstanceDown.NAME)
         val destroy = register<InstanceDestroy>(InstanceDestroy.NAME) {
             dependsOn(down)
-        }
+        }.also { checkForce(it) }
         val resolve = register<InstanceResolve>(InstanceResolve.NAME)
         val create = register<InstanceCreate>(InstanceCreate.NAME) {
             mustRunAfter(destroy, resolve)

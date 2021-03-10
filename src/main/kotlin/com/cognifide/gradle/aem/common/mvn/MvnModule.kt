@@ -9,10 +9,12 @@ import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.PackageConfig
 import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.mvn.MvnExec
 import com.cognifide.gradle.common.pathPrefix
 import com.cognifide.gradle.common.pluginProject
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Delete
@@ -177,6 +179,12 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     }
 
     fun exec(options: MvnExec.() -> Unit) = tasks.typed(options)
+
+    fun execGraphReady(options: MvnExec.(TaskExecutionGraph) -> Unit) {
+        project.gradle.taskGraph.whenReady { graph ->
+            tasks.typed<MvnExec>().configureEach { options(it, graph) }
+        }
+    }
 
     fun Task.commonOptions() {
         group = AemTask.GROUP
