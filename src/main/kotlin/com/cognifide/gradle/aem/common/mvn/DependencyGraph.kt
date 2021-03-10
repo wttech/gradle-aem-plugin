@@ -152,7 +152,9 @@ class DependencyGraph(val build: MvnBuild) {
         }
     }
 
-    private fun namesToDependencies(names: Iterable<Pair<String, String>>) = names.map { (from, to) -> build.moduleResolver.dependency(from, to) }
+    private fun namesToDependencies(names: Iterable<Pair<String, String>>) = aem.project.provider {
+        names.map { (from, to) -> build.moduleResolver.dependency(from, to) }
+    }
 
     override fun toString() = "DependencyGraph(dotFile=${dotFile.get().asFile}, dependencies=${all.get().map { it.notation }})"
 }
