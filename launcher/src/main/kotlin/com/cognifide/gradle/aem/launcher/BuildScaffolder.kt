@@ -80,6 +80,9 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             aem {
                 mvnBuild {
+                    depGraph {
+                        softRedundantModule("ui.content" to "ui.apps")
+                    }
                     discover()
                 }
             }
