@@ -10,9 +10,8 @@ class ModuleResolver(val build: MvnBuild) {
     val all = aem.obj.list<ModuleDescriptor> {
         finalizeValueOnRead()
         set(aem.project.provider {
-            val dir = build.rootDir.get().asFile
             when {
-                dir.exists() -> aem.project.fileTree(dir).matching(pomFilter).files.map { pom ->
+                build.available -> aem.project.fileTree(build.rootDir).matching(pomFilter).files.map { pom ->
                     ModuleDescriptor(this@ModuleResolver, typeResolver(pom), pom)
                 }
                 else -> listOf()

@@ -24,7 +24,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             dependencies {
                 implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
-                implementation("com.cognifide.gradle:environment-plugin:1.1.27")
+                implementation("com.cognifide.gradle:environment-plugin:1.1.29")
                 implementation("com.neva.gradle:fork-plugin:6.0.5")
             }
         """.trimIndent())
@@ -68,7 +68,8 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             apply(from = "gradle/fork/props.gradle.kts")
             if (file("gradle.user.properties").exists()) {
-                defaultTasks(":env:setup")
+                if (aem.mvnBuild.available) defaultTasks(":env:setup")
+                else defaultTasks(":env:instanceSetup")
             }
             
             allprojects {
@@ -181,7 +182,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             }
 
             tasks {
-                instanceSetup { dependsOn(":deploy") }
+                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":deploy") }
                 instanceResolve { dependsOn(":requireProps") }
                 instanceCreate { dependsOn(":requireProps") }
                 environmentUp { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }

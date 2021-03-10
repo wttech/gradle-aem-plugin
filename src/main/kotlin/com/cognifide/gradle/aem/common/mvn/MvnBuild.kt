@@ -20,6 +20,8 @@ class MvnBuild(val aem: AemExtension) {
 
     val tasks get() = project.common.tasks
 
+    val available get() = rootPom.get().asFile.exists()
+
     val rootDir = aem.obj.dir {
         set(aem.project.projectDir)
     }
@@ -147,9 +149,8 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     fun discover() {
-        val dir = rootDir.get().asFile
-        if (!dir.exists()) {
-            logger.info("Skipping Maven build discovery as root dir does not exist: $dir")
+        if (!available) {
+            logger.info("Skipping Maven build discovery as it is not available.")
             return
         }
 
@@ -171,7 +172,7 @@ class MvnBuild(val aem: AemExtension) {
             } catch (e: UnknownProjectException) {
                 throw MvnException(
                     listOf(
-                        "Maven build at path '$dir' needs subprojects defined in Gradle settings as prerequisite.",
+                        "Maven build at path '${rootDir.get().asFile}' needs subprojects defined in Gradle settings as prerequisite.",
                         "Ensure having following lines (${projectPaths.size}) in file: $settingsFile",
                         "",
                         settingsLines,
