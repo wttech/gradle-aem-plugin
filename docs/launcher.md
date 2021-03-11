@@ -41,7 +41,7 @@ Below there are some sample usages of standalone launcher.
 To add Gradle/GAP support to existing Maven build generated from Adobe AEM Archetype, run command below:
 
 ```shell
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.6/gap.jar && java -jar gap.jar && rm gap.jar
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar && java -jar gap.jar && rm gap.jar
 ```
 
 AEM build will gain new capabilities:
@@ -128,7 +128,7 @@ It is using `sh gradlew props` task to provide AEM instance files details, howev
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.6/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar \
 && java -jar gap.jar --save-props \
   -PfileTransfer.user=foo -PfileTransfer.password=pass \
   -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
@@ -149,7 +149,7 @@ sh gradlew down
 For deploying to AEM instance CRX package from any source consider using command:
 
 ```shell
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.6/gap.jar && java -jar gap.jar && rm gap.jar
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar && java -jar gap.jar && rm gap.jar
 sh gradlew instanceDeploy -Pinstance.author -Pinstance.deploy.packageUrl=https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.3.0/search-webconsole-plugin-1.3.0.jar
 ```
 
@@ -167,7 +167,7 @@ Also instead of URL, dependency notation could be used to resolve package from M
 To interactively monitor logs of any AEM instances using task [`instanceTail`](instance-plugin.md#task-instancetail), consider running command:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.6/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar \
 && java -jar gap.jar --save-props \
   -Pinstance.dev-author.httpUrl=http://foo:pass@10.11.12.1:4502 \
   -Pinstance.dev-publish.httpUrl=http://foo:pass@10.11.12.2:4503 \
@@ -182,7 +182,7 @@ Assuming instance running at URL *http://localhost:4502* or *http://localhost:45
 Consider appending parameter e.g `-Pinstance.list=http://admin:admin@localhost:4502` to customize the instance to work with.
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.6/gap.jar && java -jar gap.jar && rm gap.jar
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar && java -jar gap.jar && rm gap.jar
 sh gradlew packageSync -Pfilter.roots=[/content/example,/content/dam/example]
 ```
 
@@ -191,7 +191,7 @@ sh gradlew packageSync -Pfilter.roots=[/content/example,/content/dam/example]
 To copy JCR content between any AEM instances using task [`instanceRcp`](instance-plugin.md#task-instancercp), consider running commands:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.6/gap.jar && java -jar gap.jar && rm gap.jar
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar && java -jar gap.jar && rm gap.jar
 sh gradlew instanceRcp \
   -Pinstance.rcp.source=http://foo:pass@10.11.12.1:4502 \
   -Pinstance.rcp.target=http://foo:pass@10.11.12.2:4503 \
