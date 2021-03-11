@@ -421,7 +421,16 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         } else {
             val path = pkg.path
             val metadata = PackageMetadata(this, path)
-            if (!metadata.validChecksum(checksum)) {
+            val checksumChanged = !metadata.validChecksum(checksum)
+            val installedExternally = metadata.installedExternally
+
+            if (checksumChanged || installedExternally) {
+                if (checksumChanged) {
+                    logger.info("Deploying package '$path' on $instance (changed checksum)")
+                }
+                if (installedExternally) {
+                    logger.warn("Deploying package '$path' on $instance (installed externally at '${metadata.installedCurrent}')")
+                }
                 deployRegularly(file, activate, checksum)
                 return true
             } else {
@@ -437,7 +446,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
         sync.workflowManager.toggleTemporarily(workflowToggle.get()) {
             when {
-                checksum != null -> PackageMetadata(this, packagePath).updateChecksum(checksum) { install(packagePath) }
+                checksum != null -> PackageMetadata(this, packagePath).update(checksum) { install(packagePath) }
                 else -> install(packagePath)
             }
             if (activate) {

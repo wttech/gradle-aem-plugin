@@ -2,34 +2,59 @@ package com.cognifide.gradle.aem.common.instance.service.pkg
 
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.common.utils.Formats
+import java.util.*
 
+@Suppress("TooGenericExceptionCaught")
 class PackageMetadata(val manager: PackageManager, val pkgPath: String) {
 
     private val logger = manager.logger
 
-    val node by lazy { manager.sync.repository.node("${STORAGE_PATH}/${Formats.toHashCodeHex(pkgPath)}") }
+    val node by lazy { manager.sync.repository.node("$STORAGE_PATH/${Formats.toHashCodeHex(pkgPath)}") }
 
-    val checksum: String? by lazy { node.takeIf { it.exists }?.properties?.string(CHECKSUM_PROP) }
+    val checksumRemote: String? by lazy { node.takeIf { it.exists }?.properties?.string(CHECKSUM_PROP) }
 
-    fun validChecksum(value: String) = (checksum != null) && (value == checksum)
+    fun validChecksum(checksumLocal: String) = (checksumRemote != null) && (checksumLocal == checksumRemote)
 
-    @Suppress("TooGenericExceptionCaught")
-    fun updateChecksum(value: String, action: () -> Unit) = try {
-        save(mapOf(CHECKSUM_PROP to value))
+    val installedCurrent: Date? by lazy { readInstalledDate() }
+
+    val installedPrevious: Date? get() = node.takeIf { it.exists }?.properties?.date(INSTALLED_PROP)
+
+    val installedExternally: Boolean get() = (installedCurrent != null) && (installedPrevious != null) && (installedCurrent != installedPrevious)
+
+    fun update(checksumLocal: String, action: () -> Unit) = try {
+        saveChecksum(checksumLocal)
         action()
+        maybeSaveInstalledDate()
     } catch (e: Exception) {
-        try {
-            save(mapOf(CHECKSUM_PROP to checksum))
-        } catch (e: Exception) {
-            logger.debug("Cannot restore checksum '$checksum' of package '$pkgPath'!", e)
-        }
+        maybeRestoreChecksum()
         throw e
     }
 
-    private fun save(props: Map<String, Any?>) = node.save(mapOf(
-        Node.TYPE_UNSTRUCTURED,
-        PATH_PROP to pkgPath
-    ) + props)
+    private fun saveChecksum(checksumLocal: String) = save(mapOf(CHECKSUM_PROP to checksumLocal))
+
+    private fun maybeRestoreChecksum() = try {
+        save(mapOf(CHECKSUM_PROP to checksumRemote))
+    } catch (e: Exception) {
+        logger.debug("Cannot restore checksum '$checksumRemote' of package '$pkgPath'!", e)
+    }
+
+    private fun maybeSaveInstalledDate() = try {
+        save(mapOf(INSTALLED_PROP to readInstalledDate()))
+    } catch (e: Exception) {
+        logger.debug("Cannot save last installed date for package '$pkgPath'!", e)
+    }
+
+    private fun readInstalledDate(): Date? {
+        val properties = manager.sync.repository.node(pkgPath).child(DEFINITION_PATH).properties
+        return properties.date(LAST_UNPACKED_PROP) ?: properties.date(LAST_UNWRAPPED_PROP)
+    }
+
+    private fun save(props: Map<String, Any?>) = node.save(
+        mapOf(
+            Node.TYPE_UNSTRUCTURED,
+            PATH_PROP to pkgPath
+        ) + props
+    )
 
     companion object {
 
@@ -38,5 +63,13 @@ class PackageMetadata(val manager: PackageManager, val pkgPath: String) {
         const val PATH_PROP = "path"
 
         const val CHECKSUM_PROP = "checksumMd5"
+
+        const val INSTALLED_PROP = "installed"
+
+        const val DEFINITION_PATH = "jcr:content/vlt:definition"
+
+        const val LAST_UNPACKED_PROP = "lastUnpacked"
+
+        const val LAST_UNWRAPPED_PROP = "lastUnwrapped"
     }
 }
