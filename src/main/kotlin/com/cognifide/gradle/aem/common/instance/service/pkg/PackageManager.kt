@@ -89,11 +89,6 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Repeat reading or updating package deploy metadata on instance when failed.
-     */
-    var deployMetadataRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.deployMetadataRetry") ?: 3) }
-
-    /**
      * Allows to temporarily enable or disable workflows during CRX package deployment.
      */
     val workflowToggle = aem.obj.map<String, Boolean> {
@@ -421,29 +416,22 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         val checksum by lazy { Formats.checksum(file) }
 
         if (pkg == null || !isDeployed(pkg)) {
-            val path = deployRegularly(file, activate)
-            deployMetadataRetry.withCountdown<Unit, CommonException>(
-                "updating metadata of package '${file.name}' on '${instance.name}'"
-            ) { PackageDeployMetadata(this, path, checksum).update() }
+            deployRegularly(file, activate, checksum)
             return true
         } else {
             val path = pkg.path
-            val metadata = deployMetadataRetry.withCountdown<PackageDeployMetadata, CommonException>(
-                "reading metadata of package '${file.name}' on '${instance.name}'"
-            ) { PackageDeployMetadata(this, path, checksum) }
+            val metadata = PackageMetadata(this, path)
+            val checksumChanged = !metadata.validChecksum(checksum)
+            val installedExternally = metadata.installedExternally
 
-            if (!metadata.upToDate) {
-                if (metadata.externallyUnpacked) {
-                    logger.warn("Deploying package '$path' on $instance (changed externally at '${metadata.lastUnpackedCurrent}')")
-                }
-                if (metadata.checksumUpdated) {
+            if (checksumChanged || installedExternally) {
+                if (checksumChanged) {
                     logger.info("Deploying package '$path' on $instance (changed checksum)")
                 }
-
-                deployRegularly(file, activate)
-                deployMetadataRetry.withCountdown<Unit, CommonException>(
-                    "updating metadata of package '${file.name}' on '${instance.name}'"
-                ) { metadata.update() }
+                if (installedExternally) {
+                    logger.warn("Deploying package '$path' on $instance (installed externally at '${metadata.installedCurrent}')")
+                }
+                deployRegularly(file, activate, checksum)
                 return true
             } else {
                 logger.lifecycle("No need to deploy package '$path' on $instance (no changes)")
@@ -452,12 +440,15 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun deployRegularly(file: File, activate: Boolean = false): String {
+    private fun deployRegularly(file: File, activate: Boolean = false, checksum: String? = null): String {
         val uploadResponse = upload(file)
         val packagePath = uploadResponse.path
 
         sync.workflowManager.toggleTemporarily(workflowToggle.get()) {
-            install(packagePath)
+            when {
+                checksum != null -> PackageMetadata(this, packagePath).update(checksum) { install(packagePath) }
+                else -> install(packagePath)
+            }
             if (activate) {
                 activate(packagePath)
             }
