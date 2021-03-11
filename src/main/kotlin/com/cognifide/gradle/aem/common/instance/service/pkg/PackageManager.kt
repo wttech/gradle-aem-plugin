@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance.service.pkg
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
@@ -24,7 +23,6 @@ import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
 import org.gradle.api.tasks.Input
 import java.util.*
-import kotlin.time.ExperimentalTime
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -89,6 +87,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         convention(true)
         aem.prop.boolean("instance.packageManager.deployAvoidance")?.let { set(it) }
     }
+
+    /**
+     * Repeat reading or updating package deploy metadata on instance when failed.
+     */
+    var deployMetadataRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.deployMetadataRetry") ?: 3) }
 
     /**
      * Allows to temporarily enable or disable workflows during CRX package deployment.
@@ -413,59 +416,41 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return true
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun deployAvoiding(file: File, activate: Boolean): Boolean {
         val pkg = find(file)
-        val checksumLocal = Formats.checksum(file)
+        val checksum by lazy { Formats.checksum(file) }
 
         if (pkg == null || !isDeployed(pkg)) {
-            val pkgPath = deployRegularly(file, activate)
-            val pkgMeta = getMetadataNode(pkgPath)
-
-            saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
+            val path = deployRegularly(file, activate)
+            deployMetadataRetry.withCountdown<Unit, CommonException>(
+                "updating metadata of package '${file.name}' on '${instance.name}'"
+            ) { PackageDeployMetadata(this, path, checksum).update() }
             return true
         } else {
-            val pkgPath = pkg.path
-            val pkgMeta = getMetadataNode(pkgPath)
-            val checksumRemote = if (pkgMeta.exists) pkgMeta.properties.string(METADATA_CHECKSUM_PROP) else null
-            val lastUnpackedPrevious = if (pkgMeta.exists) pkgMeta.properties.date(METADATA_LAST_UNPACKED_PROP) else null
-            val lastUnpackedCurrent = readLastUnpackedOrUnwrapped(pkgPath)
+            val path = pkg.path
+            val metadata = deployMetadataRetry.withCountdown<PackageDeployMetadata, CommonException>(
+                "reading metadata of package '${file.name}' on '${instance.name}'"
+            ) { PackageDeployMetadata(this, path, checksum) }
 
-            val checksumChanged = checksumLocal != checksumRemote
-            val externallyUnpacked = lastUnpackedPrevious != lastUnpackedCurrent
-
-            if (checksumChanged || externallyUnpacked) {
-                if (externallyUnpacked) {
-                    logger.warn("Deploying package '$pkgPath' on $instance (changed externally at '$lastUnpackedCurrent')")
+            if (!metadata.upToDate) {
+                if (metadata.externallyUnpacked) {
+                    logger.warn("Deploying package '$path' on $instance (changed externally at '${metadata.lastUnpackedCurrent}')")
                 }
-                if (checksumChanged) {
-                    logger.info("Deploying package '$pkgPath' on $instance (changed checksum)")
+                if (metadata.checksumUpdated) {
+                    logger.info("Deploying package '$path' on $instance (changed checksum)")
                 }
 
                 deployRegularly(file, activate)
-                saveMetadataNode(pkgMeta, checksumLocal, pkgPath)
+                deployMetadataRetry.withCountdown<Unit, CommonException>(
+                    "updating metadata of package '${file.name}' on '${instance.name}'"
+                ) { metadata.update() }
                 return true
             } else {
-                logger.lifecycle("No need to deploy package '$pkgPath' on $instance (no changes)")
+                logger.lifecycle("No need to deploy package '$path' on $instance (no changes)")
                 return false
             }
         }
     }
-
-    private fun readLastUnpackedOrUnwrapped(pkgPath: String): Date {
-        val properties = sync.repository.node(pkgPath).child(DEFINITION_PATH).properties
-        return properties.date(METADATA_LAST_UNPACKED_PROP) ?: properties.date(METADATA_LAST_UNWRAPPED_PROP)
-                ?: throw PackageException("Cannot read package '$pkgPath' installation time on $instance!")
-    }
-
-    private fun getMetadataNode(pkgPath: String) = sync.repository.node("$METADATA_PATH/${Formats.toHashCodeHex(pkgPath)}")
-
-    private fun saveMetadataNode(node: Node, checksum: String, pkgPath: String) = node.save(mapOf(
-            Node.TYPE_UNSTRUCTURED,
-            METADATA_PATH_PROP to pkgPath,
-            METADATA_CHECKSUM_PROP to checksum,
-            METADATA_LAST_UNPACKED_PROP to readLastUnpackedOrUnwrapped(pkgPath)
-    ))
 
     private fun deployRegularly(file: File, activate: Boolean = false): String {
         val uploadResponse = upload(file)
@@ -594,17 +579,5 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         const val LIST_JSON = "/crx/packmgr/list.jsp"
 
         const val INDEX_PATH = "/crx/packmgr/index.jsp"
-
-        const val DEFINITION_PATH = "jcr:content/vlt:definition"
-
-        const val METADATA_PATH = "/var/gap/package/deploy"
-
-        const val METADATA_PATH_PROP = "path"
-
-        const val METADATA_CHECKSUM_PROP = "checksumMd5"
-
-        const val METADATA_LAST_UNPACKED_PROP = "lastUnpacked"
-
-        const val METADATA_LAST_UNWRAPPED_PROP = "lastUnwrapped"
     }
 }
