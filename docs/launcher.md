@@ -38,17 +38,17 @@ Below there are some sample usages of standalone launcher.
 
 ### Enhancing Maven build
 
-Demo (to play again refresh the page):
-
-<p align="center">
-  <img src="https://github.com/wttech/gradle-aem-plugin/releases/download/assets/gap-launcher.gif" alt="Gradle AEM Plugin - Launcher Demo"/>
-</p>
-
 To add Gradle/GAP support to existing Maven build generated from Adobe AEM Archetype, run command below:
 
 ```shell
 curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/14.6.7/gap.jar && java -jar gap.jar && rm gap.jar
 ```
+
+Demo (to play again refresh the page):
+
+<p align="center">
+  <img src="https://github.com/wttech/gradle-aem-plugin/releases/download/assets/gap-launcher.gif" alt="Gradle AEM Plugin - Launcher Demo"/>
+</p>
 
 AEM build will gain new capabilities:
 
