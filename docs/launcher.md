@@ -38,7 +38,7 @@ Below there are some sample usages of standalone launcher.
 
 ### Enhancing Maven build
 
-Demo:
+Demo (to play again refresh the page):
 
 <p align="center">
   <img src="https://github.com/wttech/gradle-aem-plugin/releases/download/assets/gap-launcher.gif" alt="Gradle AEM Plugin - Launcher Demo"/>
