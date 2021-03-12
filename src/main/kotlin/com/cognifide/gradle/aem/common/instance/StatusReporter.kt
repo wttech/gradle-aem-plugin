@@ -19,8 +19,11 @@ class StatusReporter(private val aem: AemExtension) {
     private val packageFiles by lazy { packages.files.toList() }
 
     fun init() {
-        logger.info("Packages considered in instance status checking (${packageFiles.size}):\n" +
-                packageFiles.joinToString("\n"))
+        aem.instanceManager.local.resolveFiles()
+
+        if (packageFiles.isNotEmpty()) {
+            logger.info("Packages considered in instance status checking (${packageFiles.size}):\n${packageFiles.joinToString("\n")}")
+        }
     }
 
     fun report(instance: Instance): String {

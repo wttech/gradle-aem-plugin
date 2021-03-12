@@ -7,10 +7,6 @@ open class InstanceStatus : Instance() {
 
     @TaskAction
     fun status() {
-        if (anyInstances.any { it.local }) {
-            instanceManager.local.resolveFiles()
-        }
-
         common.progress(anyInstances.size) {
             step = "Initializing"
             instanceManager.statusReporter.init()
