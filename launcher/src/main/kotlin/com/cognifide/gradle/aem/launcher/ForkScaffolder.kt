@@ -119,7 +119,6 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                         define("mvnBuildArgs") {
                             label = "Maven Args"
-                            text("-B")
                             description = "Added extra"
                             optional()
                         }
