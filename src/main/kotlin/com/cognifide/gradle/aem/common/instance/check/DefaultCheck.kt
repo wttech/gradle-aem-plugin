@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.common.utils.using
@@ -57,12 +58,22 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
         }
     }
 
+    // TODO eliminate race condition
     private fun InstanceSync.toggleBasicCredentialsWhenInitialized() {
         if (instance !is LocalInstance || instance.initialized) {
             return
         }
 
-        http.basicCredentials = Instance.CREDENTIALS_DEFAULT
+        val authInit: Boolean = try {
+            progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
+        } catch (e: InstanceException) {
+            logger.debug("Instance progress not available due race condition!", e)
+            true
+        }
+        if (authInit) {
+            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
+        }
+
         http.responseHandler { response ->
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
