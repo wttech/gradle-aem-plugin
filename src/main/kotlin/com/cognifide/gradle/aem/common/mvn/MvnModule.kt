@@ -167,15 +167,17 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     fun exec(name: String, options: MvnExec.() -> Unit) = tasks.register<MvnExec>(name) {
         commonOptions()
         invoker {
-            workingDir.set(build.rootDir.get())
+            workingDir.set(build.rootDir)
             args.addAll("-N", "-f", descriptor.pom.absolutePath)
             args.addAll(profileArgs)
             aem.prop.list("mvnBuild.args")?.let { args.addAll(it) }
         }
+        inputs.property("pomPath", descriptor.pom.absolutePath)
+        inputs.property("profiles", profileArgs)
         options()
     }.also { task ->
         tasks.named<Delete>(LifecycleBasePlugin.CLEAN_TASK_NAME).configure { it.delete(task) }
-        tasks.named<Task>(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(task) }
+        tasks.named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).configure { it.dependsOn(task) }
     }
 
     fun exec(options: MvnExec.() -> Unit) = tasks.typed(options)

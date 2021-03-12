@@ -9,7 +9,7 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     val dotFile = aem.obj.file {
-        set(aem.project.layout.projectDirectory.file("build.mvn.dot"))
+        set(aem.project.layout.projectDirectory.file("build.maven.dot"))
     }
 
     val generateForce = aem.obj.boolean {

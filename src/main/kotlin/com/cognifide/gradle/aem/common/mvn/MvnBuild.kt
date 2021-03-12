@@ -296,7 +296,7 @@ class MvnBuild(val aem: AemExtension) {
             doLast {
                 logger.lifecycle(listOf(
                     "Deployment of ${packageModules.size} AEM package(s) ended at ${Formats.date()}:",
-                    packageModules.joinToString(", ") { it.name }
+                    packageModules.sortedBy { it.name }.joinToString(", ") { it.name }
                 ).joinToString("\n"))
             }
         }
