@@ -5,9 +5,12 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceStatus : Instance() {
 
-    @Suppress("MagicNumber")
     @TaskAction
     fun status() {
+        if (anyInstances.any { it.local }) {
+            instanceManager.local.resolveFiles()
+        }
+
         common.progress(anyInstances.size) {
             step = "Initializing"
             instanceManager.statusReporter.init()
