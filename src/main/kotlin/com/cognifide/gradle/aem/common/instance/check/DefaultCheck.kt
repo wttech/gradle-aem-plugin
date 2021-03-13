@@ -1,11 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.common.utils.using
-import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
 abstract class DefaultCheck(protected val group: CheckGroup) : Check {
@@ -27,7 +23,6 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     var sync: InstanceSync = instance.sync.apply {
         http.connectionTimeout.convention(5_000)
         http.connectionRetries.convention(false)
-        toggleBasicCredentialsWhenInitialized()
     }
 
     fun sync(callback: InstanceSync.() -> Unit) = sync.using(callback)
@@ -56,40 +51,5 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
             other > 0 -> values.take(logValuesCount.get()).joinToString("\n") + "\n... and other ($other)"
             else -> values.take(logValuesCount.get()).joinToString("\n")
         }
-    }
-
-    // TODO eliminate race condition
-    private fun InstanceSync.toggleBasicCredentialsWhenInitialized() {
-        if (instance !is LocalInstance || instance.initialized) {
-            return
-        }
-
-        val authInit: Boolean = try {
-            progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
-        } catch (e: InstanceException) {
-            logger.debug("Instance progress not available due race condition!", e)
-            true
-        }
-        if (authInit) {
-            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
-        }
-
-        http.responseHandler { response ->
-            if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                val authInitCurrent = progress.stateData[STATE_AUTH_INIT] as Boolean? ?: true
-                if (authInitCurrent) {
-                    logger.info("Switching instance '${instance.name}' credentials from customized to defaults.")
-                    http.basicCredentials = Instance.CREDENTIALS_DEFAULT
-                } else {
-                    logger.info("Switching instance '${instance.name}' credentials from defaults to customized.")
-                    http.basicCredentials = instance.credentials
-                }
-                progress.stateData[STATE_AUTH_INIT] = !authInitCurrent
-            }
-        }
-    }
-
-    companion object {
-        private const val STATE_AUTH_INIT = "authInit"
     }
 }

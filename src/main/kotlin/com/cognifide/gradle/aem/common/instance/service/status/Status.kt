@@ -7,6 +7,7 @@ import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
+import org.apache.http.HttpStatus
 import java.util.*
 
 /**
@@ -51,6 +52,26 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     } catch (e: CommonException) {
         logger.debug("Cannot check reachable status of $instance!", e)
         -1
+    }
+
+    /**
+     * Path used to check instance auth.
+     */
+    val authorizablePath = aem.obj.string {
+        convention(OsgiFramework.BUNDLES_PATH)
+        aem.prop.string("instance.status.authorizablePath")?.let { set(it) }
+    }
+
+    /**
+     * Check if instance authorizes requests.
+     */
+    fun checkAuthorizable(): Boolean = try {
+        instance.sync {
+            http.get(authorizablePath.get()) { it.statusLine.statusCode } == HttpStatus.SC_OK
+        }
+    } catch (e: CommonException) {
+        logger.debug("Cannot check authorization on $instance!", e)
+        false
     }
 
     /**
