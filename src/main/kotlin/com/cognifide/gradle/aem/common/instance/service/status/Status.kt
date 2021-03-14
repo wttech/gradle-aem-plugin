@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.status
 
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
@@ -63,15 +64,19 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Check if instance authorizes requests.
+     * Check if instance started authorizes requests with target credentials.
+     * AEM on first run by default starts running with default admin password then after some time applies target one.
      */
-    fun checkAuthorizable(): Boolean = try {
-        instance.sync {
-            http.get(authorizablePath.get()) { it.statusLine.statusCode } == HttpStatus.SC_OK
+    fun checkUnauthorized(): Boolean {
+        return try {
+            instance.sync {
+                http.basicCredentials = Instance.CREDENTIALS_DEFAULT
+                http.get(authorizablePath.get()) { it.statusLine.statusCode } == HttpStatus.SC_UNAUTHORIZED
+            }
+        } catch (e: CommonException) {
+            logger.debug("Cannot check for unauthorized on $instance!", e)
+            false
         }
-    } catch (e: CommonException) {
-        logger.debug("Cannot check authorization on $instance!", e)
-        false
     }
 
     /**
