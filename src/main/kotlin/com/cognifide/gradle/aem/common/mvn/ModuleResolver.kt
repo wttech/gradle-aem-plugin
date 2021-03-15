@@ -45,7 +45,10 @@ class ModuleResolver(val build: MvnBuild) {
     fun byArtifact(notation: String) = byArtifact(Artifact(notation))
 
     fun byArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifactId == artifact.id }
-        ?: throw MvnException("Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!")
+        ?: throw MvnException(listOf(
+            "Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!",
+            "Consider regenerating a dependency graph file '${build.depGraph.dotFile.get().asFile}' by deleting it."
+        ).joinToString("\n"))
 
     fun dependency(nameFrom: String, nameTo: String) = Dependency(byName(nameFrom).artifact, byName(nameTo).artifact)
 
