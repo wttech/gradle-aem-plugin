@@ -52,6 +52,16 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         helpOptions = options
     }
 
+    private var initOptions: InitCheck.() -> Unit = {
+        enabled.apply {
+            aem.prop.boolean(("instance.awaitUp.init.enabled"))?.let { set(it) }
+        }
+    }
+
+    fun init(options: InitCheck.() -> Unit) {
+        initOptions = options
+    }
+
     private var installerOptions: InstallerCheck.() -> Unit = {
         busy.apply {
             aem.prop.boolean("instance.awaitUp.installer.busy.enabled")?.let { set(it) }
@@ -133,13 +143,14 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
         checks {
             listOf(
-                    timeout(timeoutOptions),
-                    help(helpOptions),
-                    bundles(bundlesOptions),
-                    events(eventsOptions),
-                    installer(installerOptions),
-                    components(componentsOptions),
-                    unchanged(unchangedOptions)
+                init(initOptions),
+                timeout(timeoutOptions),
+                help(helpOptions),
+                bundles(bundlesOptions),
+                events(eventsOptions),
+                installer(installerOptions),
+                components(componentsOptions),
+                unchanged(unchangedOptions)
             )
         }
     }

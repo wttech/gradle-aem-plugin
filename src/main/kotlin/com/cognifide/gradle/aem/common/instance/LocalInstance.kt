@@ -185,9 +185,6 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     val created: Boolean get() = locked(LOCK_CREATE)
 
     @get:JsonIgnore
-    val initialized: Boolean get() = locked(LOCK_INIT)
-
-    @get:JsonIgnore
     val installDir get() = quickstartDir.resolve("install")
 
     @get:JsonIgnore
@@ -412,12 +409,28 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val runningOther get() = available && (dir != runningDir)
 
+    fun destroy() = localManager.destroy(this)
+
+    @get:JsonIgnore
+    val initialized: Boolean get() = locked(LOCK_INIT)
+
     internal fun init(callback: LocalInstance.() -> Unit) {
         apply(callback)
         lock(LOCK_INIT)
     }
 
-    fun destroy() = localManager.destroy(this)
+    @get:JsonIgnore
+    val authAvailable: Boolean get() = initialized || locked(LOCK_AUTH)
+
+    internal fun checkAuthBecameAvailable(): Boolean {
+        if (!authAvailable && credentials != CREDENTIALS_DEFAULT) {
+            if (sync.status.checkUnauthorized()) {
+                lock(LOCK_AUTH)
+                return true
+            }
+        }
+        return false
+    }
 
     private fun lockFile(name: String) = dir.resolve("$name.lock")
 
@@ -429,10 +442,10 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         if (running) {
             throw LocalInstanceException("Instance is running so resetting password on $this is not possible!")
         }
-        if (force || localManager.resetPassword.get()) {
-            oakRun.resetPassword(user, password)
-        } else {
-            logger.debug("Skipping resetting password on $this (feature is disabled)")
+        when {
+            !initialized -> logger.debug("Skipping resetting password on $this (not initialized)")
+            force || localManager.resetPassword.get() -> oakRun.resetPassword(user, password)
+            else -> logger.debug("Skipping resetting password on $this (feature is disabled)")
         }
     }
 
@@ -451,5 +464,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         const val LOCK_CREATE = "create"
 
         const val LOCK_INIT = "init"
+
+        const val LOCK_AUTH = "auth"
     }
 }
