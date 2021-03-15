@@ -53,7 +53,10 @@ Be inspired by:
 
 Looking for a dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/wttech/gradle-sling-plugin)!
 
-### Screenshot
+### Demo
+
+Example below presents building & deploying AEM package all in Gradle.
+To review building AEM package by Maven but all the rest handled by Gradle/GAP see [Enhancing Maven build](docs/launcher.md#enhancing-maven-build) section.
 
 <p align="center">
   <img src="docs/all-package-deploy.gif" alt="Gradle AEM Multi Build"/>
@@ -362,18 +365,22 @@ allprojects {
 For instance, subproject `:aem:core` specific configuration like OSGi bundle or CRX package options should be defined in `aem/core/build.gradle.kts`:
 
 ```kotlin
-aem {
-    tasks {
-        jar {
-            bundle {
-                javaPackage.set("com.company.example.aem.core")
-            }
+import com.cognifide.gradle.aem.bundle.tasks.bundle
+
+plugins {
+    id("com.cognifide.aem.bundle")
+}
+
+tasks {
+    jar {
+        bundle {
+            javaPackage.set("com.company.example.aem.core")
         }
-        packageCompose {
-            nestPackageProject(':content')
-            archiveBaseName.set("example-core")
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        }
+    }
+    packageCompose {
+        nestPackageProject(':content')
+        archiveBaseName.set("example-core")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 ```
