@@ -55,7 +55,7 @@ Looking for a dedicated version of plugin for [**Apache Sling**](https://sling.a
 
 ### Demo
 
-Example below presents building & deploying AEM package all in Gradle.
+The example below presents building & deploying AEM package - all handled by Gradle.
 To review building AEM package by Maven but all the rest handled by Gradle/GAP see [Enhancing Maven build](docs/launcher.md#enhancing-maven-build) section.
 
 <p align="center">
