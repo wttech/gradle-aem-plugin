@@ -119,7 +119,8 @@ javaSupport.version=8
 
 ## Getting started
 
-Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
+Most effective way to experience Gradle AEM Plugin is to use:
+  * [GAP Launcher](docs/launcher.md#enhancing-maven-build) - recommended for adding Gradle/GAP support to existing AEM Maven builds (archetype-compatible),
   * [AEM Single-Project Example](https://github.com/wttech/gradle-aem-single#quickstart) - recommended for **application/library** development,
   * [AEM Multi-Project Example](https://github.com/wttech/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
   * [AEM Boot](https://github.com/wttech/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
