@@ -11,7 +11,10 @@ class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
     val sourceProperties by lazy { DeployPackageSource.from(source.get(), aem) }
 
-    val file by lazy { aem.packageOptions.wrapper.wrap(provisioner.fileResolver.get(source.get()).file) }
+    val file by lazy {
+        val sourceFile = provisioner.fileResolver.get(source.get()).file
+        aem.packageOptions.wrapper.wrap(sourceFile).also { common.checksumFile(it) }
+    }
 
     val name = aem.obj.string { convention(aem.obj.provider { sourceProperties.name }) }
 

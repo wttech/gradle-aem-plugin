@@ -413,7 +413,16 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     private fun deployAvoiding(file: File, activate: Boolean): Boolean {
         val pkg = find(file)
-        val checksum by lazy { Formats.checksum(file) }
+        val checksum by lazy {
+            Formats.toChecksumFile(file).let { checksumFile ->
+                if (checksumFile.exists()) {
+                    checksumFile.readText()
+                } else {
+                    logger.info("Calculating checksum of package to be deployed '$file'")
+                    Formats.toChecksum(checksumFile)
+                }
+            }
+        }
 
         if (pkg == null || !isDeployed(pkg)) {
             deployRegularly(file, activate, checksum)
