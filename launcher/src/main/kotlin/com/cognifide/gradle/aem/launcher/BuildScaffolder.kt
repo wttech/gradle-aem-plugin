@@ -182,7 +182,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             }
 
             tasks {
-                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":deploy") }
+                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":all:deploy") }
                 instanceResolve { dependsOn(":requireProps") }
                 instanceCreate { dependsOn(":requireProps") }
                 environmentUp { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
