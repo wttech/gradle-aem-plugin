@@ -170,7 +170,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
             workingDir.set(build.rootDir)
             args.addAll("-N", "-f", descriptor.pom.absolutePath)
             args.addAll(profileArgs)
-            aem.prop.list("mvnBuild.args")?.let { args.addAll(it) }
+            aem.prop.string("mvnBuild.args")?.let { args.addAll(it.split(" ")) }
         }
         inputs.property("pomPath", descriptor.pom.absolutePath)
         inputs.property("profiles", profileArgs)
