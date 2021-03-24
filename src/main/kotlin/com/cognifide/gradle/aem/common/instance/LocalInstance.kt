@@ -46,7 +46,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
             add(jvmDebugOpt)
         }
         if (password != PASSWORD_DEFAULT) {
-            add("-Dadmin.password=$password")
+            add("-Dadmin.password.file=${auth.file}")
         }
     }
 
@@ -211,7 +211,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         cleanDir(true)
         unpackFiles()
         correctFiles()
-        customize()
+        customizeWhenDown()
         lock(LOCK_CREATE)
     }
 
@@ -308,14 +308,23 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         }
     }
 
-    internal fun customize() {
+    internal fun customizeWhenDown() {
         aem.assetManager.copyDir(FILES_PATH, dir)
         copyOverrideFiles()
         expandFiles()
         copyInstallFiles()
         makeFilesExecutable()
-        resetPassword()
+        if (localManager.passwordMode.get() == PasswordMode.RESET_WHEN_DOWN) {
+            resetPassword()
+        }
     }
+
+    internal fun customizeWhenUp() {
+        if (localManager.passwordMode.get() == PasswordMode.UPDATE_WHEN_UP) {
+            auth.update()
+        }
+    }
+
     private fun copyOverrideFiles() {
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)
@@ -420,23 +429,13 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     @get:JsonIgnore
-    val authAvailable: Boolean get() = initialized || locked(LOCK_AUTH)
-
-    internal fun checkAuthBecameAvailable(): Boolean {
-        if (!authAvailable && credentials != CREDENTIALS_DEFAULT) {
-            if (sync.status.checkUnauthorized()) {
-                lock(LOCK_AUTH)
-                return true
-            }
-        }
-        return false
-    }
+    val auth by lazy { Auth(this) }
 
     private fun lockFile(name: String) = dir.resolve("$name.lock")
 
-    private fun lock(name: String) = FileOperations.lock(lockFile(name))
+    internal fun lock(name: String) = FileOperations.lock(lockFile(name))
 
-    private fun locked(name: String): Boolean = lockFile(name).exists()
+    internal fun locked(name: String): Boolean = lockFile(name).exists()
 
     fun resetPassword(force: Boolean = false) {
         if (running) {
@@ -444,7 +443,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         }
         when {
             !initialized -> logger.debug("Skipping resetting password on $this (not initialized)")
-            force || localManager.resetPassword.get() -> oakRun.resetPassword(user, password)
+            force -> oakRun.resetPassword(user, password)
             else -> logger.debug("Skipping resetting password on $this (feature is disabled)")
         }
     }
@@ -464,7 +463,5 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         const val LOCK_CREATE = "create"
 
         const val LOCK_INIT = "init"
-
-        const val LOCK_AUTH = "auth"
     }
 }

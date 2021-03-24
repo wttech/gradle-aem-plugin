@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.service.auth.AuthManager
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
@@ -69,6 +70,13 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * CRX DE endpoints accessor (node types etc).
      */
     fun <T> crx(callback: Crx.() -> T): T = crx.run(callback)
+
+    val authManager by lazy { AuthManager(this) }
+
+    /**
+     * Performs authorization related operations like changing passwords.
+     */
+    fun <T> authManager(callback: AuthManager.() -> T): T = authManager.run(callback)
 
     val slingInstaller by lazy { SlingInstaller(this) }
 
