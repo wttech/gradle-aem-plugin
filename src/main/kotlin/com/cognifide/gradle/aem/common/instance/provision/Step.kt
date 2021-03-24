@@ -30,6 +30,11 @@ interface Step {
     val version: Property<String>
 
     /**
+     * Implementation version builder
+     */
+    fun version(vararg dependencies: Any?)
+
+    /**
      * Controls logging error to console instead of breaking build with exception so that next step might be performed.
      */
     val continueOnFail: Property<Boolean>
