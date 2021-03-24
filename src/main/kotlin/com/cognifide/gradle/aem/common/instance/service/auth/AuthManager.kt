@@ -7,6 +7,8 @@ import com.cognifide.gradle.common.CommonException
 class AuthManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun updatePassword(user: String, currentPassword: String, newPassword: String) {
+        logger.info("Updating password for user '$user' on $instance")
+
         val node = sync.repository.query {
             path("/home/users")
             type("rep:User")

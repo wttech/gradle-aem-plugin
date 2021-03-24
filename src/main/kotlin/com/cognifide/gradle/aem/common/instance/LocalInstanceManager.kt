@@ -436,15 +436,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             }
         }
 
-        common.progress(downInstances.size) {
-            common.parallel.with(downInstances) {
-                increment("Customizing instance '$name'") {
-                    logger.info("Customizing: $this")
-                    customizeWhenUp()
-                }
-            }
-        }
-
         when {
             openMode.get() == OpenMode.ALWAYS -> open(downInstances)
             openMode.get() == OpenMode.ONCE -> open(uninitializedInstances)
@@ -455,6 +446,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private fun LocalInstance.triggerUp() {
         executeStartScript()
+    }
+
+    fun customize(instances: Collection<LocalInstance> = aem.localInstances) {
+        common.progress(instances.size) {
+            common.parallel.with(instances) {
+                increment("Customizing instance '$name'") {
+                    logger.info("Customizing: $this")
+                    customizeWhenUp()
+                }
+            }
+        }
     }
 
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()

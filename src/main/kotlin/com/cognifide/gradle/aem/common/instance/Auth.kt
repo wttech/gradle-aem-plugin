@@ -8,36 +8,36 @@ class Auth(val instance: LocalInstance) {
 
     val credentials: Pair<String, String>
         get() = when {
-            updateNeeded -> instance.user to previousPassword
+            updateNeeded -> instance.user to passwordPrevious
             else -> instance.user to instance.password
         }
 
-    val upToDate: Boolean get() = previousPasswordValue != null && instance.password == previousPasswordValue
+    val updateNeeded: Boolean get() = passwordProperty != null && instance.password != passwordProperty
 
-    val updateNeeded: Boolean get() = previousPasswordValue != null && instance.password != previousPasswordValue
-
-    val file get() = instance.dir.resolve("config/password.properties")
-
-    private val previousFile get() = instance.dir.resolve("config/password-old.properties")
-
-    private val previousPasswordValue: String?
-        get() = previousFile.takeIf { it.exists() }?.let { file ->
-            Properties().apply { file.inputStream().buffered().use { load(it) } }
-        }?.get("admin.password")?.toString()
-
-    val previousPassword: String
-        get() = previousPasswordValue ?: throw AuthException("Previous password is not available for $instance!")
+    val passwordPrevious: String get() = passwordProperty ?: Instance.PASSWORD_DEFAULT
 
     fun update() {
         if (updateNeeded) {
-            instance.sync.authManager.updatePassword(instance.user, previousPassword, instance.password)
+            instance.sync.authManager.updatePassword(instance.user, passwordPrevious, instance.password)
+            saveProperties()
         }
-        copyPasswordFile()
     }
 
-    private fun copyPasswordFile() = try {
-        file.copyTo(previousFile, true)
+    private val passwordProperty: String? get() = properties["admin.password"]?.toString()
+
+    private val properties get() = Properties().apply {
+        if (propertiesFile.exists()) {
+            propertiesFile.inputStream().buffered().use { load(it) }
+        }
+    }
+
+    private val propertiesFile get() = instance.dir.resolve("config/auth.properties")
+
+    private fun saveProperties() = try {
+        propertiesFile.bufferedWriter().use {
+            Properties().apply { put("admin.password", instance.password) }.store(it, null)
+        }
     } catch (e: CommonException) {
-        throw AuthException("Cannot save previous password file '$previousFile' for $instance!", e)
+        throw AuthException("Cannot save auth properties to file '$propertiesFile' for $instance!", e)
     }
 }
