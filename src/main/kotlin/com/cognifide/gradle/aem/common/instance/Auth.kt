@@ -8,22 +8,9 @@ class Auth(val instance: LocalInstance) {
 
     val credentials: Pair<String, String>
         get() = when {
-            !available -> Instance.CREDENTIALS_DEFAULT
-            !upToDate -> instance.user to previousPassword
+            updateNeeded -> instance.user to previousPassword
             else -> instance.user to instance.password
         }
-
-    val available: Boolean get() = instance.initialized || instance.locked(LOCK_NAME)
-
-    fun becameAvailable(): Boolean {
-        if (!available && instance.credentials != Instance.CREDENTIALS_DEFAULT) {
-            if (instance.sync.status.checkUnauthorized()) {
-                instance.lock(LOCK_NAME)
-                return true
-            }
-        }
-        return false
-    }
 
     val upToDate: Boolean get() = previousPasswordValue != null && instance.password == previousPasswordValue
 
@@ -31,7 +18,7 @@ class Auth(val instance: LocalInstance) {
 
     val file get() = instance.dir.resolve("config/password.properties")
 
-    private val previousFile get() = file.parentFile.resolve("${file.name}.previous")
+    private val previousFile get() = instance.dir.resolve("config/password-old.properties")
 
     private val previousPasswordValue: String?
         get() = previousFile.takeIf { it.exists() }?.let { file ->
@@ -52,9 +39,5 @@ class Auth(val instance: LocalInstance) {
         file.copyTo(previousFile, true)
     } catch (e: CommonException) {
         throw AuthException("Cannot save previous password file '$previousFile' for $instance!", e)
-    }
-
-    companion object {
-        const val LOCK_NAME = "auth"
     }
 }

@@ -8,7 +8,7 @@ class AuthManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun updatePassword(user: String, currentPassword: String, newPassword: String) {
         val node = sync.repository.query {
-            path("/home/user")
+            path("/home/users")
             type("rep:User")
             or {
                 propertyEquals("rep:authorizableId", user)

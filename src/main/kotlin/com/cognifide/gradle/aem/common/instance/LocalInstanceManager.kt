@@ -105,18 +105,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     /**
-     * Control how to enforce admin password change e.g before turning on instance or when it is up.
-     */
-    val passwordMode = aem.obj.typed<PasswordMode> {
-        convention(PasswordMode.UPDATE_WHEN_UP)
-        aem.prop.string("localInstance.passwordMode")?.let { set(PasswordMode.of(it)) }
-    }
-
-    fun passwordMode(name: String) {
-        passwordMode.set(PasswordMode.of(name))
-    }
-
-    /**
      * Automatically open a web browser when instances are up.
      */
     val openMode = aem.obj.typed<OpenMode> {
@@ -193,6 +181,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      */
     val expandFiles = aem.obj.strings {
         set(listOf(
+                "config/*.properties",
                 "control/*.sh",
                 "control/*.bat",
                 "service/*.sh",

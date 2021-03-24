@@ -45,9 +45,6 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         if (debugPort in 1..65535) {
             add(jvmDebugOpt)
         }
-        if (password != PASSWORD_DEFAULT) {
-            add("-Dadmin.password.file=${auth.file}")
-        }
     }
 
     @get:JsonIgnore
@@ -314,15 +311,10 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         expandFiles()
         copyInstallFiles()
         makeFilesExecutable()
-        if (localManager.passwordMode.get() == PasswordMode.RESET_WHEN_DOWN) {
-            resetPassword()
-        }
     }
 
     internal fun customizeWhenUp() {
-        if (localManager.passwordMode.get() == PasswordMode.UPDATE_WHEN_UP) {
-            auth.update()
-        }
+        auth.update()
     }
 
     private fun copyOverrideFiles() {
@@ -437,15 +429,14 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     internal fun locked(name: String): Boolean = lockFile(name).exists()
 
-    fun resetPassword(force: Boolean = false) {
+    fun resetPassword() {
         if (running) {
             throw LocalInstanceException("Instance is running so resetting password on $this is not possible!")
         }
-        when {
-            !initialized -> logger.debug("Skipping resetting password on $this (not initialized)")
-            force -> oakRun.resetPassword(user, password)
-            else -> logger.debug("Skipping resetting password on $this (feature is disabled)")
+        if (!initialized) {
+            throw LocalInstanceException("Instance is not initialized so resetting password is not possible for $this!")
         }
+        oakRun.resetPassword(user, password)
     }
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"
