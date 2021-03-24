@@ -12,7 +12,7 @@ class Auth(val instance: LocalInstance) {
             else -> instance.user to instance.password
         }
 
-    val updateNeeded: Boolean get() = passwordProperty != null && instance.password != passwordProperty
+    val updateNeeded: Boolean get() = instance.password != passwordPrevious
 
     val passwordPrevious: String get() = passwordProperty ?: Instance.PASSWORD_DEFAULT
 
