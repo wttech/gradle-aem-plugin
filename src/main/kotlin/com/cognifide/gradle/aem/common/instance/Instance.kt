@@ -48,7 +48,10 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
     lateinit var password: String
 
     @get:JsonIgnore
-    val credentials: Pair<String, String> get() = user to password
+    val credentials: Pair<String, String> get() = when (this) {
+        is LocalInstance -> auth.credentials
+        else -> user to password
+    }
 
     @get:JsonIgnore
     val credentialsString get() = "$user:$password"

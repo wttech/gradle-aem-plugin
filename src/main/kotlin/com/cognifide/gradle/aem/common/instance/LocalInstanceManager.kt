@@ -105,19 +105,15 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     /**
-     * Automatically enforce current admin password before turning on instance.
-     */
-    val resetPassword = aem.obj.boolean {
-        convention(true)
-        aem.prop.boolean("localInstance.resetPassword")?.let { set(it) }
-    }
-
-    /**
      * Automatically open a web browser when instances are up.
      */
     val openMode = aem.obj.typed<OpenMode> {
         convention(OpenMode.NEVER)
         aem.prop.string("localInstance.openMode")?.let { set(OpenMode.of(it)) }
+    }
+
+    fun openMode(name: String) {
+        openMode.set(OpenMode.of(name))
     }
 
     /**
@@ -126,10 +122,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     val openTimeout = aem.obj.long {
         convention(TimeUnit.SECONDS.toMillis(30))
         aem.prop.long("localInstance.openTimeout")?.let { set(it) }
-    }
-
-    fun openMode(name: String) {
-        openMode.set(OpenMode.of(name))
     }
 
     /**
@@ -324,7 +316,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             instances.onEachApply {
                 increment("Customizing instance '$name'") {
                     logger.info("Customizing: $this")
-                    customize()
+                    customizeWhenDown()
                     logger.info("Customized: $this")
                 }
             }
@@ -395,7 +387,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             downInstances.onEachApply {
                 increment("Customizing instance '$name'") {
                     logger.info("Customizing: $this")
-                    customize()
+                    customizeWhenDown()
                     logger.info("Customized: $this")
                 }
             }
@@ -453,6 +445,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private fun LocalInstance.triggerUp() {
         executeStartScript()
+    }
+
+    fun customize(instances: Collection<LocalInstance> = aem.localInstances) {
+        common.progress(instances.size) {
+            common.parallel.with(instances) {
+                increment("Customizing instance '$name'") {
+                    logger.info("Customizing: $this")
+                    customizeWhenUp()
+                }
+            }
+        }
     }
 
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()

@@ -15,10 +15,7 @@ open class InstanceHttpClient(private val aem: AemExtension, val instance: Insta
     init {
         baseUrl.set(instance.httpUrl)
         authorizationPreemptive.set(true)
-        basicCredentials = when {
-            instance is LocalInstance && !instance.authAvailable -> Instance.CREDENTIALS_DEFAULT
-            else -> instance.credentials
-        }
+        basicCredentials = instance.credentials
 
         connectionTimeout.apply {
             convention(30_000)

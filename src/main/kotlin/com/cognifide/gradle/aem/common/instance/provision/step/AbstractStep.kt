@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.*
+import org.apache.commons.lang3.builder.HashCodeBuilder
 
 abstract class AbstractStep(final override val provisioner: Provisioner) : Step {
 
@@ -17,6 +18,14 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
     override val description = aem.obj.string()
 
     override var version = aem.obj.string { convention(InstanceStep.VERSION_DEFAULT) }
+
+    override fun version(vararg dependencies: Any?) {
+        version.set(aem.obj.provider {
+            val builder = HashCodeBuilder()
+            dependencies.forEach { builder.append(it) }
+            builder.build().toString()
+        })
+    }
 
     override fun isPerformable(condition: Condition): Boolean {
         val operation = "condition provision step '${id.get()}' for '${condition.instance.name}'"

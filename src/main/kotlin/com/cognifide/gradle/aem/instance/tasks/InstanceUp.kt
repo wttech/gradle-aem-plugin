@@ -41,6 +41,8 @@ open class InstanceUp : LocalInstance() {
             }
         }
 
+        localInstanceManager.customize(anyInstances)
+
         if (upInstances.isNotEmpty()) {
             common.notifier.lifecycle("Instance(s) up", "Which: ${upInstances.names}")
         }
