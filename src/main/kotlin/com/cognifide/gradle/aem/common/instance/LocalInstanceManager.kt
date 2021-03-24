@@ -181,7 +181,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      */
     val expandFiles = aem.obj.strings {
         set(listOf(
-                "config/*.properties",
                 "control/*.sh",
                 "control/*.bat",
                 "service/*.sh",
