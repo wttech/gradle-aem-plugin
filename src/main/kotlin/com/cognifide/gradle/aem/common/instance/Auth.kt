@@ -34,6 +34,7 @@ class Auth(val instance: LocalInstance) {
     private val propertiesFile get() = instance.dir.resolve("config/auth.properties")
 
     private fun saveProperties() = try {
+        propertiesFile.parentFile.mkdirs()
         propertiesFile.bufferedWriter().use {
             Properties().apply { put("admin.password", instance.password) }.store(it, null)
         }
