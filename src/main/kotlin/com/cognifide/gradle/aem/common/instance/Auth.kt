@@ -19,8 +19,8 @@ class Auth(val instance: LocalInstance) {
     fun update() {
         if (updateNeeded) {
             instance.sync.authManager.updatePassword(instance.user, passwordPrevious, instance.password)
+            saveProperties()
         }
-        saveProperties()
     }
 
     private val passwordProperty: String? get() = properties["admin.password"]?.toString()
