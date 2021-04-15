@@ -10,7 +10,7 @@ class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
     /**
      * Prevents too long unavailability time (instance never responds anything).
      */
-    val unavailableTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(1)) }
+    val unavailableTime = aem.obj.long { convention(TimeUnit.MINUTES.toMillis(2)) }
 
     /**
      * Prevents too long inactivity time (instance state is no longer changing).

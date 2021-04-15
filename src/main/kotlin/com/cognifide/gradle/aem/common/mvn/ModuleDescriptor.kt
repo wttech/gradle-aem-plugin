@@ -34,7 +34,7 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
 
     fun hasProfile(name: String) = pom.readText()
         .substringAfter("<profiles>").substringBefore("</profiles>")
-        .contains("<id>$name</id>")
+        .contains("<id>${name.removePrefix("!")}</id>")
 
     fun determineOsgiConfigPath(appId: String): File {
         val paths = listOf(

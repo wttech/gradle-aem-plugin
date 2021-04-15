@@ -63,8 +63,8 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     fun targetFile(extension: String) = targetFileLocator(extension)
 
     val profiles = aem.obj.strings {
-        convention(listOf())
-        aem.prop.list("mvnBuild.profiles")?.let { set(it) }
+        set(listOf())
+        aem.prop.list("mvnBuild.profiles")?.let { addAll(it) }
     }
 
     private val profileArgs = profiles.map { ps ->
