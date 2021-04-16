@@ -120,12 +120,6 @@ class MvnBuild(val aem: AemExtension) {
 
     val modules = aem.obj.list<MvnModule> { convention(listOf()) }
 
-    private var moduleOptions: MvnModule.() -> Unit = {}
-
-    fun moduleOptions(options: MvnModule.() -> Unit) {
-        this.moduleOptions = options
-    }
-
     fun module(name: String, options: MvnModule.() -> Unit) {
         module(moduleResolver.byName(name), options)
     }
@@ -137,10 +131,21 @@ class MvnBuild(val aem: AemExtension) {
                 tmpDir.set(project.layout.buildDirectory.dir("mvnBuild/${descriptor.artifactId}"))
             }
             MvnModule(this, descriptor, subproject).apply {
-                moduleOptions()
                 options()
+                moduleOptions["*"]?.let { apply(it) }
+                moduleOptions[descriptor.name]?.let { apply(it) }
             }.also { modules.add(it) }
         }
+    }
+
+    private var moduleOptions = mutableMapOf<String, MvnModule.() -> Unit>()
+
+    fun moduleOptions(options: MvnModule.() -> Unit) {
+        this.moduleOptions["*"] = options
+    }
+
+    fun moduleOptions(name: String, options: MvnModule.() -> Unit) {
+        this.moduleOptions[name] = options
     }
 
     val init = aem.obj.boolean {

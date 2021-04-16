@@ -30,7 +30,11 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         set(build.appId)
     }
 
+    fun file(path: String) = descriptor.dir.resolve(path)
+
     val tasks get() = project.common.tasks
+
+    fun task(name: String) = tasks.named<Task>(name)
 
     val repositoryDir = aem.obj.dir {
         set(build.repositoryDir.map { it.dir("${descriptor.groupId.replace(".", "/")}/${descriptor.artifactId}/${descriptor.version}") })
