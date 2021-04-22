@@ -5,9 +5,12 @@ import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
+import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.zip.ZipFile
-import org.apache.commons.io.FileUtils
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.InputStream
+import java.io.StringReader
 
 /**
  * Package builder that could be used to compose CRX package in place.
@@ -18,6 +21,10 @@ import java.io.File
  * @see <https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html#org.gradle.api.tasks.bundling.Zip>
  */
 class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
+
+    private val streamsToZip = mutableMapOf<String, () -> InputStream>()
+
+    private val filesToZip = mutableMapOf<String, File>()
 
     val destinationDirectory = aem.obj.buildDir("package")
 
@@ -53,6 +60,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     /**
      * Temporary directory being zipped to produce CRX package.
      */
+    //TODO remove
     val pkgDir: File get() = archivePath.get().asFile.parentFile
             .resolve("${archivePath.get().asFile.nameWithoutExtension}.pkg")
 
@@ -72,22 +80,48 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     // 'content' & 'process' methods DSL
 
     fun copyJcrFile(file: File, path: String) {
-        val pkgFile = File(pkgDir, "${Package.JCR_ROOT}$path")
-        pkgFile.parentFile.mkdirs()
-        FileUtils.copyFile(file, pkgFile)
+        val fullPath = "${Package.JCR_ROOT}$path"
+        filesToZip[fullPath] = file
     }
 
-    fun copyMetaFiles(skipExisting: Boolean = true) {
-        aem.assetManager.copyDir(AssetManager.META_PATH, metaDir, !skipExisting)
+    /**
+     * Remember files to add to a zip file
+     */
+    private fun copyMetaFiles() {
+        val metaFiles = aem.assetManager.getStreams(AssetManager.META_PATH, Package.META_PATH)
+            //skip existing
+            .filterKeys { path -> !streamsToZip.contains(path) && !filesToZip.contains(path) }
+        this.streamsToZip.putAll(metaFiles)
     }
 
-    fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
-        expandFiles(metaDir, filePatterns)
+    /**
+     * Add expand amenders to files that are to be added to a zip file
+     */
+    private fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
+        val metaFiles = streamsToZip
+            .filter { it.key.startsWith(Package.META_PATH) }
+            .filter  { Patterns.wildcard(it.key, filePatterns) }
+            .mapValues { expandInputStream(it.value, it.key)}
+        streamsToZip.putAll(metaFiles)
+    }
+
+    /**
+     * Expand template variables in an input stream
+     */
+    private fun expandInputStream(inputProvider: () -> InputStream, path: String): () -> InputStream {
+        return {
+            val content = inputProvider.invoke().bufferedReader().use { it.readText() }
+            val result = common.prop.expand(content, expandProperties.get(), path)
+            ByteArrayInputStream(result.toByteArray())
+        }
     }
 
     val expandProperties = aem.obj.map<String, Any> { convention(aem.obj.provider { fileProperties }) }
 
-    fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
+    /**
+     * Expand template variables in files
+     */
+    private fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
             common.prop.expand(content, expandProperties.get(), source.absolutePath)
         }
@@ -106,6 +140,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         content()
         expandMetaFiles()
 
+        //TODO add files and input streams
         ZipFile(archivePath.get().asFile).packAll(pkgDir)
         pkgDir.deleteRecursively()
 

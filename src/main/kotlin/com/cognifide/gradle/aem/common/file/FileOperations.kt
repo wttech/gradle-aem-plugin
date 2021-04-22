@@ -12,6 +12,9 @@ import java.nio.file.Paths
 
 object FileOperations {
 
+    /**
+     * Read files, apply the given amender on their contents and write them back
+     */
     fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
         val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
         files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->

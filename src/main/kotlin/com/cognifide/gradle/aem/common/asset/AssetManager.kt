@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.common.zip.ZipFile
 import java.io.File
+import java.io.InputStream
 
 class AssetManager(private val aem: AemExtension) {
 
@@ -44,6 +45,21 @@ class AssetManager(private val aem: AemExtension) {
             targetFile.parentFile.mkdirs()
             assets.unpackFile(path, targetFile)
         }
+    }
+
+    /**
+     * Find files in the given directory path and prepare input streams and new file paths in the given
+     * target directory
+     */
+    fun getStreams(path: String, targetPath: String): Map<String, () -> InputStream> {
+        val entryStreams = mutableMapOf<String, () -> InputStream>()
+        assets.walkDir(path) { fileHeader ->
+            if (!fileHeader.isDirectory) {
+                val targetRelativePath = fileHeader.fileName.removePrefix(path)
+                entryStreams[targetPath + targetRelativePath] = { assets.readFile(fileHeader.fileName) }
+            }
+        }
+        return entryStreams
     }
 
     companion object {
