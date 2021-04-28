@@ -78,7 +78,9 @@ open class PackageSync : AemDefaultTask() {
 
     fun contentDir(dir: File) {
         contentDir.set(dir)
-        filter.set(aem.filter(dir.resolve("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}")))
+        filter.set(project.provider {
+            FilterFile.cmd(aem) ?: FilterFile(dir.resolve("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}"))
+        })
     }
 
     fun contentDir(dir: Directory) {

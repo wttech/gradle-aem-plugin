@@ -9,7 +9,7 @@ class ImportMappingsStep(provisioner: Provisioner, val fileName: String) : Abstr
     val jsonFile get() = provisioner.manager.configDir.get().asFile.resolve("mapping/$fileName")
 
     val root = aem.obj.string {
-        convention("/etc/map/publish")
+        convention("/etc/map/http")
     }
 
     override fun validate() {
