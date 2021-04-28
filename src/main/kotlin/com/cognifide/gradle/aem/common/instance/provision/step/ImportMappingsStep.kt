@@ -26,7 +26,7 @@ class ImportMappingsStep(provisioner: Provisioner, val fileName: String) : Abstr
 
     init {
         id.set("importMappings/$fileName")
-        description.convention("Importing mappings from file '$fileName'")
+        description.convention("Importing mappings file '$fileName'")
         version.set(aem.obj.provider { versionFrom(jsonFile, root.get()) })
         condition { onPublish() && once() }
     }
