@@ -3,7 +3,9 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.*
+import com.cognifide.gradle.common.utils.Formats
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.io.File
 
 abstract class AbstractStep(final override val provisioner: Provisioner) : Step {
 
@@ -20,11 +22,24 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
     override var version = aem.obj.string { convention(InstanceStep.VERSION_DEFAULT) }
 
     override fun version(vararg dependencies: Any?) {
-        version.set(aem.obj.provider {
-            val builder = HashCodeBuilder()
-            dependencies.forEach { builder.append(it) }
-            builder.build().toString()
-        })
+        version.set(aem.obj.provider { versionFrom(dependencies.asIterable()) })
+    }
+
+    fun versionFrom(vararg dependencies: Any?) = versionFrom(dependencies.asIterable())
+
+    fun versionFrom(dependencies: Iterable<Any?>): String {
+        val builder = HashCodeBuilder()
+        dependencies.forEach { dependency ->
+            when (dependency) {
+                is File -> {
+                    builder.append(Formats.toChecksum(dependency))
+                    builder.append(dependency.path)
+                    builder.append(mapOf<String, String>().hashCode())
+                }
+                else -> builder.append(dependency)
+            }
+        }
+        return builder.build().toString()
     }
 
     override fun isPerformable(condition: Condition): Boolean {

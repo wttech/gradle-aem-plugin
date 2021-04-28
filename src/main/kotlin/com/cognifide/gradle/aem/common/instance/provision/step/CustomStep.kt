@@ -7,6 +7,12 @@ import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 
 class CustomStep(provisioner: Provisioner) : AbstractStep(provisioner) {
 
+    fun validate(callback: () -> Unit) {
+        this.validateCallback = callback
+    }
+
+    private var validateCallback: () -> Unit = {}
+
     override fun validate() {
         if (!id.isPresent) {
             throw ProvisionException("Step ID is not defined!")
@@ -14,6 +20,8 @@ class CustomStep(provisioner: Provisioner) : AbstractStep(provisioner) {
         if (!::actionCallback.isInitialized) {
             throw ProvisionException("Step '${id.get()}' action is not defined!")
         }
+
+        validateCallback()
     }
 
     fun init(callback: () -> Unit) {

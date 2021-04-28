@@ -289,4 +289,15 @@ class Provisioner(val manager: InstanceManager) {
     fun configureWorkflow(id: String, options: ConfigureWorkflowStep.() -> Unit) {
         steps.add(ConfigureWorkflowStep(this, id).apply(options))
     }
+
+    fun configureOsgi(pid: String, properties: Map<String, Any?>, options: Step.() -> Unit = {}) = step("configureOsgi/$pid") {
+        description.set("Setting OSGi config '$pid'")
+        sync { osgi.configure(pid, properties) }
+        version(properties)
+        options()
+    }
+
+    fun importMappings(fileName: String, options: ImportMappingsStep.() -> Unit = {}) {
+        steps.add(ImportMappingsStep(this, fileName).apply(options))
+    }
 }
