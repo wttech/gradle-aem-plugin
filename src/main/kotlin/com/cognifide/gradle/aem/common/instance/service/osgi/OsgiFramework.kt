@@ -129,7 +129,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         refreshPackages: Boolean = true,
         retry: Retry = common.retry()
     ) {
-        logger.info("Installing OSGi $bundle on $instance.")
+        logger.info("Installing OSGi bundle '$bundle' on $instance.")
 
         retry.withCountdown<Unit, CommonException>("install bundle '${bundle.name}' on '${instance.name}'") {
             sync.http.postMultipart(BUNDLES_PATH, mapOf(
@@ -147,7 +147,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun uninstallBundle(bundle: File) {
         val bundleFile = BundleFile(bundle)
-        logger.info("Uninstalling $bundleFile on $instance.")
+        logger.info("Uninstalling OSGi $bundleFile on $instance.")
         uninstallBundleInternal(bundleFile.symbolicName)
     }
 

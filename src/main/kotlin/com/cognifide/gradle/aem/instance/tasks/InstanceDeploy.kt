@@ -5,8 +5,16 @@ import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class InstanceDeploy : Instance() {
+
+    @Internal
+    val file = aem.obj.file {
+        common.prop.string("instance.deploy.url")?.let { url ->
+            fileProvider(aem.obj.provider { common.resolveFile(url) })
+        }
+    }
 
     @Internal
     val pkgZip = aem.obj.file {
@@ -27,15 +35,15 @@ open class InstanceDeploy : Instance() {
         instanceManager.examine(anyInstances)
 
         when {
-            pkgZip.isPresent -> {
-                val zip = pkgZip.get().asFile
-                instanceManager.fileSync { deployPackage(zip) }
-                common.notifier.notify("Package deployed", "${zip.name} on ${anyInstances.names}")
-            }
-            bundleJar.isPresent -> {
-                val jar = bundleJar.get().asFile
-                instanceManager.fileSync { installBundle(jar) }
-                common.notifier.notify("Bundle deployed", "${jar.name} on ${anyInstances.names}")
+            pkgZip.isPresent -> deployPackage(pkgZip.get().asFile)
+            bundleJar.isPresent -> deployBundle(bundleJar.get().asFile)
+            file.isPresent -> {
+                val file = file.get().asFile
+                when (file.extension) {
+                    "zip" -> deployPackage(file)
+                    "jar" -> deployBundle(file)
+                    else -> throw InstanceException("File '$file' has unsupported type and cannot be deployed to instance(s)!")
+                }
             }
             else -> {
                 val msg = "Neither URL of package nor bundle provided so nothing to deploy to instance(s)!"
@@ -46,6 +54,16 @@ open class InstanceDeploy : Instance() {
                 }
             }
         }
+    }
+
+    private fun deployPackage(zip: File) {
+        instanceManager.fileSync { deployPackage(zip) }
+        common.notifier.notify("Package deployed", "${zip.name} on ${anyInstances.names}")
+    }
+
+    private fun deployBundle(jar: File) {
+        instanceManager.fileSync { installBundle(jar) }
+        common.notifier.notify("Bundle deployed", "${jar.name} on ${anyInstances.names}")
     }
 
     init {
