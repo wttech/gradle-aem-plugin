@@ -419,7 +419,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                     checksumFile.readText()
                 } else {
                     logger.info("Calculating checksum of package to be deployed '$file'")
-                    Formats.toChecksum(checksumFile)
+                    Formats.toChecksum(file)
                 }
             }
         }
