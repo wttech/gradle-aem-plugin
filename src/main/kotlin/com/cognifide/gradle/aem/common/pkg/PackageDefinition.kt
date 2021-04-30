@@ -132,7 +132,6 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
      */
     fun compose(): File {
         archivePath.get().asFile.delete()
-        pkgDir.deleteRecursively()
         metaDir.mkdirs()
         jcrDir.mkdirs()
 
@@ -140,9 +139,10 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         content()
         expandMetaFiles()
 
-        //TODO add files and input streams
-        ZipFile(archivePath.get().asFile).packAll(pkgDir)
-        pkgDir.deleteRecursively()
+        val zipFile = ZipFile(archivePath.get().asFile)
+        filesToZip.forEach { name, file -> zipFile.packAll(file) { fileNameInZip = name } }
+
+        streamsToZip.forEach { name, streamProvider -> zipFile.packStream(streamProvider.invoke(), options = {fileNameInZip = name}) }
 
         return archivePath.get().asFile
     }
