@@ -8,7 +8,6 @@ plugins {
     id("org.jetbrains.dokka") version "1.4.0-rc"
     id("com.gradle.plugin-publish") version "0.11.0"
     id("io.gitlab.arturbosch.detekt") version "1.7.0"
-    id("com.jfrog.bintray") version "1.8.4"
     id("net.researchgate.release") version "2.8.1"
     id("com.github.breadmoirai.github-release") version "2.2.10"
     id("com.neva.fork") version "5.0.0"
@@ -144,7 +143,7 @@ tasks {
     }
 
     afterReleaseBuild {
-        dependsOn("bintrayUpload", "publishPlugins")
+        dependsOn("publishPlugins")
     }
 
     named("githubRelease") {
@@ -218,27 +217,6 @@ pluginBundle {
     vcsUrl = "https://github.com/wttech/gradle-aem-plugin.git"
     description = "Gradle AEM Plugin"
     tags = listOf("aem", "cq", "vault", "scr")
-}
-
-bintray {
-    user = (findProperty("bintray.user") ?: System.getenv("BINTRAY_USER"))?.toString()
-    key = (findProperty("bintray.key") ?: System.getenv("BINTRAY_KEY"))?.toString()
-    setPublications("mavenJava")
-    with(pkg) {
-        repo = "maven-public"
-        name = "gradle-aem-plugin"
-        userOrg = "wttech"
-        setLicenses("Apache-2.0")
-        vcsUrl = "https://github.com/wttech/gradle-aem-plugin.git"
-        setLabels("aem", "cq", "vault", "scr")
-        with(version) {
-            name = project.version.toString()
-            desc = "${project.description} ${project.version}"
-            vcsTag = project.version.toString()
-        }
-    }
-    publish = (project.findProperty("bintray.publish") ?: "true").toString().toBoolean()
-    override = (project.findProperty("bintray.override") ?: "false").toString().toBoolean()
 }
 
 githubRelease {
