@@ -39,16 +39,25 @@ class ModuleResolver(val build: MvnBuild) {
         exclude(pomExclusions.get())
     }
 
-    fun byName(name: String) = all.get().firstOrNull { it.name == name }
+    val namePrefixes = aem.obj.strings {
+        set(listOf())
+        aem.prop.list("mvnBuild.moduleResolver.namePrefixes")?.let { set(it) }
+    }
+
+    fun findByName(name: String) = all.get().firstOrNull { it.name == name }
+
+    fun byName(name: String) = findByName(name)
         ?: throw MvnException("Cannot find module named '$name' in Maven build at path '$rootDir'!")
+
+
+    fun findByArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifactId == artifact.id }
 
     fun byArtifact(notation: String) = byArtifact(Artifact(notation))
 
-    fun byArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifactId == artifact.id }
-        ?: throw MvnException(listOf(
-            "Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!",
-            "Consider regenerating a dependency graph file '${build.depGraph.dotFile.get().asFile}' by deleting it."
-        ).joinToString("\n"))
+    fun byArtifact(artifact: Artifact) = findByArtifact(artifact) ?: throw MvnException(listOf(
+        "Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!",
+        "Consider regenerating a dependency graph file '${build.depGraph.dotFile.get().asFile}' by deleting it."
+    ).joinToString("\n"))
 
     fun dependency(nameFrom: String, nameTo: String) = Dependency(byName(nameFrom).artifact, byName(nameTo).artifact)
 

@@ -10,6 +10,7 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
 
     val name: String get() = Formats.relativePath(dir.absolutePath, build.rootDir.get().asFile.absolutePath)
         .replace("\\", "/").replace("/", ":")
+        .let { value -> resolver.namePrefixes.get().fold(value) { v, np -> v.replace(np, "") } }
         .ifBlank { NAME_ROOT }
 
     val dir: File get() = pom.parentFile
