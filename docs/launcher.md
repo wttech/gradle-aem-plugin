@@ -41,7 +41,7 @@ Below there are some sample usages of standalone launcher.
 To add Gradle/GAP support to existing Maven build generated from Adobe AEM Archetype, run command below:
 
 ```shell
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/15.0.4/gap.jar && java -jar gap.jar && rm gap.jar
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/15.1.4/gap.jar && java -jar gap.jar && rm gap.jar
 ```
 
 Demo (to play again refresh the page):
