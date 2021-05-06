@@ -49,7 +49,6 @@ class ModuleResolver(val build: MvnBuild) {
     fun byName(name: String) = findByName(name)
         ?: throw MvnException("Cannot find module named '$name' in Maven build at path '$rootDir'!")
 
-
     fun findByArtifact(artifact: Artifact) = all.get().firstOrNull { it.artifactId == artifact.id }
 
     fun byArtifact(notation: String) = byArtifact(Artifact(notation))

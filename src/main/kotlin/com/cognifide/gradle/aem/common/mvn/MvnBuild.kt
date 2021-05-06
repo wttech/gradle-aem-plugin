@@ -209,26 +209,30 @@ class MvnBuild(val aem: AemExtension) {
         val module2 = moduleResolver.findByArtifact(dependency.to)
 
         if (module1 != null && module2 != null) {
-            // Build ordering
-            val buildTask1 = tasks.pathed<Task>(module1.artifactTaskPath)
-            val buildTask2 = tasks.pathed<Task>(module2.artifactTaskPath)
+            defineModuleTaskDependenciesFromGraph(dependency, module1, module2)
+        }
+    }
 
-            buildTask1.configure { bt1 ->
-                if (!dependency.redundant) {
-                    bt1.dependsOn(buildTask2)
-                }
-                bt1.inputs.files(buildTask2.map { it.outputs.files })
+    private fun defineModuleTaskDependenciesFromGraph(dependency: Dependency, module1: ModuleDescriptor, module2: ModuleDescriptor) {
+        // Build ordering
+        val buildTask1 = tasks.pathed<Task>(module1.artifactTaskPath)
+        val buildTask2 = tasks.pathed<Task>(module2.artifactTaskPath)
+
+        buildTask1.configure { bt1 ->
+            if (!dependency.redundant) {
+                bt1.dependsOn(buildTask2)
             }
+            bt1.inputs.files(buildTask2.map { it.outputs.files })
+        }
 
-            // Package deploy ordering
-            if (deployPackageOrder.get() == DeployPackageOrder.GRAPH) {
-                if (module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
-                    val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
-                    val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+        // Package deploy ordering
+        if (deployPackageOrder.get() == DeployPackageOrder.GRAPH) {
+            if (module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
+                val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+                val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
 
-                    deployTask1.configure { dt1 ->
-                        dt1.mustRunAfter(deployTask2)
-                    }
+                deployTask1.configure { dt1 ->
+                    dt1.mustRunAfter(deployTask2)
                 }
             }
         }
