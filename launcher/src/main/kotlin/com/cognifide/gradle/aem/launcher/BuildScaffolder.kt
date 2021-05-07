@@ -24,8 +24,8 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             dependencies {
                 implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
-                implementation("com.cognifide.gradle:environment-plugin:1.1.29")
-                implementation("com.neva.gradle:fork-plugin:6.0.5")
+                implementation("com.cognifide.gradle:environment-plugin:1.3.5")
+                implementation("com.neva.gradle:fork-plugin:7.0.0")
             }
         """.trimIndent())
     }
@@ -207,14 +207,14 @@ class BuildScaffolder(private val launcher: Launcher) {
                     networks:
                       - docker-net
                     volumes:
-                      - "{{ docker.rootPath }}/dispatcher/src/conf.d:/etc/httpd/conf.d"
-                      - "{{ docker.rootPath }}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
-                      - "{{ docker.configPath }}/httpd:/etc/httpd.extra"
-                      - "{{ docker.workPath }}/httpd/modules/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
-                      - "{{ docker.workPath }}/httpd/logs:/etc/httpd/logs"
+                      - "{{ rootPath }}/dispatcher/src/conf.d:/etc/httpd/conf.d"
+                      - "{{ rootPath }}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
+                      - "{{ configPath }}/httpd:/etc/httpd.extra"
+                      - "{{ workPath }}/httpd/modules/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
+                      - "{{ workPath }}/httpd/logs:/etc/httpd/logs"
                       {% if docker.runtime.safeVolumes %}
-                      - "{{ docker.workPath }}/httpd/cache:/var/www/localhost/cache"
-                      - "{{ docker.workPath }}/httpd/htdocs:/var/www/localhost/htdocs"
+                      - "{{ workPath }}/httpd/cache:/var/www/localhost/cache"
+                      - "{{ workPath }}/httpd/htdocs:/var/www/localhost/htdocs"
                       {% endif %}
                     {% if docker.runtime.hostInternalIpMissing %}
                     extra_hosts:

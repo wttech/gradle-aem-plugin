@@ -69,6 +69,11 @@ class ModuleResolver(val build: MvnBuild) {
 
     val projectPaths = all.map { descriptors -> descriptors.map { it.projectPath }.sorted() }
 
+    val packagePlugins = aem.obj.strings {
+        set(listOf("content-package-maven-plugin", "wcmio-content-package-maven-plugin"))
+        aem.prop.list("mvnBuild.moduleResolver.contentPackagePlugins")?.let { set(it) }
+    }
+
     fun typeResolver(resolver: (File) -> ModuleType) {
         this.typeResolver = resolver
     }
@@ -86,8 +91,11 @@ class ModuleResolver(val build: MvnBuild) {
 
     fun isRoot(pom: File) = pom.parentFile == rootDir
 
-    fun isPackage(pom: File) = pom.parentFile.resolve(build.contentPath.get()).exists() ||
-            pom.readText().contains("<packaging>content-package</packaging>")
+    fun isPackage(pom: File) = pom.parentFile.resolve(build.contentPath.get()).exists() || pom.readText().let { text ->
+        text.contains("<packaging>content-package</packaging>") || packagePlugins.get().any {
+            text.substringBetweenTag("build").substringBetweenTag("plugins").contains("<artifactId>$it</artifactId>")
+        }
+    }
 
     fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists() ||
             pom.readText().contains("<packaging>bundle</packaging>")
@@ -95,4 +103,6 @@ class ModuleResolver(val build: MvnBuild) {
     fun isFrontend(pom: File) = pom.parentFile.resolve("clientlib.config.js").exists()
 
     fun isDispatcher(pom: File) = pom.parentFile.resolve("src/conf.dispatcher.d").exists()
+
+    private fun String.substringBetweenTag(tag: String) = this.substringAfter("<$tag>").substringBefore("</$tag>")
 }
