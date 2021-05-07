@@ -97,8 +97,8 @@ class ModuleResolver(val build: MvnBuild) {
         }
     }
 
-    fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists()
-            || pom.readText().contains("<packaging>bundle</packaging>")
+    fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists() ||
+            pom.readText().contains("<packaging>bundle</packaging>")
 
     fun isFrontend(pom: File) = pom.parentFile.resolve("clientlib.config.js").exists()
 
