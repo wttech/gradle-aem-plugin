@@ -1,9 +1,16 @@
 name: Check
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
-  build:
+  check:
+    name: Run Gradle
     runs-on: ubuntu-latest
 
     steps:
