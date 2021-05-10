@@ -18,7 +18,7 @@ class BuildScaffolder(private val launcher: Launcher) {
         writeText("""
             repositories {
                 mavenLocal()
-                jcenter()
+                mavenCentral()
                 gradlePluginPortal()
             }
             
@@ -74,8 +74,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             allprojects {
                 repositories {
-                    jcenter()
-                    maven("https://dl.bintray.com/acs/releases")
+                    mavenCentral()
                 }
             }
             

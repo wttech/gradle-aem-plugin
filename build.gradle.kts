@@ -26,7 +26,7 @@ configurations.getByName("functionalTestImplementation").apply {
 
 repositories {
     mavenLocal()
-    jcenter()
+    mavenCentral()
     gradlePluginPortal()
 }
 

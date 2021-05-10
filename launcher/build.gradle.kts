@@ -11,7 +11,7 @@ defaultTasks("build", "publishToMavenLocal")
 
 repositories {
     mavenLocal()
-    jcenter()
+    mavenCentral()
     maven("https://repo.gradle.org/gradle/libs-releases-local")
 }
 
