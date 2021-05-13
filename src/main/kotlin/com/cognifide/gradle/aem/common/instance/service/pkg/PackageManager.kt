@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.pkg
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
@@ -22,6 +23,7 @@ import org.apache.commons.io.input.TeeInputStream
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
 import org.gradle.api.tasks.Input
+import org.gradle.process.internal.streams.SafeStreams
 import java.util.*
 
 /**
@@ -158,11 +160,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Controls dumping of package installation responses.
      *
-     * Enable only for debugging purposes. May decrease deployment time.
+     * Enable only for debugging purposes. Increases deployment time about n-times.
      */
-    val responseDumping = aem.obj.boolean {
-        convention(false)
-        aem.prop.boolean("instance.packageManager.responseDumping")?.let { set(it) }
+    val responseHandling = aem.obj.typed<ResponseHandling> {
+        convention(ResponseHandling.NONE)
+        aem.prop.string("instance.packageManager.responseHandling")?.let { set(ResponseHandling.of(it)) }
+    }
+
+    /**
+     * Customize response handling.
+     */
+    fun responseHandling(name: String) {
+        responseHandling.set(ResponseHandling.of(name))
     }
 
     /**
@@ -366,8 +375,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun HttpClient.handleInstallResponse(remotePath: String, response: HttpResponse): InstallResponse = when {
-        responseDumping.get() -> {
+    private fun HttpClient.handleInstallResponse(remotePath: String, response: HttpResponse): InstallResponse = when (responseHandling.get()) {
+        ResponseHandling.FILE -> {
             val dumpFile = responseDir.map { it.dir("$it/${instance.name}") }
                     .get().asFile
                     .resolve(remotePath.removePrefix("/"))
@@ -378,6 +387,12 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                     .run { parentFile.resolve("$nameWithoutExtension.html") }
             logger.info("Dumping package installation response to file '$dumpFile'")
             val teeOut = dumpFile.outputStream().buffered()
+            val teeIn = TeeInputStream(asStream(response).buffered(), teeOut, true)
+            InstallResponse.from(teeIn, responseBuffer.get())
+        }
+        ResponseHandling.CONSOLE -> {
+            logger.info("Printing package installation response to console")
+            val teeOut = SafeStreams.systemOut().buffered()
             val teeIn = TeeInputStream(asStream(response).buffered(), teeOut, true)
             InstallResponse.from(teeIn, responseBuffer.get())
         }
@@ -567,6 +582,17 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.debug("Nothing to purge.", e)
         }
         return purged
+    }
+
+    enum class ResponseHandling {
+        FILE,
+        CONSOLE,
+        NONE;
+
+        companion object {
+            fun of(name: String) = values().find { it.name.equals(name, true) }
+                ?: throw AemException("Unsupported package response handling: $name")
+        }
     }
 
     companion object {
