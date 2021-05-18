@@ -12,29 +12,23 @@ class FilterElement(val root: String) : Serializable {
 
     var type: FilterType = FilterType.UNKNOWN
 
-    var excludes: Collection<String> = listOf()
+    var rules: List<FilterRule> = listOf()
 
-    var includes: Collection<String> = listOf()
+    val excludes get() = rules.filter { it.type == FilterRuleType.EXCLUDE }
+
+    val includes get() = rules.filter { it.type == FilterRuleType.INCLUDE }
 
     @get:Internal
     val element: Element
         get() = Element(FILTER_TAG).apply {
             attr(ROOT_ATTR, root)
-
             if (!mode.isNullOrBlank()) {
                 attr(MODE_ATTR, mode)
             }
-
-            excludes.map { e -> Element(EXCLUDE_TAG).apply {
-                attr(PATTERN_ATTR, e) }
-            }.forEach { appendChild(it) }
-
-            includes.map { e -> Element(INCLUDE_TAG).apply {
-                attr(PATTERN_ATTR, e) }
-            }.forEach { appendChild(it) }
+            rules.forEach { appendChild(it.element) }
         }
 
-    override fun toString() = element.toString().replace("></filter>", "/>")
+    override fun toString() = element.toString().replace("></$FILTER_TAG>", "/>")
 
     companion object {
 
@@ -47,9 +41,8 @@ class FilterElement(val root: String) : Serializable {
             return elements.map { element ->
                 of(element.attr(ROOT_ATTR)) {
                     type = FilterType.UNKNOWN
+                    rules = FilterRule.manyOf(element)
                     mode = element.attr(MODE_ATTR)
-                    excludes = element.select(EXCLUDE_TAG).map { it.attr(PATTERN_ATTR) }
-                    includes = element.select(INCLUDE_TAG).map { it.attr(PATTERN_ATTR) }
                 }
             }
         }
@@ -59,11 +52,5 @@ class FilterElement(val root: String) : Serializable {
         const val MODE_ATTR = "mode"
 
         const val ROOT_ATTR = "root"
-
-        const val EXCLUDE_TAG = "exclude"
-
-        const val INCLUDE_TAG = "include"
-
-        const val PATTERN_ATTR = "pattern"
     }
 }
