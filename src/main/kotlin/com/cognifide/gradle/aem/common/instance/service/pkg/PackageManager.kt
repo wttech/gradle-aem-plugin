@@ -121,6 +121,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     var downloadRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.downloadRetry") ?: 2) }
 
     /**
+     * Delete package after download (also when failed).
+     */
+    val downloadClean = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.packageManager.downloadClean")?.let { set(it) }
+    }
+
+    /**
      * Define patterns for known exceptions which could be thrown during package installation
      * making it impossible to succeed.
      *
@@ -296,7 +304,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
                 download(path, file)
             } finally {
-                if (path != null) {
+                if (downloadClean.get() && path != null) {
                     delete(path)
                 }
             }
