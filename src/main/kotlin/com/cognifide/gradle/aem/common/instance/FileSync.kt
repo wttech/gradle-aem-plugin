@@ -59,6 +59,12 @@ class FileSync(private val manager: InstanceManager) {
         }
     }
 
+    private var options: InstanceSync.() -> Unit = {}
+
+    fun options(options: InstanceSync.() -> Unit) {
+        this.options = options
+    }
+
     fun sync() {
         instanceManager.examine(instances.get())
 
@@ -67,6 +73,7 @@ class FileSync(private val manager: InstanceManager) {
             common.progress(actions) {
                 aem.syncFiles(instances.get(), files.files) { file ->
                     increment("${file.name} -> ${instance.name}") {
+                        options()
                         action(file)
                     }
                 }
