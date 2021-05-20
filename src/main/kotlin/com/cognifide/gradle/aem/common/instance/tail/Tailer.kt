@@ -148,7 +148,7 @@ class Tailer(val manager: InstanceManager) {
             else -> ENDPOINT_PATH_OLD
         }
 
-        return "$path?tail=$linesChunkSize&name=$fileName"
+        return "$path?tail=${linesChunkSize.get()}&name=$fileName"
     }
 
     val logFile: String get() = Paths.get(logFilePath.get()).fileName.toString()

@@ -39,6 +39,13 @@ class BackupManager(private val manager: LocalInstanceManager) {
     val any: File? get() = resolve(localSources + remoteSources)?.file
 
     /**
+     * Backup file specified explicitly.
+     */
+    val localFile = aem.obj.file {
+        aem.prop.file("localInstance.backup.localFile")?.let { set(it) }
+    }
+
+    /**
      * Directory storing locally created backup files.
      */
     val localDir = aem.obj.dir {
@@ -121,6 +128,7 @@ class BackupManager(private val manager: LocalInstanceManager) {
         val name = aem.prop.string("localInstance.backup.name") ?: ""
         when {
             name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
+            localFileSource != null -> firstOrNull { it == localFileSource }
             else -> firstOrNull()
         }
     }
@@ -130,7 +138,11 @@ class BackupManager(private val manager: LocalInstanceManager) {
             .sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
             .run { selector(this) }
 
-    private val localSources: List<BackupSource>
+    private val localSources: List<BackupSource> get() = listOfNotNull(localFileSource) + localDirSources
+
+    private val localFileSource: BackupSource? get() = localFile.orNull?.asFile?.let { BackupSource(BackupType.LOCAL, FileEntry.of(it)) { it } }
+
+    private val localDirSources: List<BackupSource>
         get() = (localDir.get().asFile.listFiles { _, name -> name.endsWith(suffix.get()) } ?: arrayOf()).map { file ->
             BackupSource(BackupType.LOCAL, FileEntry.of(file)) { file }
         }
