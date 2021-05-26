@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
+import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.step.*
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
@@ -198,6 +199,10 @@ class Provisioner(val manager: InstanceManager) {
             .toMap()
 
     // Predefined steps
+
+    fun syncOnce(stepName: String, options: InstanceSync.() -> Unit) = step(stepName) { condition { once() }; sync(options) }
+    fun syncOnceOnAuthor(stepName: String, options: InstanceSync.() -> Unit) = step(stepName) { condition { onAuthor() && once() }; sync(options) }
+    fun syncOnceOnPublish(stepName: String, options: InstanceSync.() -> Unit) = step(stepName) { condition { onPublish() && once() }; sync(options) }
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
         description.set("Enabling CRX DE")
