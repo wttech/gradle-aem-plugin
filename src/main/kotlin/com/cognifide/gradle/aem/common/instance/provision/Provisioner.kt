@@ -14,6 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
  */
+@Suppress("TooManyFunctions")
 class Provisioner(val manager: InstanceManager) {
 
     internal val aem = manager.aem
