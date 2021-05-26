@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.common.utils.Formats
+import org.gradle.api.Task
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -14,6 +15,10 @@ class StatusReporter(private val aem: AemExtension) {
 
     val packages = aem.obj.files {
         from(aem.obj.provider { aem.packagesBuilt.map { it.archiveFile.get().asFile } })
+    }
+
+    fun packageBuiltBy(taskPath: String) = aem.project.gradle.projectsEvaluated {
+        packages.from(aem.common.tasks.pathed<Task>(taskPath).map { it.outputs.files.first() })
     }
 
     private val packageFiles by lazy { packages.files.toList() }
