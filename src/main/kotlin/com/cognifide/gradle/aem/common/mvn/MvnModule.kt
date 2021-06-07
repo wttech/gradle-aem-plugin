@@ -44,13 +44,13 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         set(repositoryDir.map { it.file("${descriptor.artifactId}-${descriptor.version}.pom") })
     }
 
-    val inputFiles get() = project.fileTree(descriptor.dir).matching(inputFilter)
+    val inputFiles = aem.obj.files { from(project.fileTree(descriptor.dir).matching { inputFilter(it) }) }
 
     var inputFilter: PatternFilterable.() -> Unit = { exclude(outputExclusions.get()) }
 
     val outputExclusions = aem.obj.strings { set(build.outputExclusions) }
 
-    val outputFiles get() = aem.obj.files { from(targetDir) }
+    val outputFiles = aem.obj.files { from(targetDir) }
 
     val targetDir = aem.obj.dir {
         set(descriptor.dir.resolve("target"))
