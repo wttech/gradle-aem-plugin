@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.utils.Formats
 import org.gradle.api.Task
 import java.io.File
@@ -17,8 +18,13 @@ class StatusReporter(private val aem: AemExtension) {
         from(aem.obj.provider { aem.packagesBuilt.map { it.archiveFile.get().asFile } })
     }
 
-    fun packageBuiltBy(taskPath: String) = aem.project.gradle.projectsEvaluated {
-        packages.from(aem.common.tasks.pathed<Task>(taskPath).map { it.outputs.files.first() })
+    fun packageBuiltBy(taskPath: String, strict: Boolean = false) = aem.project.gradle.projectsEvaluated {
+        try {
+            packages.from(aem.common.tasks.pathed<Task>(taskPath).map { it.outputs.files.first() })
+        } catch (e: CommonException) {
+            if (strict) throw e
+            else logger.debug("Cannot find a package building task at path '$taskPath'!")
+        }
     }
 
     private val packageFiles by lazy { packages.files.toList() }
