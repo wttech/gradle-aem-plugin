@@ -50,7 +50,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     val outputExclusions = aem.obj.strings { set(build.outputExclusions) }
 
-    val outputFiles get() = project.fileTree(targetDir)
+    val outputFiles get() = aem.obj.files { from(targetDir) }
 
     val targetDir = aem.obj.dir {
         set(descriptor.dir.resolve("target"))
