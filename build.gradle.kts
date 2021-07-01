@@ -5,7 +5,6 @@ plugins {
     id("java-gradle-plugin")
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "1.4.20"
-    id("org.jetbrains.dokka") version "1.4.0-rc"
     id("com.gradle.plugin-publish") version "0.11.0"
     id("io.gitlab.arturbosch.detekt") version "1.7.0"
     id("net.researchgate.release") version "2.8.1"
@@ -59,21 +58,6 @@ tasks {
         archiveFileName.set("assets.zip")
         destinationDirectory.set(file("$buildDir/resources/main"))
     }
-    register<Jar>("sourcesJar") {
-        archiveClassifier.set("sources")
-        dependsOn("classes")
-        from(sourceSets["main"].allSource)
-    }
-
-    dokkaJavadoc {
-        outputDirectory = "$buildDir/javadoc"
-    }
-
-    register<Jar>("javadocJar") {
-        archiveClassifier.set("javadoc")
-        dependsOn("dokkaJavadoc")
-        from("$buildDir/javadoc")
-    }
 
     withType<JavaCompile>().configureEach{
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
@@ -89,10 +73,6 @@ tasks {
 
     withType<Detekt>().configureEach {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
-    }
-
-    build {
-        dependsOn("sourcesJar", "javadocJar")
     }
 
     val buildProperties = register("buildProperties") {
@@ -164,8 +144,6 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
         }
     }
 }
@@ -228,8 +206,7 @@ githubRelease {
     overwrite((findProperty("github.override") ?: "true").toString().toBoolean())
 
     gradle.projectsEvaluated {
-        releaseAssets(listOf("jar", "sourcesJar", "javadocJar").map { tasks.named(it) }
-                + project(":launcher").tasks.named("jar"))
+        releaseAssets(listOf("jar").map { tasks.named(it) } + project(":launcher").tasks.named("jar"))
     }
 
     if ((findProperty("github.prerelease") ?: "true").toString().toBoolean()) {
