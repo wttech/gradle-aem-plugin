@@ -231,7 +231,7 @@ class PackagePluginTest : AemBuildTest() {
                     packageCompose {
                         installBundle("org.jsoup:jsoup:1.10.2")
                         installBundle("com.github.mickleroy:aem-sass-compiler:1.0.1")
-                        installBundle("com.neva.felix:search-webconsole-plugin:1.3.0") { runMode.set("author") }
+                        // installBundle("com.neva.felix:search-webconsole-plugin:1.3.0") { runMode.set("author") }
                         
                         nestPackage("com.adobe.cq:core.wcm.components.all:2.8.0")
                         nestPackage("com.adobe.cq:core.wcm.components.examples:2.8.0")
@@ -252,7 +252,7 @@ class PackagePluginTest : AemBuildTest() {
 
             assertZipEntry(pkg, "jcr_root/apps/package-nesting-repository/install/jsoup-1.10.2.jar")
             assertZipEntry(pkg, "jcr_root/apps/package-nesting-repository/install/aem-sass-compiler-1.0.1.jar")
-            assertZipEntry(pkg, "jcr_root/apps/package-nesting-repository/install.author/search-webconsole-plugin-1.3.0.jar")
+            // assertZipEntry(pkg, "jcr_root/apps/package-nesting-repository/install.author/search-webconsole-plugin-1.3.0.jar")
             assertZipEntry(pkg, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.all-2.8.0.zip")
             assertZipEntry(pkg, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip")
             assertZipEntry(pkg, "jcr_root/etc/packages/ICF Next/aem-groovy-console-14.0.0.zip")
@@ -262,7 +262,6 @@ class PackagePluginTest : AemBuildTest() {
                 <workspaceFilter version="1.0">
                   <filter root="/apps/package-nesting-repository/install/jsoup-1.10.2.jar"/>
                   <filter root="/apps/package-nesting-repository/install/aem-sass-compiler-1.0.1.jar"/>
-                  <filter root="/apps/package-nesting-repository/install.author/search-webconsole-plugin-1.3.0.jar"/>
                   <filter root="/etc/packages/adobe/cq60/core.wcm.components.all-2.8.0.zip"/>
                   <filter root="/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip"/>
                   <filter root="/etc/packages/ICF Next/aem-groovy-console-14.0.0.zip"/>
