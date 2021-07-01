@@ -24,7 +24,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             dependencies {
                 implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
-                implementation("com.cognifide.gradle:environment-plugin:1.3.5")
+                implementation("com.cognifide.gradle:environment-plugin:2.0.3")
                 implementation("com.neva.gradle:fork-plugin:7.0.0")
             }
         """.trimIndent())
@@ -81,7 +81,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             aem {
                 mvnBuild {
                     depGraph {
-                        softRedundantModule("ui.content" to "ui.apps")
+                        // softRedundantModule("ui.content" to "ui.apps")
                     }
                     discover()
                 }
@@ -208,7 +208,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                     volumes:
                       - "{{ rootPath }}/dispatcher/src/conf.d:/etc/httpd/conf.d"
                       - "{{ rootPath }}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
-                      - "{{ configPath }}/httpd:/etc/httpd.extra"
+                      - "{{ sourcePath }}/httpd:/etc/httpd.extra"
                       - "{{ workPath }}/httpd/modules/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
                       - "{{ workPath }}/httpd/logs:/etc/httpd/logs"
                       {% if docker.runtime.safeVolumes %}
