@@ -1,12 +1,6 @@
-name: Check
+name: Release
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: workflow_dispatch
 
 jobs:
   check:
@@ -23,4 +17,8 @@ jobs:
           distribution: adopt
 
       - name: Build & run functional tests
-        run: ./gradlew build functionalTest
+        run: |
+          ./gradlew fullRelease \
+            -Pgithub.token=${{ secrets.GITHUB_TOKEN }} \
+            -Pgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }} \
+            -Pgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
