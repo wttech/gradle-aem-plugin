@@ -16,7 +16,7 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Build & run functional tests
+      - name: Build, release then publish assets
         run: |
           ./gradlew fullRelease \
             -Pgithub.token=${{ secrets.GITHUB_TOKEN }} \
