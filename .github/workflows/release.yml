@@ -3,7 +3,7 @@ name: Release
 on: workflow_dispatch
 
 jobs:
-  check:
+  release:
     name: Run Gradle
     runs-on: ubuntu-latest
 
