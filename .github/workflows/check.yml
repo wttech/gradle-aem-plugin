@@ -23,4 +23,4 @@ jobs:
           distribution: adopt
 
       - name: Build & run functional tests
-        run: ./gradlew build functionalTest
+        run: ./gradlew -i -S build functionalTest
