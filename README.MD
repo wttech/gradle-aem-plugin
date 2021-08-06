@@ -329,7 +329,7 @@ Each plugin has its own documentation:
 Common configuration like root of content for JCR package, should be defined in `allprojects` section like below / e.g in root *build.gradle.kts* file:
 
 ```kotlin
-import 
+import com.cognifide.gradle.aem.bundle.tasks.bundle
 
 allprojects {
   plugins.withId("com.cognifide.aem.common") {
