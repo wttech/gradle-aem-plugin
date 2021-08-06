@@ -22,8 +22,14 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Build & run functional tests
-        run: ./gradlew -i -S build functionalTest
+      - name: Assemble
+        run: ./gradlew -i -S assemble
+
+      - name: Check
+        run: ./gradlew -i -S check
+
+      - name: Run functional tests
+        run: ./gradlew -i -S functionalTest
 
       - name: Publish unit test results
         uses: mikepenz/action-junit-report@v2

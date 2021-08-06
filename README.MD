@@ -1,7 +1,5 @@
 [![WTT logo](docs/wtt-logo.png)](https://www.wundermanthompson.com/service/technology)
 
-[![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
-[![Build Status](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_apis/build/status/Continuous%20Check?branchName=master)](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_build/latest?definitionId=6&branchName=master)
 [![Gradle Status](https://gradleupdate.appspot.com/wttech/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/wttech/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 
@@ -146,11 +144,7 @@ consider using [standalone launcher](docs/launcher.md) as it could be the easies
 
 ### Plugins setup
 
-Released versions of plugin are available on: 
-
-* [Gradle Plugin Portal](https://plugins.gradle.org/search?term=com.cognifide.aem),
-* [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin) (when using this repository proper URL need to be added into `buildscript` section).
-
+Released versions of plugin are available on Gradle Plugin Portal](https://plugins.gradle.org/search?term=com.cognifide.aem).
 Recommended way is to apply plugin using Gradle Plugin Portal and techniques described there.
 
 #### Minimal plugins setup
@@ -335,6 +329,8 @@ Each plugin has its own documentation:
 Common configuration like root of content for JCR package, should be defined in `allprojects` section like below / e.g in root *build.gradle.kts* file:
 
 ```kotlin
+import com.cognifide.gradle.aem.bundle.tasks.bundle
+
 allprojects {
   plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
@@ -345,17 +341,15 @@ allprojects {
   }
   
   plugins.withId("com.cognifide.aem.bundle") {
-    configure<AemExtension> {
-        tasks {
-            jar {
-                bundle {
-                    category = "example"
-                    vendor = "Company"
-                }
+    tasks {
+        jar {
+            bundle {
+                category = "example"
+                vendor = "Company"
             }
         }
     }
-  
+      
     dependencies {
         "compileOnly"("com.adobe.aem:uber-jar:${Build.AEM_VERSION}:apis") // and more
     }

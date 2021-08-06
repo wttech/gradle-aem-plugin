@@ -25,6 +25,7 @@ open class PackageValidate : AemDefaultTask() {
 
     init {
         description = "Validates built CRX package"
+        enabled = aem.prop.boolean("package.validate.enabled") ?: false
     }
 
     companion object {

@@ -84,7 +84,7 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "packageValidate", "-Poffline") {
             assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
-            assertTask(":packageValidate")
+            assertTask(":packageValidate", TaskOutcome.SKIPPED)
         }
     }
 
@@ -204,7 +204,7 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, ":assembly:packageValidate", "-Poffline") {
             assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
-            assertTask(":assembly:packageValidate")
+            assertTask(":assembly:packageValidate", TaskOutcome.SKIPPED)
         }
 
         runBuild(projectDir, ":assembly:publish", "-Poffline") {
@@ -218,6 +218,10 @@ class PackagePluginTest : AemBuildTest() {
     fun `should build package with nested bundle and subpackages from Maven repository`() {
         val projectDir = prepareProject("package-nesting-repository") {
             settingsGradle("")
+
+            gradleProperties("""
+                package.validate.enabled=true
+            """)
 
             buildGradle("""
                 plugins {
@@ -288,6 +292,7 @@ class PackagePluginTest : AemBuildTest() {
 
             gradleProperties("""
                 version=1.0.0
+                package.validate.enabled=true
             """)
 
             buildGradle("""
