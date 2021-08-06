@@ -37,7 +37,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
      */
     @Input
     val enabled = aem.obj.boolean {
-        convention(false)
+        convention(true)
         aem.prop.boolean("package.validator.enabled")?.let { set(it) }
     }
 

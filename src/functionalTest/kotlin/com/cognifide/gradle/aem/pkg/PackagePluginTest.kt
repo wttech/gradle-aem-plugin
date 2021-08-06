@@ -220,7 +220,7 @@ class PackagePluginTest : AemBuildTest() {
             settingsGradle("")
 
             gradleProperties("""
-                package.validator.enabled=true
+                package.validate.enabled=true
             """.trimIndent())
 
             buildGradle("""
@@ -292,7 +292,7 @@ class PackagePluginTest : AemBuildTest() {
 
             gradleProperties("""
                 version=1.0.0
-                package.validator.enabled=true
+                package.validate.enabled=true
             """)
 
             buildGradle("""
