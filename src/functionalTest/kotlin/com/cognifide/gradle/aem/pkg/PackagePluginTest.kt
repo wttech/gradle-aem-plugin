@@ -219,6 +219,10 @@ class PackagePluginTest : AemBuildTest() {
         val projectDir = prepareProject("package-nesting-repository") {
             settingsGradle("")
 
+            gradleProperties("""
+                package.validator.enabled=true
+            """.trimIndent())
+
             buildGradle("""
                 plugins {
                     id("com.cognifide.aem.package")
@@ -288,6 +292,7 @@ class PackagePluginTest : AemBuildTest() {
 
             gradleProperties("""
                 version=1.0.0
+                package.validator.enabled=true
             """)
 
             buildGradle("""

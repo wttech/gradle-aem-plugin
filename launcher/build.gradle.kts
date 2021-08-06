@@ -53,6 +53,7 @@ tasks {
             attributes["Main-Class"] = "com.cognifide.gradle.aem.launcher.Launcher"
         }
         from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) })
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         archiveFileName.set("gap.jar")
     }
     register<Test>("functionalTest") {
