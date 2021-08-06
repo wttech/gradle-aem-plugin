@@ -24,3 +24,27 @@ jobs:
 
       - name: Build & run functional tests
         run: ./gradlew -i -S build functionalTest
+
+      - name: Publish unit test results
+        uses: mikepenz/action-junit-report@v2
+        if: always()
+        with:
+          report_paths: |
+            **/target/**/TEST-*.xml
+            **/build/**/TEST-*.xml
+            **/cypress/results/**/TEST-*.xml
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish unit test reports
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: gap-unit-tests-reports
+          path: build/reports/tests/test
+
+      - name: Publish functional test reports
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: gap-functional-tests-reports
+          path: build/reports/tests/functionalTest
