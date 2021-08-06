@@ -24,3 +24,17 @@ jobs:
 
       - name: Build & run functional tests
         run: ./gradlew -i -S build functionalTest
+
+      - name: Publish unit test results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: gap-unit-tests-${{ steps.aem-version.outputs.value }}
+          path: build/reports/tests/test
+
+      - name: Publish functional test results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: gap-functional-tests-${{ steps.aem-version.outputs.value }}
+          path: build/reports/tests/functionalTest
