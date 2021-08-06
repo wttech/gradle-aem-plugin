@@ -84,7 +84,7 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "packageValidate", "-Poffline") {
             assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
-            assertTask(":packageValidate")
+            assertTask(":packageValidate", TaskOutcome.SKIPPED)
         }
     }
 
@@ -204,7 +204,7 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, ":assembly:packageValidate", "-Poffline") {
             assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
-            assertTask(":assembly:packageValidate")
+            assertTask(":assembly:packageValidate", TaskOutcome.SKIPPED)
         }
 
         runBuild(projectDir, ":assembly:publish", "-Poffline") {
@@ -221,7 +221,7 @@ class PackagePluginTest : AemBuildTest() {
 
             gradleProperties("""
                 package.validate.enabled=true
-            """.trimIndent())
+            """)
 
             buildGradle("""
                 plugins {
