@@ -322,7 +322,7 @@ class MvnBuild(val aem: AemExtension) {
             tasks.registerSequence(TASK_DEPLOY_ALL, taskOptions) { dependsOn(deployTasks) }
         } else {
             val deployTasks = packageModules.map { tasks.pathed<Task>(it.taskPath(MvnModule.TASK_PACKAGE_DEPLOY)) }
-            tasks.register(TASK_CLEAN_ALL) { taskOptions(); dependsOn(deployTasks) }
+            tasks.register(TASK_DEPLOY_ALL) { taskOptions(); dependsOn(deployTasks) }
         }
     }
 
