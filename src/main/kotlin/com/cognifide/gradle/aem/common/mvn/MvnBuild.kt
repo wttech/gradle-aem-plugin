@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
@@ -10,6 +11,8 @@ import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
+import org.gradle.api.tasks.Delete
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.util.*
 
 class MvnBuild(val aem: AemExtension) {
@@ -187,7 +190,8 @@ class MvnBuild(val aem: AemExtension) {
             }
 
             defineModuleTaskDependenciesFromGraph()
-            defineDeployPackageTask()
+            defineDeployAllTask()
+            defineCleanAllTask()
         }
     }
 
@@ -299,11 +303,12 @@ class MvnBuild(val aem: AemExtension) {
         aem.prop.list("mvnBuild.deployPackageNames")?.let { set(it) }
     }
 
-    fun defineDeployPackageTask() {
+    fun defineDeployAllTask() {
         val packageModules = moduleResolver.all.get()
             .filter { it.type == ModuleType.PACKAGE && Patterns.wildcard(it.name, deployPackageNames.get()) }
         val taskOptions: Task.() -> Unit = {
-            description = "Deploys AEM packages incrementally"
+            group = AemTask.GROUP
+            description = "Deploys AEM packages to instance"
             doLast {
                 logger.lifecycle(listOf(
                     "Deployment of ${packageModules.size} AEM package(s) ended at ${Formats.date()}:",
@@ -316,12 +321,27 @@ class MvnBuild(val aem: AemExtension) {
             val deployTasks = packageModules.sortedBy { module ->
                 deployPackagePrecedence.get().indexOfFirst { Patterns.wildcard(module.name, it) }
             }.map { tasks.pathed<Task>(it.taskPath(MvnModule.TASK_PACKAGE_DEPLOY)) }
-            tasks.registerSequence(MvnModule.TASK_PACKAGE_DEPLOY, taskOptions) { dependsOn(deployTasks) }
+            tasks.registerSequence(TASK_DEPLOY_ALL, taskOptions) { dependsOn(deployTasks) }
         } else {
             val deployTasks = packageModules.map { tasks.pathed<Task>(it.taskPath(MvnModule.TASK_PACKAGE_DEPLOY)) }
-            tasks.register(MvnModule.TASK_PACKAGE_DEPLOY) { taskOptions(); dependsOn(deployTasks) }
+            tasks.register(TASK_DEPLOY_ALL) { taskOptions(); dependsOn(deployTasks) }
+        }
+    }
+
+    fun defineCleanAllTask() {
+        val allModules = moduleResolver.all.get()
+        tasks.register<Delete>(TASK_CLEAN_ALL) {
+            group = AemTask.GROUP
+            description = "Cleans AEM modules built"
+            dependsOn(allModules.map { tasks.pathed<Task>(it.taskPath(LifecycleBasePlugin.CLEAN_TASK_NAME)) })
         }
     }
 
     override fun toString() = "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
+
+    companion object {
+        const val TASK_DEPLOY_ALL = "deployAll"
+
+        const val TASK_CLEAN_ALL = "cleanAll"
+    }
 }
