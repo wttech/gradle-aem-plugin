@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
@@ -306,7 +307,8 @@ class MvnBuild(val aem: AemExtension) {
         val packageModules = moduleResolver.all.get()
             .filter { it.type == ModuleType.PACKAGE && Patterns.wildcard(it.name, deployPackageNames.get()) }
         val taskOptions: Task.() -> Unit = {
-            description = "Deploys AEM packages incrementally"
+            group = AemTask.GROUP
+            description = "Deploys AEM packages to instance"
             doLast {
                 logger.lifecycle(listOf(
                     "Deployment of ${packageModules.size} AEM package(s) ended at ${Formats.date()}:",
@@ -329,6 +331,8 @@ class MvnBuild(val aem: AemExtension) {
     fun defineCleanAllTask() {
         val allModules = moduleResolver.all.get()
         tasks.register<Delete>(TASK_CLEAN_ALL) {
+            group = AemTask.GROUP
+            description = "Cleans AEM modules built"
             dependsOn(allModules.map { tasks.pathed<Task>(it.taskPath(LifecycleBasePlugin.CLEAN_TASK_NAME)) })
         }
     }
