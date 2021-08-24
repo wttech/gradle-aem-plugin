@@ -171,6 +171,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     fun exec(name: String, options: MvnExec.() -> Unit) = tasks.register<MvnExec>(name) {
         commonOptions()
         invoker {
+            apply(build.invokerOptions)
             workingDir.set(build.rootDir)
             args.addAll("-N", "-f", descriptor.pom.absolutePath)
             args.addAll(profileArgs)

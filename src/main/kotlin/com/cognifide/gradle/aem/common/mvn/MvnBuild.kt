@@ -6,6 +6,8 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
 import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.mvn.MvnExec
+import com.cognifide.gradle.common.mvn.MvnInvoker
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
@@ -149,6 +151,16 @@ class MvnBuild(val aem: AemExtension) {
 
     fun moduleOptions(name: String, options: MvnModule.() -> Unit) {
         this.moduleOptions[name] = options
+    }
+
+    internal var invokerOptions: MvnInvoker.() -> Unit = {
+        spec {
+            environment("JAVA_HOME", aem.common.javaSupport.homePath)
+        }
+    }
+
+    fun invokerOptions(options: MvnInvoker.() -> Unit) {
+        this.invokerOptions = options
     }
 
     val init = aem.obj.boolean {
