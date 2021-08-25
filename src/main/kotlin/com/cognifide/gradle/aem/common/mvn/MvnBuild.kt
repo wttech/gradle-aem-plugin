@@ -135,7 +135,7 @@ class MvnBuild(val aem: AemExtension) {
             }
             MvnModule(this, descriptor, subproject).apply {
                 options()
-                moduleOptions["*"]?.let { apply(it) }
+                moduleOptions[MODULE_ALL]?.let { apply(it) }
                 moduleOptions[descriptor.name]?.let { apply(it) }
             }.also { modules.add(it) }
         }
@@ -144,7 +144,7 @@ class MvnBuild(val aem: AemExtension) {
     private var moduleOptions = mutableMapOf<String, MvnModule.() -> Unit>()
 
     fun moduleOptions(options: MvnModule.() -> Unit) {
-        this.moduleOptions["*"] = options
+        this.moduleOptions[MODULE_ALL] = options
     }
 
     fun moduleOptions(name: String, options: MvnModule.() -> Unit) {
@@ -343,5 +343,7 @@ class MvnBuild(val aem: AemExtension) {
         const val TASK_DEPLOY_ALL = "deployAll"
 
         const val TASK_CLEAN_ALL = "cleanAll"
+
+        private const val MODULE_ALL = "*"
     }
 }
