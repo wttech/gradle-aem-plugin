@@ -44,7 +44,6 @@ class DependencyGraph(val build: MvnBuild) {
                 aem.common.progress {
                     step = "Performing Maven build for dependency graph"
                     aem.common.mvn {
-                        apply(build.invokerOptions)
                         workingDir(buildDir)
                         args(buildCommand.get().split(" "))
                     }

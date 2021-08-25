@@ -152,16 +152,6 @@ class MvnBuild(val aem: AemExtension) {
         this.moduleOptions[name] = options
     }
 
-    internal var invokerOptions: MvnInvoker.() -> Unit = {
-        spec {
-            environment("JAVA_HOME", aem.common.javaSupport.homePath)
-        }
-    }
-
-    fun invokerOptions(options: MvnInvoker.() -> Unit) {
-        this.invokerOptions = options
-    }
-
     val init = aem.obj.boolean {
         convention(aem.prop.flag("launcher.wrapper"))
         aem.prop.boolean("mvnBuild.init")?.let { set(it) }
