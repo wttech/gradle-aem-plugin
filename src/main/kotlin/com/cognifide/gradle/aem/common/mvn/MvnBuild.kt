@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.utils.filterNotNull
 import com.cognifide.gradle.common.common
-import com.cognifide.gradle.common.mvn.MvnInvoker
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
