@@ -23,6 +23,11 @@ class ConfigureReplicationAgentStep(provisioner: Provisioner, val location: Stri
         this.agentAction = action
     }
 
+    fun agent(props: Map<String, Any?>) {
+        agent { configure(props) }
+        version(props)
+    }
+
     override fun validate() {
         if (!::agentAction.isInitialized) {
             throw ProvisionException("Step '${id.get()}' has no replication agent action defined!")
@@ -32,11 +37,8 @@ class ConfigureReplicationAgentStep(provisioner: Provisioner, val location: Stri
     override fun action(instance: Instance) {
         instance.sync {
             if (bundleToggle.get()) {
-                try {
-                    osgi.stopBundle(bundleSymbolicName.get())
+                osgi.toggleBundle(bundleSymbolicName.get()) {
                     repository.replicationAgent(location, name).apply(agentAction)
-                } finally {
-                    osgi.startBundle(bundleSymbolicName.get())
                 }
             } else {
                 repository.replicationAgent(location, name).apply(agentAction)

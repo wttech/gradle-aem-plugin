@@ -87,6 +87,13 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     fun stopBundle(bundle: Bundle) = stopBundle(bundle.symbolicName)
 
+    fun <T> toggleBundle(symbolicName: String, action: () -> T): T = try {
+        stopBundle(symbolicName)
+        action()
+    } finally {
+        startBundle(symbolicName)
+    }
+
     /**
      * Stop then start again OSGi bundle. Works correctly even it is already stopped.
      */
@@ -243,6 +250,13 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun restartComponent(component: Component) = restartComponent(component.uid)
+
+    fun <T> toggleComponent(pid: String, action: () -> T): T = try {
+        disableComponent(pid)
+        action()
+    } finally {
+        enableComponent(pid)
+    }
 
     // ----- Configurations -----
 
