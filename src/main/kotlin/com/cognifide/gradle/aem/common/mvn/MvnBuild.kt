@@ -308,10 +308,10 @@ class MvnBuild(val aem: AemExtension) {
             .filter { it.type == ModuleType.PACKAGE && Patterns.wildcard(it.name, deployPackageNames.get()) }
         val taskOptions: Task.() -> Unit = {
             group = AemTask.GROUP
-            description = "Deploys AEM packages to instance"
+            description = "Deploys CRX packages to instance"
             doLast {
                 logger.lifecycle(listOf(
-                    "Deployment of ${packageModules.size} AEM package(s) ended at ${Formats.date()}:",
+                    "Deployment of ${packageModules.size} CRX package(s) ended at ${Formats.date()}:",
                     packageModules.sortedBy { it.name }.joinToString(", ") { it.name }
                 ).joinToString("\n"))
             }

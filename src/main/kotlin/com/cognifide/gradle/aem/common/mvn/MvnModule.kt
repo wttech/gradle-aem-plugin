@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.common.mvn
 
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.InstanceFileSync
+import com.cognifide.gradle.aem.common.utils.fileNames
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
@@ -118,7 +120,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     }
 
     fun buildPackage(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
-        description = "Builds AEM package"
+        description = "Builds CRX package"
         invoker.args("clean", "install")
         val outputFile = targetFile(Artifact.ZIP)
         inputs.files(inputFiles)
@@ -130,7 +132,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun deployPackage(zip: Any, options: InstanceFileSync.() -> Unit = {}) = tasks.register<InstanceFileSync>(TASK_PACKAGE_DEPLOY) {
         commonOptions()
-        description = "Deploys AEM package to instance"
+        description = "Deploys CRX package to instance"
         sync.deployPackage(zip)
 
         val localInstanceProject = project.pluginProject(LocalInstancePlugin.ID)
@@ -142,7 +144,9 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
                 mustRunAfter(listOf(InstanceProvision.NAME).map { "${instanceProject.pathPrefix}$it" })
             }
         }
-
+        doLast {
+            common.notifier.notify("Package deployed", "${files.fileNames} on ${instances.names}")
+        }
         options()
     }
 
