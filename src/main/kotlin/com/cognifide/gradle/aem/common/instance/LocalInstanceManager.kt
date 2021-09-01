@@ -630,7 +630,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun determineJavaCompatibleVersions(): List<JavaVersion> {
-        val aemVersion = quickstart.jar?.takeIf { it.exists() }?.let { AemVersion.fromJar(it) } ?: return listOf()
+        val aemVersion = quickstart.jar?.let { AemVersion.fromJar(it) } ?: return listOf()
         return aemVersion.javaCompatibleVersions(javaCompatibility.get())
     }
 

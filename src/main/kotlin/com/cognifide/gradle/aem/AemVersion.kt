@@ -96,12 +96,13 @@ class AemVersion(val value: String) : Comparable<AemVersion> {
             return UnclosedRange(start, end)
         }
 
-        fun fromJar(jar: File) = jar.let { ZipFile(it).listDir("static/app") }
-            .map { it.substringAfterLast("/") }
-            .firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
-            ?.let { AemVersion.fromJarFileName(it) }
+        fun fromJar(jar: File): AemVersion? = jar.takeIf { it.exists() }
+            ?.let { ZipFile(it).listDir("static/app") }
+            ?.map { it.substringAfterLast("/") }
+            ?.firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
+            ?.let { fromJarFileName(it) }
 
-        fun fromJarFileName(fileName: String) = fileName
+        fun fromJarFileName(fileName: String): AemVersion = fileName
             .removePrefix("cq-quickstart-").removePrefix("cloudready-")
             .substringBefore("-").let { AemVersion(it) }
     }

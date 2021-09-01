@@ -26,7 +26,6 @@ import com.cognifide.gradle.aem.common.utils.WebBrowser
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
-import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.pluginProjects
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
