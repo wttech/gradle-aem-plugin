@@ -9,7 +9,6 @@ import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.oak.OakRun
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.common.zip.ZipFile
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
@@ -140,17 +139,9 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     private fun readVersionFromJar() = readVersionFromExtractedJar() ?: readVersionFromQuickstartJar() ?: AemVersion.UNKNOWN
 
-    private fun readVersionFromExtractedJar() = jar?.name?.let { readVersionFromJarFileName(it) }
+    private fun readVersionFromExtractedJar() = jar?.name?.let { AemVersion.fromJarFileName(it) }
 
-    private fun readVersionFromQuickstartJar() = quickstartJar
-            .let { ZipFile(it).listDir("static/app") }
-            .map { it.substringAfterLast("/") }
-            .firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
-            ?.let { readVersionFromJarFileName(it) }
-
-    private fun readVersionFromJarFileName(fileName: String) = fileName
-            .removePrefix("cq-quickstart-").removePrefix("cloudready-")
-            .substringBefore("-").let { AemVersion(it) }
+    private fun readVersionFromQuickstartJar() = AemVersion.fromJar(quickstartJar)
 
     private val startScript: Script get() = script("start")
 

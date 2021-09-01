@@ -6,9 +6,7 @@ import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.common.CommonDefaultPlugin
-import com.cognifide.gradle.common.RuntimePlugin
-import com.cognifide.gradle.common.checkForce
+import com.cognifide.gradle.common.*
 import com.cognifide.gradle.common.tasks.runtime.*
 import org.gradle.api.Project
 

@@ -7,9 +7,7 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
-import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
-import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
 import org.buildobjects.process.ProcBuilder
@@ -631,6 +629,11 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         aem.prop.map("localInstance.javaCompatibility")?.let { set(it) }
     }
 
+    fun determineJavaCompatibleVersions(): List<JavaVersion> {
+        val aemVersion = quickstart.jar?.takeIf { it.exists() }?.let { AemVersion.fromJar(it) } ?: return listOf()
+        return aemVersion.javaCompatibleVersions(javaCompatibility.get())
+    }
+
     fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
         if (javaCompatibility.get().isEmpty()) {
             logger.debug("Examining Java compatibility skipped as configuration not provided!")
@@ -639,25 +642,22 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
         logger.debug("Examining Java compatibility for configuration: ${javaCompatibility.get()}")
 
-        val versionCurrent = JavaVersion.toVersion(javaLauncher.get().metadata.languageVersion)
+        val javaVersionCurrent = JavaVersion.toVersion(javaLauncher.get().metadata.languageVersion)
         val errors = instances.fold(mutableListOf<String>()) { result, instance ->
             val aemVersion = instance.version
             if (aemVersion == AemVersion.UNKNOWN) {
                 logger.info("Cannot examine Java compatibility because AEM version is unknown for $instance")
             } else {
-                javaCompatibility.get().forEach { (aemVersionValue, versionList) ->
-                    val versions = versionList.javaVersions("|")
-                    if ((aemVersion.inRange(aemVersionValue) || Patterns.wildcard(aemVersion.value, aemVersionValue)) && versionCurrent !in versions) {
-                        result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
-                                " and requires Java ${versions.joinToString("|")}!")
-                    }
+                val javaVersionCompatibles = aemVersion.javaCompatibleVersions(javaCompatibility.get())
+                if (javaVersionCurrent !in javaVersionCompatibles) {
+                    result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
+                            " and requires Java ${javaVersionCompatibles.joinToString("|")}!")
                 }
             }
-
             result
         }
         if (errors.isNotEmpty()) {
-            throw LocalInstanceException("Some instances (${errors.size}) require different Java version than current $versionCurrent:\n" +
+            throw LocalInstanceException("Some instances (${errors.size}) require different Java version than current $javaVersionCurrent:\n" +
                     errors.joinToString("\n")
             )
         }
