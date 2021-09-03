@@ -1,15 +1,16 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.aem
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.common.CommonDefaultPlugin
-import com.cognifide.gradle.common.RuntimePlugin
-import com.cognifide.gradle.common.checkForce
+import com.cognifide.gradle.common.*
 import com.cognifide.gradle.common.tasks.runtime.*
+import com.cognifide.gradle.common.utils.onEachApply
 import org.gradle.api.Project
 
 class LocalInstancePlugin : CommonDefaultPlugin() {
@@ -17,6 +18,7 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
     override fun Project.configureProject() {
         setupDependentPlugins()
         setupTasks()
+        setupJavaEnforcement()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -102,6 +104,25 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
         }
         named<Await>(Await.NAME) {
             dependsOn(await)
+        }
+    }
+
+    private fun Project.setupJavaEnforcement() {
+        val enabled = aem.prop.boolean("localInstance.javaEnforcement.enabled") ?: true
+        if (!enabled) {
+            return
+        }
+
+        val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version") ?: "11"
+
+        gradle.projectsEvaluated {
+            pluginProjects(CommonPlugin.ID).onEachApply {
+                aem.common.javaSupport.version.set(provider {
+                    val compatibleVersions = aem.localInstanceManager.determineJavaCompatibleVersions()
+                    val desiredVersion = compatibleVersions.lastOrNull()?.toString()
+                    desiredVersion ?: fallbackVersion
+                })
+            }
         }
     }
 

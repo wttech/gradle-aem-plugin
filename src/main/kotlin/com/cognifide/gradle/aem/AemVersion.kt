@@ -2,7 +2,9 @@ package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.zip.ZipFile
 import org.gradle.api.JavaVersion
+import java.io.File
 
 class AemVersion(val value: String) : Comparable<AemVersion> {
 
@@ -19,6 +21,14 @@ class AemVersion(val value: String) : Comparable<AemVersion> {
     fun atMost(other: String) = atMost(AemVersion(other))
 
     fun inRange(range: String): Boolean = range.contains("-") && this in unclosedRange(range, "-")
+
+    fun inRangeOrMatches(valueOrPattern: String) = inRange(valueOrPattern) || Patterns.wildcard(value, valueOrPattern)
+
+    fun javaCompatibleVersions(compatibility: Map<String, String>): List<JavaVersion> {
+        return compatibility.entries.mapNotNull { (aemVersionValue, javaVersionList) ->
+            if (inRangeOrMatches(aemVersionValue)) javaVersionList.javaVersions("|") else null
+        }.firstOrNull() ?: listOf()
+    }
 
     /**
      * Indicates repository restructure performed in AEM 6.4.0 / preparations for making AEM available on cloud.
@@ -85,6 +95,16 @@ class AemVersion(val value: String) : Comparable<AemVersion> {
             val (start, end) = versions.map { AemVersion(it) }
             return UnclosedRange(start, end)
         }
+
+        fun fromJar(jar: File): AemVersion? = jar.takeIf { it.exists() }
+            ?.let { ZipFile(it).listDir("static/app") }
+            ?.map { it.substringAfterLast("/") }
+            ?.firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
+            ?.let { fromJarFileName(it) }
+
+        fun fromJarFileName(fileName: String): AemVersion = fileName
+            .removePrefix("cq-quickstart-").removePrefix("cloudready-")
+            .substringBefore("-").let { AemVersion(it) }
     }
 }
 
