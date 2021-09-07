@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.*
+import com.cognifide.gradle.common.java.JavaSupport
 import com.cognifide.gradle.common.tasks.runtime.*
 import com.cognifide.gradle.common.utils.onEachApply
 import org.gradle.api.Project
@@ -113,15 +114,15 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
             return
         }
 
-        val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version") ?: "11"
-
         gradle.projectsEvaluated {
+            val enforcedVersion by lazy {
+                val compatibleVersions = aem.localInstanceManager.determineJavaCompatibleVersions()
+                val desiredVersion = compatibleVersions.lastOrNull()?.toString()
+                val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version") ?: JavaSupport.VERSION_DEFAULT
+                desiredVersion ?: fallbackVersion
+            }
             pluginProjects(CommonPlugin.ID).onEachApply {
-                aem.common.javaSupport.version.set(provider {
-                    val compatibleVersions = aem.localInstanceManager.determineJavaCompatibleVersions()
-                    val desiredVersion = compatibleVersions.lastOrNull()?.toString()
-                    desiredVersion ?: fallbackVersion
-                })
+                aem.common.javaSupport.version.set(provider { enforcedVersion })
             }
         }
     }
