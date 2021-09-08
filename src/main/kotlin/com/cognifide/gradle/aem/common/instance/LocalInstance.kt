@@ -185,7 +185,8 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     private val quickstartJar get() = localManager.quickstart.jar?.takeIf { it.exists() }
-            ?: throw LocalInstanceException("Instance JAR file not found! Is instance JAR URL configured?")
+            ?: localManager.quickstart.sdkJar?.takeIf { it.exists() }
+            ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
 
     private val quickstartLicense get() = localManager.quickstart.license?.takeIf { it.exists() }
             ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
@@ -261,6 +262,13 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     private fun unpackFiles() {
+        unpackQuickstartJar()
+
+        logger.info("Copying quickstart license from '$quickstartLicense' to '$license'")
+        FileUtils.copyFile(quickstartLicense, license)
+    }
+
+    private fun unpackQuickstartJar() {
         logger.info("Unpacking quickstart from JAR '$quickstartJar' to directory '$quickstartDir'")
         common.progressIndicator {
             step = "Copying quickstart JAR"
@@ -280,9 +288,6 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
                 tmpJar.delete()
             }
         }
-
-        logger.info("Copying quickstart license from '$quickstartLicense' to '$license'")
-        FileUtils.copyFile(quickstartLicense, license)
     }
 
     internal fun delete() = cleanDir(create = false)

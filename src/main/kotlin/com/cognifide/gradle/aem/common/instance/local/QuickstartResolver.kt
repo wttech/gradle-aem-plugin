@@ -1,9 +1,14 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.LocalInstanceManager
+import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
+import org.gradle.internal.os.OperatingSystem
 import java.io.File
 
-class QuickstartResolver(private val aem: AemExtension) {
+class QuickstartResolver(private val manager: LocalInstanceManager) {
+
+    private val aem = manager.aem
 
     private val common = aem.common
 
@@ -11,7 +16,7 @@ class QuickstartResolver(private val aem: AemExtension) {
      * Directory storing downloaded AEM Quickstart source files (JAR & license).
      */
     val downloadDir = aem.obj.dir {
-        convention(aem.obj.buildDir("localInstance/quickstart"))
+        convention(aem.project.layout.buildDirectory.dir("localInstance/quickstart"))
         aem.prop.file("localInstance.quickstart.downloadDir")?.let { set(it) }
     }
 
@@ -33,13 +38,67 @@ class QuickstartResolver(private val aem: AemExtension) {
 
     val license: File? get() = licenseUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
 
-    val files: List<File> get() = listOfNotNull(jar, license)
-
     /**
-     * Shorthand for setting both requires URLs at once.
+     * URI pointing to AEM SDK ZIP containing AEM instance JAR and Dispatcher Docker image.
      */
-    fun files(jarUrl: String, licenseUrl: String) {
-        this.jarUrl.set(jarUrl)
-        this.licenseUrl.set(licenseUrl)
+    val sdkUrl = aem.obj.string {
+        aem.prop.string("localInstance.quickstart.sdkUrl")?.let { set(it) }
     }
+
+    val sdk: File? get() = sdkUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
+
+    val sdkDir = aem.obj.dir {
+        convention(manager.rootDir.dir("sdk"))
+        aem.prop.file("localInstance.quickstart.sdkDir")?.let { set(it) }
+    }
+
+    val sdkJar: File? get() = sdk?.let { unpackSdk(it) }
+        ?.listFiles { _, name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull()
+
+    val sdkDispatcherImage: File? get() = sdk?.let { unpackSdk(it) }?.let {
+        if (OperatingSystem.current().isWindows) findAndUnpackSdkDispatcherZip(it) else findAndRunSdkDispatcherScript(it)
+    }?.resolve("bin/dispatcher-publish.tar.gz")
+
+    private fun unpackSdk(zip: File): File {
+        val workDir = sdkDir.get().asFile
+        if (!workDir.exists()) {
+            common.progress {
+                step = "Unpacking AEM SDK: ${zip.name} (${Formats.fileSize(zip)})"
+                common.zip(sdk!!).unpackAll(workDir) // TODO remove '!!'
+            }
+        }
+        return workDir
+    }
+
+    private fun findAndRunSdkDispatcherScript(dir: File): File? {
+        return dir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
+            ?.firstOrNull()
+            ?.let { script ->
+                val dispatcherDir = dir.resolve(script.name)
+                if (!dispatcherDir.exists()) {
+                    common.progress {
+                        step = "Unpacking AEM SDK Dispatcher Tools: ${script.name} (${Formats.fileSize(script)})"
+                        /* TODO run script */
+                    }
+                }
+                dispatcherDir
+            }
+    }
+
+    private fun findAndUnpackSdkDispatcherZip(dir: File): File? {
+        return dir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-windows.zip") }
+            ?.firstOrNull()
+            ?.let { zip ->
+                val dispatcherDir = dir.resolve(zip.name)
+                if (!dispatcherDir.exists()) {
+                    common.progress {
+                        step = "Unpacking AEM SDK Dispatcher Tools: ${zip.name} (${Formats.fileSize(zip)})"
+                        common.zip(zip).unpackAll(dispatcherDir)
+                    }
+                }
+                dispatcherDir
+            }
+    }
+
+    val files: List<File> get() = listOfNotNull(sdkJar, sdkDispatcherImage, jar, license)
 }

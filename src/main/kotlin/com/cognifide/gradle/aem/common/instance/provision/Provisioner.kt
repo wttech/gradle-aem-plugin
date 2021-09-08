@@ -189,7 +189,7 @@ class Provisioner(val manager: InstanceManager) {
 
     val fileResolver = FileResolver(aem.common).apply {
         downloadDir.apply {
-            convention(aem.obj.buildDir("instance/provision/files"))
+            convention(aem.project.layout.buildDirectory.dir("instance/provision/files"))
             aem.prop.file("instance.provision.filesDir")?.let { set(it) }
         }
     }

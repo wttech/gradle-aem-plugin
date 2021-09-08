@@ -212,7 +212,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      */
     val expandProperties = aem.obj.map<String, Any> { convention(mapOf()) }
 
-    val quickstart by lazy { QuickstartResolver(aem) }
+    val quickstart by lazy { QuickstartResolver(this) }
 
     /**
      * Configure AEM source files when creating instances from the scratch.
@@ -322,13 +322,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
-        if (quickstart.jar == null) {
+        if (quickstart.sdk == null || quickstart.jar == null) {
             throw LocalInstanceException("Cannot create instances due to lacking source files. " +
-                    "Ensure having specified local instance quickstart JAR url.")
+                    "Ensure having specified AEM SDK or Quickstart JAR url.")
         }
         if (quickstart.license == null) {
             throw LocalInstanceException("Cannot create instances due to lacking source files. " +
-                    "Ensure having specified local instance quickstart license url.")
+                    "Ensure having specified AEM Quickstart license url.")
         }
 
         common.progress(instances.size) {
@@ -630,7 +630,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun determineJavaCompatibleVersions(): List<JavaVersion> {
-        val aemVersion = quickstart.jar?.let { AemVersion.fromJar(it) } ?: return listOf()
+        val aemVersion = (quickstart.jar ?: quickstart.sdkJar)?.let { AemVersion.fromJar(it) } ?: return listOf()
         return aemVersion.javaCompatibleVersions(javaCompatibility.get())
     }
 
