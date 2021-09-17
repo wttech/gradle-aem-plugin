@@ -32,6 +32,11 @@ class DependencyGraph(val build: MvnBuild) {
         aem.prop.map("mvnBuild.depGraph.packagingMap")?.let { set(it) }
     }
 
+    val artifactSuffixes = aem.obj.strings {
+        convention(listOf(":compile", ":provided"))
+        aem.prop.list("mvnBuild.depGraph.artifactSuffixes")?.let { set(it) }
+    }
+
     @Suppress("TooGenericExceptionCaught")
     private fun generateDotFile(): String {
         if (generateForce.get() || !dotFile.get().asFile.exists()) {
@@ -90,7 +95,9 @@ class DependencyGraph(val build: MvnBuild) {
         })
     }
 
-    private fun normalizeArtifact(value: String) = value.takeIf { it.endsWith(":compile") }?.removeSuffix(":compile")
+    private fun normalizeArtifact(value: String) = value
+        .takeIf { v -> artifactSuffixes.get().any { v.endsWith(it) } }
+        ?.let { v -> artifactSuffixes.get().fold(v) { r, s -> r.removeSuffix(s) } }
         ?.removePrefix("${build.groupId.get()}:")
         ?.let { dep ->
             packagingMap.get().entries.fold(dep) { depFolded, (packaging, extension) ->
@@ -99,7 +106,13 @@ class DependencyGraph(val build: MvnBuild) {
         }
         ?.let { Artifact(it) }
 
-    val defaults = dotArtifacts.map { da -> da.map { a -> Dependency(a, build.moduleResolver.root.map { it.artifact }.get()) } }
+    val defaults = dotArtifacts.map { da ->
+        da.flatMap { a ->
+            build.moduleResolver.all.get()
+                .filter { m -> m.type == ModuleType.POM }
+                .map { m -> Dependency(a, m.artifact) }
+        }
+    }
 
     val extras = aem.obj.list<Dependency> {
         convention(listOf())
