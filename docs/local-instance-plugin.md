@@ -72,7 +72,7 @@ localInstance.quickstart.jarUrl=[protocol]://[user]:[password]@[host]/[path]/cq-
 localInstance.quickstart.licenseUrl=[protocol]://[user]:[password]@[host]/[path]/license.properties
 ```
 
-To create instances from local backups, firstly create instances from scratch, then run [backup task](#task-instancebackup). After creating backup, at any time, instances could be restored to previous state by running [resetup task](#task-resetup).
+To create instances from local backups, firstly create instances from scratch, then run [backup task](#task-instancebackup). After creating backup, at any time, instances could be restored to previous state by running [resetup task](#task-instanceresetup).
 Nothing need to be configured by default.
 
 To create instances from remote backups see section [work with remote instance backups](#work-with-remote-instance-backups).
