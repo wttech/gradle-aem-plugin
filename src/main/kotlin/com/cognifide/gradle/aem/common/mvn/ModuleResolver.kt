@@ -85,11 +85,13 @@ class ModuleResolver(val build: MvnBuild) {
         isPackage(pom) -> ModuleType.PACKAGE
         isFrontend(pom) -> ModuleType.FRONTEND
         isDispatcher(pom) -> ModuleType.DISPATCHER
-        isRoot(pom) -> ModuleType.POM
+        isPom(pom) -> ModuleType.POM
         else -> ModuleType.RUN
     }
 
-    fun isRoot(pom: File) = pom.parentFile == rootDir
+    fun isPom(pom: File) = pom.readText().let { text ->
+        text.contains("<packaging>pom</packaging>") || !text.containsTag("build")
+    }
 
     fun isPackage(pom: File) = pom.parentFile.resolve(build.contentPath.get()).exists() || pom.readText().let { text ->
         text.contains("<packaging>content-package</packaging>") || packagePlugins.get().any {
@@ -103,6 +105,8 @@ class ModuleResolver(val build: MvnBuild) {
     fun isFrontend(pom: File) = pom.parentFile.resolve("clientlib.config.js").exists()
 
     fun isDispatcher(pom: File) = pom.parentFile.resolve("src/conf.dispatcher.d").exists()
+
+    private fun String.containsTag(tag: String) = this.contains("<$tag>") && this.contains("</$tag>")
 
     private fun String.substringBetweenTag(tag: String) = this.substringAfter("<$tag>").substringBefore("</$tag>")
 }

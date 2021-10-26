@@ -115,6 +115,12 @@ To instruct GAP to use Java 8, consider setting property:
 javaSupport.version=8
 ```
 
+However since GAP 15.3.3, Java version automatically determined by Quickstart JAR (property below), so that Java support version does not need to be explicitly set up.
+
+```ini
+localInstance.quickstart.jarUrl=https://company-share.com/aem/cq-quicstart-6.5.0.jar
+```
+
 ## Getting started
 
 Most effective way to experience Gradle AEM Plugin is to use:

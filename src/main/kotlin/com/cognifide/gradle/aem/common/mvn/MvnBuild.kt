@@ -230,14 +230,12 @@ class MvnBuild(val aem: AemExtension) {
         }
 
         // Package deploy ordering
-        if (deployPackageOrder.get() == DeployPackageOrder.GRAPH) {
-            if (module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
-                val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
-                val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+        if (deployPackageOrder.get() == DeployPackageOrder.GRAPH && module1.type == ModuleType.PACKAGE && module2.type == ModuleType.PACKAGE) {
+            val deployTask1 = tasks.pathed<Task>(module1.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
+            val deployTask2 = tasks.pathed<Task>(module2.taskPath(MvnModule.TASK_PACKAGE_DEPLOY))
 
-                deployTask1.configure { dt1 ->
-                    dt1.mustRunAfter(deployTask2)
-                }
+            deployTask1.configure { dt1 ->
+                dt1.mustRunAfter(deployTask2)
             }
         }
     }
