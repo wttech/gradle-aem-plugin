@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.cognifide.gradle.aem.common.instance.provision.*
 import com.cognifide.gradle.common.utils.Formats
 import org.apache.commons.lang3.builder.HashCodeBuilder
@@ -89,9 +90,23 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
         this.awaitUpOptions = options
     }
 
+    override val reload = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.provision.step.reload")?.let { set(it) }
+    }
+
+    private var reloadOptions: ReloadAction.() -> Unit = {}
+
+    override fun awaitReload(options: ReloadAction.() -> Unit) {
+        this.reloadOptions = options
+    }
+
     override fun awaitUp(instances: Collection<Instance>) {
         if (awaitUp.get() && (!awaitOptionally || awaitRequired)) {
-            aem.instanceManager.awaitUp(instances, awaitUpOptions)
+            when {
+                reload.get() -> aem.instanceManager.awaitReloaded(instances, reloadOptions, awaitUpOptions)
+                else -> aem.instanceManager.awaitUp(instances, awaitUpOptions)
+            }
         }
     }
 
