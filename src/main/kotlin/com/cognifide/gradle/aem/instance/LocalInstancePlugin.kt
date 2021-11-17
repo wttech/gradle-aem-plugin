@@ -118,7 +118,10 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
             val enforcedVersion by lazy {
                 val compatibleVersions = aem.localInstanceManager.determineJavaCompatibleVersions()
                 val desiredVersion = compatibleVersions.lastOrNull()?.toString()
-                val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version") ?: JavaSupport.VERSION_DEFAULT
+                val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version")
+                    ?: aem.prop.string("javaSupport.version")
+                    ?: JavaSupport.VERSION_DEFAULT
+
                 desiredVersion ?: fallbackVersion
             }
             pluginProjects(CommonPlugin.ID).onEachApply {

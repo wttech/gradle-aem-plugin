@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
@@ -630,8 +631,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun determineJavaCompatibleVersions(): List<JavaVersion> {
-        val aemVersion = quickstart.jar?.let { AemVersion.fromJar(it) } ?: return listOf()
-        return aemVersion.javaCompatibleVersions(javaCompatibility.get())
+        val aemVersion = try {
+            quickstart.jar?.let { AemVersion.fromJar(it) }
+        } catch (e: CommonException) {
+            logger.info("Determining Java compatible versions for specified AEM quickstart JAR is not possible.")
+            logger.debug("Cannot determine Java compatible versions basing on AEM quickstart JAR '${quickstart.jar}'", e)
+            null
+        }
+        return aemVersion?.javaCompatibleVersions(javaCompatibility.get()) ?: listOf()
     }
 
     fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
