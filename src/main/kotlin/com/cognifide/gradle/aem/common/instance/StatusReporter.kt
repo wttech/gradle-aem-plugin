@@ -21,9 +21,9 @@ class StatusReporter(private val aem: AemExtension) {
     fun packageBuiltBy(taskPath: String, strict: Boolean = false) = aem.project.gradle.projectsEvaluated {
         try {
             packages.from(aem.common.tasks.pathed<Task>(taskPath).map { it.outputs.files.first() })
-        } catch (e: CommonException) {
+        } catch (e: Exception) {
             if (strict) throw e
-            else logger.debug("Cannot find a package building task at path '$taskPath'!")
+            else logger.debug("Cannot find a package building task at path '$taskPath'!", e)
         }
     }
 
