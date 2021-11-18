@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.utils.Formats
 import org.gradle.api.Task
 import java.io.File
@@ -18,6 +17,7 @@ class StatusReporter(private val aem: AemExtension) {
         from(aem.obj.provider { aem.packagesBuilt.map { it.archiveFile.get().asFile } })
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun packageBuiltBy(taskPath: String, strict: Boolean = false) = aem.project.gradle.projectsEvaluated {
         try {
             packages.from(aem.common.tasks.pathed<Task>(taskPath).map { it.outputs.files.first() })
