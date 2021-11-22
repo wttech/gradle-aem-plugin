@@ -635,7 +635,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             quickstart.jar?.let { AemVersion.fromJar(it) }
         } catch (e: CommonException) {
             logger.info("Determining Java compatible versions for specified AEM quickstart JAR is not possible.")
-            logger.debug("Cannot determine Java compatible versions basing on AEM quickstart JAR '${quickstart.jar}'", e)
+            logger.debug("Cannot determine Java compatible versions basing on AEM quickstart JAR!", e)
             null
         }
         return aemVersion?.javaCompatibleVersions(javaCompatibility.get()) ?: listOf()
