@@ -109,7 +109,7 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupJavaEnforcement() {
-        val enabled = aem.prop.boolean("localInstance.javaEnforcement.enabled") ?: true
+        val enabled = aem.prop.boolean("localInstance.javaEnforcement.enabled") ?: false
         if (!enabled) {
             return
         }
