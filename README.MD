@@ -437,6 +437,14 @@ subprojects {
 }
 ```
 
+### Target individual instances when running tasks
+
+The ability to perform tasks against individual instances is provided by the Common Plugin, which comes with instance filtering. [Read more on instance filtering](https://github.com/wttech/gradle-aem-plugin/blob/master/docs/common-plugin.md#instance-filtering) if you're looking for information on:
+  - how to destroy an individual instance,
+  - how to start or stop author/publish instances only,
+  - how to deploy to a single instance,
+  - etc.
+
 ## Building
 
 1. Clone this project using command `git clone https://github.com/wttech/gradle-aem-plugin.git`
