@@ -74,6 +74,7 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     val dotDependencies = aem.obj.list<Dependency> {
+        finalizeValueOnRead()
         set(aem.obj.provider {
             generateDotFile().lineSequence().mapNotNull { line ->
                 line.takeIf { it.contains(" -> ") }?.trim()?.split(" -> ")?.let {
@@ -88,6 +89,7 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     val dotArtifacts = aem.obj.list<Artifact> {
+        finalizeValueOnRead()
         set(aem.obj.provider {
             generateDotFile().lineSequence().mapNotNull { line ->
                 line.takeIf { it.contains("[label=") }?.trim()?.substringBefore("[label=")?.removeSurrounding("\"")

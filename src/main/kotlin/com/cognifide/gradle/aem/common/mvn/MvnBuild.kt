@@ -208,12 +208,15 @@ class MvnBuild(val aem: AemExtension) {
         }
     }
 
-    fun defineModuleTaskDependenciesFromGraph() = depGraph.all.get().forEach { dependency ->
-        val module1 = moduleResolver.findByArtifact(dependency.from)
-        val module2 = moduleResolver.findByArtifact(dependency.to)
+    fun defineModuleTaskDependenciesFromGraph() {
+        val artifactModuleLookupCache = mutableMapOf<Artifact, ModuleDescriptor?>()
+        depGraph.all.get().forEach { dependency ->
+            val module1 = artifactModuleLookupCache.getOrPut(dependency.from) { moduleResolver.findByArtifact(dependency.from) }
+            val module2 = artifactModuleLookupCache.getOrPut(dependency.to) { moduleResolver.findByArtifact(dependency.to) }
 
-        if (module1 != null && module2 != null) {
-            defineModuleTaskDependenciesFromGraph(dependency, module1, module2)
+            if (module1 != null && module2 != null) {
+                defineModuleTaskDependenciesFromGraph(dependency, module1, module2)
+            }
         }
     }
 
