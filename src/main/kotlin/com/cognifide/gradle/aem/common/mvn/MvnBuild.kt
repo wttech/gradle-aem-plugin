@@ -180,10 +180,17 @@ class MvnBuild(val aem: AemExtension) {
             } catch (e: UnknownProjectException) {
                 throw MvnException(
                     listOf(
-                        "Maven build at path '${rootDir.get().asFile}' needs subprojects defined in Gradle settings as prerequisite.",
+                        "Maven build prerequisites are not met!",
+                        "",
+                        "(1)",
+                        "Maven project at root '${rootDir.get().asFile}' needs subprojects defined in Gradle settings.",
                         "Ensure having following lines (${projectPaths.size}) in file: $settingsFile",
                         "",
                         settingsLines,
+                        "",
+                        "(2)",
+                        "Maven module dependencies need to be exported and up-to-date.",
+                        "Force auto-regeneration by removing graph file: ${depGraph.dotFile.get().asFile}",
                         ""
                     ).joinToString("\n")
                 )

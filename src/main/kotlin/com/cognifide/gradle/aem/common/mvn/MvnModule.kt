@@ -81,7 +81,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         description = "Installs POM to local repository"
         invoker.args("clean", "install")
         inputs.file(descriptor.pom)
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
     }
 
     fun buildJar(options: MvnExec.() -> Unit = {}) = buildArtifact(Artifact.JAR) {
@@ -99,7 +99,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(extension))
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         options()
     }
 
@@ -108,7 +108,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(Artifact.ZIP))
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         options()
     }
 
@@ -125,7 +125,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         val outputFile = targetFile(Artifact.ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         doLast { aem.common.checksumFile(outputFile.get().asFile, true) }
         options()
     }
@@ -168,7 +168,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.files(outputFiles)
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         options()
     }
 
