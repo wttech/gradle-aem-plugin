@@ -204,8 +204,6 @@ class BuildScaffolder(private val launcher: Launcher) {
                       replicas: 1
                     ports:
                       - "80:80"
-                    networks:
-                      - docker-net
                     volumes:
                       - "{{ rootPath }}/dispatcher/src/conf.d:/etc/httpd/conf.d"
                       - "{{ rootPath }}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
@@ -220,8 +218,6 @@ class BuildScaffolder(private val launcher: Launcher) {
                     extra_hosts:
                       - "host.docker.internal:{{ docker.runtime.hostInternalIp }}"
                     {% endif %}
-                networks:
-                  docker-net:
             """.trimIndent())
         }
 
