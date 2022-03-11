@@ -17,6 +17,8 @@ class ForkScaffolder(private val launcher: Launcher) {
             {% endif %}
             localInstance.quickstart.jarUrl={{ localInstanceQuickstartJarUri }}
             localInstance.quickstart.licenseUrl={{ localInstanceQuickstartLicenseUri }}
+            localInstance.spUrl={{ localInstanceSpUri }}
+            localInstance.coreComponentsUrl={{ localInstanceCoreComponentsUri }}
             localInstance.openMode={{ localInstanceOpenMode }}
             instance.default.type={{instanceType}}
             instance.default.password={{instancePassword}}
@@ -85,11 +87,21 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                         define("localInstanceQuickstartJarUri") {
                             label = "Quickstart URI"
-                            description = "Typically file named 'cq-quickstart-*.jar' or 'aem-sdk-quickstart-*.jar"
+                            description = "Typically file named 'cq-quickstart-*.jar' or 'aem-sdk-quickstart-*.jar'"
                         }
                         define("localInstanceQuickstartLicenseUri") {
                             label = "Quickstart License URI"
                             description = "Typically file named 'license.properties'"
+                        }
+                        define("localInstanceSpUri") {
+                            label = "Service Pack URI"
+                            description = "Typically file named 'aem-service-pkg-*.zip'"
+                            optional()
+                        }
+                        define("localInstanceCoreComponentsUri") {
+                            label = "Core Components package URI"
+                            description = "Typically file named 'core.wcm.components.all-*.zip'"
+                            optional()
                         }
                         define("localInstanceOpenMode") {
                             label = "Open Automatically"

@@ -102,11 +102,15 @@ class BuildScaffolder(private val launcher: Launcher) {
             val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
             val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
             val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz"
+            val servicePackUrl = common.prop.string("localInstance.spUrl")
+            val coreComponentsUrl = common.prop.string("localInstance.coreComponentsUrl")
 
             aem {
                 instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/master/docs/instance-plugin.md
                     provisioner {
                         enableCrxDe()
+                        servicePackUrl?.let { deployPackage(it) }
+                        coreComponentsUrl?.let { deployPackage(it) }
                         configureReplicationAgentAuthor("publish") {
                             agent { configure(transportUri = "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1", transportUser = "admin", transportPassword = instancePassword, userId = "admin") }
                             version.set(publishHttpUrl)
