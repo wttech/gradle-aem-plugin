@@ -12,7 +12,6 @@ class MiscScaffolder(private val launcher: Launcher) {
             .gradle/
             build/
             /gap.jar
-            dispatcher/src/conf.d/variables/default.vars
         """.trimIndent()
 
         if (!exists()) {

@@ -31,13 +31,6 @@ class ForkScaffolder(private val launcher: Launcher) {
 
             mvnBuild.args={{mvnBuildArgs}}
             mvnBuild.profiles={{mvnBuildProfiles}}
-            
-            dispatcher.tarUrl={{ dispatcherTarUri }}
-
-            # === Gradle Environment Plugin ===
-            {% if dockerSafeVolumes == 'true' %}
-            docker.desktop.safeVolumes=true
-            {% endif %}
 
             # === Gradle Common Plugin ===
             notifier.enabled=true
@@ -107,19 +100,6 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Open Automatically"
                             description = "Open web browser when instances are up."
                             select(OpenMode.values().map { it.name.toLowerCase() }, OpenMode.ALWAYS.name.toLowerCase())
-                        }
-                    }
-                    group("Dispatcher") {
-                        define("dispatcherTarUri") {
-                            label = "Tar Archive URI"
-                            description = "Typically file named 'dispatcher-apache2.4-linux-x86_64-*.tar.gz'"
-                            text("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz")
-                        }
-                        define("dockerSafeVolumes") {
-                            label = "Docker Safe Volumes"
-                            description = "Enables volumes for easily previewing e.g cache and logs (requires WSL2)"
-                            checkbox(false)
-                            dynamic("props")
                         }
                     }
                     group("Build") {
