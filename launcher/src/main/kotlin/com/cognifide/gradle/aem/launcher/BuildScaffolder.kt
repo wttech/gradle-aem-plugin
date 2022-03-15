@@ -130,7 +130,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                             resolve {
                                 resolveFiles {
                                     download(dispatcherTarUrl).use {
-                                        copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
+                                        copyArchiveFile(it, "**/dispatcher-apache*.so", workFile("modules/mod_dispatcher.so"))
                                     }
                                 }
                                 ensureDir("htdocs", "cache", "logs")
