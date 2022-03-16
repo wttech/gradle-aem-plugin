@@ -95,12 +95,12 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                         define("localInstanceSpUri") {
                             label = "Service Pack URI"
-                            description = "Typically file named 'aem-service-pkg-*.zip'"
+                            description = "[AEM on-prem only!] Typically file named 'aem-service-pkg-*.zip'"
                             optional()
                         }
                         define("localInstanceCoreComponentsUri") {
                             label = "Core Components package URI"
-                            description = "Typically file named 'core.wcm.components.all-*.zip'"
+                            description = "[AEM on-prem only!] Typically file named 'core.wcm.components.all-*.zip'"
                             optional()
                         }
                         define("localInstanceOpenMode") {
@@ -113,7 +113,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                         define("dispatcherTarUri") {
                             label = "Tar Archive URI"
                             description = "Typically file named 'dispatcher-apache2.4-linux-x86_64-*.tar.gz'"
-                            text("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz")
+                            text("https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.4.tar.gz")
                         }
                         define("dockerSafeVolumes") {
                             label = "Docker Safe Volumes"
