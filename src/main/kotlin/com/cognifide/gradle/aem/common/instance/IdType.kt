@@ -7,7 +7,7 @@ enum class IdType {
     AUTHOR,
     PUBLISH;
 
-    val type: String get() = name.toLowerCase()
+    val type: String get() = name.lowercase()
 
     val httpUrlDefault: String get() = when (this) {
         AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT

@@ -43,7 +43,7 @@ class InstanceUrl(raw: String) {
         }
     }
 
-    val id: String get() = type.name.toLowerCase()
+    val id: String get() = type.name.lowercase()
 
     val type: IdType get() = IdType.byUrl(httpUrl)
 

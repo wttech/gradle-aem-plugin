@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAg
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
+import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -231,6 +232,25 @@ class Provisioner(val manager: InstanceManager) {
     fun deployPackages(vararg sources: Any, options: DeployPackageStep.() -> Unit = {}) = deployPackages(sources.asIterable(), options)
 
     fun deployPackages(sources: Iterable<Any>, options: DeployPackageStep.() -> Unit = {}) = sources.forEach { deployPackage(it, options) }
+
+    fun deployPackagesFrom(dir: File, options: DeployPackageStep.() -> Unit = {}) {
+        checkPackagesDir(dir)
+        dir.walkTopDown()
+            .filter { it.isFile && it.extension == "zip" }
+            .sortedBy { it.absolutePath }
+            .forEach { deployPackage(it, options) }
+    }
+
+    fun deployPackagesNamed(parentDir: File, fileNames: Iterable<String>, options: DeployPackageStep.() -> Unit = {}) {
+        checkPackagesDir(parentDir)
+        fileNames.map { parentDir.resolve(it) }.forEach { deployPackage(it, options) }
+    }
+
+    private fun checkPackagesDir(dir: File) {
+        if (!dir.exists()) {
+            throw ProvisionException("Packages directory does not exist at path '$dir'!")
+        }
+    }
 
     fun evalGroovyScript(fileName: String, options: Step.() -> Unit = {}) = evalGroovyScript(fileName, mapOf(), options)
 

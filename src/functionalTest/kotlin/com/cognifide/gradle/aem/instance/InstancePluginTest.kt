@@ -10,11 +10,13 @@ class InstancePluginTest : AemBuildTest() {
         val projectDir = prepareProject("instance-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance")
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {
@@ -27,7 +29,8 @@ class InstancePluginTest : AemBuildTest() {
         val projectDir = prepareProject("instance-provisioner") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance")
                 }
@@ -62,7 +65,8 @@ class InstancePluginTest : AemBuildTest() {
                         }
                     }
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {

@@ -72,7 +72,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     val startOptsString: String get() = startOpts.joinToString(" ")
 
     @get:JsonIgnore
-    val runModesDefault get() = listOf(type.name.toLowerCase(), aem.commonOptions.env.get())
+    val runModesDefault get() = listOf(type.name.lowercase(), aem.commonOptions.env.get())
 
     @get:JsonIgnore
     var runModes: List<String> = listOf()

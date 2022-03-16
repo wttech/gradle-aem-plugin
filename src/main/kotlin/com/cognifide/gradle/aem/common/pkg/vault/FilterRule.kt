@@ -6,7 +6,7 @@ import java.io.Serializable
 
 class FilterRule(val type: FilterRuleType, val pattern: String) : Serializable {
 
-    private val tag get() = type.name.toLowerCase()
+    private val tag get() = type.name.lowercase()
 
     @get:Internal
     val element get() = Element(tag).apply { attr(ATTR_PATTERN, pattern) }

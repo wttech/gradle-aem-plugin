@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.capitalizeChar
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -22,7 +23,7 @@ class Log(
 
     val cause: String
         get() = message.splitToSequence("\n").firstOrNull()?.run { trim() }
-                ?.substringAfter(" ")?.capitalize() ?: ""
+                ?.substringAfter(" ")?.capitalizeChar() ?: ""
 
     val logWithLocalTimestamp: String
         get() =

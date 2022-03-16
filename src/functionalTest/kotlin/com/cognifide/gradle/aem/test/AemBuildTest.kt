@@ -42,7 +42,9 @@ open class AemBuildTest {
     // === Samples  ===
 
     fun File.helloServiceJava(rootPath: String = "") {
-        file(rootPath(rootPath, "src/main/java/com/company/example/aem/HelloService.java"), """
+        file(
+            rootPath(rootPath, "src/main/java/com/company/example/aem/HelloService.java"),
+            """
             package com.company.example.aem;
             
             import org.osgi.service.component.annotations.Activate;
@@ -66,9 +68,12 @@ open class AemBuildTest {
                     LOG.info("Good bye world!");
                 }
             }
-        """)
+        """
+        )
 
-        file(rootPath(rootPath, "src/test/java/com/company/example/aem/HelloServiceTest.java"), """
+        file(
+            rootPath(rootPath, "src/test/java/com/company/example/aem/HelloServiceTest.java"),
+            """
             package com.company.example.aem;
             
             import static org.junit.jupiter.api.Assertions.*;
@@ -89,7 +94,8 @@ open class AemBuildTest {
                     //assertNotNull(context.getService(HelloService.class));
                 }
             }
-        """)
+        """
+        )
     }
 
     fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path" } ?: path

@@ -4,9 +4,9 @@ import io.gitlab.arturbosch.detekt.Detekt
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.4.20"
+    id("org.jetbrains.kotlin.jvm") version "1.5.31"
     id("com.gradle.plugin-publish") version "0.11.0"
-    id("io.gitlab.arturbosch.detekt") version "1.7.0"
+    id("io.gitlab.arturbosch.detekt") version "1.19.0"
     id("net.researchgate.release") version "2.8.1"
     id("com.github.breadmoirai.github-release") version "2.2.10"
     id("com.neva.fork") version "5.0.0"
@@ -24,35 +24,39 @@ configurations.getByName("functionalTestImplementation").apply {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     gradlePluginPortal()
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.20")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.20")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    // Build environment
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
+    implementation("com.cognifide.gradle:common-plugin:1.1.0")
 
-    implementation("com.cognifide.gradle:common-plugin:1.0.37")
-
-    implementation("org.jsoup:jsoup:1.12.1")
-    implementation("org.buildobjects:jproc:2.3.0")
+    // External dependencies
+    implementation("org.jsoup:jsoup:1.14.3")
+    implementation("org.buildobjects:jproc:2.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
-    implementation("org.apache.commons:commons-lang3:3.9")
-    implementation("commons-io:commons-io:2.6")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.3")
-    implementation("org.apache.httpcomponents:httpclient:4.5.12")
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+    implementation("commons-io:commons-io:2.11.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("org.apache.httpcomponents:httpclient:4.5.13")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.3.0")
-    implementation("net.lingala.zip4j:zip4j:2.5.1")
+    implementation("net.lingala.zip4j:zip4j:2.9.1")
     implementation("org.osgi:org.osgi.core:6.0.0")
+}
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
-
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.7.0")
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 tasks {
-
     register<Zip>("assetsZip") {
         from("src/asset")
         archiveFileName.set("assets.zip")
@@ -60,19 +64,18 @@ tasks {
     }
 
     withType<JavaCompile>().configureEach{
-        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-        targetCompatibility = JavaVersion.VERSION_1_8.toString()
+        sourceCompatibility = JavaVersion.VERSION_11.toString()
+        targetCompatibility = JavaVersion.VERSION_11.toString()
     }
 
     withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_1_8.toString()
-            freeCompilerArgs = freeCompilerArgs + "-Xuse-experimental=kotlin.Experimental"
+            jvmTarget = JavaVersion.VERSION_11.toString()
         }
     }
 
     withType<Detekt>().configureEach {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     val buildProperties = register("buildProperties") {
@@ -142,13 +145,14 @@ detekt {
 
 publishing {
     publications {
-        create<MavenPublication>("mavenJava") {
+        create<MavenPublication>("pluginMaven") {
             from(components["java"])
         }
     }
 }
 
 gradlePlugin {
+    isAutomatedPublishing = false
     plugins {
         create("common") {
             id = "com.cognifide.aem.common"

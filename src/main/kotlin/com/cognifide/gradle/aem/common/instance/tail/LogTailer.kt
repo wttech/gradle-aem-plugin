@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.aem.common.instance.tail.io.ConsolePrinter
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
+@OptIn(DelicateCoroutinesApi::class)
 class LogTailer(
     private val source: LogSource,
     private val destination: LogDestination,

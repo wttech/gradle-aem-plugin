@@ -22,9 +22,7 @@ class FilterElement(val root: String) : Serializable {
     val element: Element
         get() = Element(FILTER_TAG).apply {
             attr(ROOT_ATTR, root)
-            if (!mode.isNullOrBlank()) {
-                attr(MODE_ATTR, mode)
-            }
+            mode?.takeIf { it.isNotBlank() }?.let { attr(MODE_ATTR, it) }
             rules.forEach { appendChild(it.element) }
         }
 

@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.filterNotNull
+import com.cognifide.gradle.common.utils.capitalizeChar
 
 class ReplicationAgent(val page: Node) {
 
@@ -48,7 +49,7 @@ class ReplicationAgent(val page: Node) {
         ))
         pageContent.save(if (!pageContent.exists) mapOf(
                 "jcr:primaryType" to "nt:unstructured",
-                "jcr:title" to name.capitalize(),
+                "jcr:title" to name.capitalizeChar(),
                 "sling:resourceType" to "cq/replication/components/agent",
                 "cq:template" to "/libs/cq/replication/templates/agent"
         ) + props else props)

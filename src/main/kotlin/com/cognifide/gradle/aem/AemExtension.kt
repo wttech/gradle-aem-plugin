@@ -28,6 +28,7 @@ import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.pluginProjects
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.capitalizeChar
 import com.cognifide.gradle.common.utils.using
 import java.io.File
 import java.io.Serializable
@@ -456,7 +457,7 @@ class AemExtension(val project: Project) : Serializable {
 
         fun of(project: Project): AemExtension {
             return project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException("${project.displayName.capitalize()} must have at least one of following plugins applied: $PLUGIN_IDS")
+                    ?: throw AemException("${project.displayName.capitalizeChar()} must have at least one of following plugins applied: $PLUGIN_IDS")
         }
     }
 }
