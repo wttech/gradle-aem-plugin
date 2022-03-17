@@ -9,6 +9,7 @@ import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
+import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
 import org.gradle.api.tasks.Delete
@@ -325,14 +326,16 @@ class MvnBuild(val aem: AemExtension) {
         val taskOptions: Task.() -> Unit = {
             group = AemTask.GROUP
             description = "Deploys CRX packages to instance"
-            doLast {
-                logger.lifecycle(
-                    listOf(
-                        "Deployment of ${packageModules.size} CRX package(s) ended at ${Formats.date()}:",
-                        packageModules.sortedBy { it.name }.joinToString(", ") { it.name }
-                    ).joinToString("\n")
-                )
-            }
+            doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
+                override fun execute(task: Task) {
+                    logger.lifecycle(
+                        listOf(
+                            "Deployment of ${packageModules.size} CRX package(s) ended at ${Formats.date()}:",
+                            packageModules.sortedBy { it.name }.joinToString(", ") { it.name }
+                        ).joinToString("\n")
+                    )
+                }
+            })
         }
 
         if (deployPackageOrder.get() == DeployPackageOrder.PRECEDENCE) {
