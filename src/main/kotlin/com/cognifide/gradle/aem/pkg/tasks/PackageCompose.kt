@@ -8,7 +8,13 @@ import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.pkg.tasks.compose.*
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalled
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalledBuilt
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalledResolved
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNested
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNestedBuilt
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNestedResolved
+import com.cognifide.gradle.aem.pkg.tasks.compose.RepositoryArchive
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.using
 import org.apache.commons.lang3.StringUtils

@@ -32,17 +32,6 @@ dependencies {
 }
 
 tasks {
-    withType<JavaCompile>().configureEach{
-        sourceCompatibility = JavaVersion.VERSION_11.toString()
-        targetCompatibility = JavaVersion.VERSION_11.toString()
-    }
-
-    withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_11.toString()
-        }
-    }
-
     val buildProperties = register("buildProperties") {
         val properties = """
             pluginVersion=${project.version}

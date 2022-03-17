@@ -5,10 +5,10 @@ plugins {
     id("java-gradle-plugin")
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "1.5.31"
-    id("com.gradle.plugin-publish") version "0.11.0"
+    id("com.gradle.plugin-publish") version "0.20.0"
     id("io.gitlab.arturbosch.detekt") version "1.20.0-RC1"
     id("net.researchgate.release") version "2.8.1"
-    id("com.github.breadmoirai.github-release") version "2.2.10"
+    id("com.github.breadmoirai.github-release") version "2.2.12"
     id("com.neva.fork") version "5.0.0"
 }
 
@@ -16,17 +16,41 @@ group = "com.cognifide.gradle"
 description = "Gradle AEM Plugin"
 defaultTasks(":publishToMavenLocal", ":launcher:publishToMavenLocal")
 
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    plugins.withId("java") {
+        java {
+            withJavadocJar()
+            withSourcesJar()
+        }
+        tasks.withType<JavaCompile>().configureEach{
+            sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+            targetCompatibility = JavaVersion.VERSION_1_8.toString()
+        }
+        tasks.withType<Test>().configureEach {
+            testLogging.showStandardStreams = true
+            useJUnitPlatform()
+        }
+    }
+    plugins.withId("kotlin") {
+        tasks.withType<KotlinCompile>().configureEach {
+            kotlinOptions {
+                jvmTarget = JavaVersion.VERSION_1_8.toString()
+            }
+        }
+    }
+}
+
 val functionalTestSourceSet = sourceSets.create("functionalTest")
 gradlePlugin.testSourceSets(functionalTestSourceSet)
 
 configurations.getByName("functionalTestImplementation").apply {
     extendsFrom(configurations.getByName("testImplementation"))
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    gradlePluginPortal()
 }
 
 dependencies {
@@ -51,11 +75,6 @@ dependencies {
     implementation("org.osgi:org.osgi.core:6.0.0")
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
 tasks {
     register<Zip>("assetsZip") {
         from("src/asset")
@@ -63,19 +82,8 @@ tasks {
         destinationDirectory.set(file("$buildDir/resources/main"))
     }
 
-    withType<JavaCompile>().configureEach{
-        sourceCompatibility = JavaVersion.VERSION_11.toString()
-        targetCompatibility = JavaVersion.VERSION_11.toString()
-    }
-
-    withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_11.toString()
-        }
-    }
-
     withType<Detekt>().configureEach {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
     val buildProperties = register("buildProperties") {
@@ -98,11 +106,6 @@ tasks {
 
     publishToMavenLocal {
         dependsOn(jar)
-    }
-
-    withType<Test>().configureEach {
-        testLogging.showStandardStreams = true
-        useJUnitPlatform()
     }
 
     test {
