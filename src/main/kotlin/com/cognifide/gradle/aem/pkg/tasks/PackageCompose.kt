@@ -19,6 +19,8 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.util.GradleVersion
+import java.lang.IllegalStateException
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
@@ -230,7 +232,16 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
 
-    fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
+    fun mergePackage(taskPath: String) {
+        if (GradleVersion.current() >= GradleVersion.version("7.0")) {
+            throw IllegalStateException(listOf(
+                "Merging packages does not work properly since Gradle 7.x.",
+                "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
+            ).joinToString("\n"))
+        }
+
+        mergePackage(common.tasks.pathed(taskPath))
+    }
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
         dependsOn(task)
