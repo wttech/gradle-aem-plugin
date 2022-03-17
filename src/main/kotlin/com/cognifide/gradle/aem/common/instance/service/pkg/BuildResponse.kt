@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BuildResponse private constructor() {
 
-    var isSuccess: Boolean = false
+    var success: Boolean = false
 
     lateinit var msg: String
 

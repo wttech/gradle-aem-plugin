@@ -24,7 +24,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.process.internal.streams.SafeStreams
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.*
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -274,7 +273,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 throw InstanceException("Malformed response after uploading package '$file' to $instance. Cause: ${e.message}", e)
             }
 
-            if (!response.isSuccess) {
+            if (!response.success) {
                 throw InstanceException("Cannot upload package '$file' to $instance. Reason: ${interpretFail(response.msg)}.")
             }
 
@@ -517,7 +516,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             throw InstanceException("Malformed response after activating package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
-        if (!response.isSuccess) {
+        if (!response.success) {
             throw InstanceException("Cannot activate package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
