@@ -12,7 +12,7 @@ class BuildScaffolder(private val launcher: Launcher) {
 
 //      TODO: if archetype aem version == cloud, then call scaffold() method on EnvCloudScaffolder,
 //       else call it on EnvOnPremScaffolder
-        EnvCloudScaffolder(launcher).scaffold()
+        EnvOnPremScaffolder(launcher).scaffold()
     }
 
     private fun saveBuildSrc() = launcher.workFileOnce("buildSrc/build.gradle.kts") {

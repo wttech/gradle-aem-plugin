@@ -53,8 +53,7 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                             }
                             up {
                                 symlink(
-                                    "/etc/httpd.extra/conf.modules.d/02-dispatcher.conf" to "/etc/httpd/conf.modules.d/02-dispatcher.conf",
-                                    "/etc/httpd.extra/conf.d/variables/default.vars" to "/etc/httpd/conf.d/variables/default.vars"
+                                    "/etc/httpd.extra/conf.modules.d/02-dispatcher.conf" to "/etc/httpd/conf.modules.d/02-dispatcher.conf"
                                 )
                                 ensureDir("/usr/local/apache2/logs", "/var/www/localhost/htdocs", "/var/www/localhost/cache")
                                 execShell("Starting HTTPD server", "/usr/sbin/httpd -k start")
@@ -138,23 +137,15 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                     extra_hosts:
                       - "host.docker.internal:{{ docker.runtime.hostInternalIp }}"
                     {% endif %}
-            """.trimIndent())
-        }
-
-        launcher.workFileOnce("env/src/environment/httpd/conf.d/variables/default.vars") {
-            println("Saving environment variables file '$this'")
-            writeText("""
-                Define DOCROOT /var/www/localhost/cache
-                Define AEM_HOST host.docker.internal
-                Define AEM_IP *.*.*.*
-                Define AEM_PORT 4503
-
-                Define DISP_LOG_LEVEL Warn
-                Define REWRITE_LOG_LEVEL Warn
-                Define EXPIRATION_TIME A2592000
-                
-                Define FORWARDED_HOST_SETTING Off
-                Define COMMERCE_ENDPOINT graphql
+                      - DOCROOT=/var/www/localhost/cache
+                      - AEM_HOST=host.docker.internal
+                      - AEM_IP=*.*.*.*
+                      - AEM_PORT=4503
+                      - DISP_LOG_LEVEL=Warn
+                      - REWRITE_LOG_LEVEL=Warn
+                      - EXPIRATION_TIME=A2592000
+                      - FORWARDED_HOST_SETTING=Off
+                      - COMMERCE_ENDPOINT=graphql
             """.trimIndent())
         }
 
