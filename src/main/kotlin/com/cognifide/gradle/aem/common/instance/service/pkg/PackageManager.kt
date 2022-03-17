@@ -356,7 +356,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             throw InstanceException("Malformed response after building package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
-        if (!response.isSuccess) {
+        if (!response.success) {
             throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
