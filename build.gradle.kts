@@ -146,16 +146,7 @@ detekt {
     autoCorrect = true
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("pluginMaven") {
-            from(components["java"])
-        }
-    }
-}
-
 gradlePlugin {
-    isAutomatedPublishing = false
     plugins {
         create("common") {
             id = "com.cognifide.aem.common"
