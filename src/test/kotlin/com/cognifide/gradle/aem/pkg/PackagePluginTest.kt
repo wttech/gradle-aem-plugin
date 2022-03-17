@@ -24,9 +24,8 @@ class PackagePluginTest : AemTest() {
 
         tasks.getByName(PackageActivate.NAME)
 
-        tasks.named(PackageCompose.NAME, PackageCompose::class.java).get().apply {
-            assertEquals("test.zip", archiveFile.get().asFile.name)
-        }
+        val compose = tasks.named(PackageCompose.NAME, PackageCompose::class.java).get()
+        assertEquals("test.zip", compose.archiveFile.get().asFile.name)
 
         tasks.getByName(PackageDelete.NAME)
         tasks.getByName(PackageDeploy.NAME)
