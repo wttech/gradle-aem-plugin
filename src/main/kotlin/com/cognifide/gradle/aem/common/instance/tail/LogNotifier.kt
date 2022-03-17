@@ -2,16 +2,17 @@ package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.aem.common.instance.tail.io.LogFiles
 import com.cognifide.gradle.common.notifier.NotifierFacade
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import java.net.URI
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.gradle.api.logging.LogLevel
 import java.awt.Desktop
+import java.net.URI
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 class LogNotifier(
     private val notificationChannel: ReceiveChannel<LogChunk>,
     private val notifier: NotifierFacade,

@@ -13,13 +13,17 @@ open class CommonOptions(private val aem: AemExtension) {
      * and also for OSGi bundle JARs.
      */
     val baseName = aem.obj.string {
-        convention(aem.obj.provider {
-            (if (project == project.rootProject) {
-                project.rootProject.name
-            } else {
-                "${project.rootProject.name}-${project.name}"
-            })
-        })
+        convention(
+            aem.obj.provider {
+                (
+                    if (project == project.rootProject) {
+                        project.rootProject.name
+                    } else {
+                        "${project.rootProject.name}-${project.name}"
+                    }
+                    )
+            }
+        )
     }
 
     /**

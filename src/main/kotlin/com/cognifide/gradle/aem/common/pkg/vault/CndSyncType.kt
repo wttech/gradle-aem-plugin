@@ -12,6 +12,6 @@ enum class CndSyncType {
         fun find(name: String) = values().firstOrNull { it.name.equals(name, true) }
 
         fun of(name: String) = find(name)
-                ?: throw PackageException("Unsupported CND file sync mode '$name'!")
+            ?: throw PackageException("Unsupported CND file sync mode '$name'!")
     }
 }

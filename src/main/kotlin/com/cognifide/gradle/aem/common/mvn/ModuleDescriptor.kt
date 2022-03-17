@@ -43,9 +43,13 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
             "/apps/$appId/config",
         ).map { path -> dir.resolve("${build.contentPath.get()}/jcr_root/${path.removePrefix("/")}") }
         return paths.firstOrNull { it.exists() }
-            ?: throw MvnException((listOf(
-                "Cannot find existing OSGi config path for Maven module! Searched paths:"
-            ) + paths.map { it.toString() }).joinToString("\n"))
+            ?: throw MvnException(
+                (
+                    listOf(
+                        "Cannot find existing OSGi config path for Maven module! Searched paths:"
+                    ) + paths.map { it.toString() }
+                    ).joinToString("\n")
+            )
     }
 
     override fun toString() = "ModuleDescriptor(name=$name, type=$type)"

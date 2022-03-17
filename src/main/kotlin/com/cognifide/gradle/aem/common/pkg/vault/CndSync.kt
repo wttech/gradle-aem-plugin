@@ -11,12 +11,14 @@ class CndSync(private val aem: AemExtension) {
     val file = aem.obj.file()
 
     val type = aem.obj.typed<CndSyncType> {
-        convention(aem.obj.provider {
-            when {
-                aem.commonOptions.offline.get() -> CndSyncType.NEVER
-                else -> CndSyncType.PRESERVE
+        convention(
+            aem.obj.provider {
+                when {
+                    aem.commonOptions.offline.get() -> CndSyncType.NEVER
+                    else -> CndSyncType.PRESERVE
+                }
             }
-        })
+        )
     }
 
     fun type(name: String) {
@@ -25,7 +27,7 @@ class CndSync(private val aem: AemExtension) {
 
     fun sync() {
         val file = file.orNull?.asFile
-                ?: throw PackageException("CND file to be synchronized is not specified!")
+            ?: throw PackageException("CND file to be synchronized is not specified!")
         when (type.get()) {
             CndSyncType.ALWAYS -> syncOrElse {
                 throw PackageException("CND file '$file' cannot be synchronized as of none of AEM instances are available!")

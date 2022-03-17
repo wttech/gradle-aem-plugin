@@ -6,10 +6,10 @@ import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.file.FileContentReader
 import com.cognifide.gradle.common.utils.Patterns
-import java.io.File
-import java.io.Serializable
 import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.Input
+import java.io.File
+import java.io.Serializable
 
 class PackageFileFilter(private val task: PackageCompose) : Serializable {
 
@@ -110,24 +110,24 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
 
     companion object {
         val EXPAND_FILES_DEFAULT = listOf(
-                "**/${Package.META_PATH}/MANIFEST.MF",
-                "**/${Package.VLT_PATH}/nodetypes.cnd",
-                "**/${Package.META_PATH}/**/*.xml"
+            "**/${Package.META_PATH}/MANIFEST.MF",
+            "**/${Package.VLT_PATH}/nodetypes.cnd",
+            "**/${Package.META_PATH}/**/*.xml"
         )
 
         val EXCLUDE_FILES_DEFAULT = listOf(
-                "**/.gradle",
-                "**/.git",
-                "**/.git/**",
-                "**/.gitattributes",
-                "**/.gitignore",
-                "**/.gitmodules",
-                "**/.vlt",
-                "**/.vlt*.tmp",
-                "**/.vlt-sync-config.properties",
-                "**/aemsync/**",
-                "**/node_modules/**",
-                "**/vault/filter.*.xml"
+            "**/.gradle",
+            "**/.git",
+            "**/.git/**",
+            "**/.gitattributes",
+            "**/.gitignore",
+            "**/.gitmodules",
+            "**/.vlt",
+            "**/.vlt*.tmp",
+            "**/.vlt-sync-config.properties",
+            "**/aemsync/**",
+            "**/node_modules/**",
+            "**/vault/filter.*.xml"
         )
     }
 }

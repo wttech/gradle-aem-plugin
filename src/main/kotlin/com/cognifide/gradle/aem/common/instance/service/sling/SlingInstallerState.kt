@@ -36,19 +36,19 @@ class SlingInstallerState private constructor() {
         other as SlingInstallerState
 
         return EqualsBuilder()
-                .append(active, other.active)
-                .append(suspendedSince, other.suspendedSince)
-                .append(activeResourceCount, other.activeResourceCount)
-                .append(installedResourceCount, other.installedResourceCount)
-                .isEquals
+            .append(active, other.active)
+            .append(suspendedSince, other.suspendedSince)
+            .append(activeResourceCount, other.activeResourceCount)
+            .append(installedResourceCount, other.installedResourceCount)
+            .isEquals
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(active)
-            .append(suspendedSince)
-            .append(activeResourceCount)
-            .append(installedResourceCount)
-            .toHashCode()
+        .append(active)
+        .append(suspendedSince)
+        .append(activeResourceCount)
+        .append(installedResourceCount)
+        .toHashCode()
 
     override fun toString(): String = "SlingInstallerState(instance='${instance.name}', active='$active', activeResourceCount=$activeResourceCount)"
 

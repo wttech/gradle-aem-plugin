@@ -374,7 +374,7 @@ publishing {
 
     publications {
         create<MavenPublication>("maven") {
-            artifact(common.publicationArtifact("packageCompose"))
+            artifact(tasks["packageCompose"])
         }
     }
 }

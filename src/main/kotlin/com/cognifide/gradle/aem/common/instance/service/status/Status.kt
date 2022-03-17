@@ -168,14 +168,14 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      * Windows paths with backslash. Below code is fixing 'Malformed \uxxxx encoding.' exception.
      */
     private fun statusPropertiesAsIni(text: String) = text.lineSequence()
-            .filter { Patterns.wildcard(it, "* = *") } // Filter headings starting with '*** '
-            .map {
-                val key = it.substringBefore("=").trim().replace(" ", "_") // Spaces in keys fix
-                val value = it.substringAfter("=").trim().replace("\\", "\\\\") // Windows paths fix
-                "$key=$value"
-            }
-            .joinToString("\n")
-            .byteInputStream()
+        .filter { Patterns.wildcard(it, "* = *") } // Filter headings starting with '*** '
+        .map {
+            val key = it.substringBefore("=").trim().replace(" ", "_") // Spaces in keys fix
+            val value = it.substringAfter("=").trim().replace("\\", "\\\\") // Windows paths fix
+            "$key=$value"
+        }
+        .joinToString("\n")
+        .byteInputStream()
 
     /**
      * Instance version read once across whole build, fail-safe.

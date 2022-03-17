@@ -20,10 +20,13 @@ class AuthManager(sync: InstanceSync) : InstanceService(sync) {
         }.nodeSequence().firstOrNull() ?: throw AuthException("Cannot find user '$user' for updating password on $instance!")
 
         try {
-            sync.http.postUrlencoded("${node.path}.rw.userprops.html", mapOf(
-                ":currentPassword" to currentPassword,
-                "rep:password" to newPassword
-            ))
+            sync.http.postUrlencoded(
+                "${node.path}.rw.userprops.html",
+                mapOf(
+                    ":currentPassword" to currentPassword,
+                    "rep:password" to newPassword
+                )
+            )
         } catch (e: CommonException) {
             throw AuthException("Cannot update password for user '$user' on $instance!")
         }

@@ -7,7 +7,7 @@ enum class IdType {
     AUTHOR,
     PUBLISH;
 
-    val type: String get() = name.toLowerCase()
+    val type: String get() = name.lowercase()
 
     val httpUrlDefault: String get() = when (this) {
         AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
@@ -33,7 +33,7 @@ enum class IdType {
 
         fun byId(id: String): IdType {
             return values().find { id.startsWith(it.name, ignoreCase = true) }
-                    ?: throw AemException("Invalid instance ID '$id'! Must start with prefix 'author' or 'publish'.")
+                ?: throw AemException("Invalid instance ID '$id'! Must start with prefix 'author' or 'publish'.")
         }
 
         fun byUrl(url: String): IdType {

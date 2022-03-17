@@ -66,12 +66,12 @@ class Configuration {
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(pid)
-            .append(rawProperties)
-            .toHashCode()
+        .append(pid)
+        .append(rawProperties)
+        .toHashCode()
 
     override fun toString(): String = "Configuration(pid='$pid', title='$title', description='$description'" +
-                    ", properties=${Formats.toJson(properties, false)}, instance='${instance.name}')"
+        ", properties=${Formats.toJson(properties, false)}, instance='${instance.name}')"
 
     companion object {
         const val DESCRIPTION_METATYPE_ABSENCE = "absence of the OSGi Metatype Service or the absence of a MetaType descriptor for this configuration"

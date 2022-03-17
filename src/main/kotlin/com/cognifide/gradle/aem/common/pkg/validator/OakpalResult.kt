@@ -10,7 +10,7 @@ enum class OakpalResult(val exitCode: Int) {
     MAJOR_VIOLATION(11),
     MINOR_VIOLATION(12);
 
-    val cause get() = name.replace("_", " ").toLowerCase()
+    val cause get() = name.replace("_", " ").lowercase()
 
     companion object {
         fun byExitCode(value: Int) = values().find { it.exitCode == value } ?: UNKNOWN_ERROR

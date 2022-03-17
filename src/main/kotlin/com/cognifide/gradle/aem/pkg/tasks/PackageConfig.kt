@@ -95,8 +95,10 @@ open class PackageConfig : AemDefaultTask() {
                     rootNode.delete()
                     configPkg.delete()
 
-                    logger.lifecycle("Synchronized OSGi configuration XML file(s) (${configPids.size}) matching PID '$configPidPattern':\n" +
-                            configFiles.joinToString("\n"))
+                    logger.lifecycle(
+                        "Synchronized OSGi configuration XML file(s) (${configPids.size}) matching PID '$configPidPattern':\n" +
+                            configFiles.joinToString("\n")
+                    )
                 }
             }
         }

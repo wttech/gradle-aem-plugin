@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -12,27 +13,35 @@ class PackagePluginTest : AemBuildTest() {
         val projectDir = prepareProject("package-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.package")
                 }
                 
                 group = "com.company.example"
                 version = "1.0.0"
-                """)
+                """
+            )
 
-            file("src/main/content/jcr_root/apps/example/.content.xml", """
+            file(
+                "src/main/content/jcr_root/apps/example/.content.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
                     jcr:primaryType="sling:Folder"/>
-                """)
+                """
+            )
 
-            file("src/main/content/META-INF/vault/filter.xml", """
+            file(
+                "src/main/content/META-INF/vault/filter.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                     <filter root="/apps/example"/>
                 </workspaceFilter>
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
@@ -44,15 +53,20 @@ class PackagePluginTest : AemBuildTest() {
 
             assertZipEntry(pkg, "jcr_root/apps/example/.content.xml")
 
-            assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
+            assertZipEntryEquals(
+                pkg, "META-INF/vault/filter.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   <filter root="/apps/example"/>
                   
                 </workspaceFilter>
-            """)
+            """
+            )
 
-            assertZipEntryEquals(pkg, "META-INF/vault/properties.xml", """
+            assertZipEntryEquals(
+                pkg, "META-INF/vault/properties.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
                 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
                 <properties>
@@ -67,9 +81,12 @@ class PackagePluginTest : AemBuildTest() {
                     <entry key="requiresRoot">false</entry>
                     
                 </properties>
-            """)
+            """
+            )
 
-            assertZipEntryMatchingOrdered(pkg, "META-INF/MANIFEST.MF", """
+            assertZipEntryMatchingOrdered(
+                pkg, "META-INF/MANIFEST.MF",
+                """
                 Manifest-Version: 1.0
                 Build-Jdk: *
                 Built-By: ${System.getProperty("user.name")}
@@ -79,7 +96,8 @@ class PackagePluginTest : AemBuildTest() {
                 Created-By: Gradle (AEM Plugin)
                 Implementation-Vendor-Id: com.company.example
                 Implementation-Version: 1.0.0
-            """)
+            """
+            )
         }
 
         runBuild(projectDir, "packageValidate", "-Poffline") {
@@ -89,25 +107,35 @@ class PackagePluginTest : AemBuildTest() {
     }
 
     @Test
+    @Disabled // TODO https://github.com/wttech/gradle-aem-plugin/issues/884
     fun `should build assembly package with content and bundles merged`() {
         val projectDir = prepareProject("package-assembly") {
-            settingsGradle("""
+            settingsGradle(
+                """
                 rootProject.name = "example"
                 
                 include("ui.apps")
                 include("ui.content") 
                 include("assembly")
-            """)
+            """
+            )
 
-            gradleProperties("""
+            gradleProperties(
+                """
                 version=1.0.0
-            """)
+            """
+            )
 
-            file("assembly/build.gradle.kts", """
+            file(
+                "assembly/build.gradle.kts",
+                """
                 plugins {
                     id("com.cognifide.aem.package")
                     id("maven-publish")
                 }
+                
+                evaluationDependsOn(":ui.apps")
+                evaluationDependsOn(":ui.content")
                 
                 group = "com.company.example.aem"
                 
@@ -125,11 +153,12 @@ class PackagePluginTest : AemBuildTest() {
                 
                     publications {
                         create<MavenPublication>("maven") {
-                            artifact(common.publicationArtifact("packageCompose"))
+                            artifact(tasks["packageCompose"])
                         }
                     }
                 }
-            """)
+            """
+            )
 
             uiApps()
             uiContent()
@@ -144,7 +173,9 @@ class PackagePluginTest : AemBuildTest() {
 
             // Check if bundle was build in sub-project
             assertBundle("ui.apps/build/libs/example-ui.apps-1.0.0.jar")
-            assertZipEntryEquals("ui.apps/build/libs/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
+            assertZipEntryEquals(
+                "ui.apps/build/libs/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
@@ -152,19 +183,25 @@ class PackagePluginTest : AemBuildTest() {
                   </service>
                   <implementation class="com.company.example.aem.HelloService"/>
                 </scr:component>
-            """)
+            """
+            )
 
             // Check assembled package
-            assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
+            assertZipEntryEquals(
+                pkg, "META-INF/vault/filter.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   <filter root="/apps/example/ui.apps"/>
                   <filter root="/content/example"/>
                   
                 </workspaceFilter>
-            """)
+            """
+            )
 
-            assertZipEntryEquals(pkg, "META-INF/vault/properties.xml", """
+            assertZipEntryEquals(
+                pkg, "META-INF/vault/properties.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
                 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
                 <properties>
@@ -182,11 +219,14 @@ class PackagePluginTest : AemBuildTest() {
                     <entry key="installhook.aecu.class">de.valtech.aecu.core.installhook.AecuInstallHook</entry>
                     
                 </properties>
-            """)
+            """
+            )
 
             assertZipEntry(pkg, "jcr_root/content/example/.content.xml")
             assertZipEntry(pkg, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
-            assertZipEntryMatching(pkg, "META-INF/vault/nodetypes.cnd", """
+            assertZipEntryMatching(
+                pkg, "META-INF/vault/nodetypes.cnd",
+                """
                 <'apps'='http://apps.com/apps/1.0'>
                 <'content'='http://content.com/content/1.0'>
                 *
@@ -199,7 +239,8 @@ class PackagePluginTest : AemBuildTest() {
                   - * (undefined) multiple
                   - * (undefined)
                   + * (nt:base) = content:Folder version
-            """)
+            """
+            )
         }
 
         runBuild(projectDir, ":assembly:packageValidate", "-Poffline") {
@@ -219,11 +260,14 @@ class PackagePluginTest : AemBuildTest() {
         val projectDir = prepareProject("package-nesting-repository") {
             settingsGradle("")
 
-            gradleProperties("""
+            gradleProperties(
+                """
                 package.validate.enabled=true
-            """)
+            """
+            )
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.package")
                 }
@@ -242,7 +286,8 @@ class PackagePluginTest : AemBuildTest() {
                         nestPackage("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
                     }
                 }
-                """)
+                """
+            )
 
             defaultPlanJson()
         }
@@ -261,7 +306,9 @@ class PackagePluginTest : AemBuildTest() {
             assertZipEntry(pkg, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip")
             assertZipEntry(pkg, "jcr_root/etc/packages/ICF Next/aem-groovy-console-14.0.0.zip")
 
-            assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
+            assertZipEntryEquals(
+                pkg, "META-INF/vault/filter.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   <filter root="/apps/package-nesting-repository/install/jsoup-1.10.2.jar"/>
@@ -271,7 +318,8 @@ class PackagePluginTest : AemBuildTest() {
                   <filter root="/etc/packages/ICF Next/aem-groovy-console-14.0.0.zip"/>
                   
                 </workspaceFilter>
-            """)
+            """
+            )
         }
 
         runBuild(projectDir, "packageValidate", "-Poffline") {
@@ -283,19 +331,24 @@ class PackagePluginTest : AemBuildTest() {
     @Test
     fun `should build package with nested bundle and sub-package built by sub-projects`() {
         val projectDir = prepareProject("package-nesting-built") {
-            settingsGradle("""
+            settingsGradle(
+                """
                 rootProject.name = "example"
                 
                 include("ui.apps")
                 include("ui.content") 
-            """)
+            """
+            )
 
-            gradleProperties("""
+            gradleProperties(
+                """
                 version=1.0.0
                 package.validate.enabled=true
-            """)
+            """
+            )
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.package")
                 }
@@ -312,7 +365,8 @@ class PackagePluginTest : AemBuildTest() {
                         installBundleProject(":ui.apps")
                     }
                 }
-                """)
+                """
+            )
 
             defaultPlanJson()
 
@@ -334,19 +388,24 @@ class PackagePluginTest : AemBuildTest() {
             assertZipEntry(pkg, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
             assertZipEntry(pkg, "jcr_root/etc/packages/com.company.example/example-ui.content-1.0.0.zip")
 
-            assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
+            assertZipEntryEquals(
+                pkg, "META-INF/vault/filter.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   <filter root="/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar"/>
                   <filter root="/etc/packages/com.company.example/example-ui.content-1.0.0.zip"/>
                   
                 </workspaceFilter>
-            """)
+            """
+            )
         }
     }
 
     private fun File.uiApps() {
-        file("ui.apps/build.gradle.kts", """
+        file(
+            "ui.apps/build.gradle.kts",
+            """
             plugins {
                 id("com.cognifide.aem.bundle")
                 id("com.cognifide.aem.package")
@@ -376,29 +435,38 @@ class PackagePluginTest : AemBuildTest() {
                     }
                 }
             }
-            """)
+            """
+        )
 
-        file("ui.apps/src/main/content/META-INF/vault/nodetypes.cnd", """
+        file(
+            "ui.apps/src/main/content/META-INF/vault/nodetypes.cnd",
+            """
             <'apps'='http://apps.com/apps/1.0'>
 
             [apps:Folder] > nt:folder
               - * (undefined) multiple
               - * (undefined)
               + * (nt:base) = apps:Folder version
-        """)
+        """
+        )
 
-        file("ui.apps/src/main/content/META-INF/vault/filter.xml", """
+        file(
+            "ui.apps/src/main/content/META-INF/vault/filter.xml",
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <workspaceFilter version="1.0">
                 <filter root="/apps/example/ui.apps"/>
             </workspaceFilter>
-        """)
+        """
+        )
 
         helloServiceJava("ui.apps")
     }
 
     private fun File.uiContent() {
-        file("ui.content/build.gradle.kts", """
+        file(
+            "ui.content/build.gradle.kts",
+            """
             plugins {
                 id("com.cognifide.aem.package")
             }
@@ -412,33 +480,45 @@ class PackagePluginTest : AemBuildTest() {
                     }
                 }
             }
-        """)
+        """
+        )
 
-        file("ui.content/src/main/content/jcr_root/content/example/.content.xml", """
+        file(
+            "ui.content/src/main/content/jcr_root/content/example/.content.xml",
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
                 jcr:primaryType="sling:Folder"/>
-        """)
+        """
+        )
 
-        file("ui.content/src/main/content/META-INF/vault/filter.xml", """
+        file(
+            "ui.content/src/main/content/META-INF/vault/filter.xml",
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <workspaceFilter version="1.0">
                 <filter root="/content/example"/>
             </workspaceFilter>
-        """)
+        """
+        )
 
-        file("ui.content/src/main/content/META-INF/vault/nodetypes.cnd", """
+        file(
+            "ui.content/src/main/content/META-INF/vault/nodetypes.cnd",
+            """
             <'content'='http://content.com/content/1.0'>
 
             [content:Folder] > nt:folder
               - * (undefined) multiple
               - * (undefined)
               + * (nt:base) = content:Folder version
-        """)
+        """
+        )
     }
 
     private fun File.defaultPlanJson() {
-        file("src/aem/package/OAKPAL_OPEAR/default-plan.json", """
+        file(
+            "src/aem/package/OAKPAL_OPEAR/default-plan.json",
+            """
                 {
                   "checklists": [
                     "net.adamcin.oakpal.core/basic"
@@ -453,6 +533,7 @@ class PackagePluginTest : AemBuildTest() {
                     }
                   ]
                 } 
-            """)
+            """
+        )
     }
 }

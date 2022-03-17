@@ -73,8 +73,10 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         val stack = Stack<Workflow>().apply { addAll(workflows) }
         toggleRetry.withCountdown<Unit, CommonException>("workflow toggle on '${instance.name}'") { no ->
             if (no > 1) {
-                aem.logger.info("Retrying to toggle workflow launchers (${stack.size}) on $instance:\n" +
-                        stack.joinToString("\n") { it.launcher.path })
+                aem.logger.info(
+                    "Retrying to toggle workflow launchers (${stack.size}) on $instance:\n" +
+                        stack.joinToString("\n") { it.launcher.path }
+                )
             }
 
             while (stack.isNotEmpty()) {
@@ -89,8 +91,10 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         val stack = Stack<Workflow>().apply { addAll(workflows) }
         restoreRetry.withCountdown<Unit, CommonException>("workflow restore on '${instance.name}'") { no ->
             if (no > 1) {
-                aem.logger.info("Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
-                        stack.joinToString("\n") { it.launcher.path })
+                aem.logger.info(
+                    "Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
+                        stack.joinToString("\n") { it.launcher.path }
+                )
             }
 
             while (stack.isNotEmpty()) {

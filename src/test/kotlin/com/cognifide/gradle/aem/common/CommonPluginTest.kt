@@ -33,8 +33,8 @@ class CommonPluginTest : AemTest() {
         }
 
         assertTrue(
-                tasks.none { it.group == AemTask.GROUP },
-                "Common plugin should not provide any tasks which belongs to group AEM."
+            tasks.none { it.group == AemTask.GROUP },
+            "Common plugin should not provide any tasks which belongs to group AEM."
         )
     }
 }

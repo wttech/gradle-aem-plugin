@@ -3,14 +3,15 @@ package com.cognifide.gradle.aem.pkg.tasks.sync
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.VaultException
-import java.io.File
-import java.io.IOException
-import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.util.PatternFilterable
+import java.io.File
+import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.regex.Pattern
 
 @Suppress("TooManyFunctions")
 class Cleaner(private val aem: AemExtension) {
@@ -35,11 +36,13 @@ class Cleaner(private val aem: AemExtension) {
     }
 
     private var filesDeleted: PatternFilterable.() -> Unit = {
-        include(listOf(
+        include(
+            listOf(
                 "**/.vlt",
                 "**/.vlt*.tmp",
                 "**/install/*.jar"
-        ))
+            )
+        )
     }
 
     /**
@@ -51,12 +54,14 @@ class Cleaner(private val aem: AemExtension) {
     }
 
     private var filesFlattened: PatternFilterable.() -> Unit = {
-        include(listOf(
+        include(
+            listOf(
                 "**/_cq_design_dialog/.content.xml",
                 "**/_cq_dialog/.content.xml",
                 "**/_cq_htmlTag/.content.xml",
                 "**/_cq_template/.content.xml"
-        ))
+            )
+        )
     }
 
     /**
@@ -66,7 +71,8 @@ class Cleaner(private val aem: AemExtension) {
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     val propertiesSkipped = aem.obj.strings {
-        set(listOf(
+        set(
+            listOf(
                 pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
                 pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
                 "jcr:lastModified*",
@@ -78,17 +84,20 @@ class Cleaner(private val aem: AemExtension) {
                 "dam:assetState",
                 "dc:modified",
                 "*_x0040_*"
-        ))
+            )
+        )
     }
 
     /**
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
     val mixinTypesSkipped = aem.obj.strings {
-        set(listOf(
+        set(
+            listOf(
                 "cq:ReplicationStatus",
                 "mix:versionable"
-        ))
+            )
+        )
     }
 
     /**
@@ -186,7 +195,7 @@ class Cleaner(private val aem: AemExtension) {
 
             FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.commonOptions.lineSeparator.get().value)
         } catch (e: IOException) {
-            throw VaultException(String.format("Error opening %s", file.path), e)
+            throw VaultException(String.format(Locale.ENGLISH, "Error opening %s", file.path), e)
         }
     }
 
@@ -217,7 +226,7 @@ class Cleaner(private val aem: AemExtension) {
         return contentProcess(file, result)
     }
 
-    @Suppress("unused_parameter")
+    @Suppress("UnusedPrivateMember", "unused_parameter")
     fun normalizeContent(file: File, lines: List<String>): List<String> {
         return mergeSinglePropertyLines(cleanNamespaces(lines))
     }
@@ -253,15 +262,15 @@ class Cleaner(private val aem: AemExtension) {
         return lines.map { line ->
             if (line.trim().startsWith(JCR_ROOT_PREFIX)) {
                 line.split(" ")
-                        .filter { part ->
-                            val matcher = NAMESPACE_PATTERN.matcher(part)
-                            if (matcher.matches()) {
-                                lines.any { it.contains(matcher.group(1) + ":") }
-                            } else {
-                                true
-                            }
+                    .filter { part ->
+                        val matcher = NAMESPACE_PATTERN.matcher(part)
+                        if (matcher.matches()) {
+                            lines.any { it.contains(matcher.group(1) + ":") }
+                        } else {
+                            true
                         }
-                        .joinToString(" ")
+                    }
+                    .joinToString(" ")
             } else {
                 line
             }
@@ -340,18 +349,20 @@ class Cleaner(private val aem: AemExtension) {
     private fun deleteFiles(root: File) {
         eachParentFiles(root) { parent ->
             aem.project.fileTree(parent)
-                    .matching { it.include("*") }
-                    .matching(filesDeleted)
-                    .forEach { deleteFile(it) }
+                .matching { it.include("*") }
+                .matching(filesDeleted)
+                .forEach { deleteFile(it) }
         }
         eachFiles(root, filesDeleted) { deleteFile(it) }
     }
 
     private fun deleteBackupFiles(root: File) = eachFiles(root, {
-        include(listOf(
+        include(
+            listOf(
                 "**/${parentsBackupDirIndicator.get()}",
                 "**/*${parentsBackupSuffix.get()}"
-        ))
+            )
+        )
     }) { deleteFile(it) }
 
     private fun deleteFile(file: File) {
@@ -383,11 +394,11 @@ class Cleaner(private val aem: AemExtension) {
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator.get()).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }
-                        .forEach { origin ->
-                            val backup = File(parent, origin.name + parentsBackupSuffix.get())
-                            aem.logger.info("Doing backup of parent file: $origin")
-                            origin.copyTo(backup, true)
-                        }
+                    .forEach { origin ->
+                        val backup = File(parent, origin.name + parentsBackupSuffix.get())
+                        aem.logger.info("Doing backup of parent file: $origin")
+                        origin.copyTo(backup, true)
+                    }
             }
         }
     }

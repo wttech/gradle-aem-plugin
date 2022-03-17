@@ -67,9 +67,9 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
 
         checks {
             listOf(
-                    timeout(timeoutOptions),
-                    unavailable(unavailableOptions),
-                    unchanged(unchangedOptions)
+                timeout(timeoutOptions),
+                unavailable(unavailableOptions),
+                unchanged(unchangedOptions)
             )
         }
     }

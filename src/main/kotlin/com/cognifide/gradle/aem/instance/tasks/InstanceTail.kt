@@ -1,10 +1,8 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.tasks.Instance
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.gradle.api.tasks.TaskAction
 
-@OptIn(ExperimentalCoroutinesApi::class)
 open class InstanceTail : Instance() {
 
     @TaskAction

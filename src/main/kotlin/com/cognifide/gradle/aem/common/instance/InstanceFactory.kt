@@ -53,8 +53,11 @@ class InstanceFactory(val aem: AemExtension) {
 
     fun parseProperties(allProps: Map<String, *>): List<Instance> {
         val instanceNames = allProps.filterKeys { prop ->
-            !prop.startsWith("$NAME_DEFAULT.") && (ALL_PROPS.any {
-                Regex("^instance.$NAME_REGEX.$it\$").matches(prop) })
+            !prop.startsWith("$NAME_DEFAULT.") && (
+                ALL_PROPS.any {
+                    Regex("^instance.$NAME_REGEX.$it\$").matches(prop)
+                }
+                )
         }.keys.mapNotNull { p ->
             val name = p.split(".")[1]
             val nameParts = name.split("-")
@@ -126,8 +129,10 @@ class InstanceFactory(val aem: AemExtension) {
 
         const val NAME_REGEX = "[\\w_]+-[\\w_]+"
 
-        val LOCAL_PROPS = listOf("httpUrl", "enabled", "type", "password", "jvmOpts", "startOpts", "runModes",
-            "debugPort", "debugAddress", "openPath")
+        val LOCAL_PROPS = listOf(
+            "httpUrl", "enabled", "type", "password", "jvmOpts", "startOpts", "runModes",
+            "debugPort", "debugAddress", "openPath"
+        )
 
         val REMOTE_PROPS = listOf("httpUrl", "enabled", "type", "user", "password")
 

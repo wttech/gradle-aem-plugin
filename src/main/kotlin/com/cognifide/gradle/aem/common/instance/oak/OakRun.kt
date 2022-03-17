@@ -24,10 +24,13 @@ class OakRun(val aem: AemExtension, val instance: LocalInstance) {
             logger.info("Resetting user '$user' password for $instance using OakRun")
 
             val template = aem.assetManager.readFile("oakrun/admin-reset.groovy.peb").bufferedReader().readText()
-            val content = aem.prop.expand(template, mapOf(
-                "user" to user,
-                "password" to password
-            ))
+            val content = aem.prop.expand(
+                template,
+                mapOf(
+                    "user" to user,
+                    "password" to password
+                )
+            )
             runGroovyScript(content)
         } catch (e: OakRunException) {
             throw OakRunException("Cannot reset password for '$instance'!", e)

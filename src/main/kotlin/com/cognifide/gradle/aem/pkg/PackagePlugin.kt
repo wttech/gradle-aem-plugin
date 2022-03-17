@@ -4,8 +4,20 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.Package
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.tasks.*
-import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
+import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
+import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
+import com.cognifide.gradle.aem.pkg.tasks.PackageActivate
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
+import com.cognifide.gradle.aem.pkg.tasks.PackageDelete
+import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
+import com.cognifide.gradle.aem.pkg.tasks.PackageInstall
+import com.cognifide.gradle.aem.pkg.tasks.PackagePrepare
+import com.cognifide.gradle.aem.pkg.tasks.PackagePurge
+import com.cognifide.gradle.aem.pkg.tasks.PackageUninstall
+import com.cognifide.gradle.aem.pkg.tasks.PackageUpload
+import com.cognifide.gradle.aem.pkg.tasks.PackageValidate
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.checkForce
 import com.cognifide.gradle.common.tasks.configureApply
@@ -102,7 +114,5 @@ class PackagePlugin : CommonDefaultPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.package"
-
-        const val CONFIGURATION = "aemPackage"
     }
 }

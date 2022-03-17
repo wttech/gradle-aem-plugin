@@ -9,11 +9,13 @@ class PackageSyncPluginTest : AemBuildTest() {
         val projectDir = prepareProject("package-sync-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.package.sync")
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {

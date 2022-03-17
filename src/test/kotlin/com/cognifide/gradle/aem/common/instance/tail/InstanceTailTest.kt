@@ -56,8 +56,11 @@ class InstanceTailTest {
             assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350"), timestamp)
             assertEquals("INFO", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1]", source)
-            assertEquals("egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae:" +
-                    " /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)", message)
+            assertEquals(
+                "egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae:" +
+                    " /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)",
+                message
+            )
             assertEquals("c298a80e1b5083dea0c9dbf12b045a67", checksum)
         }
         logsList.last().apply {
@@ -119,8 +122,9 @@ class InstanceTailTest {
     fun shouldAggregateOverlappingLogsBetweenRequests() {
         // given
         val source = MockSource(
-                "aggregating/overlapping/first-chunk-error.log",
-                "aggregating/overlapping/second-chunk-error.log")
+            "aggregating/overlapping/first-chunk-error.log",
+            "aggregating/overlapping/second-chunk-error.log"
+        )
         val destination = MockDestination()
         val tailer = LogTailer(source, destination)
 
@@ -146,8 +150,9 @@ class InstanceTailTest {
     fun shouldAggregateWhenThereIsNoOverlapping() {
         // given
         val source = MockSource(
-                "aggregating/disjoint/first-chunk-error.log",
-                "aggregating/disjoint/second-chunk-error.log")
+            "aggregating/disjoint/first-chunk-error.log",
+            "aggregating/disjoint/second-chunk-error.log"
+        )
         val destination = MockDestination()
         val tailer = LogTailer(source, destination)
 
@@ -173,8 +178,9 @@ class InstanceTailTest {
     fun shouldSkipLogsChunkWhenThereAreNoNewLogs() {
         // given
         val source = MockSource(
-                "aggregating/disjoint/first-chunk-error.log",
-                "aggregating/disjoint/first-chunk-error.log")
+            "aggregating/disjoint/first-chunk-error.log",
+            "aggregating/disjoint/first-chunk-error.log"
+        )
         val destination = MockDestination()
         val tailer = LogTailer(source, destination)
 
@@ -205,9 +211,18 @@ class InstanceTailTest {
         val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertTrue(logFilter.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
-            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+        assertTrue(
+            logFilter.isExcluded(
+                Log.create(
+                    NoLogInfo(),
+                    listOf(
+                        "14.01.2019 12:20:43.111 *ERROR* " +
+                            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"
+                    )
+                )
+            )
+        )
     }
 
     @Test
@@ -219,9 +234,18 @@ class InstanceTailTest {
         val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertFalse(blacklist.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
-            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+        assertFalse(
+            blacklist.isExcluded(
+                Log.create(
+                    NoLogInfo(),
+                    listOf(
+                        "14.01.2019 12:20:43.111 *ERROR* " +
+                            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"
+                    )
+                )
+            )
+        )
     }
 
     @Test
@@ -233,9 +257,18 @@ class InstanceTailTest {
         val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertTrue(logFilter.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
-            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+        assertTrue(
+            logFilter.isExcluded(
+                Log.create(
+                    NoLogInfo(),
+                    listOf(
+                        "14.01.2019 12:20:43.111 *ERROR* " +
+                            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"
+                    )
+                )
+            )
+        )
     }
 
     @Test
@@ -247,9 +280,18 @@ class InstanceTailTest {
         val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertFalse(blacklist.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
-            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+        assertFalse(
+            blacklist.isExcluded(
+                Log.create(
+                    NoLogInfo(),
+                    listOf(
+                        "14.01.2019 12:20:43.111 *ERROR* " +
+                            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"
+                    )
+                )
+            )
+        )
     }
 
     private fun assertEqualsIgnoringCr(expected: String, actual: String) {

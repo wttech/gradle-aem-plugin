@@ -238,11 +238,13 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     ): Map<String, Any?> {
         return mutableMapOf<String, Any?>().apply {
             putAll(operationProperties("import"))
-            putAll(mapOf(
+            putAll(
+                mapOf(
                     ":replace" to replace,
                     ":replaceProperties" to replaceProperties,
                     ":contentType" to "json"
-            ))
+                )
+            )
             name?.let { put(":name", it) }
             json?.let { put(":content", json) }
             file?.let { put(":contentFile", file) }
@@ -282,9 +284,12 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
      * Copy node to from source path to destination path.
      */
     fun copy(targetPath: String): Node = try {
-        http.postUrlencoded(path, operationProperties("copy") + mapOf(
+        http.postUrlencoded(
+            path,
+            operationProperties("copy") + mapOf(
                 ":dest" to targetPath
-        )) { checkStatus(it, HttpStatus.SC_CREATED) }
+            )
+        ) { checkStatus(it, HttpStatus.SC_CREATED) }
 
         Node(repository, targetPath)
     } catch (e: CommonException) {
@@ -295,10 +300,13 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
      * Move node from source path to destination path.
      */
     fun move(targetPath: String, replace: Boolean = false): Node = try {
-        http.postUrlencoded(path, operationProperties("move") + mapOf(
+        http.postUrlencoded(
+            path,
+            operationProperties("move") + mapOf(
                 ":dest" to targetPath,
                 ":replace" to replace
-        )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
+            )
+        ) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
 
         Node(repository, targetPath)
     } catch (e: CommonException) {
@@ -422,8 +430,8 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     }
 
     private fun operationProperties(operation: String): Map<String, Any?> = mapOf(
-            ":operation" to operation,
-            ":http-equiv-accept" to "application/json"
+        ":operation" to operation,
+        ":http-equiv-accept" to "application/json"
     )
 
     private fun filterMetaProperties(properties: Map<String, Any>): Map<String, Any> {
@@ -466,10 +474,13 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         log("Uploading DAM asset '$file' to repository node '$path' on $instance")
 
         return try {
-            http.postMultipart("${parent.path}$DAM_UPLOAD_SUFFIX", mapOf(
+            http.postMultipart(
+                "${parent.path}$DAM_UPLOAD_SUFFIX",
+                mapOf(
                     "file" to file,
                     "fileName" to name
-            ))
+                )
+            )
         } catch (e: CommonException) {
             throw RepositoryException("Cannot upload DAM asset '$file' to node '$path' on $instance. Cause: ${e.message}", e)
         }

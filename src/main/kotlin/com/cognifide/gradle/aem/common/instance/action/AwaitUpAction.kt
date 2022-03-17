@@ -97,9 +97,11 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
             aem.prop.list("instance.awaitUp.components.platform")?.let { set(it) }
         }
         specificComponents.apply {
-            convention(aem.obj.provider {
-                aem.javaPackages.map { "$it.*" }
-            })
+            convention(
+                aem.obj.provider {
+                    aem.javaPackages.map { "$it.*" }
+                }
+            )
             aem.prop.list("instance.awaitUp.components.specific")?.let { set(it) }
         }
     }

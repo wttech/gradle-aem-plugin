@@ -2,11 +2,11 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.asset.AssetManager
-import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.aem.common.cli.CliApp
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.validator.OakpalResult
 import com.cognifide.gradle.aem.common.pkg.validator.OakpalSeverity
+import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.common.utils.using
 import com.cognifide.gradle.common.zip.ZipFile
 import org.apache.commons.io.FileUtils
@@ -188,16 +188,20 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     @Suppress("SpreadOperator")
     private fun runOakPal(packages: Collection<File>) {
-        val result = OakpalResult.byExitCode(cli.exec {
-            isIgnoreExitValue = true
-            environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
-            workingDir(workDir.get().asFile)
-            args("-pi", initialPkg.get().asFile, "-pf", planFile.get().asFile, "-s", severity.get(),
-                    "-j", "-o", reportFile.get().asFile, *packages.toTypedArray())
-        }.exitValue)
+        val result = OakpalResult.byExitCode(
+            cli.exec {
+                isIgnoreExitValue = true
+                environment("OAKPAL_OPEAR", opearDir.get().asFile.absolutePath)
+                workingDir(workDir.get().asFile)
+                args(
+                    "-pi", initialPkg.get().asFile, "-pf", planFile.get().asFile, "-s", severity.get(),
+                    "-j", "-o", reportFile.get().asFile, *packages.toTypedArray()
+                )
+            }.exitValue
+        )
         if (result != OakpalResult.SUCCESS) {
             val message = "OakPAL validation failed due to ${result.cause}!\nSee report file: '${reportFile.get()}' for package(s):\n" +
-                    packages.joinToString("\n")
+                packages.joinToString("\n")
             if (verbose.get()) {
                 throw PackageException(message)
             } else {

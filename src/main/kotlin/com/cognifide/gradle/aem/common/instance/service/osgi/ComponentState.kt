@@ -44,15 +44,15 @@ class ComponentState private constructor() {
         other as ComponentState
 
         return EqualsBuilder()
-                .append(components, other.components)
-                .append(total, other.total)
-                .isEquals
+            .append(components, other.components)
+            .append(total, other.total)
+            .isEquals
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(components)
-            .append(total)
-            .toHashCode()
+        .append(components)
+        .append(total)
+        .toHashCode()
 
     override fun toString(): String = "ComponentState(instance='${instance.name}', total='$total')"
 

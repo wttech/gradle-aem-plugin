@@ -97,19 +97,19 @@ class Package private constructor() {
         other as Package
 
         return EqualsBuilder()
-                .append(path, other.path)
-                .append(group, other.group)
-                .append(name, other.name)
-                .append(version, other.version)
-                .isEquals
+            .append(path, other.path)
+            .append(group, other.group)
+            .append(name, other.name)
+            .append(version, other.version)
+            .isEquals
     }
 
     override fun hashCode() = HashCodeBuilder()
-            .append(path)
-            .append(group)
-            .append(name)
-            .append(version)
-            .toHashCode()
+        .append(path)
+        .append(group)
+        .append(name)
+        .append(version)
+        .toHashCode()
 
     override fun toString(): String = "Package(path='$path', group='$group', name='$name', version='$version', instance='${instance.name}')"
 }

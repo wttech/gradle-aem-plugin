@@ -15,10 +15,12 @@ open class QueryParams(private val enumerated: Boolean) {
         }
     }
 
-    private val paramIndex: Int get() = (params.keys
+    private val paramIndex: Int get() = (
+        params.keys
             .filter { it.matches(Regex("^\\d+_\\w+$")) }
             .map { it.split("_")[0].toInt() }
-            .maxOrNull() ?: 0) + 1
+            .maxOrNull() ?: 0
+        ) + 1
 
     // Node type filtering params
 

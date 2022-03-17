@@ -134,9 +134,9 @@ class BackupManager(private val manager: LocalInstanceManager) {
     }
 
     private fun resolve(sources: List<BackupSource>): BackupSource? = sources
-            .filter { it.fileEntry.name.endsWith(suffix.get()) }
-            .sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
-            .run { selector(this) }
+        .filter { it.fileEntry.name.endsWith(suffix.get()) }
+        .sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
+        .run { selector(this) }
 
     private val localSources: List<BackupSource> get() = listOfNotNull(localFileSource) + localDirSources
 

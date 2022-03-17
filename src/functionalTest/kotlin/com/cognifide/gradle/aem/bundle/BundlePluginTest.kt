@@ -12,7 +12,8 @@ class BundlePluginTest : AemBuildTest() {
         val projectDir = prepareProject("bundle-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.bundle")
                 }
@@ -23,7 +24,8 @@ class BundlePluginTest : AemBuildTest() {
                     compileOnly("org.slf4j:slf4j-api:1.5.10")
                     compileOnly("org.osgi:osgi.cmpn:6.0.0")
                 }
-                """)
+                """
+            )
 
             helloServiceJava()
         }
@@ -31,7 +33,9 @@ class BundlePluginTest : AemBuildTest() {
         runBuild(projectDir, "jar", "-Poffline") {
             assertTask(":jar")
             assertBundle("build/libs/bundle-minimal.jar")
-            assertZipEntryEquals("build/libs/bundle-minimal.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
+            assertZipEntryEquals(
+                "build/libs/bundle-minimal.jar", "OSGI-INF/com.company.example.aem.HelloService.xml",
+                """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
@@ -39,7 +43,8 @@ class BundlePluginTest : AemBuildTest() {
                   </service>
                   <implementation class="com.company.example.aem.HelloService"/>
                 </scr:component>
-            """)
+            """
+            )
         }
     }
 
@@ -48,7 +53,8 @@ class BundlePluginTest : AemBuildTest() {
         val projectDir = prepareProject("bundle-extended") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 import com.cognifide.gradle.aem.bundle.tasks.bundle
                 
                 plugins {
@@ -92,7 +98,8 @@ class BundlePluginTest : AemBuildTest() {
                         }
                     }
                 }
-                """)
+                """
+            )
 
             helloServiceJava()
         }
@@ -117,7 +124,8 @@ class BundlePluginTest : AemBuildTest() {
         val projectDir = prepareProject("bundle-embed") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 import com.cognifide.gradle.aem.bundle.tasks.bundle
                 
                 plugins {
@@ -138,7 +146,8 @@ class BundlePluginTest : AemBuildTest() {
                         }
                     }
                 }
-                """)
+                """
+            )
 
             helloServiceJava()
         }

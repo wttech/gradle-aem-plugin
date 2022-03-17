@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks.sync
 
-import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.aem.common.pkg.vault.VaultException
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 
 class CleanerRule(value: String) {
