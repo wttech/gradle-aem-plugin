@@ -107,7 +107,7 @@ class PackagePluginTest : AemBuildTest() {
     }
 
     @Test
-    @Disabled // TODO does not work since Gradle 7.x or Kotlin 15.x
+    @Disabled // TODO https://github.com/wttech/gradle-aem-plugin/issues/884
     fun `should build assembly package with content and bundles merged`() {
         val projectDir = prepareProject("package-assembly") {
             settingsGradle(
@@ -133,6 +133,9 @@ class PackagePluginTest : AemBuildTest() {
                     id("com.cognifide.aem.package")
                     id("maven-publish")
                 }
+                
+                evaluationDependsOn(":ui.apps")
+                evaluationDependsOn(":ui.content")
                 
                 group = "com.company.example.aem"
                 

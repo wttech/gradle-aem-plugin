@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
+import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.Bundle
@@ -11,7 +11,9 @@ import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.configureApply
+import org.gradle.api.Action
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.bundling.Jar
@@ -64,7 +66,11 @@ class BundlePlugin : CommonDefaultPlugin() {
             val jar = named<Jar>(JavaPlugin.JAR_TASK_NAME) {
                 val bundle = BundleJar(this).also { convention.plugins[CONVENTION_PLUGIN] = it }
                 bundle.applyDefaults()
-                doLast { bundle.runBndTool() }
+                doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
+                    override fun execute(task: Task) {
+                        bundle.runBndTool()
+                    }
+                })
             }.apply {
                 afterEvaluate { configureApply { convention.getPlugin(BundleJar::class.java).applyEvaluated() } }
             }

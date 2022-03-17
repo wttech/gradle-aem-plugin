@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.test.AemBuildTest
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
 
 @Suppress("LongMethod", "MaxLineLength")
@@ -109,7 +110,7 @@ class BundlePluginTest : AemBuildTest() {
         }
 
         runBuild(projectDir, "publish", "-Poffline") {
-            assertTask(":jar" /*, TODO TaskOutcome.UP_TO_DATE */)
+            assertTask(":jar", TaskOutcome.UP_TO_DATE)
 
             val mavenDir = projectDir.resolve("build/repository/com/company/example/bundle-extended/1.0.0")
             assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.jar"))

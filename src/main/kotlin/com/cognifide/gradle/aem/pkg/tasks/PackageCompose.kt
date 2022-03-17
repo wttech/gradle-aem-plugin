@@ -123,7 +123,10 @@ open class PackageCompose : ZipTask(), AemTask {
 
     override fun projectsEvaluated() {
         super.projectsEvaluated()
-        (definitions + definition).forEach { it() }
+
+        // TODO https://github.com/wttech/gradle-aem-plugin/issues/884
+        definitions.forEach { it() }
+        definition()
     }
 
     fun fromDefaults() {
@@ -231,7 +234,10 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
         dependsOn(task)
-        definitions.add { task.get().merging(this) }
+        definitions.add {
+            logger.info("Defining package merging for task '${task.get().path}'")
+            task.get().merging(this)
+        }
     }
 
     fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
@@ -251,7 +257,10 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
         dependsOn(task)
-        definitions.add { packagesNested.add(PackageNestedBuilt(this, task).apply(options)) }
+        definitions.add {
+            logger.info("Defining package nesting for task '${task.get().path}'")
+            packagesNested.add(PackageNestedBuilt(this, task).apply(options))
+        }
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
@@ -275,6 +284,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     private var definition: () -> Unit = {
+        logger.info("Defining package using defaults '${path}'")
         fromDefaults()
     }
 
