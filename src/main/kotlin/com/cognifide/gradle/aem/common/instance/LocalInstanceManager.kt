@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.pluginProject

@@ -20,6 +20,8 @@ import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.common.utils.ProcessKiller
 import com.cognifide.gradle.aem.common.utils.WebBrowser
+import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose

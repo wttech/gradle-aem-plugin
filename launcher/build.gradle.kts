@@ -12,7 +12,7 @@ defaultTasks("build", "publishToMavenLocal")
 repositories {
     mavenLocal()
     mavenCentral()
-    maven("https://repo.gradle.org/gradle/libs-releases-local")
+    maven("https://repo.gradle.org/gradle/libs-releases")
 }
 
 val functionalTestSourceSet = sourceSets.create("functionalTest")
@@ -23,7 +23,7 @@ configurations.getByName("functionalTestImplementation").apply {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.gradle:gradle-tooling-api:6.8")
+    implementation("org.gradle:gradle-tooling-api:7.4-rc-1")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
 
     "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.3.2")
@@ -32,9 +32,17 @@ dependencies {
 }
 
 tasks {
-    withType<KotlinCompile>().configureEach {
-        kotlinOptions.jvmTarget = "1.8"
+    withType<JavaCompile>().configureEach{
+        sourceCompatibility = JavaVersion.VERSION_11.toString()
+        targetCompatibility = JavaVersion.VERSION_11.toString()
     }
+
+    withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = JavaVersion.VERSION_11.toString()
+        }
+    }
+
     val buildProperties = register("buildProperties") {
         val properties = """
             pluginVersion=${project.version}

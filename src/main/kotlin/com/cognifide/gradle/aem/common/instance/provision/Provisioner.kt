@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.provision.step.*
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver

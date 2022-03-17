@@ -1,6 +1,10 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.action.CheckAction
+import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.InstancePlugin
