@@ -28,13 +28,15 @@ class ReplicationAgent(val page: Node) {
         transportUser: String? = null,
         transportPassword: String? = null,
         userId: String? = null
-    ) = configure(mapOf(
+    ) = configure(
+        mapOf(
             "enabled" to enabled,
             "transportUri" to transportUri,
             "transportUser" to transportUser,
             "transportPassword" to transportPassword,
             "userId" to userId
-    ).filterNotNull())
+        ).filterNotNull()
+    )
 
     fun configure(instance: Instance, enabled: Boolean = true) = configure(
         enabled, "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
@@ -44,15 +46,19 @@ class ReplicationAgent(val page: Node) {
     fun configure(propName: String, propValue: Any?) = configure(mapOf(propName to propValue))
 
     fun configure(props: Map<String, Any?>) {
-        if (!page.exists) page.save(mapOf(
+        if (!page.exists) page.save(
+            mapOf(
                 "jcr:primaryType" to "cq:Page"
-        ))
-        pageContent.save(if (!pageContent.exists) mapOf(
+            )
+        )
+        pageContent.save(
+            if (!pageContent.exists) mapOf(
                 "jcr:primaryType" to "nt:unstructured",
                 "jcr:title" to name.capitalizeChar(),
                 "sling:resourceType" to "cq/replication/components/agent",
                 "cq:template" to "/libs/cq/replication/templates/agent"
-        ) + props else props)
+            ) + props else props
+        )
     }
 
     fun delete() = page.delete()

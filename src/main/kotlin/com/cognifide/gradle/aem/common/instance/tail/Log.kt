@@ -23,15 +23,15 @@ class Log(
 
     val cause: String
         get() = message.splitToSequence("\n").firstOrNull()?.run { trim() }
-                ?.substringAfter(" ")?.capitalizeChar() ?: ""
+            ?.substringAfter(" ")?.capitalizeChar() ?: ""
 
     val logWithLocalTimestamp: String
         get() =
             "[${info.name.padEnd(13)}]" +
-                    "$LOGS_SEPARATOR${timestamp.toLocalDateTime().format(PRINT_DATE_TIME_FORMATTER)}" +
-                    "$LOGS_SEPARATOR${level.padEnd(5)}" +
-                    "$LOGS_SEPARATOR$source" +
-                    "$LOGS_SEPARATOR$message"
+                "$LOGS_SEPARATOR${timestamp.toLocalDateTime().format(PRINT_DATE_TIME_FORMATTER)}" +
+                "$LOGS_SEPARATOR${level.padEnd(5)}" +
+                "$LOGS_SEPARATOR$source" +
+                "$LOGS_SEPARATOR$message"
 
     fun isLevel(vararg levels: String) = isLevel(levels.asIterable())
 
@@ -75,12 +75,12 @@ class Log(
                     val (timestamp, level, source, message) = result.destructured
                     val followingMessageLines = logLines.slice(1 until logLines.size)
                     return Log(
-                            info,
-                            fullLog,
-                            parseTimestamp(timestamp, info),
-                            level,
-                            source,
-                            listOf(message) + followingMessageLines
+                        info,
+                        fullLog,
+                        parseTimestamp(timestamp, info),
+                        level,
+                        source,
+                        listOf(message) + followingMessageLines
                     )
                 }
             }
@@ -90,8 +90,10 @@ class Log(
 
         fun parseTimestamp(timestamp: String, logInfo: LogInfo = NoLogInfo()): ZonedDateTime {
             return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER).atZone(logInfo.zoneId)
-                    ?: throw TailerException("Invalid timestamp in log:\n$timestamp" +
-                            "\n required format: $DATE_TIME_FORMATTER")
+                ?: throw TailerException(
+                    "Invalid timestamp in log:\n$timestamp" +
+                        "\n required format: $DATE_TIME_FORMATTER"
+                )
         }
 
         private fun matchLogLine(text: String) = LOG_PATTERN.toRegex().matchEntire(text)

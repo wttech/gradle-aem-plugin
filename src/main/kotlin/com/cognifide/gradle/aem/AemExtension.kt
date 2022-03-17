@@ -7,34 +7,33 @@ import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.instance.*
-import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
+import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
+import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
+import com.cognifide.gradle.aem.common.mvn.MvnBuild
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
-import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
-import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
-import com.cognifide.gradle.aem.common.mvn.MvnBuild
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.common.utils.ProcessKiller
 import com.cognifide.gradle.aem.common.utils.WebBrowser
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.pluginProjects
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.capitalizeChar
 import com.cognifide.gradle.common.utils.using
-import java.io.File
-import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
+import java.io.File
+import java.io.Serializable
 
 /**
  * Core of library, facade for implementing tasks.
@@ -115,8 +114,8 @@ class AemExtension(val project: Project) : Serializable {
      * Use with caution as of this property is eagerly configuring all tasks building bundles.
      */
     val bundlesBuilt: List<Jar> get() = project.pluginProjects(BundlePlugin.ID)
-            .flatMap { p -> p.common.tasks.getAll<Jar>() }
-            .filter { jar -> jar.convention.plugins.containsKey(BundlePlugin.CONVENTION_PLUGIN) }
+        .flatMap { p -> p.common.tasks.getAll<Jar>() }
+        .filter { jar -> jar.convention.plugins.containsKey(BundlePlugin.CONVENTION_PLUGIN) }
 
     /**
      * Collection of Vault definitions from all packages from all projects applying package plugin.
@@ -124,7 +123,7 @@ class AemExtension(val project: Project) : Serializable {
      * Use with caution as of this property is eagerly configuring all tasks building packages.
      */
     val packagesBuilt: List<PackageCompose> get() = project.pluginProjects(PackagePlugin.ID)
-            .flatMap { p -> p.common.tasks.getAll<PackageCompose>() }
+        .flatMap { p -> p.common.tasks.getAll<PackageCompose>() }
 
     /**
      * Java package of built bundle (if project is applying bundle plugin).
@@ -207,7 +206,7 @@ class AemExtension(val project: Project) : Serializable {
      */
     fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = commonOptions.envFilter): Instance {
         return findInstance(desiredName, defaultName)
-                ?: throw AemException("Instance named '${desiredName ?: defaultName}' is not defined.")
+            ?: throw AemException("Instance named '${desiredName ?: defaultName}' is not defined.")
     }
 
     /**
@@ -238,7 +237,7 @@ class AemExtension(val project: Project) : Serializable {
     val authorInstances: List<Instance> get() = filterInstances().filter { it.author }
 
     val authorInstance: Instance get() = authorInstances.firstOrNull()
-            ?: throw AemException("No author instances defined!")
+        ?: throw AemException("No author instances defined!")
 
     /**
      * Work in parallel with all author instances running on current environment.
@@ -251,7 +250,7 @@ class AemExtension(val project: Project) : Serializable {
     val publishInstances: List<Instance> get() = filterInstances().filter { it.publish }
 
     val publishInstance: Instance get() = publishInstances.firstOrNull()
-            ?: throw AemException("No publish instances defined!")
+        ?: throw AemException("No publish instances defined!")
 
     /**
      * Work in parallel with all publish instances running on current environment.
@@ -447,17 +446,17 @@ class AemExtension(val project: Project) : Serializable {
         const val NAME = "aem"
 
         private val PLUGIN_IDS = listOf(
-                CommonPlugin.ID,
-                PackagePlugin.ID,
-                PackageSyncPlugin.ID,
-                BundlePlugin.ID,
-                InstancePlugin.ID,
-                LocalInstancePlugin.ID
+            CommonPlugin.ID,
+            PackagePlugin.ID,
+            PackageSyncPlugin.ID,
+            BundlePlugin.ID,
+            InstancePlugin.ID,
+            LocalInstancePlugin.ID
         )
 
         fun of(project: Project): AemExtension {
             return project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException("${project.displayName.capitalizeChar()} must have at least one of following plugins applied: $PLUGIN_IDS")
+                ?: throw AemException("${project.displayName.capitalizeChar()} must have at least one of following plugins applied: $PLUGIN_IDS")
         }
     }
 }

@@ -9,27 +9,31 @@ class ModuleResolver(val build: MvnBuild) {
 
     val all = aem.obj.list<ModuleDescriptor> {
         finalizeValueOnRead()
-        set(aem.project.provider {
-            when {
-                build.available -> aem.project.fileTree(build.rootDir).matching(pomFilter).files.map { pom ->
-                    ModuleDescriptor(this@ModuleResolver, typeResolver(pom), pom)
+        set(
+            aem.project.provider {
+                when {
+                    build.available -> aem.project.fileTree(build.rootDir).matching(pomFilter).files.map { pom ->
+                        ModuleDescriptor(this@ModuleResolver, typeResolver(pom), pom)
+                    }
+                    else -> listOf()
                 }
-                else -> listOf()
             }
-        })
+        )
     }
 
     val pomExclusions = aem.obj.strings {
-        set(listOf(
-            "**/test/**",
-            "**/tests/**",
-            "**/*.test/**",
-            "**/*-test/**",
-            "**/*.tests/**",
-            "**/*-tests/**",
-            "**/pipeline/**",
-            "**/pipelines/**"
-        ))
+        set(
+            listOf(
+                "**/test/**",
+                "**/tests/**",
+                "**/*.test/**",
+                "**/*-test/**",
+                "**/*.tests/**",
+                "**/*-tests/**",
+                "**/pipeline/**",
+                "**/pipelines/**"
+            )
+        )
         aem.prop.list("mvnBuild.moduleResolver.pomExclusions")?.let { set(it) }
     }
 
@@ -53,10 +57,12 @@ class ModuleResolver(val build: MvnBuild) {
 
     fun byArtifact(notation: String) = byArtifact(Artifact(notation))
 
-    fun byArtifact(artifact: Artifact) = findByArtifact(artifact) ?: throw MvnException(listOf(
-        "Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!",
-        "Consider regenerating a dependency graph file '${build.depGraph.dotFile.get().asFile}' by deleting it."
-    ).joinToString("\n"))
+    fun byArtifact(artifact: Artifact) = findByArtifact(artifact) ?: throw MvnException(
+        listOf(
+            "Cannot find module for artifact '${artifact.notation}' in Maven build at path '$rootDir'!",
+            "Consider regenerating a dependency graph file '${build.depGraph.dotFile.get().asFile}' by deleting it."
+        ).joinToString("\n")
+    )
 
     fun dependency(nameFrom: String, nameTo: String) = Dependency(byName(nameFrom).artifact, byName(nameTo).artifact)
 
@@ -100,7 +106,7 @@ class ModuleResolver(val build: MvnBuild) {
     }
 
     fun isJar(pom: File) = pom.parentFile.resolve("src/main/java").exists() ||
-            pom.readText().contains("<packaging>bundle</packaging>")
+        pom.readText().contains("<packaging>bundle</packaging>")
 
     fun isFrontend(pom: File) = pom.parentFile.resolve("clientlib.config.js").exists()
 

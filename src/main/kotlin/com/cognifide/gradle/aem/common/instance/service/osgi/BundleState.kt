@@ -66,15 +66,15 @@ class BundleState private constructor() {
         other as BundleState
 
         return EqualsBuilder()
-                .append(bundles, other.bundles)
-                .append(stats, other.stats)
-                .isEquals
+            .append(bundles, other.bundles)
+            .append(stats, other.stats)
+            .isEquals
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(bundles)
-            .append(stats)
-            .toHashCode()
+        .append(bundles)
+        .append(stats)
+        .toHashCode()
 
     override fun toString(): String = "BundleState(instance='${instance.name}', status='$status')"
 

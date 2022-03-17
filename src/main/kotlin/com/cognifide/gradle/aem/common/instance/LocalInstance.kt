@@ -12,8 +12,8 @@ import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
-import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import java.io.File
 import java.io.FileFilter
 
@@ -48,7 +48,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     private val jvmDebugOpt: String get() = when {
-          localManager.javaLauncher.get().metadata.languageVersion >= JavaLanguageVersion.of(9) ->
+        localManager.javaLauncher.get().metadata.languageVersion >= JavaLanguageVersion.of(9) ->
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
         else ->
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
@@ -56,7 +56,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     var jvmOpts: List<String> = listOf(
-            "-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true"
+        "-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true"
     )
 
     @get:JsonProperty("jvmOpts")
@@ -110,7 +110,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     val pid: Int get() = pidFile.takeIf { it.exists() }?.readText()
-            ?.trim()?.ifBlank { null }?.toInt() ?: 0
+        ?.trim()?.ifBlank { null }?.toInt() ?: 0
 
     @get:JsonIgnore
     val logsDir: File get() = quickstartDir.resolve("logs")
@@ -185,10 +185,10 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     private val quickstartJar get() = localManager.quickstart.jar?.takeIf { it.exists() }
-            ?: throw LocalInstanceException("Instance JAR file not found! Is instance JAR URL configured?")
+        ?: throw LocalInstanceException("Instance JAR file not found! Is instance JAR URL configured?")
 
     private val quickstartLicense get() = localManager.quickstart.license?.takeIf { it.exists() }
-            ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
+        ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
 
     @get:JsonIgnore
     val localManager: LocalInstanceManager get() = aem.localInstanceManager
@@ -209,24 +209,24 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
             // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
             result = result.replace(
-                    "timeout /T 1 /NOBREAK >nul",
-                    "ping 127.0.0.1 -n 3 > nul"
+                "timeout /T 1 /NOBREAK >nul",
+                "ping 127.0.0.1 -n 3 > nul"
             )
 
             // Force AEM to be launched in background
             result = result.replace(
-                    "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
+                "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM <= 6.2
             result = result.replace(
-                    "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
+                "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
             result = result.replace(
-                    "set START_OPTS=start -c %CurrDirName% -i launchpad",
-                    "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%"
+                "set START_OPTS=start -c %CurrDirName% -i launchpad",
+                "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%"
             )
 
             result
@@ -237,8 +237,8 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
             result = result.replace(
-                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
-                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
+                "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
+                "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
             )
 
             result
@@ -246,15 +246,18 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
         // Use java executable path explicitly to make instance working even when running from non-interactive shells (e.g as systemd service).
         aem.project.fileTree(dir)
-                .matching { it.include(localManager.executableFiles.get()) }
-                .forEach { file ->
-                    FileOperations.amendFile(file) {
-                        it.replace("java ", when (file.extension) {
+            .matching { it.include(localManager.executableFiles.get()) }
+            .forEach { file ->
+                FileOperations.amendFile(file) {
+                    it.replace(
+                        "java ",
+                        when (file.extension) {
                             "bat" -> "%JAVA_EXECUTABLE% "
                             else -> "\$JAVA_EXECUTABLE "
-                        })
-                    }
+                        }
+                    )
                 }
+            }
 
         // Ensure that 'logs' directory exists
         logsDir.mkdirs()
@@ -316,17 +319,17 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     private fun expandFiles() {
         val propertiesAll = mapOf(
-                "instance" to this,
-                "service" to localManager.serviceComposer
+            "instance" to this,
+            "service" to localManager.serviceComposer
         ) + properties + localManager.expandProperties.get()
 
         aem.project.fileTree(dir)
-                .matching { it.include(localManager.expandFiles.get()) }
-                .forEach { file ->
-                    FileOperations.amendFile(file) { content ->
-                        aem.prop.expand(content, propertiesAll, file.absolutePath)
-                    }
+            .matching { it.include(localManager.expandFiles.get()) }
+            .forEach { file ->
+                FileOperations.amendFile(file) { content ->
+                    aem.prop.expand(content, propertiesAll, file.absolutePath)
                 }
+            }
     }
 
     private fun copyInstallFiles() {

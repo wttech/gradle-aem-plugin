@@ -14,8 +14,10 @@ class AemPlugin : Serializable {
         const val PKG = "com.cognifide.gradle.aem"
 
         val BUILD by lazy {
-            fromJson(AemPlugin::class.java.getResourceAsStream("/build.json")
-                    .bufferedReader().use { it.readText() })
+            fromJson(
+                AemPlugin::class.java.getResourceAsStream("/build.json")
+                    .bufferedReader().use { it.readText() }
+            )
         }
 
         const val ID = "gradle-aem-plugin"

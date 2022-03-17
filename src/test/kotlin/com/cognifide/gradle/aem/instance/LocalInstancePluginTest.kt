@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
 import com.cognifide.gradle.aem.instance.tasks.InstanceDown
+import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
 import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.PackagePlugin

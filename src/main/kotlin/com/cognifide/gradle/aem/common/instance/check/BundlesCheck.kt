@@ -21,8 +21,8 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
 
         if (state.unknown) {
             statusLogger.error(
-                    "Bundles unknown",
-                    "Unknown bundle state on $instance"
+                "Bundles unknown",
+                "Unknown bundle state on $instance"
             )
             return
         }
@@ -30,12 +30,12 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
         val unstable = state.bundlesExcept(symbolicNamesIgnored.get()).filter { !it.stable }
         if (unstable.isNotEmpty()) {
             statusLogger.error(
-                    when (unstable.size) {
-                        1 -> "Bundle unstable '${unstable.first().symbolicName.shortenClass()}'"
-                        in 2..10 -> "Bundles unstable (${unstable.size})"
-                        else -> "Bundles stable (${state.stablePercent})"
-                    },
-                    "Unstable bundles detected (${unstable.size}) on $instance:\n${logValues(unstable)}"
+                when (unstable.size) {
+                    1 -> "Bundle unstable '${unstable.first().symbolicName.shortenClass()}'"
+                    in 2..10 -> "Bundles unstable (${unstable.size})"
+                    else -> "Bundles stable (${state.stablePercent})"
+                },
+                "Unstable bundles detected (${unstable.size}) on $instance:\n${logValues(unstable)}"
             )
         }
     }

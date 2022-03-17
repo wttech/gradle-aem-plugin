@@ -42,19 +42,21 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
      * ZIP file name
      */
     val archiveFileName = aem.obj.string {
-        convention(aem.obj.provider {
-            listOf(archiveBaseName.orNull, archiveAppendix.orNull, archiveVersion.orNull, archiveClassifier.orNull)
+        convention(
+            aem.obj.provider {
+                listOf(archiveBaseName.orNull, archiveAppendix.orNull, archiveVersion.orNull, archiveClassifier.orNull)
                     .filter { !it.isNullOrBlank() }
                     .joinToString("-")
                     .run { "$this.${archiveExtension.get()}" }
-        })
+            }
+        )
     }
 
     /**
      * Temporary directory being zipped to produce CRX package.
      */
     val pkgDir: File get() = archivePath.get().asFile.parentFile
-            .resolve("${archivePath.get().asFile.nameWithoutExtension}.pkg")
+        .resolve("${archivePath.get().asFile.nameWithoutExtension}.pkg")
 
     val metaDir: File get() = pkgDir.resolve(Package.META_PATH)
 

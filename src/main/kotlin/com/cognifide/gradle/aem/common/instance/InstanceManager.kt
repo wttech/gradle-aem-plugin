@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.instance.action.*
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.InstancePlugin
@@ -23,12 +22,14 @@ open class InstanceManager(val aem: AemExtension) {
      * Needed to determine common directory storing instance related resources (tailer incident filter, Groovy scripts etc).
      */
     val projectDir = aem.obj.dir {
-        convention(aem.obj.provider {
-            project.pluginProject(InstancePlugin.ID)?.layout?.projectDirectory ?: throw InstanceException(
+        convention(
+            aem.obj.provider {
+                project.pluginProject(InstancePlugin.ID)?.layout?.projectDirectory ?: throw InstanceException(
                     "Using remote AEM instances requires having at least one project applying plugin '${InstancePlugin.ID}'" +
-                    " or setting property 'instance.projectDir'!"
-            )
-        })
+                        " or setting property 'instance.projectDir'!"
+                )
+            }
+        )
         aem.prop.string("instance.projectDir")?.let { set(project.rootProject.file(it)) }
     }
 
@@ -74,13 +75,15 @@ open class InstanceManager(val aem: AemExtension) {
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
     val defined = aem.obj.list<Instance> {
-        convention(aem.obj.provider {
-            val fromCmd = aem.prop.string("instance.list")?.let {
-                factory.parse(it) { env = Instance.ENV_CMD }
-            } ?: listOf()
-            val fromProperties = factory.parseProperties()
-            (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }
-        })
+        convention(
+            aem.obj.provider {
+                val fromCmd = aem.prop.string("instance.list")?.let {
+                    factory.parse(it) { env = Instance.ENV_CMD }
+                } ?: listOf()
+                val fromProperties = factory.parseProperties()
+                (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }
+            }
+        )
     }
 
     /**
@@ -225,7 +228,8 @@ open class InstanceManager(val aem: AemExtension) {
 
         val unavailable = instances.filter { !it.available }
         if (unavailable.isNotEmpty()) {
-            throw InstanceException("Some instances (${unavailable.size}) are unavailable:\n" +
+            throw InstanceException(
+                "Some instances (${unavailable.size}) are unavailable:\n" +
                     unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
                     "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
             )

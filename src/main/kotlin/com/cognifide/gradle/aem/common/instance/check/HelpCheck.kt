@@ -16,10 +16,12 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
      * Bundle with these states are considered for forcing start.
      */
     val bundleStartStates = aem.obj.strings {
-        convention(listOf(
+        convention(
+            listOf(
                 Bundle.STATE_RESOLVED,
                 Bundle.STATE_INSTALLED
-        ))
+            )
+        )
     }
 
     /**
@@ -61,19 +63,21 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
                 }
             }
         } catch (e: HelpException) {
-            logger.warn("Bundles (${startable.size}) cannot be started automatically on $instance:\n" +
-                    startable.joinToString("\n"))
+            logger.warn(
+                "Bundles (${startable.size}) cannot be started automatically on $instance:\n" +
+                    startable.joinToString("\n")
+            )
         }
     }
 
     private fun ignoredBundles() = group.checks.filterIsInstance<BundlesCheck>()
-            .firstOrNull()?.symbolicNamesIgnored?.get()
-            ?: listOf<String>()
+        .firstOrNull()?.symbolicNamesIgnored?.get()
+        ?: listOf<String>()
 
     private fun InstanceSync.startableBundles(): List<Bundle> = osgi.bundles.asSequence()
-            .filter { !ignoredBundles().contains(it.symbolicName) }
-            .filter { !it.fragment && bundleStartStates.get().contains(it.state) }
-            .toList()
+        .filter { !ignoredBundles().contains(it.symbolicName) }
+        .filter { !it.fragment && bundleStartStates.get().contains(it.state) }
+        .toList()
 
     private fun InstanceSync.startBundles(bundles: List<Bundle>) {
         common.parallel.poolEach(bundles) { startBundle(it) }

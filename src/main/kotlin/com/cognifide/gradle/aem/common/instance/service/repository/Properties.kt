@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.utils.JcrUtil
-import com.cognifide.gradle.aem.common.instance.service.repository.Node as Base
 import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.text.ParseException
 import java.util.*
+import com.cognifide.gradle.aem.common.instance.service.repository.Node as Base
 
 /**
  * Provides easy conversion of properties to desired types.

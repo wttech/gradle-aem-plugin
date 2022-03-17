@@ -39,16 +39,17 @@ class InstallResponse private constructor(private val rawHtml: String) : HtmlRes
         private const val INSTALL_SUCCESS_WITH_ERRORS = "<span class=\"Package imported (with errors"
 
         private val ERROR_PATTERN: Pattern = Pattern.compile(
-                "<span class=\"E\"><b>E</b>&nbsp;(.+\\s??.+)</span>", Pattern.DOTALL
+            "<span class=\"E\"><b>E</b>&nbsp;(.+\\s??.+)</span>", Pattern.DOTALL
         )
 
         private val PROCESSING_ERROR_PATTERN: Pattern = Pattern.compile(
-                "<span class=\"error\">(.+)</span><br><code><pre>([\\s\\S]+)</pre>", Pattern.DOTALL
+            "<span class=\"error\">(.+)</span><br><code><pre>([\\s\\S]+)</pre>", Pattern.DOTALL
         )
 
         private val ERROR_PATTERNS = listOf(
-                ErrorPattern(PROCESSING_ERROR_PATTERN, true),
-                ErrorPattern(ERROR_PATTERN, false))
+            ErrorPattern(PROCESSING_ERROR_PATTERN, true),
+            ErrorPattern(ERROR_PATTERN, false)
+        )
 
         private val STATUS_TAGS = listOf(INSTALL_SUCCESS, INSTALL_SUCCESS_WITH_ERRORS)
 

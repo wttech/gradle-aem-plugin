@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.Package
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
-import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.checkForce
 import com.cognifide.gradle.common.tasks.configureApply

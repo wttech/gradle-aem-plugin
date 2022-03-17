@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.provision.step.*
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
@@ -83,10 +82,12 @@ class Provisioner(val manager: InstanceManager) {
      * Define custom provision step.
      */
     fun step(id: String, options: CustomStep.() -> Unit) {
-        steps.add(CustomStep(this).apply {
-            this.id.set(id)
-            options()
-        })
+        steps.add(
+            CustomStep(this).apply {
+                this.id.set(id)
+                options()
+            }
+        )
     }
 
     /**
@@ -196,9 +197,9 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     private fun stepsFor(instances: Collection<Instance>) = steps
-            .filter { Patterns.wildcard(it.id.get(), stepName.get()) }
-            .map { step -> step to instances.map { InstanceStep(it, step) } }
-            .toMap()
+        .filter { Patterns.wildcard(it.id.get(), stepName.get()) }
+        .map { step -> step to instances.map { InstanceStep(it, step) } }
+        .toMap()
 
     // Predefined steps
 
@@ -285,10 +286,12 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     fun configureCrypto(options: ConfigureCryptoStep.() -> Unit) {
-        steps.add(ConfigureCryptoStep(this).apply {
-            condition { onLocal() && once() }
-            options()
-        })
+        steps.add(
+            ConfigureCryptoStep(this).apply {
+                condition { onLocal() && once() }
+                options()
+            }
+        )
     }
 
     fun configureCrypto(hmac: Any, master: Any, options: ConfigureCryptoStep.() -> Unit = {}) = configureCrypto {

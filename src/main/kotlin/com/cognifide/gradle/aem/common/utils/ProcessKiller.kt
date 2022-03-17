@@ -30,12 +30,12 @@ class ProcessKiller(private val aem: AemExtension) {
             val args = allArgs.drop(1) + pid.toString()
 
             ProcBuilder(executable, *args.toTypedArray())
-                    .withWorkingDirectory(aem.project.projectDir)
-                    .withTimeoutMillis(TimeUnit.SECONDS.toMillis(10))
-                    .withExpectedExitStatuses(0)
-                    .apply(this.options)
-                    .apply(options)
-                    .run()
+                .withWorkingDirectory(aem.project.projectDir)
+                .withTimeoutMillis(TimeUnit.SECONDS.toMillis(10))
+                .withExpectedExitStatuses(0)
+                .apply(this.options)
+                .apply(options)
+                .run()
         } catch (e: Exception) {
             throw AemException("Instance killing failed for PID '$pid'! Cause: ${e.message}", e)
         }

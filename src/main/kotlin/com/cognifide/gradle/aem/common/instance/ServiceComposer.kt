@@ -94,14 +94,14 @@ class ServiceComposer(val manager: LocalInstanceManager) {
      * Effective values (shorthand)
      */
     val opts get() = mapOf(
-            "dir" to configDir.get().asFile,
-            "user" to user.orNull,
-            "group" to group.orNull,
-            "limitNoFile" to limitNoFile.orNull,
-            "environmentCommand" to environmentCommand.orNull,
-            "startCommand" to startCommand.orNull,
-            "stopCommand" to stopCommand.orNull,
-            "statusCommand" to statusCommand.orNull
+        "dir" to configDir.get().asFile,
+        "user" to user.orNull,
+        "group" to group.orNull,
+        "limitNoFile" to limitNoFile.orNull,
+        "environmentCommand" to environmentCommand.orNull,
+        "startCommand" to startCommand.orNull,
+        "stopCommand" to stopCommand.orNull,
+        "statusCommand" to statusCommand.orNull
     )
 
     fun compose() {

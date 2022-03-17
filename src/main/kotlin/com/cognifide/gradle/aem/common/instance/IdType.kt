@@ -33,7 +33,7 @@ enum class IdType {
 
         fun byId(id: String): IdType {
             return values().find { id.startsWith(it.name, ignoreCase = true) }
-                    ?: throw AemException("Invalid instance ID '$id'! Must start with prefix 'author' or 'publish'.")
+                ?: throw AemException("Invalid instance ID '$id'! Must start with prefix 'author' or 'publish'.")
         }
 
         fun byUrl(url: String): IdType {

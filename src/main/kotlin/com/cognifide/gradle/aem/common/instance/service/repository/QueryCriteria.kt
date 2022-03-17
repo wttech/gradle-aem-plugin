@@ -17,10 +17,12 @@ class QueryCriteria : QueryParams(false) {
         this.params.putAll(params.mapKeys { "${index}_group.${it.key}" })
     }
 
-    private val groupIndex: Int get() = (params.keys
+    private val groupIndex: Int get() = (
+        params.keys
             .filter { it.matches(Regex("^\\d+_group\\..*")) }
             .map { it.split("_")[0].toInt() }
-            .maxOrNull() ?: 0) + 1
+            .maxOrNull() ?: 0
+        ) + 1
 
     // Multi-value shorthands
 
@@ -82,7 +84,7 @@ class QueryCriteria : QueryParams(false) {
     // Rest
 
     val queryString get() = (params + FORCED_PARAMS).entries
-            .joinToString("&") { (k, v) -> "$k=$v" }
+        .joinToString("&") { (k, v) -> "$k=$v" }
 
     fun copy() = QueryCriteria().apply { params.putAll(this@QueryCriteria.params) }
 
@@ -100,8 +102,8 @@ class QueryCriteria : QueryParams(false) {
         const val LIMIT_DEFAULT = 100
 
         private val FORCED_PARAMS = mapOf(
-                "p.guessTotal" to "true",
-                "p.hits" to "full"
+            "p.guessTotal" to "true",
+            "p.hits" to "full"
         )
     }
 }

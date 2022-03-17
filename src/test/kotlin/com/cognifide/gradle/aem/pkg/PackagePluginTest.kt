@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.aem.test.AemTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

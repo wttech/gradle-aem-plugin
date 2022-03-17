@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.pkg.tasks.compose.*
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.using
 import org.apache.commons.lang3.StringUtils
@@ -234,10 +233,12 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun mergePackage(taskPath: String) {
         if (GradleVersion.current() >= GradleVersion.version("7.0")) {
-            throw IllegalStateException(listOf(
-                "Merging packages does not work properly since Gradle 7.x.",
-                "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
-            ).joinToString("\n"))
+            throw IllegalStateException(
+                listOf(
+                    "Merging packages does not work properly since Gradle 7.x.",
+                    "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
+                ).joinToString("\n")
+            )
         }
 
         mergePackage(common.tasks.pathed(taskPath))
@@ -295,7 +296,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     private var definition: () -> Unit = {
-        logger.info("Defining package using defaults '${path}'")
+        logger.info("Defining package using defaults '$path'")
         fromDefaults()
     }
 

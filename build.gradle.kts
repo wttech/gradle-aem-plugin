@@ -6,7 +6,7 @@ plugins {
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "1.5.31"
     id("com.gradle.plugin-publish") version "0.11.0"
-    id("io.gitlab.arturbosch.detekt") version "1.19.0"
+    id("io.gitlab.arturbosch.detekt") version "1.20.0-RC1"
     id("net.researchgate.release") version "2.8.1"
     id("com.github.breadmoirai.github-release") version "2.2.10"
     id("com.neva.fork") version "5.0.0"
@@ -34,7 +34,7 @@ dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.20.0-RC1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     implementation("com.cognifide.gradle:common-plugin:1.1.0")
 

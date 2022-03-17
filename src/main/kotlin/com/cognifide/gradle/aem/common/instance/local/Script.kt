@@ -2,12 +2,12 @@ package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.instance.LocalInstanceException
-import java.io.File
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import org.buildobjects.process.ProcResult
 import org.buildobjects.process.TimeoutException
 import org.gradle.process.internal.streams.SafeStreams
+import java.io.File
 
 @Suppress("SpreadOperator", "TooGenericExceptionCaught")
 class Script(val instance: LocalInstance, val shellCommand: List<String>, val wrapper: File, val bin: File) {
@@ -30,13 +30,13 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
             logger.info("Executing script '$commandString' at directory '${instance.dir}'")
 
             ProcBuilder(command, *args.toTypedArray())
-                    .withWorkingDirectory(instance.dir)
-                    .withExpectedExitStatuses(0)
-                    .withInputStream(SafeStreams.emptyInput())
-                    .withOutputStream(SafeStreams.systemOut())
-                    .withErrorStream(SafeStreams.systemOut())
-                    .apply(options)
-                    .run()
+                .withWorkingDirectory(instance.dir)
+                .withExpectedExitStatuses(0)
+                .withInputStream(SafeStreams.emptyInput())
+                .withOutputStream(SafeStreams.systemOut())
+                .withErrorStream(SafeStreams.systemOut())
+                .apply(options)
+                .run()
         } catch (e: Exception) {
             throw handleException(e)
         }
@@ -46,18 +46,21 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
         logger.debug("Executing script '$commandString' at directory '${instance.dir}'")
 
         ProcBuilder(command, *args.toTypedArray())
-                .withWorkingDirectory(instance.dir)
-                .ignoreExitStatus()
-                .apply(options)
-                .run()
+            .withWorkingDirectory(instance.dir)
+            .ignoreExitStatus()
+            .apply(options)
+            .run()
     } catch (e: Exception) {
         throw handleException(e)
     }
 
     private fun handleException(e: Exception): LocalInstanceException {
         return when (e) {
-            is ExternalProcessFailureException -> LocalInstanceException("Local instance script failure: $this! " +
-                    "Error: '${e.stderr}', exit code: '${e.exitValue}'", e)
+            is ExternalProcessFailureException -> LocalInstanceException(
+                "Local instance script failure: $this! " +
+                    "Error: '${e.stderr}', exit code: '${e.exitValue}'",
+                e
+            )
             is TimeoutException -> LocalInstanceException("Local instance script timeout: $this! Cause: '${e.message}'", e)
             else -> LocalInstanceException("Local instance script failure: $this! Cause: '${e.message}'", e)
         }

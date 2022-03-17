@@ -3,11 +3,11 @@ package com.cognifide.gradle.aem.common.instance.tail
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
-import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.common.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.common.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.common.instance.tail.io.UrlSource
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.using
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -131,11 +131,11 @@ class Tailer(val manager: InstanceManager) {
 
     internal var incidentChecker: Log.(Instance) -> Boolean = { instance ->
         val levels = Formats.toList(instance.property("instance.tail.incidentLevels"))
-                ?: aem.prop.list("instance.tail.incidentLevels")
-                ?: INCIDENT_LEVELS_DEFAULT
+            ?: aem.prop.list("instance.tail.incidentLevels")
+            ?: INCIDENT_LEVELS_DEFAULT
         val oldMillis = instance.property("instance.tail.incidentOld")?.toLong()
-                ?: aem.prop.long("instance.tail.incidentOld")
-                ?: INCIDENT_OLD_DEFAULT
+            ?: aem.prop.long("instance.tail.incidentOld")
+            ?: INCIDENT_OLD_DEFAULT
 
         isLevel(levels) && !isOlderThan(oldMillis) && !logFilter.isExcluded(this)
     }

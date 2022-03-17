@@ -735,11 +735,11 @@ style:
   SafeCast:
     active: true
   SerialVersionUIDInSerializableClass:
-    active: true
+    active: false
   SpacingBetweenPackageAndImports:
     active: false
   ThrowsCount:
-    active: true
+    active: false
     max: 2
     excludeGuardClauses: false
   TrailingWhitespace:

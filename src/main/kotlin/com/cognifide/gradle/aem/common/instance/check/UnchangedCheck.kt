@@ -15,8 +15,8 @@ class UnchangedCheck(group: CheckGroup) : DefaultCheck(group) {
     override fun check() {
         if (progress.stateChanges <= 1 && progress.stateTime < awaitTime.get()) {
             statusLogger.error(
-                    "State unchanged",
-                    "Awaiting state to be changed on $instance"
+                "State unchanged",
+                "Awaiting state to be changed on $instance"
             )
             return
         }

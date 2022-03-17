@@ -10,7 +10,7 @@ class BundleFile(val file: File) : Serializable {
     val jar = Jar(file)
 
     val symbolicName: String = jar.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME)
-            ?: throw BundleException("File is not a valid OSGi bundle: $file")
+        ?: throw BundleException("File is not a valid OSGi bundle: $file")
 
     val version: String = jar.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
 

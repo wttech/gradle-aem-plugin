@@ -26,9 +26,11 @@ class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
         if (!instance.reachable && progress.stateTime >= unavailableTime.get()) {
             val error = "Instance is unreachable! Timeout occurred after '${Formats.duration(progress.stateTime)}' for $instance!"
             if (instance is LocalInstance) {
-                throw InstanceException("$error\n\n" +
+                throw InstanceException(
+                    "$error\n\n" +
                         "Troubleshoot by investigating log files:\n${instance.stdoutLog}\n${instance.errorLog}\n\n" +
-                        "When ports are already used ('bind failed: Address already in use'), try rebooting machine.")
+                        "When ports are already used ('bind failed: Address already in use'), try rebooting machine."
+                )
             } else {
                 throw InstanceException(error)
             }

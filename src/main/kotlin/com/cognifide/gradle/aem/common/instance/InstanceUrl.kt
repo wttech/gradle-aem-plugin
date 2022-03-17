@@ -61,15 +61,15 @@ class InstanceUrl(raw: String) {
     val env: String get() = when {
         ENV_LOCAL_HOSTS.contains(config.host) -> "local"
         else -> IdType.trim(config.host)
-                .replace(".", "_")
-                .replace("-", "_")
+            .replace(".", "_")
+            .replace("-", "_")
     }
 
     private fun userPart(index: Int): String? {
         return config.userInfo?.split(":")
-                ?.takeIf { it.size == 2 }
-                ?.get(index)
-                ?.let { decode(it) }
+            ?.takeIf { it.size == 2 }
+            ?.get(index)
+            ?.let { decode(it) }
     }
 
     companion object {
