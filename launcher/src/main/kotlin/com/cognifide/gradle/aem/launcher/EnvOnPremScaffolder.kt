@@ -32,8 +32,11 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                             version.set(publishHttpUrl)
                         }
                         configureReplicationAgentPublish("flush") {
-                            agent { configure(transportUri = "${'$'}dispatcherHttpUrl/dispatcher/invalidate.cache") }
-                            version.set(dispatcherHttpUrl)
+                            agent(mapOf(
+                                "enabled" to true,
+                                "transportUri" to "${'$'}dispatcherHttpUrl/dispatcher/invalidate.cache",
+                                "protocolHTTPHeaders" to listOf("CQ-Action:{action}", "CQ-Handle:{path}", "CQ-Path: {path}", "Host: dispflush")
+                            ))
                         }
                     }
                 }
@@ -62,7 +65,9 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                                 )
                                 symlink(
                                     "/etc/httpd.extra/conf.modules.d/02-dispatcher.conf" to "/etc/httpd/conf.modules.d/02-dispatcher.conf",
-                                    "/etc/httpd.extra/conf.d/proxy/mock.proxy" to "/etc/httpd/conf.d/proxy/mock.proxy"
+                                    "/etc/httpd.extra/conf.d/proxy/mock.proxy" to "/etc/httpd/conf.d/proxy/mock.proxy",
+                                    "/etc/httpd.extra/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any" to "/etc/httpd/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any",
+                                    "/etc/httpd.extra/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any" to "/etc/httpd/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any"
                                 )
                                 execShell("Installing SSL module", "yum -y install mod_ssl openssh")
                                 execShell("Starting HTTPD server", "/usr/sbin/httpd -k start")
@@ -154,12 +159,12 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                       - CRX_FILTER=deny
                       - FORWARDED_HOST_SETTING=Off
                       - AUTHOR_DOCROOT=/var/www/localhost/author/cache
-                      - AUTHOR_DEFAULT_HOSTNAME=host.author.docker.internal
-                      - AUTHOR_IP=*.*.*.*
+                      - AUTHOR_DEFAULT_HOSTNAME=host.docker.internal
+                      - AUTHOR_IP=host.docker.internal
                       - AUTHOR_PORT=4502
                       - PUBLISH_DOCROOT=/var/www/localhost/publish/cache
-                      - PUBLISH_DEFAULT_HOSTNAME=host.publish.docker.internal
-                      - PUBLISH_IP=*.*.*.*
+                      - PUBLISH_DEFAULT_HOSTNAME=host.docker.internal
+                      - PUBLISH_IP=host.docker.internal
                       - PUBLISH_PORT=4503
             """.trimIndent())
         }
@@ -174,6 +179,36 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
         launcher.workFileOnce("env/src/environment/httpd/conf.d/proxy/mock.proxy") {
             println("Creating mock proxy configuration file '$this'")
             writeText("".trimIndent())
+        }
+
+        launcher.workFileOnce("env/src/environment/httpd/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any") {
+            println("Creating author flush config file '$this'")
+            writeText("""
+                # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
+                /0 {
+                    /glob "*.*.*.*"
+                    /type "allow"
+                }
+                /01 {
+                    /glob "*.*.*.*"
+                    /type "allow"
+                }
+            """.trimIndent())
+        }
+
+        launcher.workFileOnce("env/src/environment/httpd/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any") {
+            println("Creating publish flush config file '$this'")
+            writeText("""
+                # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
+                /0 {
+                    /glob "*.*.*.*"
+                    /type "allow"
+                }
+                /01 {
+                    /glob "*.*.*.*"
+                    /type "allow"
+                }
+            """.trimIndent())
         }
     }
 }
