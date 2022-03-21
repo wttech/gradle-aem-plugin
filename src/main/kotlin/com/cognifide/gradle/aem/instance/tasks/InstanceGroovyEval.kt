@@ -27,8 +27,8 @@ open class InstanceGroovyEval : AemDefaultTask() {
         } else {
             val summary = evalScripts(scripts)
             common.notifier.lifecycle(
-                    "Evaluated Groovy script(s)",
-                    "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
+                "Evaluated Groovy script(s)",
+                "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
             )
         }
     }

@@ -24,8 +24,8 @@ data class DeployPackageSource(val name: String, val version: String = InstanceS
             if (URL_EXTENSIONS.any { urlOrNotation.endsWith(it) }) {
                 val baseName = FilenameUtils.getBaseName(urlOrNotation)
                 val version = URL_VERSION_PATTERNS.asSequence()
-                        .mapNotNull { it.matchEntire(baseName)?.groupValues?.get(1) }
-                        .firstOrNull()
+                    .mapNotNull { it.matchEntire(baseName)?.groupValues?.get(1) }
+                    .firstOrNull()
                 return when {
                     version != null -> DeployPackageSource(baseName.substringBefore("-$version"), version)
                     else -> DeployPackageSource(baseName)
@@ -56,10 +56,10 @@ data class DeployPackageSource(val name: String, val version: String = InstanceS
         private val URL_EXTENSIONS = listOf(".zip", ".jar")
 
         private val URL_VERSION_PATTERNS = listOf(
-                ".*-(\\d+.\\d+.\\d+[-|.]\\w+)",
-                ".*-(\\d+.\\d+.\\w+)",
-                ".*-(\\d+.\\d+)",
-                ".*-(\\d+.\\d+).*"
+            ".*-(\\d+.\\d+.\\d+[-|.]\\w+)",
+            ".*-(\\d+.\\d+.\\w+)",
+            ".*-(\\d+.\\d+)",
+            ".*-(\\d+.\\d+).*"
         ).map { it.toRegex() }
     }
 }

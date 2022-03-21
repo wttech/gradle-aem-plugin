@@ -8,6 +8,6 @@ enum class BundleChecking {
 
     companion object {
         fun of(name: String) = values().find { it.name.equals(name, true) }
-                ?: throw PackageException("Unsupported bundle checking: $name")
+            ?: throw PackageException("Unsupported bundle checking: $name")
     }
 }

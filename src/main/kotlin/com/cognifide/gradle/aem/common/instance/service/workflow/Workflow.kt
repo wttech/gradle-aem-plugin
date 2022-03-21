@@ -8,10 +8,12 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     private val logger = manager.aem.logger
 
-    val launcher = repository.node(when {
+    val launcher = repository.node(
+        when {
             manager.instance.version.frozen -> "/conf/global/settings/workflow/launcher/config/$id"
             else -> "/etc/workflow/launcher/config/$id"
-        })
+        }
+    )
 
     val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
 

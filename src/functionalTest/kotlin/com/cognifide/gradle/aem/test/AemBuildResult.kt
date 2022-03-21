@@ -17,7 +17,7 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun file(path: String): File = projectDir.resolve(path)
 
     fun files(path: String, pattern: String) = projectDir.resolve(path)
-            .walk().filter { Patterns.wildcard(it.absolutePath, pattern) }.toList()
+        .walk().filter { Patterns.wildcard(it.absolutePath, pattern) }.toList()
 
     fun assertFileExists(path: String) = assertFileExists(file(path))
 
@@ -62,18 +62,22 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         val expectedNormalized = normalizeString(expectedContent)
         val actualNormalized = normalizeString(actual)
 
-        assertTrue(FilenameUtils.wildcardMatch(actualNormalized, expectedNormalized),
-                "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
-                        "==> expected content pattern:\n\n$expectedNormalized\n\n==> actual content:\n\n$actualNormalized\n\n")
+        assertTrue(
+            FilenameUtils.wildcardMatch(actualNormalized, expectedNormalized),
+            "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
+                "==> expected content pattern:\n\n$expectedNormalized\n\n==> actual content:\n\n$actualNormalized\n\n"
+        )
     }
 
     fun assertZipEntryMatchingOrdered(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
         val expectedOrdered = normalizeString(expectedContent).lines().sorted().joinToString("\n")
         val actualOrdered = normalizeString(actual).lines().sorted().joinToString("\n")
 
-        assertTrue(FilenameUtils.wildcardMatch(actualOrdered, expectedOrdered),
-                "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
-                        "==> expected content pattern:\n\n$expectedOrdered\n\n==> actual content:\n\n$actualOrdered\n\n")
+        assertTrue(
+            FilenameUtils.wildcardMatch(actualOrdered, expectedOrdered),
+            "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
+                "==> expected content pattern:\n\n$expectedOrdered\n\n==> actual content:\n\n$actualOrdered\n\n"
+        )
     }
 
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
@@ -133,15 +137,15 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     companion object {
         val PACKAGE_META_FILES = listOf(
-                // Essentials
-                "META-INF/MANIFEST.MF",
-                "META-INF/vault/config.xml",
-                "META-INF/vault/filter.xml",
-                "META-INF/vault/properties.xml",
-                "META-INF/vault/settings.xml",
+            // Essentials
+            "META-INF/MANIFEST.MF",
+            "META-INF/vault/config.xml",
+            "META-INF/vault/filter.xml",
+            "META-INF/vault/properties.xml",
+            "META-INF/vault/settings.xml",
 
-                // Extra
-                "META-INF/vault/definition/thumbnail.png"
+            // Extra
+            "META-INF/vault/definition/thumbnail.png"
         )
     }
 }

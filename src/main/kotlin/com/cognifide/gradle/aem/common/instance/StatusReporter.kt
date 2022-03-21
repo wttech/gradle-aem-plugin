@@ -82,20 +82,20 @@ class StatusReporter(private val aem: AemExtension) {
             sync {
                 packageManager.listRetry.never()
                 packageFiles
-                        .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
-                        .sortedWith(
-                                compareByDescending<PackageFile> {
-                                    it.pkg?.lastUnpacked ?: 0L
-                                }.thenBy { it.file.name }
-                        )
-                        .joinToString("\n") { (file, pkg) ->
-                            when {
-                                !file.exists() -> "${file.name} | not built"
-                                pkg == null -> "${file.name} | not uploaded | ${Formats.fileSize(file)}"
-                                !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
-                                else -> "${file.name} | ${pkg.installedDate} | ${Formats.fileSize(file)}"
-                            }
+                    .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
+                    .sortedWith(
+                        compareByDescending<PackageFile> {
+                            it.pkg?.lastUnpacked ?: 0L
+                        }.thenBy { it.file.name }
+                    )
+                    .joinToString("\n") { (file, pkg) ->
+                        when {
+                            !file.exists() -> "${file.name} | not built"
+                            pkg == null -> "${file.name} | not uploaded | ${Formats.fileSize(file)}"
+                            !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
+                            else -> "${file.name} | ${pkg.installedDate} | ${Formats.fileSize(file)}"
                         }
+                    }
             }.ifBlank { "none" }
         } catch (e: Exception) {
             logger.debug("Installed packages error", e)

@@ -31,13 +31,6 @@ class ForkScaffolder(private val launcher: Launcher) {
 
             mvnBuild.args={{mvnBuildArgs}}
             mvnBuild.profiles={{mvnBuildProfiles}}
-            
-            dispatcher.tarUrl={{ dispatcherTarUri }}
-
-            # === Gradle Environment Plugin ===
-            {% if dockerSafeVolumes == 'true' %}
-            docker.desktop.safeVolumes=true
-            {% endif %}
 
             # === Gradle Common Plugin ===
             notifier.enabled=true

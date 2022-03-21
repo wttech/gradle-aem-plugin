@@ -9,7 +9,8 @@ class CommonPluginTest : AemBuildTest() {
         val projectDir = prepareProject("common-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.common")
                 }
@@ -17,7 +18,8 @@ class CommonPluginTest : AemBuildTest() {
                 aem {
                     // anything
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks") {

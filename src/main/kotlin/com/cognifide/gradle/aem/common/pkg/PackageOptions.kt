@@ -37,12 +37,14 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * Content path for AEM application placed in CRX package.
      */
     val appPath = aem.obj.string {
-        convention(aem.obj.provider {
-            when (aem.project) {
-                aem.project.rootProject -> "/apps/${aem.project.rootProject.name}"
-                else -> "/apps/${aem.project.rootProject.name}/${aem.project.name}"
+        convention(
+            aem.obj.provider {
+                when (aem.project) {
+                    aem.project.rootProject -> "/apps/${aem.project.rootProject.name}"
+                    else -> "/apps/${aem.project.rootProject.name}/${aem.project.name}"
+                }
             }
-        })
+        )
         aem.prop.string("package.appPath")?.let { set(it) }
     }
 

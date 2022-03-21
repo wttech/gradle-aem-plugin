@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.local
 
+import com.cognifide.gradle.common.utils.capitalizeChar
+
 @Suppress("MagicNumber")
 class Status(val type: Type, val exitValue: String) {
 
@@ -22,7 +24,7 @@ class Status(val type: Type, val exitValue: String) {
         UNKNOWN("4"),
         UNRECOGNIZED("<none>");
 
-        val displayName: String get() = name.toLowerCase().replace("_", " ").capitalize()
+        val displayName: String get() = name.lowercase().replace("_", " ").capitalizeChar()
 
         override fun toString() = displayName
 

@@ -18,15 +18,15 @@ class PackageFilter private constructor() {
         other as PackageFilter
 
         return EqualsBuilder()
-                .append(root, other.root)
-                .append(rules, other.rules)
-                .isEquals
+            .append(root, other.root)
+            .append(rules, other.rules)
+            .isEquals
     }
 
     override fun hashCode() = HashCodeBuilder()
-            .append(root)
-            .append(rules)
-            .toHashCode()
+        .append(root)
+        .append(rules)
+        .toHashCode()
 
     override fun toString() = "PackageFilter(root='$root', rules=$rules)"
 }

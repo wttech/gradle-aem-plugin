@@ -16,9 +16,13 @@ open class CliApp(protected val aem: AemExtension) {
     val dependencyExtension = aem.obj.boolean { convention(true) }
 
     val dependencyDir = aem.obj.dir {
-        convention(aem.project.rootProject.layout.projectDirectory.dir(dependencyNotation.map {
-            ".gradle/aem/cli/${Formats.toHashCodeHex(it)}"
-        }))
+        convention(
+            aem.project.rootProject.layout.projectDirectory.dir(
+                dependencyNotation.map {
+                    ".gradle/aem/cli/${Formats.toHashCodeHex(it)}"
+                }
+            )
+        )
     }
 
     val executable = aem.obj.string()
@@ -43,8 +47,10 @@ open class CliApp(protected val aem: AemExtension) {
         val executablePath = executable.map { if (executableExtension.get()) "$it${aem.commonOptions.executableExtension.get()}" else it }
         val executableFile = dependencyDir.get().asFile.resolve(executablePath.get())
         if (!executableFile.exists()) {
-            throw CliException("CLI application '${dependencyNotation.get()}' executable file '${executablePath.get()}'" +
-                    " cannot be found at path '$executableFile' after extracting archive!")
+            throw CliException(
+                "CLI application '${dependencyNotation.get()}' executable file '${executablePath.get()}'" +
+                    " cannot be found at path '$executableFile' after extracting archive!"
+            )
         }
 
         return try {
@@ -69,9 +75,11 @@ open class CliApp(protected val aem: AemExtension) {
             return@doOnce
         }
 
-        val file = downloadArchive(dependencyNotation.map {
-            if (dependencyExtension.get()) "$it@${aem.commonOptions.archiveExtension.get()}" else it
-        })
+        val file = downloadArchive(
+            dependencyNotation.map {
+                if (dependencyExtension.get()) "$it@${aem.commonOptions.archiveExtension.get()}" else it
+            }
+        )
         val fileTree = when (file.get().extension) {
             "zip" -> aem.project.zipTree(file)
             else -> aem.project.tarTree(file)

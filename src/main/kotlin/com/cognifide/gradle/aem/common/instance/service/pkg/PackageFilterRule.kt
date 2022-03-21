@@ -18,13 +18,13 @@ class PackageFilterRule private constructor() {
         other as PackageFilterRule
 
         return EqualsBuilder()
-                .append(modifier, other.modifier)
-                .append(pattern, other.pattern)
-                .isEquals
+            .append(modifier, other.modifier)
+            .append(pattern, other.pattern)
+            .isEquals
     }
 
     override fun hashCode() = HashCodeBuilder()
-            .append(modifier)
-            .append(pattern)
-            .toHashCode()
+        .append(modifier)
+        .append(pattern)
+        .toHashCode()
 }

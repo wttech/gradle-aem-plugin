@@ -27,13 +27,15 @@ open class PackageDeploy : Package() {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
 
         sync.actionAwaited { packageManager.deploy(it, distributed.get()) }
-        sync.instances.convention(aem.obj.provider {
-            if (distributed.get()) {
-                aem.authorInstances
-            } else {
-                aem.instances
+        sync.instances.convention(
+            aem.obj.provider {
+                if (distributed.get()) {
+                    aem.authorInstances
+                } else {
+                    aem.instances
+                }
             }
-        })
+        )
 
         aem.prop.boolean("package.deploy.awaited")?.let { sync.awaited.set(it) }
     }

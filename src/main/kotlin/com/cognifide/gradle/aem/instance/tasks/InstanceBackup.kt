@@ -4,9 +4,9 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.tasks.LocalInstance
 import com.cognifide.gradle.common.utils.Formats
-import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class InstanceBackup : LocalInstance() {
 
@@ -58,7 +58,7 @@ open class InstanceBackup : LocalInstance() {
 
         companion object {
             fun of(name: String) = values().find { it.name.equals(name, true) }
-                    ?: throw AemException("Unsupported instance backup mode: $name")
+                ?: throw AemException("Unsupported instance backup mode: $name")
         }
     }
 

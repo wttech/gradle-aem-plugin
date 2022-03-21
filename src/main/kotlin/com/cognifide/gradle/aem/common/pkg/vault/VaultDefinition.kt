@@ -23,8 +23,9 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     @Input
     val manifestProperties = aem.obj.map<String, String> {
-        set(aem.obj.provider {
-            mapOf(
+        set(
+            aem.obj.provider {
+                mapOf(
                     "Content-Package-Type" to "application",
                     "Content-Package-Id" to if (group.isPresent && name.isPresent && version.isPresent) {
                         "${group.get()}:${name.get()}:${version.get()}"
@@ -36,11 +37,12 @@ open class VaultDefinition(private val aem: AemExtension) {
                     "Build-Jdk" to System.getProperty("java.version"),
                     "Built-By" to createdBy.orNull,
                     "Created-By" to "Gradle (AEM Plugin)"
-            ).mapNotNull {
-                if (!it.value.isNullOrBlank()) it.key to it.value!!
-                else null
-            }.toMap()
-        })
+                ).mapNotNull {
+                    if (!it.value.isNullOrBlank()) it.key to it.value!!
+                    else null
+                }.toMap()
+            }
+        )
     }
 
     /**
@@ -91,12 +93,14 @@ open class VaultDefinition(private val aem: AemExtension) {
     fun filters(file: RegularFileProperty, optionallyExist: Boolean = true) = filters(file.asFile, optionallyExist)
 
     fun filters(provider: Provider<File>, optionallyExist: Boolean = true) {
-        filterElements.addAll(provider.map { file ->
-            when {
-                file.exists() || !optionallyExist -> FilterFile(file).elements
-                else -> listOf()
+        filterElements.addAll(
+            provider.map { file ->
+                when {
+                    file.exists() || !optionallyExist -> FilterFile(file).elements
+                    else -> listOf()
+                }
             }
-        })
+        )
     }
 
     @get:Internal
@@ -107,9 +111,9 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     private val filterEffectives: Collection<FilterElement>
         get() = filterElements.get().asSequence()
-                .filter { isFilterNeeded(it) }
-                .sortedBy { it.type }
-                .toList()
+            .filter { isFilterNeeded(it) }
+            .sortedBy { it.type }
+            .toList()
 
     @Input
     val nodeTypeLibs = aem.obj.strings { convention(listOf()) }
@@ -157,10 +161,12 @@ open class VaultDefinition(private val aem: AemExtension) {
      */
     @Input
     val properties = aem.obj.map<String, Any> {
-        set(mapOf(
+        set(
+            mapOf(
                 AC_HANDLING_PROPERTY to "merge_preserve",
                 REQUIRES_ROOT_PROPERTY to false
-        ))
+            )
+        )
     }
 
     fun property(name: String, value: String) {
@@ -185,11 +191,11 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     private fun isFilterDynamicAndNotRedundant(custom: FilterElement): Boolean {
         return filterElements.get().asSequence()
-                .filter { custom != it }
-                .none { general ->
-                    custom != general && custom.root.startsWith("${general.root}/") &&
-                            general.excludes.isEmpty() && general.includes.isEmpty()
-                }
+            .filter { custom != it }
+            .none { general ->
+                custom != general && custom.root.startsWith("${general.root}/") &&
+                    general.excludes.isEmpty() && general.includes.isEmpty()
+            }
     }
 
     /**
@@ -201,16 +207,16 @@ open class VaultDefinition(private val aem: AemExtension) {
     @get:Internal
     val fileProperties by lazy {
         mapOf(
-                "definition" to Delegate(this),
-                "manifest" to Manifest().run {
-                    mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0")
-                    manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
+            "definition" to Delegate(this),
+            "manifest" to Manifest().run {
+                mainAttributes.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0")
+                manifestProperties.get().forEach { (k, v) -> mainAttributes.putValue(k, v) }
 
-                    val output = ByteArrayOutputStream()
-                    write(output)
-                    output.toString(StandardCharsets.UTF_8.displayName())
-                },
-                "aem" to aem
+                val output = ByteArrayOutputStream()
+                write(output)
+                output.toString(StandardCharsets.UTF_8.displayName())
+            },
+            "aem" to aem
         )
     }
 

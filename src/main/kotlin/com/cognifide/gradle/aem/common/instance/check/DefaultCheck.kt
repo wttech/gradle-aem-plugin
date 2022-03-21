@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.utils.decapitalizeChar
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.logging.LogLevel
 
@@ -27,7 +28,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     fun sync(callback: InstanceSync.() -> Unit) = sync.using(callback)
 
-    val name get() = this::class.simpleName!!.removeSuffix("Check").decapitalize()
+    val name get() = this::class.simpleName!!.removeSuffix("Check").decapitalizeChar()
 
     override val enabled = aem.obj.boolean {
         convention(true)

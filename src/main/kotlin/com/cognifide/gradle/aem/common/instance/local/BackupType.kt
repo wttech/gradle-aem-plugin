@@ -14,5 +14,5 @@ enum class BackupType {
      */
     REMOTE;
 
-    val dirName get() = name.toLowerCase()
+    val dirName get() = name.lowercase()
 }

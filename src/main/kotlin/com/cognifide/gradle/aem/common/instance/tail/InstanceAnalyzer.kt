@@ -7,7 +7,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 class InstanceAnalyzer(
     private val tailer: Tailer,
     private val instance: Instance,

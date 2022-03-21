@@ -1,7 +1,15 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.aem.pkg.tasks.PackageActivate
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
+import com.cognifide.gradle.aem.pkg.tasks.PackageDelete
+import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
+import com.cognifide.gradle.aem.pkg.tasks.PackageInstall
+import com.cognifide.gradle.aem.pkg.tasks.PackagePrepare
+import com.cognifide.gradle.aem.pkg.tasks.PackagePurge
+import com.cognifide.gradle.aem.pkg.tasks.PackageUninstall
+import com.cognifide.gradle.aem.pkg.tasks.PackageUpload
 import com.cognifide.gradle.aem.test.AemTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -16,9 +24,8 @@ class PackagePluginTest : AemTest() {
 
         tasks.getByName(PackageActivate.NAME)
 
-        tasks.named(PackageCompose.NAME, PackageCompose::class.java).get().apply {
-            assertEquals("test.zip", archiveFile.get().asFile.name)
-        }
+        val compose = tasks.named(PackageCompose.NAME, PackageCompose::class.java).get()
+        assertEquals("test.zip", compose.archiveFile.get().asFile.name)
 
         tasks.getByName(PackageDelete.NAME)
         tasks.getByName(PackageDeploy.NAME)

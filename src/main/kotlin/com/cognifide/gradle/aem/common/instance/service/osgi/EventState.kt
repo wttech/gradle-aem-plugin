@@ -28,13 +28,13 @@ class EventState private constructor() {
         other as EventState
 
         return EqualsBuilder()
-                .append(events, other.events)
-                .isEquals
+            .append(events, other.events)
+            .isEquals
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(events)
-            .toHashCode()
+        .append(events)
+        .toHashCode()
 
     override fun toString(): String = "EventState(instance='${instance.name}', status='$status')"
 

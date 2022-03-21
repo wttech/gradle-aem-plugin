@@ -13,11 +13,13 @@ class LocalInstancePluginTest : AemBuildTest() {
         val projectDir = prepareProject("local-instance-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance.local")
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {
@@ -33,12 +35,15 @@ class LocalInstancePluginTest : AemBuildTest() {
             file("src/aem/files/cq-quickstart-6.5.0.jar", "")
             file("src/aem/files/license.properties", "")
 
-            gradleProperties("""
+            gradleProperties(
+                """
                 localInstance.quickstart.jarUrl=src/aem/files/cq-quickstart-6.5.0.jar
                 localInstance.quickstart.licenseUrl=src/aem/files/license.properties
-            """)
+            """
+            )
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance.local")
                 }
@@ -53,7 +58,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                         }
                     }
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "instanceResolve", "-Poffline") {
@@ -73,7 +79,8 @@ class LocalInstancePluginTest : AemBuildTest() {
     @Test
     fun `should setup and backup local aem author and publish instances`() {
         val projectDir = prepareProject("local-instance-setup-and-backup") {
-            gradleProperties("""
+            gradleProperties(
+                """
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
                 fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
@@ -93,11 +100,13 @@ class LocalInstancePluginTest : AemBuildTest() {
                 
                 localInstance.backup.localDir=$BACKUP_DIR/local
                 localInstance.backup.uploadUrl=$BACKUP_DIR/upload
-                """)
+                """
+            )
 
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance.local")
                 }
@@ -131,7 +140,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                         }
                     }
                 }
-                """)
+                """
+            )
         }
 
         try {
@@ -159,21 +169,29 @@ class LocalInstancePluginTest : AemBuildTest() {
                 val localBackupDir = "$BACKUP_DIR/local"
                 assertFileExists(localBackupDir)
                 val localBackups = files(localBackupDir, "**/*.backup.zip")
-                assertEquals("Backup file should end with *.backup.zip suffix!",
-                        1, localBackups.count())
+                assertEquals(
+                    "Backup file should end with *.backup.zip suffix!",
+                    1, localBackups.count()
+                )
 
                 val remoteBackupDir = "$BACKUP_DIR/upload"
                 assertFileExists(remoteBackupDir)
                 val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
-                assertEquals("Backup file should end with *.backup.zip suffix!",
-                        1, remoteBackups.count())
+                assertEquals(
+                    "Backup file should end with *.backup.zip suffix!",
+                    1, remoteBackups.count()
+                )
 
                 val localBackup = localBackups.first()
                 val remoteBackup = remoteBackups.first()
-                assertEquals("Local & remote backup names does not match!",
-                        localBackup.name, remoteBackup.name)
-                assertEquals("Local & remote backup size does not match!",
-                        localBackup.length(), remoteBackup.length())
+                assertEquals(
+                    "Local & remote backup names does not match!",
+                    localBackup.name, remoteBackup.name
+                )
+                assertEquals(
+                    "Local & remote backup size does not match!",
+                    localBackup.length(), remoteBackup.length()
+                )
             }
 
             runBuild(projectDir, "instanceDestroy", "-Pforce") {
