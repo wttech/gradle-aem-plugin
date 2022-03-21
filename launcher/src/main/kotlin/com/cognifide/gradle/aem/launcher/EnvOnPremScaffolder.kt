@@ -66,6 +66,8 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                                 symlink(
                                     "/etc/httpd.extra/conf.modules.d/02-dispatcher.conf" to "/etc/httpd/conf.modules.d/02-dispatcher.conf",
                                     "/etc/httpd.extra/conf.d/proxy/mock.proxy" to "/etc/httpd/conf.d/proxy/mock.proxy",
+                                    "/etc/httpd.extra/conf.d/variables/default.vars" to "/etc/httpd/conf.d/variables/default.vars",
+                                    "/etc/httpd.extra/conf.d/custom.conf" to "/etc/httpd/conf.d/custom.conf",
                                     "/etc/httpd.extra/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any" to "/etc/httpd/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any",
                                     "/etc/httpd.extra/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any" to "/etc/httpd/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any"
                                 )
@@ -153,19 +155,25 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                     {% endif %}
                     environment:
                       - DISP_ID=docker
-                      - DISP_LOG_LEVEL=Warn
-                      - REWRITE_LOG_LEVEL=Warn
-                      - EXPIRATION_TIME=A2592000
-                      - CRX_FILTER=deny
-                      - FORWARDED_HOST_SETTING=Off
-                      - AUTHOR_DOCROOT=/var/www/localhost/author/cache
-                      - AUTHOR_DEFAULT_HOSTNAME=host.docker.internal
-                      - AUTHOR_IP=host.docker.internal
-                      - AUTHOR_PORT=4502
-                      - PUBLISH_DOCROOT=/var/www/localhost/publish/cache
-                      - PUBLISH_DEFAULT_HOSTNAME=host.docker.internal
-                      - PUBLISH_IP=host.docker.internal
-                      - PUBLISH_PORT=4503
+            """.trimIndent())
+        }
+
+        launcher.workFileOnce("env/src/environment/httpd/conf.d/variables/default.vars") {
+            println("Saving environment variables file '$this'")
+            writeText("""
+                      Define DISP_LOG_LEVEL Warn
+                      Define REWRITE_LOG_LEVEL Warn
+                      Define EXPIRATION_TIME A2592000
+                      Define CRX_FILTER deny
+                      Define FORWARDED_HOST_SETTING Off
+                      Define AUTHOR_DOCROOT /var/www/localhost/author/cache
+                      Define AUTHOR_DEFAULT_HOSTNAME host.docker.internal
+                      Define AUTHOR_IP host.docker.internal
+                      Define AUTHOR_PORT 4502
+                      Define PUBLISH_DOCROOT /var/www/localhost/publish/cache
+                      Define PUBLISH_DEFAULT_HOSTNAME host.docker.internal
+                      Define PUBLISH_IP host.docker.internal
+                      Define PUBLISH_PORT 4503
             """.trimIndent())
         }
 
@@ -173,6 +181,13 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
             println("Saving environment HTTPD dispatcher config file '$this'")
             writeText("""
                 LoadModule dispatcher_module modules/mod_dispatcher.so
+            """.trimIndent())
+        }
+
+        launcher.workFileOnce("env/src/environment/httpd/conf.d/custom.conf") {
+            println("Saving environment HTTPD dispatcher config file '$this'")
+            writeText("""
+                Include conf.d/variables/default.vars
             """.trimIndent())
         }
 

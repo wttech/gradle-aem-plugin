@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.launcher
 
+import java.io.File
 import java.util.*
 
 class BuildScaffolder(private val launcher: Launcher) {
@@ -9,11 +10,18 @@ class BuildScaffolder(private val launcher: Launcher) {
         saveProperties()
         saveSettings()
         saveRootBuildScript()
-
-//      TODO: if archetype aem version == cloud, then call scaffold() method on EnvCloudScaffolder,
-//       else call it on EnvOnPremScaffolder
-        EnvOnPremScaffolder(launcher).scaffold()
+        when (propertyAemVersion()){
+            "cloud" -> EnvCloudScaffolder(launcher).scaffold()
+            else -> EnvOnPremScaffolder(launcher).scaffold()
+        }
     }
+
+    fun archetypeProperties() = Properties().apply {
+        File("archetype.properties").inputStream().buffered().use { load(it) }
+    }
+
+    fun propertyAemVersion() = archetypeProperties().getProperty("aemVersion")
+        ?: error("Cannot read aemVersion from file 'archetype.properties'!")
 
     private fun saveBuildSrc() = launcher.workFileOnce("buildSrc/build.gradle.kts") {
         println("Saving Gradle build source script file '$this'")
