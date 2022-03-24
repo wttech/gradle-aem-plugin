@@ -88,8 +88,8 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                     }
                 }
                 hosts {
-                    "http://publish" { tag("publish") }
-                    "http://dispatcher" { tag("dispatcher") }
+                    "http://author.aem.local" { tag("author") }
+                    "http://publish.aem.local" { tag("publish") }
                 }
                 healthChecks {
                     aem.findInstance("local-author")?.let { instance ->
@@ -108,7 +108,7 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                             options { basicCredentials = instance.credentials }
                         }
                         /*
-                        http("Site Home", "http://publish/us/en.html") {
+                        http("Site Home", "http://publish.aem.local/us/en.html") {
                             containsText("My Site")
                         }
                         */
@@ -167,11 +167,11 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                       Define CRX_FILTER deny
                       Define FORWARDED_HOST_SETTING Off
                       Define AUTHOR_DOCROOT /var/www/localhost/author/cache
-                      Define AUTHOR_DEFAULT_HOSTNAME host.docker.internal
+                      Define AUTHOR_DEFAULT_HOSTNAME author.aem.local
                       Define AUTHOR_IP host.docker.internal
                       Define AUTHOR_PORT 4502
                       Define PUBLISH_DOCROOT /var/www/localhost/publish/cache
-                      Define PUBLISH_DEFAULT_HOSTNAME host.docker.internal
+                      Define PUBLISH_DEFAULT_HOSTNAME publish.aem.local
                       Define PUBLISH_IP host.docker.internal
                       Define PUBLISH_PORT 4503
             """.trimIndent())
@@ -204,10 +204,6 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                     /glob "*.*.*.*"
                     /type "allow"
                 }
-                /01 {
-                    /glob "*.*.*.*"
-                    /type "allow"
-                }
             """.trimIndent())
         }
 
@@ -216,10 +212,6 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
             writeText("""
                 # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
                 /0 {
-                    /glob "*.*.*.*"
-                    /type "allow"
-                }
-                /01 {
                     /glob "*.*.*.*"
                     /type "allow"
                 }

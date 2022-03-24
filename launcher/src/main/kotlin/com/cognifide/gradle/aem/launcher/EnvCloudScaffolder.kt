@@ -73,8 +73,7 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                     }
                 }
                 hosts {
-                    "http://publish" { tag("publish") }
-                    "http://dispatcher" { tag("dispatcher") }
+                    "http://publish.aem.local" { tag("publish") }
                 }
                 healthChecks {
                     aem.findInstance("local-author")?.let { instance ->
@@ -93,7 +92,7 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                             options { basicCredentials = instance.credentials }
                         }
                         /*
-                        http("Site Home", "http://publish/us/en.html") {
+                        http("Site Home", "http://publish.aem.local/us/en.html") {
                             containsText("My Site")
                         }
                         */
@@ -152,14 +151,14 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
             println("Saving environment variables file '$this'")
             writeText("""
                       Define DOCROOT /var/www/localhost/cache
-                      Define AEM_HOST host.docker.internal
+                      Define AEM_HOST publish.aem.local
                       Define AEM_IP *.*.*.*
                       Define AEM_PORT 4503
                       Define DISP_LOG_LEVEL Warn
                       Define REWRITE_LOG_LEVEL Warn
                       Define EXPIRATION_TIME A2592000
                       Define FORWARDED_HOST_SETTING Off
-                      Define COMMERCE_ENDPOINT https://publish/api/graphql
+                      Define COMMERCE_ENDPOINT https://publish.aem.local/api/graphql
             """.trimIndent())
         }
     }

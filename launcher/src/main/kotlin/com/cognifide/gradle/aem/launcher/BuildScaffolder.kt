@@ -10,9 +10,10 @@ class BuildScaffolder(private val launcher: Launcher) {
         saveProperties()
         saveSettings()
         saveRootBuildScript()
-        when (propertyAemVersion()){
-            "cloud" -> EnvCloudScaffolder(launcher).scaffold()
-            else -> EnvOnPremScaffolder(launcher).scaffold()
+        if (Regex("6.5.*").matches(propertyAemVersion())) {
+            EnvOnPremScaffolder(launcher).scaffold()
+        } else if (propertyAemVersion() === "cloud") {
+            EnvCloudScaffolder(launcher).scaffold()
         }
     }
 
@@ -21,7 +22,6 @@ class BuildScaffolder(private val launcher: Launcher) {
     }
 
     fun propertyAemVersion() = archetypeProperties().getProperty("aemVersion")
-        ?: error("Cannot read aemVersion from file 'archetype.properties'!")
 
     private fun saveBuildSrc() = launcher.workFileOnce("buildSrc/build.gradle.kts") {
         println("Saving Gradle build source script file '$this'")
@@ -104,7 +104,6 @@ class BuildScaffolder(private val launcher: Launcher) {
         println("Saving Gradle settings file '$this'")
         writeText("""
             include(":env")
-            
         """.trimIndent())
     }
 }

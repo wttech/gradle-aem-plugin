@@ -34,11 +34,6 @@ class ForkScaffolder(private val launcher: Launcher) {
             
             dispatcher.tarUrl={{ dispatcherTarUri }}
 
-            # === Gradle Environment Plugin ===
-            {% if dockerSafeVolumes == 'true' %}
-            docker.desktop.safeVolumes=true
-            {% endif %}
-
             # === Gradle Common Plugin ===
             notifier.enabled=true
             fileTransfer.user={{companyUser}}
@@ -95,12 +90,12 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                         define("localInstanceSpUri") {
                             label = "Service Pack URI"
-                            description = "[AEM on-prem only!] Typically file named 'aem-service-pkg-*.zip'"
+                            description = "Only for on-prem AEM instances. Typically file named 'aem-service-pkg-*.zip'"
                             optional()
                         }
                         define("localInstanceCoreComponentsUri") {
                             label = "Core Components package URI"
-                            description = "[AEM on-prem only!] Typically file named 'core.wcm.components.all-*.zip'"
+                            description = "Only for on-prem AEM instances. Typically file named 'core.wcm.components.all-*.zip'"
                             optional()
                         }
                         define("localInstanceOpenMode") {
@@ -114,12 +109,6 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Tar Archive URI"
                             description = "Typically file named 'dispatcher-apache2.4-linux-x86_64-*.tar.gz'"
                             text("https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.4.tar.gz")
-                        }
-                        define("dockerSafeVolumes") {
-                            label = "Docker Safe Volumes"
-                            description = "Enables volumes for easily previewing e.g cache and logs (requires WSL2)"
-                            checkbox(false)
-                            dynamic("props")
                         }
                     }
                     group("Build") {
