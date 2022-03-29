@@ -72,6 +72,29 @@ class Launcher(val args: Array<String>) {
         }
     }
 
+    fun workFileBackupOnce(path: String, action: File.() -> Unit) {
+        workDir.resolve(path).apply {
+            if (exists()) {
+                renameTo(parentFile.resolve("${name}.bak"))
+            }
+        }
+        workFileOnce(path, action)
+    }
+
+    fun workFileBackupAndReplaceStrings(path: String, vararg strings: Pair<String, String>) {
+        workDir.resolve(path).apply {
+            if (exists()) {
+                var text = readText()
+                for (stringPair in strings) {
+                    text = text.replace(stringPair.first, stringPair.second)
+                }
+                workFileBackupOnce(path) {
+                    writeText(text)
+                }
+            }
+        }
+    }
+
     fun runBuildWrapperOnce() = workFile("gradle/wrapper/gradle-wrapper.properties") {
         if (!exists()) {
             println("Generating Gradle wrapper files")

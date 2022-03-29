@@ -12,7 +12,7 @@ class BuildScaffolder(private val launcher: Launcher) {
         saveRootBuildScript()
         if (Regex("6.5.*").matches(propertyAemVersion())) {
             EnvOnPremScaffolder(launcher).scaffold()
-        } else if (propertyAemVersion() === "cloud") {
+        } else if (propertyAemVersion() == "cloud") {
             EnvCloudScaffolder(launcher).scaffold()
         }
     }

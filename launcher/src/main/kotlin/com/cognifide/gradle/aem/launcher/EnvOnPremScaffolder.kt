@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.launcher
 
-class EnvOnPremScaffolder (private val launcher: Launcher) {
+class EnvOnPremScaffolder(private val launcher: Launcher) {
     fun scaffold() {
         saveEnvBuildScript()
         saveEnvSrcFiles()
@@ -67,9 +67,7 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                                     "/etc/httpd.extra/conf.modules.d/02-dispatcher.conf" to "/etc/httpd/conf.modules.d/02-dispatcher.conf",
                                     "/etc/httpd.extra/conf.d/proxy/mock.proxy" to "/etc/httpd/conf.d/proxy/mock.proxy",
                                     "/etc/httpd.extra/conf.d/variables/default.vars" to "/etc/httpd/conf.d/variables/default.vars",
-                                    "/etc/httpd.extra/conf.d/custom.conf" to "/etc/httpd/conf.d/custom.conf",
-                                    "/etc/httpd.extra/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any" to "/etc/httpd/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any",
-                                    "/etc/httpd.extra/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any" to "/etc/httpd/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any"
+                                    "/etc/httpd.extra/conf.d/custom.conf" to "/etc/httpd/conf.d/custom.conf"
                                 )
                                 execShell("Installing SSL module", "yum -y install mod_ssl openssh")
                                 execShell("Starting HTTPD server", "/usr/sbin/httpd -k start")
@@ -196,7 +194,7 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
             writeText("".trimIndent())
         }
 
-        launcher.workFileOnce("env/src/environment/httpd/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any") {
+        launcher.workFileBackupOnce("dispatcher/src/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any") {
             println("Creating author flush config file '$this'")
             writeText("""
                 # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
@@ -207,7 +205,7 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
             """.trimIndent())
         }
 
-        launcher.workFileOnce("env/src/environment/httpd/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any") {
+        launcher.workFileBackupOnce("dispatcher/src/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any") {
             println("Creating publish flush config file '$this'")
             writeText("""
                 # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
@@ -217,5 +215,21 @@ class EnvOnPremScaffolder (private val launcher: Launcher) {
                 }
             """.trimIndent())
         }
+
+        launcher.workFileBackupOnce("dispatcher/src/conf.d/rewrites/xforwarded_forcessl_rewrite.rules") {
+            println("Creating X-Forwarded-For SSL rewrite config file '$this'")
+            writeText("""
+                # This ruleset forces https in the end users browser
+                #RewriteCond %{HTTP:X-Forwarded-Proto} !https
+                #RewriteCond %{REQUEST_URI} !^/dispatcher/invalidate.cache
+                #RewriteRule (.*) https://%{SERVER_NAME}%{REQUEST_URI} [L,R=301]
+            """.trimIndent())
+        }
+
+        //Replacing md5 checksums in dispatcher's pom.xml for the files that are being replaced
+        launcher.workFileBackupAndReplaceStrings("dispatcher/pom.xml",
+            Pair("cd1373a055f245de6e9ed78f74f974a6", "3f6158d0fd659071fa29c50c9a509804"), //replacing md5 checksum for xforwarded_forcessl_rewrite.rules file
+            Pair("a66be278d68472073241fc78db7af993", "122cecacb81e64d1c1c47f68d082bef1")  //replacing md5 checksum for ams_author_invalidate_allowed.any and ams_publish_invalidate_allowed.any files
+        )
     }
 }
