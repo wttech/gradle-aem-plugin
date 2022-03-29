@@ -29,11 +29,13 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
     }
 
     override fun init() {
-        logger.debug(listOf(
+        logger.debug(
+            listOf(
                 "Resolved Crypto files are located at paths:",
                 "HMAC: $hmacFile",
                 "Master: $masterFile"
-        ).joinToString("\n"))
+            ).joinToString("\n")
+        )
     }
 
     override fun action(instance: Instance) = instance.sync {
@@ -43,11 +45,13 @@ class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) 
             val fileBundle = osgi.getBundle(fileSymbolicName.get())
             val dataDir = fileBundle.dir.resolve("data")
 
-            logger.info(listOf(
+            logger.info(
+                listOf(
                     "Copying Crypto files to directory $dataDir:",
                     "HMAC: $hmacFile",
                     "Master: $masterFile"
-            ).joinToString("\n"))
+                ).joinToString("\n")
+            )
             hmacFile.copyTo(dataDir.resolve("hmac"), true)
             masterFile.copyTo(dataDir.resolve("master"), true)
 

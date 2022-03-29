@@ -41,19 +41,19 @@ class Event {
         other as Event
 
         return EqualsBuilder()
-                .append(id, other.id)
-                .append(topic, other.topic)
-                .append(category, other.category)
-                .append(received, other.received)
-                .isEquals
+            .append(id, other.id)
+            .append(topic, other.topic)
+            .append(category, other.category)
+            .append(received, other.received)
+            .isEquals
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(id)
-            .append(topic)
-            .append(category)
-            .append(received)
-            .toHashCode()
+        .append(id)
+        .append(topic)
+        .append(category)
+        .append(received)
+        .toHashCode()
 
     override fun toString(): String = "Event(details='$details', received='$receivedDate' id='$id', instance='${instance.name}')"
 }

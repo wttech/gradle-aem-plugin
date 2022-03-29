@@ -2,11 +2,11 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.auth.AuthManager
+import com.cognifide.gradle.aem.common.instance.service.crx.Crx
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
-import com.cognifide.gradle.aem.common.instance.service.crx.Crx
 import com.cognifide.gradle.aem.common.instance.service.sling.SlingInstaller
 import com.cognifide.gradle.aem.common.instance.service.status.Status
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowManager

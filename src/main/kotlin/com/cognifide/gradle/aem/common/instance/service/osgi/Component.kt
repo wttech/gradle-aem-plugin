@@ -47,23 +47,23 @@ class Component {
         other as Component
 
         return EqualsBuilder()
-                .append(id, other.id)
-                .append(name, other.name)
-                .append(state, other.state)
-                .append(stateRaw, other.stateRaw)
-                .append(pid, other.pid)
-                .append(bundleId, other.bundleId)
-                .isEquals
+            .append(id, other.id)
+            .append(name, other.name)
+            .append(state, other.state)
+            .append(stateRaw, other.stateRaw)
+            .append(pid, other.pid)
+            .append(bundleId, other.bundleId)
+            .isEquals
     }
 
     override fun hashCode(): Int {
         return HashCodeBuilder()
-                .append(id)
-                .append(bundleId)
-                .append(name)
-                .append(stateRaw)
-                .append(state)
-                .toHashCode()
+            .append(id)
+            .append(bundleId)
+            .append(name)
+            .append(stateRaw)
+            .append(state)
+            .toHashCode()
     }
 
     override fun toString(): String = "Component(uid='$uid', state='$state', id='$id', bundleId='$bundleId', instance='${instance.name}')"

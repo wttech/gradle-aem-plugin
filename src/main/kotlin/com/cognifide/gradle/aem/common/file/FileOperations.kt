@@ -37,9 +37,9 @@ object FileOperations {
         }
 
         return mutableListOf<(String) -> File>(
-                { project.file(pathOrFileName) },
-                { File(File(dirIfFileName), pathOrFileName) },
-                { File(pathOrFileName) }
+            { project.file(pathOrFileName) },
+            { File(File(dirIfFileName), pathOrFileName) },
+            { File(pathOrFileName) }
         ).map { it(pathOrFileName) }.firstOrNull { it.exists() }
     }
 
@@ -86,9 +86,12 @@ object FileOperations {
     }
 
     fun makeExecutable(file: File) {
-        Files.setPosixFilePermissions(file.toPath(), Files.getPosixFilePermissions(file.toPath()) + setOf(
+        Files.setPosixFilePermissions(
+            file.toPath(),
+            Files.getPosixFilePermissions(file.toPath()) + setOf(
                 PosixFilePermission.OWNER_EXECUTE,
                 PosixFilePermission.GROUP_EXECUTE
-        ))
+            )
+        )
     }
 }

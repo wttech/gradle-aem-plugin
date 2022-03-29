@@ -8,7 +8,13 @@ import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.pkg.tasks.compose.*
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalled
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalledBuilt
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalledResolved
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNested
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNestedBuilt
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNestedResolved
+import com.cognifide.gradle.aem.pkg.tasks.compose.RepositoryArchive
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.using
 import org.apache.commons.lang3.StringUtils
@@ -19,6 +25,8 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.util.GradleVersion
+import java.lang.IllegalStateException
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
@@ -123,7 +131,10 @@ open class PackageCompose : ZipTask(), AemTask {
 
     override fun projectsEvaluated() {
         super.projectsEvaluated()
-        (definitions + definition).forEach { it() }
+
+        // TODO https://github.com/wttech/gradle-aem-plugin/issues/884
+        definitions.forEach { it() }
+        definition()
     }
 
     fun fromDefaults() {
@@ -227,11 +238,25 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
 
-    fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
+    fun mergePackage(taskPath: String) {
+        if (GradleVersion.current() >= GradleVersion.version("7.0")) {
+            throw IllegalStateException(
+                listOf(
+                    "Merging packages does not work properly since Gradle 7.x.",
+                    "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
+                ).joinToString("\n")
+            )
+        }
+
+        mergePackage(common.tasks.pathed(taskPath))
+    }
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
         dependsOn(task)
-        definitions.add { task.get().merging(this) }
+        definitions.add {
+            logger.info("Defining package merging for task '${task.get().path}'")
+            task.get().merging(this)
+        }
     }
 
     fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
@@ -251,7 +276,10 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
         dependsOn(task)
-        definitions.add { packagesNested.add(PackageNestedBuilt(this, task).apply(options)) }
+        definitions.add {
+            logger.info("Defining package nesting for task '${task.get().path}'")
+            packagesNested.add(PackageNestedBuilt(this, task).apply(options))
+        }
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
@@ -275,6 +303,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     private var definition: () -> Unit = {
+        logger.info("Defining package using defaults '$path'")
         fromDefaults()
     }
 

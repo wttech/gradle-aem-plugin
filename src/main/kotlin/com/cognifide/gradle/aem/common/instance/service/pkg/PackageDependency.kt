@@ -18,15 +18,15 @@ class PackageDependency {
         other as PackageDependency
 
         return EqualsBuilder()
-                .append(name, other.name)
-                .append(id, other.id)
-                .isEquals
+            .append(name, other.name)
+            .append(id, other.id)
+            .isEquals
     }
 
     override fun hashCode() = HashCodeBuilder()
-            .append(name)
-            .append(id)
-            .toHashCode()
+        .append(name)
+        .append(id)
+        .toHashCode()
 
     override fun toString() = "PackageDependency(name='$name', id='$id')"
 }

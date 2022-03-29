@@ -53,7 +53,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Get OSGi bundle by symbolic name. Fail if not found.
      */
     fun getBundle(symbolicName: String): Bundle = findBundle(symbolicName)
-            ?: throw OsgiException("OSGi bundle '$symbolicName' cannot be found on $instance.")
+        ?: throw OsgiException("OSGi bundle '$symbolicName' cannot be found on $instance.")
 
     /**
      * Start OSGi bundle. Does nothing if already started.
@@ -139,13 +139,16 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Installing OSGi bundle '$bundle' on $instance.")
 
         retry.withCountdown<Unit, CommonException>("install bundle '${bundle.name}' on '${instance.name}'") {
-            sync.http.postMultipart(BUNDLES_PATH, mapOf(
+            sync.http.postMultipart(
+                BUNDLES_PATH,
+                mapOf(
                     "action" to "install",
                     "bundlefile" to bundle,
                     "bundlestart" to "start".takeIf { start },
                     "bundlestartlevel" to startLevel,
                     "refreshPackages" to "refresh".takeIf { refreshPackages }
-            )) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
+                )
+            ) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
         }
     }
 
@@ -207,7 +210,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Get OSGi component by PID. Fail if not found.
      */
     fun getComponent(pid: String): Component = findComponent(pid)
-            ?: throw OsgiException("OSGi component '$pid' cannot be found on $instance.")
+        ?: throw OsgiException("OSGi component '$pid' cannot be found on $instance.")
 
     /**
      * Enable OSGi component. Does nothing if already enabled.
@@ -275,7 +278,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     val configurations: Sequence<Configuration>
         get() = determineConfigurationState().pids.asSequence()
-                .mapNotNull { findConfiguration(it.id) }
+            .mapNotNull { findConfiguration(it.id) }
 
     /**
      * Determine all OSGi configuration PIDs.
@@ -287,7 +290,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             sync.http.get(CONFIGURATION_PATH) { response ->
                 val html = asString(response)
                 val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value
-                        ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
+                    ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
                 Formats.toObjectFromJson<ConfigurationState>(configJson)
             }
         } catch (e: CommonException) {
@@ -317,14 +320,14 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Get OSGi configuration by PID. Fail if not found.
      */
     fun getConfiguration(pid: String): Configuration = findConfiguration(pid)
-            ?: throw OsgiException("OSGi configuration for PID '$pid' cannot be found on $instance")
+        ?: throw OsgiException("OSGi configuration for PID '$pid' cannot be found on $instance")
 
     /**
      * Get all OSGi configurations for specified factory PID.
      */
     fun getConfigurations(fpid: String): Sequence<Configuration> = determineConfigurationState().pids.asSequence()
-            .filter { fpid == it.fpid }
-            .mapNotNull { findConfiguration(it.id) }
+        .filter { fpid == it.fpid }
+        .mapNotNull { findConfiguration(it.id) }
 
     /**
      * Set properties for existing OSGi configuration.
@@ -362,10 +365,10 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     private fun configurationProperties(existingConfig: Configuration, properties: Map<String, Any?>): Map<String, Any?> {
         val valueProperties = existingConfig.properties + properties
         return valueProperties + mapOf(
-                "apply" to true,
-                "action" to "ajaxConfigManager",
-                "\$location" to existingConfig.bundleLocation,
-                "propertylist" to valueProperties.keys.joinToString(",")
+            "apply" to true,
+            "action" to "ajaxConfigManager",
+            "\$location" to existingConfig.bundleLocation,
+            "propertylist" to valueProperties.keys.joinToString(",")
         )
     }
 
@@ -381,8 +384,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Deleting OSGi configuration for PID '$pid' on $instance")
 
         val properties = mapOf(
-                "apply" to 1,
-                "delete" to 1
+            "apply" to 1,
+            "delete" to 1
         )
 
         sync.http.post("$CONFIGURATION_PATH/$pid", properties)

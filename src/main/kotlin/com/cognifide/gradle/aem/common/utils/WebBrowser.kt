@@ -25,12 +25,12 @@ class WebBrowser(private val aem: AemExtension) {
             }
 
             ProcBuilder(command, url)
-                    .withWorkingDirectory(aem.project.projectDir)
-                    .withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
-                    .ignoreExitStatus()
-                    .apply(this.options)
-                    .apply(options)
-                    .run()
+                .withWorkingDirectory(aem.project.projectDir)
+                .withTimeoutMillis(TimeUnit.SECONDS.toMillis(30))
+                .ignoreExitStatus()
+                .apply(this.options)
+                .apply(options)
+                .run()
         } catch (e: Exception) {
             throw AemException("Browser opening command failed! Cause: ${e.message}", e)
         }

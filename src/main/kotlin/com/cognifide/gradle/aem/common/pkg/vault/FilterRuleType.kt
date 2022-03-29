@@ -9,6 +9,6 @@ enum class FilterRuleType {
 
         fun of(name: String) = find(name) ?: throw VaultException("Unsupported Vault filter rule '$name'!")
 
-        fun tags() = values().map { it.name.toLowerCase() }
+        fun tags() = values().map { it.name.lowercase() }
     }
 }

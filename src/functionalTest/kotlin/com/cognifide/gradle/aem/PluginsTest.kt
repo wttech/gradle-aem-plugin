@@ -10,7 +10,8 @@ class PluginsTest : AemBuildTest() {
         val projectDir = prepareProject("plugins-all") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance.local")
                     id("com.cognifide.aem.bundle")
@@ -21,7 +22,8 @@ class PluginsTest : AemBuildTest() {
                 aem {
                     // ...
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {

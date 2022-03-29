@@ -34,7 +34,6 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             dependencies {
                 implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
-                implementation("com.cognifide.gradle:environment-plugin:2.1.4")
                 implementation("com.cognifide.gradle:common-plugin:1.0.41")
                 implementation("com.neva.gradle:fork-plugin:7.0.5")
             }
@@ -99,7 +98,39 @@ class BuildScaffolder(private val launcher: Launcher) {
             }
         """.trimIndent())
     }
+    private fun saveEnvBuildScript() = launcher.workFileOnce("env/build.gradle.kts") {
+        println("Saving environment Gradle build script file '$this'")
+        writeText("""
+            plugins {
+                id("com.cognifide.aem.instance.local")
+            }
+            
+            val instancePassword = common.prop.string("instance.default.password")
+            val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
+            val servicePackUrl = common.prop.string("localInstance.spUrl")
+            val coreComponentsUrl = common.prop.string("localInstance.coreComponentsUrl")
 
+            aem {
+                instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/master/docs/instance-plugin.md
+                    provisioner {
+                        enableCrxDe()
+                        servicePackUrl?.let { deployPackage(it) }
+                        coreComponentsUrl?.let { deployPackage(it) }
+                        configureReplicationAgentAuthor("publish") {
+                            agent { configure(transportUri = "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1", transportUser = "admin", transportPassword = instancePassword, userId = "admin") }
+                            version.set(publishHttpUrl)
+                        }
+                    }
+                }
+            }
+
+            tasks {
+                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":all:deploy") }
+                instanceResolve { dependsOn(":requireProps") }
+                instanceCreate { dependsOn(":requireProps") }
+            }
+        """.trimIndent())
+    }
     private fun saveSettings() = launcher.workFileOnce("settings.gradle.kts") {
         println("Saving Gradle settings file '$this'")
         writeText("""

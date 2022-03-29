@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.io.File
-
 import org.osgi.framework.Bundle as Base
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -53,21 +52,21 @@ class Bundle {
         other as Bundle
 
         return EqualsBuilder()
-                .append(id, other.id)
-                .append(name, other.name)
-                .append(stateRaw, other.stateRaw)
-                .append(symbolicName, other.symbolicName)
-                .append(version, other.version)
-                .isEquals
+            .append(id, other.id)
+            .append(name, other.name)
+            .append(stateRaw, other.stateRaw)
+            .append(symbolicName, other.symbolicName)
+            .append(version, other.version)
+            .isEquals
     }
 
     override fun hashCode(): Int = HashCodeBuilder()
-            .append(id)
-            .append(name)
-            .append(stateRaw)
-            .append(symbolicName)
-            .append(version)
-            .toHashCode()
+        .append(id)
+        .append(name)
+        .append(stateRaw)
+        .append(symbolicName)
+        .append(version)
+        .toHashCode()
 
     override fun toString(): String = "Bundle(symbolicName='$symbolicName', state='$state', id='$id', instance='${instance.name}')"
 

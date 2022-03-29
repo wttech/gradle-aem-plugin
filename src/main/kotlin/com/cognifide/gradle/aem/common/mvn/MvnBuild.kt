@@ -9,6 +9,7 @@ import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
+import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.UnknownProjectException
 import org.gradle.api.tasks.Delete
@@ -40,22 +41,24 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val archetypeProperties = aem.obj.map<String, String> {
-        set(archetypePropertiesFile.map { rf ->
-            val rff = rf.asFile
-            if (!rff.exists()) {
-                throw MvnException(
-                    listOf(
-                        "Maven archetype properties file does not exist '$rff'!",
-                        "Consider creating it or specify 'appId' and 'groupId' in build script."
-                    ).joinToString(" ")
-                )
-            }
+        set(
+            archetypePropertiesFile.map { rf ->
+                val rff = rf.asFile
+                if (!rff.exists()) {
+                    throw MvnException(
+                        listOf(
+                            "Maven archetype properties file does not exist '$rff'!",
+                            "Consider creating it or specify 'appId' and 'groupId' in build script."
+                        ).joinToString(" ")
+                    )
+                }
 
-            Properties().apply { rff.bufferedReader().use { load(it) } }
-                .filterNotNull()
-                .entries.map { (k, v) -> k.toString() to v.toString() }
-                .toMap()
-        })
+                Properties().apply { rff.bufferedReader().use { load(it) } }
+                    .filterNotNull()
+                    .entries.map { (k, v) -> k.toString() to v.toString() }
+                    .toMap()
+            }
+        )
     }
 
     val appId = aem.obj.string {
@@ -78,35 +81,37 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val outputExclusions = aem.obj.strings {
-        set(listOf(
-            // ignored files
-            "**/.idea/**",
-            "**/.idea",
-            "**/.gradle/**",
-            "**/.gradle",
-            "**/gradle.user.properties",
-            "**/gradle/user/**",
+        set(
+            listOf(
+                // ignored files
+                "**/.idea/**",
+                "**/.idea",
+                "**/.gradle/**",
+                "**/.gradle",
+                "**/gradle.user.properties",
+                "**/gradle/user/**",
 
-            // build files
-            "**/target/**",
-            "**/target",
-            "**/build/**",
-            "**/build",
-            "**/dist/**",
-            "**/dist",
-            "**/generated",
-            "**/generated/**",
+                // build files
+                "**/target/**",
+                "**/target",
+                "**/build/**",
+                "**/build",
+                "**/dist/**",
+                "**/dist",
+                "**/generated",
+                "**/generated/**",
 
-            "**/package-lock.json",
+                "**/package-lock.json",
 
-            // temporary files
-            "**/node_modules/**",
-            "**/node_modules",
-            "**/node/**",
-            "**/node",
-            "**/*.log",
-            "**/*.tmp",
-        ))
+                // temporary files
+                "**/node_modules/**",
+                "**/node_modules",
+                "**/node/**",
+                "**/node",
+                "**/*.log",
+                "**/*.tmp",
+            )
+        )
     }
 
     val depGraph by lazy { DependencyGraph(this) }
@@ -260,54 +265,58 @@ class MvnBuild(val aem: AemExtension) {
     }
 
     val deployPackagePrecedence = aem.obj.strings {
-        convention(listOf(
-            "prereqs",
-            "prereqs.*",
-            "prereqs-*",
-            "ui.prereqs",
-            "ui.prereqs.*",
-            "ui.prereqs-*",
-            "ui.apps.prereqs",
-            "ui.apps-prereqs",
-            "ui.apps",
-            "ui.apps.*",
-            "ui.apps-*",
-            "ui.*.apps",
-            "ui.*-apps",
-            "config",
-            "config.*",
-            "config-*",
-            "ui.config",
-            "ui.config.*",
-            "ui.config-*",
-            "ui.*.config",
-            "ui.*-config",
-            "ui.content",
-            "ui.content.*",
-            "ui.content-*",
-            "ui.*.content",
-            "ui.*-content",
-            "ui.*",
-            "all.*",
-            "all-*",
-            "*.all",
-            "*-all",
-            "all"
-        ))
+        convention(
+            listOf(
+                "prereqs",
+                "prereqs.*",
+                "prereqs-*",
+                "ui.prereqs",
+                "ui.prereqs.*",
+                "ui.prereqs-*",
+                "ui.apps.prereqs",
+                "ui.apps-prereqs",
+                "ui.apps",
+                "ui.apps.*",
+                "ui.apps-*",
+                "ui.*.apps",
+                "ui.*-apps",
+                "config",
+                "config.*",
+                "config-*",
+                "ui.config",
+                "ui.config.*",
+                "ui.config-*",
+                "ui.*.config",
+                "ui.*-config",
+                "ui.content",
+                "ui.content.*",
+                "ui.content-*",
+                "ui.*.content",
+                "ui.*-content",
+                "ui.*",
+                "all.*",
+                "all-*",
+                "*.all",
+                "*-all",
+                "all"
+            )
+        )
         aem.prop.list("mvnBuild.deployPackagePrecedence")?.let { set(it) }
     }
 
     val deployPackageNames = aem.obj.strings {
-        convention(listOf(
-            "*",
-            "!ui.*.structure",
-            "!ui.*-structure",
-            "!all.*",
-            "!all-*",
-            "!*.all",
-            "!*-all",
-            "!all"
-        ))
+        convention(
+            listOf(
+                "*",
+                "!ui.*.structure",
+                "!ui.*-structure",
+                "!all.*",
+                "!all-*",
+                "!*.all",
+                "!*-all",
+                "!all"
+            )
+        )
         aem.prop.list("mvnBuild.deployPackageNames")?.let { set(it) }
     }
 
@@ -317,12 +326,16 @@ class MvnBuild(val aem: AemExtension) {
         val taskOptions: Task.() -> Unit = {
             group = AemTask.GROUP
             description = "Deploys CRX packages to instance"
-            doLast {
-                logger.lifecycle(listOf(
-                    "Deployment of ${packageModules.size} CRX package(s) ended at ${Formats.date()}:",
-                    packageModules.sortedBy { it.name }.joinToString(", ") { it.name }
-                ).joinToString("\n"))
-            }
+            doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
+                override fun execute(task: Task) {
+                    logger.lifecycle(
+                        listOf(
+                            "Deployment of ${packageModules.size} CRX package(s) ended at ${Formats.date()}:",
+                            packageModules.sortedBy { it.name }.joinToString(", ") { it.name }
+                        ).joinToString("\n")
+                    )
+                }
+            })
         }
 
         if (deployPackageOrder.get() == DeployPackageOrder.PRECEDENCE) {

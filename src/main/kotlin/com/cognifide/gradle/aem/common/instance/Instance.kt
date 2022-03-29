@@ -119,9 +119,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
     }
 
     fun property(key: String): String? = properties[key]
-            ?: systemProperties[key]
-            ?: slingProperties[key]
-            ?: slingSettings[key]
+        ?: systemProperties[key]
+        ?: slingProperties[key]
+        ?: slingSettings[key]
 
     @get:JsonIgnore
     val reachable: Boolean get() = sync.status.reachable
@@ -131,7 +131,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
     @get:JsonIgnore
     val zoneId: ZoneId get() = systemProperties["user.timezone"]?.let { ZoneId.of(it) }
-                ?: throw InstanceException("Cannot read timezone of $this!")
+        ?: throw InstanceException("Cannot read timezone of $this!")
 
     @get:JsonIgnore
     val zoneOffset: ZoneOffset get() = zoneId.rules.getOffset(LocalDateTime.now())
@@ -148,26 +148,26 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
     @get:JsonIgnore
     val osInfo: String get() = mutableListOf<String>().apply {
-            systemProperties["os.name"]?.let { add(it) }
-            systemProperties["os.arch"]?.let { add(it) }
-            systemProperties["os.version"]?.let { add("($it)") }
-        }.joinToString(" ")
+        systemProperties["os.name"]?.let { add(it) }
+        systemProperties["os.arch"]?.let { add(it) }
+        systemProperties["os.version"]?.let { add("($it)") }
+    }.joinToString(" ")
 
     @get:JsonIgnore
     val javaInfo: String get() = mutableListOf<String>().apply {
-            systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
-            systemProperties["java.version"]?.let { add("($it)") }
-        }.joinToString(" ")
+        systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
+        systemProperties["java.version"]?.let { add("($it)") }
+    }.joinToString(" ")
 
     @get:JsonIgnore
     val runningPath: String get() = systemProperties["user.dir"]
-                ?: throw InstanceException("Cannot read running path of $this!")
+        ?: throw InstanceException("Cannot read running path of $this!")
 
     @get:JsonIgnore
     val runningModes: List<String> get() = slingSettings["Run_Modes"]
-                ?.removeSurrounding("[", "]")
-                ?.split(",")?.map { it.trim() }
-                ?: throw InstanceException("Cannot read running modes of $this!")
+        ?.removeSurrounding("[", "]")
+        ?.split(",")?.map { it.trim() }
+        ?: throw InstanceException("Cannot read running modes of $this!")
 
     @get:JsonIgnore
     open val version: AemVersion get() = AemVersion(sync.status.productVersion)
@@ -212,16 +212,16 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         other as Instance
 
         return EqualsBuilder()
-                .append(name, other.name)
-                .append(httpUrl, other.httpUrl)
-                .isEquals
+            .append(name, other.name)
+            .append(httpUrl, other.httpUrl)
+            .isEquals
     }
 
     override fun hashCode(): Int {
         return HashCodeBuilder()
-                .append(name)
-                .append(httpUrl)
-                .toHashCode()
+            .append(name)
+            .append(httpUrl)
+            .toHashCode()
     }
 
     override fun toString(): String = "Instance(name='$name', httpUrl='$httpUrl')"

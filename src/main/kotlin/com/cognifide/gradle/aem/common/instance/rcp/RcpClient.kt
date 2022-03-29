@@ -53,8 +53,10 @@ class RcpClient(private val aem: AemExtension) {
     fun copy(sourcePath: String, targetPath: String) {
         checkInstances()
         stopWatch.apply { if (!isStarted) start() else resume() }
-        aem.vlt("rcp $opts ${sourceInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$sourcePath " +
-                "${targetInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$targetPath")
+        aem.vlt(
+            "rcp $opts ${sourceInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$sourcePath " +
+                "${targetInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$targetPath"
+        )
         copiedPaths++
         stopWatch.suspend()
     }
