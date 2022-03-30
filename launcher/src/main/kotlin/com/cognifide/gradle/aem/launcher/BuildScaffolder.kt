@@ -3,25 +3,24 @@ package com.cognifide.gradle.aem.launcher
 import java.io.File
 import java.util.*
 
-class BuildScaffolder(private val launcher: Launcher) {
+class BuildScaffolder(private val launcher: Launcher): Scaffolder {
 
-    fun scaffold() {
+    override fun scaffold() {
         saveBuildSrc()
         saveProperties()
         saveSettings()
         saveRootBuildScript()
-        if (Regex("6.5.*").matches(propertyAemVersion())) {
-            EnvOnPremScaffolder(launcher).scaffold()
-        } else if (propertyAemVersion() == "cloud") {
-            EnvCloudScaffolder(launcher).scaffold()
+        if(propertyAemVersion()?.isNotBlank() == true) {
+            val scaffolder = if(propertyAemVersion() == "cloud") EnvCloudScaffolder(launcher) else EnvOnPremScaffolder(launcher)
+            scaffolder.scaffold()
         }
     }
 
-    fun archetypeProperties() = Properties().apply {
-        File("archetype.properties").inputStream().buffered().use { load(it) }
-    }
+    fun archetypeProperties() = if (File("archetype.properties").exists()) Properties().apply {
+            File("archetype.properties").inputStream().buffered().use { load(it) }
+    } else null
 
-    fun propertyAemVersion() = archetypeProperties().getProperty("aemVersion")
+    fun propertyAemVersion() = archetypeProperties()?.getProperty("aemVersion")
 
     private fun saveBuildSrc() = launcher.workFileOnce("buildSrc/build.gradle.kts") {
         println("Saving Gradle build source script file '$this'")

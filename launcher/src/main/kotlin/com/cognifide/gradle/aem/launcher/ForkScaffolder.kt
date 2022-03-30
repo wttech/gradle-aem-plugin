@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.launcher
 
-class ForkScaffolder(private val launcher: Launcher) {
+class ForkScaffolder(private val launcher: Launcher): Scaffolder {
 
-    fun scaffold() {
+    override fun scaffold() {
         savePropertiesTemplate()
         savePropertiesDefinitions()
     }
