@@ -48,3 +48,10 @@ jobs:
         with:
           name: gap-functional-tests-reports
           path: build/reports/tests/functionalTest
+
+      - name: Publish launcher functional test reports
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: gap-launcher-functional-tests-reports
+          path: launcher/build/reports/tests/functionalTest
