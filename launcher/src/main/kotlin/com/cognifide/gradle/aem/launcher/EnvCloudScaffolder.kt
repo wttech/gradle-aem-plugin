@@ -1,14 +1,36 @@
 package com.cognifide.gradle.aem.launcher
 
-class EnvCloudScaffolder (private val launcher: Launcher) {
+class EnvCloudScaffolder(private val launcher: Launcher) {
     fun scaffold() {
+        saveBuildSrc()
         saveEnvBuildScript()
         saveEnvSrcFiles()
     }
+    private fun saveBuildSrc() = launcher.workFileOnce("buildSrc/build.gradle.kts") {
+        println("Saving Gradle build source script file '$this'")
+        writeText(
+            """
+            repositories {
+                mavenLocal()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+            
+            dependencies {
+                implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
+                implementation("com.cognifide.gradle:common-plugin:1.0.41")
+                implementation("com.neva.gradle:fork-plugin:7.0.5")
+                implementation("com.cognifide.gradle:environment-plugin:2.2.0")
+            }
+            """.trimIndent()
+        )
+    }
 
+    @Suppress("LongMethod", "MaxLineLength")
     private fun saveEnvBuildScript() = launcher.workFileOnce("env/build.gradle.kts") {
         println("Saving environment Gradle build script file '$this'")
-        writeText("""
+        writeText(
+            """
             plugins {
                 id("com.cognifide.aem.instance.local")
                 id("com.cognifide.environment")
@@ -107,13 +129,15 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                 environmentUp { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
                 environmentAwait { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
             }
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 
     private fun saveEnvSrcFiles() {
         launcher.workFileOnce("env/src/environment/docker-compose.yml.peb") {
             println("Saving environment Docker compose file '$this'")
-            writeText("""
+            writeText(
+                """
                 version: "3"
                 services:
                   httpd:
@@ -137,19 +161,23 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                     extra_hosts:
                       - "host.docker.internal:{{ docker.runtime.hostInternalIp }}"
                     {% endif %}
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileOnce("env/src/environment/httpd/conf.modules.d/02-dispatcher.conf") {
             println("Saving environment HTTPD dispatcher config file '$this'")
-            writeText("""
+            writeText(
+                """
                 LoadModule dispatcher_module modules/mod_dispatcher.so
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileOnce("env/src/environment/httpd/conf.d/variables/default.vars") {
             println("Saving environment variables file '$this'")
-            writeText("""
+            writeText(
+                """
                       Define DOCROOT /var/www/localhost/cache
                       Define AEM_HOST publish.aem.local
                       Define AEM_IP *.*.*.*
@@ -159,7 +187,8 @@ class EnvCloudScaffolder (private val launcher: Launcher) {
                       Define EXPIRATION_TIME A2592000
                       Define FORWARDED_HOST_SETTING Off
                       Define COMMERCE_ENDPOINT https://publish.aem.local/api/graphql
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
     }
 }

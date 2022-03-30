@@ -141,7 +141,7 @@ tasks {
 }
 
 detekt {
-    config.from(file("detekt.yml"))
+    config.from(rootProject.file("detekt.yml"))
     parallel = true
     autoCorrect = true
 }

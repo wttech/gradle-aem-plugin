@@ -2,13 +2,35 @@ package com.cognifide.gradle.aem.launcher
 
 class EnvOnPremScaffolder(private val launcher: Launcher) {
     fun scaffold() {
+        saveBuildSrc()
         saveEnvBuildScript()
         saveEnvSrcFiles()
     }
+    private fun saveBuildSrc() = launcher.workFileOnce("buildSrc/build.gradle.kts") {
+        println("Saving Gradle build source script file '$this'")
+        writeText(
+            """
+            repositories {
+                mavenLocal()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+            
+            dependencies {
+                implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
+                implementation("com.cognifide.gradle:common-plugin:1.0.41")
+                implementation("com.neva.gradle:fork-plugin:7.0.5")
+                implementation("com.cognifide.gradle:environment-plugin:2.2.0")
+            }
+            """.trimIndent()
+        )
+    }
 
+    @Suppress("LongMethod", "MaxLineLength")
     private fun saveEnvBuildScript() = launcher.workFileOnce("env/build.gradle.kts") {
         println("Saving environment Gradle build script file '$this'")
-        writeText("""
+        writeText(
+            """
             plugins {
                 id("com.cognifide.aem.instance.local")
                 id("com.cognifide.environment")
@@ -121,13 +143,16 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                 environmentUp { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
                 environmentAwait { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
             }
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 
+    @Suppress("LongMethod")
     private fun saveEnvSrcFiles() {
         launcher.workFileOnce("env/src/environment/docker-compose.yml.peb") {
             println("Saving environment Docker compose file '$this'")
-            writeText("""
+            writeText(
+                """
                 version: "3"
                 services:
                   httpd:
@@ -153,12 +178,14 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                     {% endif %}
                     environment:
                       - DISP_ID=docker
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileOnce("env/src/environment/httpd/conf.d/variables/default.vars") {
             println("Saving environment variables file '$this'")
-            writeText("""
+            writeText(
+                """
                       Define DISP_LOG_LEVEL Warn
                       Define REWRITE_LOG_LEVEL Warn
                       Define EXPIRATION_TIME A2592000
@@ -172,21 +199,26 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                       Define PUBLISH_DEFAULT_HOSTNAME publish.aem.local
                       Define PUBLISH_IP host.docker.internal
                       Define PUBLISH_PORT 4503
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileOnce("env/src/environment/httpd/conf.modules.d/02-dispatcher.conf") {
             println("Saving environment HTTPD dispatcher config file '$this'")
-            writeText("""
+            writeText(
+                """
                 LoadModule dispatcher_module modules/mod_dispatcher.so
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileOnce("env/src/environment/httpd/conf.d/custom.conf") {
             println("Saving environment HTTPD dispatcher config file '$this'")
-            writeText("""
+            writeText(
+                """
                 Include conf.d/variables/default.vars
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileOnce("env/src/environment/httpd/conf.d/proxy/mock.proxy") {
@@ -196,40 +228,51 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
 
         launcher.workFileBackupOnce("dispatcher/src/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any") {
             println("Creating author flush config file '$this'")
-            writeText("""
+            writeText(
+                """
                 # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
                 /0 {
                     /glob "*.*.*.*"
                     /type "allow"
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileBackupOnce("dispatcher/src/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any") {
             println("Creating publish flush config file '$this'")
-            writeText("""
+            writeText(
+                """
                 # This is where you'd put an entry for each publisher or author that you want to allow to invalidate the cache on the dispatcher
                 /0 {
                     /glob "*.*.*.*"
                     /type "allow"
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         launcher.workFileBackupOnce("dispatcher/src/conf.d/rewrites/xforwarded_forcessl_rewrite.rules") {
             println("Creating X-Forwarded-For SSL rewrite config file '$this'")
-            writeText("""
+            writeText(
+                """
                 # This ruleset forces https in the end users browser
                 #RewriteCond %{HTTP:X-Forwarded-Proto} !https
                 #RewriteCond %{REQUEST_URI} !^/dispatcher/invalidate.cache
                 #RewriteRule (.*) https://%{SERVER_NAME}%{REQUEST_URI} [L,R=301]
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
-        // Replacing md5 checksums in dispatcher's pom.xml for the files that are being replaced
-        launcher.workFileBackupAndReplaceStrings("dispatcher/pom.xml",
-            Pair("cd1373a055f245de6e9ed78f74f974a6", "3f6158d0fd659071fa29c50c9a509804"), // Replacing md5 checksum for xforwarded_forcessl_rewrite.rules file
-            Pair("a66be278d68472073241fc78db7af993", "122cecacb81e64d1c1c47f68d082bef1")  // Replacing md5 checksum for ams_author_invalidate_allowed.any and ams_publish_invalidate_allowed.any files
+        /**
+         * Replacing md5 checksums in dispatcher's pom.xml for the files that are being replaced
+         */
+        launcher.workFileBackupAndReplaceStrings(
+            "dispatcher/pom.xml",
+            // Replacing md5 checksum for xforwarded_forcessl_rewrite.rules file
+            Pair("cd1373a055f245de6e9ed78f74f974a6", "3f6158d0fd659071fa29c50c9a509804"),
+            // Replacing md5 checksum for ams_author_invalidate_allowed.any and ams_publish_invalidate_allowed.any files
+            Pair("a66be278d68472073241fc78db7af993", "122cecacb81e64d1c1c47f68d082bef1")
         )
     }
 }

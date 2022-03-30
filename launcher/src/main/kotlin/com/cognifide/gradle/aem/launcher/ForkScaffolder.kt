@@ -9,7 +9,8 @@ class ForkScaffolder(private val launcher: Launcher) {
 
     private fun savePropertiesTemplate() = launcher.workFileOnce("gradle/fork/gradle.user.properties.peb") {
         println("Saving user-specific properties template '$this'")
-        writeText("""
+        writeText(
+            """
             # === Gradle AEM Plugin ===
             package.manager.deployAvoidance={{packageDeployAvoidance}}
             {% if packageDamAssetToggle == 'true' %}
@@ -36,12 +37,15 @@ class ForkScaffolder(private val launcher: Launcher) {
             fileTransfer.user={{companyUser}}
             fileTransfer.password={{companyPassword}}
             fileTransfer.domain={{companyDomain}}
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 
+    @Suppress("LongMethod")
     private fun savePropertiesDefinitions() = launcher.workFileOnce("gradle/fork/props.gradle.kts") {
         println("Saving user-specific property definitions '$this'")
-        writeText("""
+        writeText(
+            """
             import com.cognifide.gradle.aem.common.instance.local.OpenMode
             import com.neva.gradle.fork.ForkExtension
 
@@ -160,6 +164,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                     }
                 }
             }
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 }
