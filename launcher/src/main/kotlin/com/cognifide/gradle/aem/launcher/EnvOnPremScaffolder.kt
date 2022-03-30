@@ -226,10 +226,10 @@ class EnvOnPremScaffolder(private val launcher: Launcher): Scaffolder {
             """.trimIndent())
         }
 
-        //Replacing md5 checksums in dispatcher's pom.xml for the files that are being replaced
+        // Replacing md5 checksums in dispatcher's pom.xml for the files that are being replaced
         launcher.workFileBackupAndReplaceStrings("dispatcher/pom.xml",
-            Pair("cd1373a055f245de6e9ed78f74f974a6", "3f6158d0fd659071fa29c50c9a509804"), //replacing md5 checksum for xforwarded_forcessl_rewrite.rules file
-            Pair("a66be278d68472073241fc78db7af993", "122cecacb81e64d1c1c47f68d082bef1")  //replacing md5 checksum for ams_author_invalidate_allowed.any and ams_publish_invalidate_allowed.any files
+            Pair("cd1373a055f245de6e9ed78f74f974a6", "3f6158d0fd659071fa29c50c9a509804"), // Replacing md5 checksum for xforwarded_forcessl_rewrite.rules file
+            Pair("a66be278d68472073241fc78db7af993", "122cecacb81e64d1c1c47f68d082bef1")  // Replacing md5 checksum for ams_author_invalidate_allowed.any and ams_publish_invalidate_allowed.any files
         )
     }
 }

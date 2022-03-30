@@ -29,6 +29,7 @@ class ForkScaffolder(private val launcher: Launcher): Scaffolder {
             instance.local-publish.httpUrl={{instancePublishHttpUrl}}
             instance.local-publish.openPath=/crx/packmgr
 
+            mvnBuild.args={{mvnBuildArgs}}
 
             # === Gradle Common Plugin ===
             notifier.enabled=true
