@@ -3,16 +3,15 @@ package com.cognifide.gradle.aem.launcher
 import java.io.File
 import java.util.*
 
-class BuildScaffolder(private val launcher: Launcher): Scaffolder {
+class BuildScaffolder(private val launcher: Launcher) {
 
-    override fun scaffold() {
+    fun scaffold() {
         saveBuildSrc()
         saveProperties()
         saveSettings()
         saveRootBuildScript()
         if(propertyAemVersion()?.isNotBlank() == true) {
-            val scaffolder = if(propertyAemVersion() == "cloud") EnvCloudScaffolder(launcher) else EnvOnPremScaffolder(launcher)
-            scaffolder.scaffold()
+            if(propertyAemVersion() == "cloud") EnvCloudScaffolder(launcher).scaffold() else EnvOnPremScaffolder(launcher).scaffold()
         }
     }
 

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.launcher
 
-class EnvCloudScaffolder (private val launcher: Launcher): Scaffolder {
-    override fun scaffold() {
+class EnvCloudScaffolder (private val launcher: Launcher) {
+    fun scaffold() {
         saveEnvBuildScript()
         saveEnvSrcFiles()
     }
