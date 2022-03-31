@@ -53,6 +53,7 @@ class Launcher(val args: Array<String>) {
      * On Windows later build execution might fail without it, because Gradle files might not be ready.
      * Do not remove it!
      */
+    @Suppress("MagicNumber")
     private fun awaitFileSystem() {
         Thread.sleep(1_000)
     }
@@ -102,6 +103,7 @@ class Launcher(val args: Array<String>) {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught", "PrintStackTrace")
     fun runBuildAndExit(): Unit = try {
         runBuild(gradleArgs)
         exitProcess(0)
