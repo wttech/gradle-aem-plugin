@@ -9,19 +9,20 @@ class BuildScaffolder(private val launcher: Launcher) {
         saveProperties()
         saveSettings()
         saveRootBuildScript()
-
-        if (propertyAemVersion()?.isNotBlank() == true) {
-            if (propertyAemVersion() == "cloud") EnvCloudScaffolder(launcher).scaffold() else EnvOnPremScaffolder(launcher).scaffold()
-        } else {
-            EnvScaffolder(launcher).scaffold()
+        when (propertyAemVersion()) {
+            "cloud" -> EnvCloudScaffolder(launcher).scaffold()
+            null -> EnvScaffolder(launcher).scaffold()
+            else -> EnvOnPremScaffolder(launcher).scaffold()
         }
     }
 
-    fun propertyAemVersion() = archetypeProperties()?.getProperty("aemVersion")
+    private fun propertyAemVersion() = archetypeProperties()?.getProperty("aemVersion")
 
-    fun archetypeProperties() = if (File("archetype.properties").exists()) Properties().apply {
-        File("archetype.properties").inputStream().buffered().use { load(it) }
+    private fun archetypeProperties() = if (archetypePropertiesFile.exists()) Properties().apply {
+        archetypePropertiesFile.inputStream().buffered().use { load(it) }
     } else null
+
+    private val archetypePropertiesFile get() = File("archetype.properties")
 
     private fun saveProperties() = launcher.workFileOnce("gradle.properties") {
         println("Saving Gradle properties file '$this'")
@@ -38,18 +39,20 @@ class BuildScaffolder(private val launcher: Launcher) {
 
     private val savePropsFlag get() = launcher.args.contains(Launcher.ARG_SAVE_PROPS)
 
-    private val saveProps get() = launcher.args.filter { it.startsWith(Launcher.ARG_SAVE_PREFIX) }
-        .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
-        .map { it.substringBefore("=") to it.substringAfter("=") }
-        .toMap()
+    private val saveProps
+        get() = launcher.args.filter { it.startsWith(Launcher.ARG_SAVE_PREFIX) }
+            .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
+            .map { it.substringBefore("=") to it.substringAfter("=") }
+            .toMap()
 
-    private val defaultProps get() = mapOf(
-        "org.gradle.logging.level" to "info",
-        "org.gradle.daemon" to "true",
-        "org.gradle.parallel" to "true",
-        "org.gradle.caching" to "true",
-        "org.gradle.jvmargs" to "-Xmx2048m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8"
-    )
+    private val defaultProps
+        get() = mapOf(
+            "org.gradle.logging.level" to "info",
+            "org.gradle.daemon" to "true",
+            "org.gradle.parallel" to "true",
+            "org.gradle.caching" to "true",
+            "org.gradle.jvmargs" to "-Xmx2048m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8"
+        )
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
         println("Saving root Gradle build script file '$this'")
