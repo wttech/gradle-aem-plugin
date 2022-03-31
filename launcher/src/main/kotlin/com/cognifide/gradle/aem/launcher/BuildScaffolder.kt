@@ -9,16 +9,16 @@ class BuildScaffolder(private val launcher: Launcher) {
         saveProperties()
         saveSettings()
         saveRootBuildScript()
-        when (propertyAemVersion()) {
+        when (aemVersion) {
             "cloud" -> EnvCloudScaffolder(launcher).scaffold()
             null -> EnvScaffolder(launcher).scaffold()
             else -> EnvOnPremScaffolder(launcher).scaffold()
         }
     }
 
-    private fun propertyAemVersion() = archetypeProperties()?.getProperty("aemVersion")
+    private val aemVersion get() = archetypeProperties?.getProperty("aemVersion")
 
-    private fun archetypeProperties() = if (archetypePropertiesFile.exists()) Properties().apply {
+    private val archetypeProperties get() = if (archetypePropertiesFile.exists()) Properties().apply {
         archetypePropertiesFile.inputStream().buffered().use { load(it) }
     } else null
 
@@ -51,7 +51,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             "org.gradle.daemon" to "true",
             "org.gradle.parallel" to "true",
             "org.gradle.caching" to "true",
-            "org.gradle.jvmargs" to "-Xmx2048m -XX:MaxPermSize=512m -Dfile.encoding=UTF-8"
+            "org.gradle.jvmargs" to "-Xmx2048m -Dfile.encoding=UTF-8"
         )
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {

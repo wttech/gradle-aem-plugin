@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.launcher
 
+@Suppress("LongMethod", "MaxLineLength")
 class EnvOnPremScaffolder(private val launcher: Launcher) {
     fun scaffold() {
         saveBuildSrc()
@@ -26,7 +27,6 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
         )
     }
 
-    @Suppress("LongMethod", "MaxLineLength")
     private fun saveEnvBuildScript() = launcher.workFileOnce("env/build.gradle.kts") {
         println("Saving environment Gradle build script file '$this'")
         writeText(
@@ -147,7 +147,6 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
         )
     }
 
-    @Suppress("LongMethod")
     private fun saveEnvSrcFiles() {
         launcher.workFileOnce("env/src/environment/docker-compose.yml.peb") {
             println("Saving environment Docker compose file '$this'")

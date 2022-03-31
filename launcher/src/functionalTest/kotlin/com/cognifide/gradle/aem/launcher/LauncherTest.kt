@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.launcher
-
 import org.buildobjects.process.ProcBuilder
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.*
@@ -19,7 +19,7 @@ class LauncherTest {
     @Test
     fun shouldGenerateCloudEnvProperly() = makeTestProject("cloud-env", "cloud") {
         launch("env:environmentResolve")
-        assert(
+        assertTrue(
             File("build/functionalTest/cloud-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("COMMERCE_ENDPOINT")
         )
@@ -28,7 +28,7 @@ class LauncherTest {
     @Test
     fun shouldGenerateOnPremEnvProperly() = makeTestProject("on-prem-env", "6.5.10") {
         launch("env:environmentResolve")
-        assert(
+        assertTrue(
             File("build/functionalTest/on-prem-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("AUTHOR_DEFAULT_HOSTNAME")
         )
@@ -37,7 +37,7 @@ class LauncherTest {
     @Test
     fun shouldNotGenerateEnvironmentWithoutArchetypePropertiesFile() {
         makeTestProject("no-env", null) {
-            assert(!File("build/functionalTest/no-env/env/src").exists())
+            assertFalse(File("build/functionalTest/no-env/env/src").exists())
         }
     }
 
