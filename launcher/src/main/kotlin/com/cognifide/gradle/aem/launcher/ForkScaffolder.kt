@@ -9,7 +9,8 @@ class ForkScaffolder(private val launcher: Launcher) {
 
     private fun savePropertiesTemplate() = launcher.workFileOnce("gradle/fork/gradle.user.properties.peb") {
         println("Saving user-specific properties template '$this'")
-        writeText("""
+        writeText(
+            """
             # === Gradle AEM Plugin ===
             package.manager.deployAvoidance={{packageDeployAvoidance}}
             {% if packageDamAssetToggle == 'true' %}
@@ -30,19 +31,21 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.local-publish.openPath=/crx/packmgr
 
             mvnBuild.args={{mvnBuildArgs}}
-            mvnBuild.profiles={{mvnBuildProfiles}}
 
             # === Gradle Common Plugin ===
             notifier.enabled=true
             fileTransfer.user={{companyUser}}
             fileTransfer.password={{companyPassword}}
             fileTransfer.domain={{companyDomain}}
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 
+    @Suppress("LongMethod")
     private fun savePropertiesDefinitions() = launcher.workFileOnce("gradle/fork/props.gradle.kts") {
         println("Saving user-specific property definitions '$this'")
-        writeText("""
+        writeText(
+            """
             import com.cognifide.gradle.aem.common.instance.local.OpenMode
             import com.neva.gradle.fork.ForkExtension
 
@@ -88,12 +91,12 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                         define("localInstanceSpUri") {
                             label = "Service Pack URI"
-                            description = "Typically file named 'aem-service-pkg-*.zip'"
+                            description = "Only for on-prem AEM instances. Typically file named 'aem-service-pkg-*.zip'"
                             optional()
                         }
                         define("localInstanceCoreComponentsUri") {
                             label = "Core Components package URI"
-                            description = "Typically file named 'core.wcm.components.all-*.zip'"
+                            description = "Only for on-prem AEM instances. Typically file named 'core.wcm.components.all-*.zip'"
                             optional()
                         }
                         define("localInstanceOpenMode") {
@@ -161,6 +164,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                     }
                 }
             }
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 }
