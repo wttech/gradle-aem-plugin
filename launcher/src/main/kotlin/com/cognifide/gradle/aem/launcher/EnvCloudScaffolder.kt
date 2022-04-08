@@ -179,7 +179,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             writeText(
                 """
                       Define DOCROOT /var/www/localhost/cache
-                      Define AEM_HOST publish.aem.local
+                      Define AEM_HOST host.docker.internal
                       Define AEM_IP *.*.*.*
                       Define AEM_PORT 4503
                       Define DISP_LOG_LEVEL Warn
