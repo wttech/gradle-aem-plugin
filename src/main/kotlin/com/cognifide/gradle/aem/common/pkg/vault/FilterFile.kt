@@ -82,8 +82,9 @@ class FilterFile(@InputFile val file: File, val temporary: Boolean = false) : Cl
             return null
         }
 
-        fun convention(aem: AemExtension): FilterFile = aem.run {
-            val dir = packageOptions.vltDir.get().asFile
+        fun convention(aem: AemExtension): FilterFile = convention(aem, aem.packageOptions.vltDir.get().asFile)
+
+        fun convention(aem: AemExtension, dir: File): FilterFile = aem.run {
             val files = listOf("$dir/$SYNC_NAME", "$dir/$BUILD_NAME")
             val file = FileOperations.find(project, dir, files)
             if (file != null) {
