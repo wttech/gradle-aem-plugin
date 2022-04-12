@@ -134,7 +134,7 @@ It is using `sh gradlew props` task to provide AEM instance files details, howev
 To set up and turn on AEM instance(s) by single command, consider running:
 
 ```bash
-curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/15.0.4/gap.jar \
+curl -OJL https://github.com/Cognifide/gradle-aem-plugin/releases/download/15.5.3/gap.jar \
 && java -jar gap.jar --save-props \
   -PfileTransfer.user=foo -PfileTransfer.password=pass \
   -PlocalInstance.quickstart.jarUrl=http://company-share.com/aem/cq-quickstart-6.5.0.jar \
