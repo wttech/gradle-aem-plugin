@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.tail.io.ConsolePrinter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -10,12 +11,13 @@ import kotlinx.coroutines.launch
 class LogTailer(
     private val source: LogSource,
     private val destination: LogDestination,
+    val aem: AemExtension,
     info: LogInfo = NoLogInfo(),
     private val logsAnalyzerChannel: SendChannel<Log>? = null,
     private val printer: ConsolePrinter = ConsolePrinter.none()
 ) {
 
-    private val parser = LogParser(info)
+    private val parser = LogParser(aem, info)
 
     private var lastLogChecksum = ""
 
