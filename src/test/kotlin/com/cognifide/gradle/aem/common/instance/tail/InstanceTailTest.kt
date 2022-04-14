@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FileUtils
 import org.gradle.testfixtures.ProjectBuilder
@@ -128,7 +127,7 @@ class InstanceTailTest {
             "aggregating/overlapping/second-chunk-error.log"
         )
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination, aem)
+        val tailer = LogTailer(aem, source, destination)
 
         // when
         tailer.tail()
@@ -156,7 +155,7 @@ class InstanceTailTest {
             "aggregating/disjoint/second-chunk-error.log"
         )
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination, aem)
+        val tailer = LogTailer(aem, source, destination)
 
         // when
         tailer.tail()
@@ -184,7 +183,7 @@ class InstanceTailTest {
             "aggregating/disjoint/first-chunk-error.log"
         )
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination, aem)
+        val tailer = LogTailer(aem, source, destination)
 
         // when
         tailer.tail()
@@ -216,8 +215,8 @@ class InstanceTailTest {
         assertTrue(
             logFilter.isExcluded(
                 Log.create(
-                    NoLogInfo(),
                     aem,
+                    NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
                             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
@@ -240,8 +239,8 @@ class InstanceTailTest {
         assertFalse(
             blacklist.isExcluded(
                 Log.create(
-                    NoLogInfo(),
                     aem,
+                    NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
                             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
@@ -264,8 +263,8 @@ class InstanceTailTest {
         assertTrue(
             logFilter.isExcluded(
                 Log.create(
-                    NoLogInfo(),
                     aem,
+                    NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
                             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
@@ -288,8 +287,8 @@ class InstanceTailTest {
         assertFalse(
             blacklist.isExcluded(
                 Log.create(
-                    NoLogInfo(),
                     aem,
+                    NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
                             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +

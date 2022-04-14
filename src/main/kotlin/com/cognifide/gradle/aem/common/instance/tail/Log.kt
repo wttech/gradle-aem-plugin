@@ -61,7 +61,7 @@ class Log(
 
         private val PRINT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
-        fun create(info: LogInfo, aem: AemExtension, logLines: List<String>): Log {
+        fun create(aem: AemExtension, info: LogInfo, logLines: List<String>): Log {
 
             if (logLines.isEmpty() || logLines.first().isBlank()) {
                 throw TailerException("Passed log entry is empty!")

@@ -23,7 +23,7 @@ class LogParser(val aem: AemExtension, private val info: LogInfo = NoLogInfo()) 
     private fun read(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
         val (completeLogLines, firstLineOfNextLog) = readSubsequentLogLines(reader, firstLogLine?.let { listOf(it) } ?: emptyList<String>())
         return if (completeLogLines.isNotEmpty()) {
-            Log.create(info, aem, completeLogLines) to firstLineOfNextLog
+            Log.create(aem, info, completeLogLines) to firstLineOfNextLog
         } else {
             null to null
         }

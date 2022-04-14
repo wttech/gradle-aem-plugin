@@ -9,9 +9,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(DelicateCoroutinesApi::class)
 class LogTailer(
+    val aem: AemExtension,
     private val source: LogSource,
     private val destination: LogDestination,
-    val aem: AemExtension,
     info: LogInfo = NoLogInfo(),
     private val logsAnalyzerChannel: SendChannel<Log>? = null,
     private val printer: ConsolePrinter = ConsolePrinter.none()
