@@ -10,7 +10,7 @@ import java.io.File
 open class InstanceDeploy : Instance() {
 
     @Internal
-    val packages = aem.obj.files() {
+    val files = aem.obj.files {
         common.prop.list("instance.deploy.url")?.let { urls ->
             setFrom(aem.obj.provider { common.resolveFiles(urls) })
         }
@@ -35,8 +35,8 @@ open class InstanceDeploy : Instance() {
         instanceManager.examine(anyInstances)
 
         when {
-            !packages.isEmpty -> packages.forEach {
-                when(it.extension){
+            !files.isEmpty -> files.forEach {
+                when (it.extension) {
                     "zip" -> deployPackage(it)
                     "jar" -> deployBundle(it)
                     else -> throw InstanceException("File '$it' has unsupported type and cannot be deployed to instance(s)!")
