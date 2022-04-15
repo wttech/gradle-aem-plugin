@@ -34,7 +34,7 @@ class UrlSource(
             chunk
         } catch (ex: RequestException) {
             if (wasStable) {
-                logger.warn("Tailing paused for $instance due to '${ex.message}'. Awaiting resumption.")
+                logger.warn("Tailing paused for $instance due to:\n '${ex.message}' Awaiting resumption.")
             }
             wasStable = false
             emptyList<T>()

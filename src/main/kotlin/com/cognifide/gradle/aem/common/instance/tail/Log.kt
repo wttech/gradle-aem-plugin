@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 
 class Log(
@@ -68,31 +69,29 @@ class Log(
             }
 
             val fullLog = logLines.joinToString("\n")
+            val result = matchLogLine(logLines.first())?.groups ?: throw TailerException("Nothing to parse")
 
-            when (val result = matchLogLine(logLines.first())?.groups) {
-                null -> throw TailerException("Passed text is not a log entry\nPattern:\n$LOG_PATTERN\nText:\n${logLines.first()}")
-                else -> {
-                    val followingMessageLines = logLines.slice(1 until logLines.size)
-                    return Log(
-                        info,
-                        fullLog,
-                        parseTimestamp(result.get("timestamp") ?.value ?.trim() ?: "", aem.datePattern.get(), info),
-                        result.get("level")?.value ?: "",
-                        result.get("source")?.value ?: "",
-                        listOf(result.get("message")?.value ?: "") + followingMessageLines
-                    )
-                }
-            }
+            val timestamp = result.get("timestamp")?.value?.trim() ?: throw TailerException("Cannot get `timestamp` value from log")
+            val level = result.get("level")?.value ?: throw TailerException("Cannot get `level` value from log")
+            val source = result.get("source")?.value ?: throw TailerException("Cannot get `source` value from log")
+            val message = result.get("message")?.value ?: throw TailerException("Cannot get `message` value from log")
+            val followingMessageLines = logLines.slice(1 until logLines.size)
+
+            return Log(info, fullLog, parseTimestamp(timestamp, aem.datePattern.get(), info), level, source, listOf(message) + followingMessageLines)
         }
 
         fun isFirstLineOfLog(text: String) = matchLogLine(text) != null
 
         fun parseTimestamp(timestamp: String, dateTimeFormatter: DateTimeFormatter, logInfo: LogInfo = NoLogInfo()): ZonedDateTime {
-            return LocalDateTime.parse(timestamp, dateTimeFormatter).atZone(logInfo.zoneId)
-                ?: throw TailerException(
-                    "Invalid timestamp in log:\n$timestamp" +
-                        "\n required format: $dateTimeFormatter"
+            try {
+                return LocalDateTime.parse(timestamp, dateTimeFormatter).atZone(logInfo.zoneId)
+            } catch (e: DateTimeParseException) {
+                throw TailerException(
+                    "\nProbably date pattern doesn't match. " +
+                        "Consider configuring it in property \"instance.tail.datePattern\" " +
+                        "to match the other one configured on AEM instance(s)\n"
                 )
+            }
         }
 
         private fun matchLogLine(text: String) = LOG_PATTERN.toRegex().matchEntire(text)
