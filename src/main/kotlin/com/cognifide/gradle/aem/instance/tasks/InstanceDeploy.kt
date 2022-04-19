@@ -32,8 +32,6 @@ open class InstanceDeploy : Instance() {
 
     @TaskAction
     fun deploy() {
-        instanceManager.examine(anyInstances)
-
         when {
             !files.isEmpty -> files.forEach {
                 when (it.extension) {
@@ -56,11 +54,13 @@ open class InstanceDeploy : Instance() {
     }
 
     private fun deployPackage(zip: File) {
+        instanceManager.examine(anyInstances)
         instanceManager.fileSync { deployPackage(zip) }
         common.notifier.notify("Package deployed", "${zip.name} on ${anyInstances.names}")
     }
 
     private fun deployBundle(jar: File) {
+        instanceManager.examine(anyInstances)
         instanceManager.fileSync { installBundle(jar) }
         common.notifier.notify("Bundle deployed", "${jar.name} on ${anyInstances.names}")
     }
