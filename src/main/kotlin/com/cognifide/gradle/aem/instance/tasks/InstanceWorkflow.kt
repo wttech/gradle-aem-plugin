@@ -9,11 +9,11 @@ open class InstanceWorkflow : Instance() {
 
     private val notifier = common.notifier
 
-    @Internal
-    val workflow = common.prop.string("instance.workflow") ?: error("No workflow defined!")
+    @get:Internal
+    val workflow by lazy { common.prop.string("instance.workflow") ?: error("No workflow defined!") }
 
-    @Internal
-    val workflowPath = common.prop.string("instance.workflow.path") ?: error("No worflow path defined!")
+    @get:Internal
+    val workflowPath by lazy { common.prop.string("instance.workflow.path") ?: error("No worflow path defined!") }
 
     @TaskAction
     fun run() = anyInstances.forEach { instanceWorkflows(it) }.let { notifier.notify("All workflows executed correctly!", "Instances: ${anyInstances.names}") }
