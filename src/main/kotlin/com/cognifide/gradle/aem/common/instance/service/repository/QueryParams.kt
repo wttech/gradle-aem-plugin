@@ -28,15 +28,15 @@ open class QueryParams(private val enumerated: Boolean) {
         params["type"] = value
     }
 
-    fun file() = type("nt:file")
+    fun file() = type(ResourceType.FILE.value)
 
-    fun page() = type("cq:Page")
+    fun page() = type(ResourceType.PAGE.value)
 
-    fun pageContent() = type("cq:PageContent")
+    fun pageContent() = type(ResourceType.PAGE_CONTENT.value)
 
-    fun damAsset() = type("dam:Asset")
+    fun damAsset() = type(ResourceType.ASSET.value)
 
-    fun damAssetContent() = type("dam:AssetContent")
+    fun damAssetContent() = type(ResourceType.ASSET_CONTENT.value)
 
     // Specialized filtering params
 

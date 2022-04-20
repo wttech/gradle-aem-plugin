@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.names
+import com.cognifide.gradle.aem.common.instance.service.repository.Node
+import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
+import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowException
 import com.cognifide.gradle.aem.common.tasks.Instance
 import org.apache.http.HttpStatus
 import org.gradle.api.tasks.Internal
@@ -10,13 +12,17 @@ import org.gradle.api.tasks.TaskAction
 open class InstanceWorkflow : Instance() {
 
     private val notifier = common.notifier
-    private var nodesCount = 0
+    private var workflowsCount = 0L
 
     @Internal
     val workflow = common.prop.string("instance.workflow")
 
     @Internal
-    val workflowPath = common.prop.string("instance.workflow.path")
+    val workflowPath = common.prop.string("instance.workflow.path") ?: Node.DAM_PATH
+
+    @Internal
+    val resourceType = common.prop.string("instance.workflow.resourceType")?.let { ResourceType.valueOf(it) }
+        ?: ResourceType.ASSET
 
     @Internal
     val targetInstaces = when {
@@ -28,35 +34,29 @@ open class InstanceWorkflow : Instance() {
     @TaskAction
     fun run() {
         instanceManager.examine(targetInstaces)
-        when {
-            workflow == null -> throw InstanceException("No workflow model defined!")
-            workflowPath == null -> throw InstanceException("No path defined!")
-            else -> {
-                targetInstaces.forEach { instanceWorkflows(it) }
-                notifier.notify("All workflows schedled properly!", "Instances: ${targetInstaces.names}")
-            }
-        }
-    }
 
-    fun instanceWorkflows(instance: com.cognifide.gradle.aem.common.instance.Instance) {
-        instance.sync.repository {
-            val nodes = sync.repository.query {
-                workflowPath?.let { path(it) }
-                type(NODE_TYPE)
-            }.nodeSequence()
+        if (workflow == null) throw WorkflowException("No workflow model defined!")
+        logger.lifecycle("Instances to execute: ${targetInstaces.names}, resource type: '${resourceType.value}', resources path: '$workflowPath'\n")
+        val params = mutableMapOf("model" to "$workflow", "payloadType" to "JCR_PATH")
+        common.progressIndicator {
+            targetInstaces.forEach {
+                step = "Getting resources"
+                val nodes = getResources(it)
 
-            if (nodes.count() == 0) throw InstanceException("There are no assets to be processed in workflow at $workflowPath!")
-            nodesCount += nodes.count()
+                total = nodes.count().toLong().also { workflowsCount += it }
 
-            logger.lifecycle("Instance: ${instance.id}, Assets to be processed:\n${nodes.map { node -> node.path }.joinToString("\n")}")
+                logger.lifecycle(
+                    "Instance: ${it.id}\nResources to be processed:\n${nodes.map { node -> node.path }.joinToString("\n")}"
+                )
 
-            instance.sync.http {
-                common.progress(nodes.count()) {
+                step = "Scheduling workflows"
+
+                it.sync.http {
                     nodes.forEach {
-                        val params = mapOf("model" to "$workflow", "payloadType" to "JCR_PATH", "payload" to it.path)
+                        params.put("payload", it.path)
                         post(WORKFLOW_POST_URI, params) {
                             if (!it.statusLine.statusCode.equals(HttpStatus.SC_CREATED)) {
-                                throw InstanceException(
+                                throw WorkflowException(
                                     "Workflow creating failed for ${params.get("payload")} and workflow model: $workflow" +
                                         "\nStatus: ${it.statusLine}!"
                                 )
@@ -65,18 +65,36 @@ open class InstanceWorkflow : Instance() {
                         increment()
                     }
                 }
+                reset()
             }
         }
+        notifier.notify(
+            "All workflows schedled properly!",
+            "Instances: '${targetInstaces.names}', path: '$workflowPath', resources type: '${resourceType.value}'"
+        )
+    }
+
+    private fun getResources(instance: com.cognifide.gradle.aem.common.instance.Instance): Sequence<Node> {
+        var nodes = sequenceOf<Node>()
+        instance.sync.repository {
+            nodes = sync.repository.query {
+                workflowPath
+                type(resourceType.value)
+            }.nodeSequence()
+        }
+        if (nodes.count() == 0) {
+            throw WorkflowException("There are no resources of type: ${resourceType.value} to be processed in workflow at $workflowPath!")
+        }
+        return nodes
     }
 
     init {
-        description = "Executing given workflow on assets under the specified path"
+        description = "Executing given workflow on resources under the specified path"
     }
 
     companion object {
         const val NAME = "instanceWorkflow"
 
         const val WORKFLOW_POST_URI = "/etc/workflow/instances.json"
-        const val NODE_TYPE = "dam:Asset"
     }
 }
