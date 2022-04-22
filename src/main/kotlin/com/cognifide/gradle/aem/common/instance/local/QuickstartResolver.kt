@@ -20,6 +20,13 @@ class QuickstartResolver(private val aem: AemExtension) {
      */
     val jarUrl = aem.obj.string {
         aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
+        aem.prop.string("localInstance.quickstart.dirUrl")?.let {
+            set(
+                File(it).walk()
+                    .filter { ".*-quickstart-\\d\\.\\d\\.\\d+\\.jar".toRegex().matches(it.name) }
+                    .first().absolutePath
+            )
+        }
     }
 
     val jar: File? get() = jarUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
@@ -29,6 +36,9 @@ class QuickstartResolver(private val aem: AemExtension) {
      */
     val licenseUrl = aem.obj.string {
         aem.prop.string("localInstance.quickstart.licenseUrl")?.let { set(it) }
+        aem.prop.string("localInstance.quickstart.dirUrl")?.let {
+            set(File(it).walk().filter { it.name.equals("license.properties") }.first().absolutePath)
+        }
     }
 
     val license: File? get() = licenseUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
