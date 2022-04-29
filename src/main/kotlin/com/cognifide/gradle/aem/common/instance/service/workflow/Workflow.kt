@@ -6,7 +6,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     private val repository = manager.repository
 
-    private val logger = manager.aem.logger
+    val logger = manager.aem.logger
 
     val launcher = repository.node(
         when {
@@ -14,6 +14,12 @@ class Workflow(val manager: WorkflowManager, val id: String) {
             else -> "/etc/workflow/launcher/config/$id"
         }
     )
+
+    val model get() = repository.node(WORKFLOWS_PATH) {
+        query { type(WORKFLOW_RESOURCE_TYPE) }
+    }.filter { it.name == id }.firstOrNull() ?: throw WorkflowException("No workflow model found!")
+
+    var resourceType = DEFAULT_RESOURCE_TYPE
 
     val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
 
@@ -26,6 +32,10 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     private var toggleInitial: Boolean? = null
 
     internal var toggleIntended: Boolean? = null
+
+    fun schedule(path: String, type: String = resourceType) {
+        WorkflowScheduler.execute(this, path, type)
+    }
 
     fun toggle() {
         toggleIntended?.let { toggle(it) }
@@ -73,5 +83,8 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     companion object {
 
         const val ENABLED_PROP = "enabled"
+        const val WORKFLOW_RESOURCE_TYPE = "cq:WorkflowModel"
+        const val WORKFLOWS_PATH = "/var/workflow/models"
+        const val DEFAULT_RESOURCE_TYPE = "dam:Asset"
     }
 }

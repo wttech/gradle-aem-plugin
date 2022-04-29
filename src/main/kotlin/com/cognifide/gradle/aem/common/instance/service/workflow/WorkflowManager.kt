@@ -20,6 +20,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun workflow(id: String) = Workflow(this, id)
 
+    fun workflow(id: String, options: Workflow.() -> Unit) = Workflow(this, id).run(options)
+
     fun workflows(type: String) = workflows(listOf(type))
 
     fun workflows(types: Iterable<String>) = WorkflowType.ids(types).map { Workflow(this, it) }
