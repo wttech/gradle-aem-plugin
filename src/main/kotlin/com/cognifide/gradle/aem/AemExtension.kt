@@ -444,12 +444,6 @@ class AemExtension(val project: Project) : Serializable {
      */
     fun mvnBuild(options: MvnBuild.() -> Unit) = mvnBuild.using(options)
 
-    /* log options */
-    val datePattern = obj.typed<DateTimeFormatter> {
-        convention(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS"))
-        prop.string("instance.tail.datePattern")?.let { set(DateTimeFormatter.ofPattern(it)) }
-    }
-
     companion object {
 
         const val NAME = "aem"
