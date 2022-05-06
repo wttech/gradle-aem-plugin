@@ -36,7 +36,6 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 import java.io.Serializable
-import java.time.format.DateTimeFormatter
 
 /**
  * Core of library, facade for implementing tasks.
