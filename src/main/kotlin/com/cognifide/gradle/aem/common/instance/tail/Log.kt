@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.capitalizeChar
 import java.time.LocalDateTime
@@ -46,7 +47,7 @@ class Log(
 
     companion object {
 
-        private const val TIMESTAMP = """(?<timestamp>[0-9]{2}\.[0-9]{2}\.[0-9]{4}\s[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})"""
+        private const val TIMESTAMP = """(?<timestamp>(^[\d[^(\*)]]+))"""
 
         private const val LEVEL = """\*(?<level>[A-Z]+)\*"""
 
@@ -58,29 +59,27 @@ class Log(
 
         private const val LOGS_SEPARATOR = "  "
 
-        private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS")
-
         private val PRINT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
-        fun create(info: LogInfo, logLines: List<String>): Log {
+        fun create(aem: AemExtension, info: LogInfo, logLines: List<String>): Log {
+
             if (logLines.isEmpty() || logLines.first().isBlank()) {
                 throw TailerException("Passed log entry is empty!")
             }
 
             val fullLog = logLines.joinToString("\n")
 
-            when (val result = matchLogLine(logLines.first())) {
+            when (val result = matchLogLine(logLines.first())?.groups) {
                 null -> throw TailerException("Passed text is not a log entry\nPattern:\n$LOG_PATTERN\nText:\n${logLines.first()}")
                 else -> {
-                    val (timestamp, level, source, message) = result.destructured
                     val followingMessageLines = logLines.slice(1 until logLines.size)
                     return Log(
                         info,
                         fullLog,
-                        parseTimestamp(timestamp, info),
-                        level,
-                        source,
-                        listOf(message) + followingMessageLines
+                        parseTimestamp(result.get("timestamp") ?.value ?.trim() ?: "", aem.datePattern.get(), info),
+                        result.get("level")?.value ?: "",
+                        result.get("source")?.value ?: "",
+                        listOf(result.get("message")?.value ?: "") + followingMessageLines
                     )
                 }
             }
@@ -88,11 +87,11 @@ class Log(
 
         fun isFirstLineOfLog(text: String) = matchLogLine(text) != null
 
-        fun parseTimestamp(timestamp: String, logInfo: LogInfo = NoLogInfo()): ZonedDateTime {
-            return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER).atZone(logInfo.zoneId)
+        fun parseTimestamp(timestamp: String, dateTimeFormatter: DateTimeFormatter, logInfo: LogInfo = NoLogInfo()): ZonedDateTime {
+            return LocalDateTime.parse(timestamp, dateTimeFormatter).atZone(logInfo.zoneId)
                 ?: throw TailerException(
                     "Invalid timestamp in log:\n$timestamp" +
-                        "\n required format: $DATE_TIME_FORMATTER"
+                        "\n required format: $dateTimeFormatter"
                 )
         }
 
