@@ -34,28 +34,29 @@ open class InstanceDeploy : Instance() {
     fun deploy() {
         instanceManager.examine(anyInstances)
 
-        when {
-            !files.isEmpty -> files.forEach {
-                when (it.extension) {
-                    "zip" -> deployPackage(it)
-                    "jar" -> deployBundle(it)
-                    else -> {
-                        val msg = "File '$it' has unsupported type ('${it.extension}') and cannot be deployed to instance(s)!"
-                        if(!aem.commonOptions.verbose.get()) logger.info(msg) else throw InstanceException(msg)
-                    }
-                }
+        if (files.isEmpty && !pkgZip.isPresent && !bundleJar.isPresent) {
+            val msg = "Neither URL of package nor bundle provided so nothing to deploy to instance(s)!"
+            if (aem.commonOptions.verbose.get()) {
+                throw InstanceException(msg)
+            } else {
+                logger.info(msg)
             }
-            pkgZip.isPresent -> deployPackage(pkgZip.get().asFile)
-            bundleJar.isPresent -> deployBundle(bundleJar.get().asFile)
-            else -> {
-                val msg = "Neither URL of package nor bundle provided so nothing to deploy to instance(s)!"
-                if (aem.commonOptions.verbose.get()) {
-                    throw InstanceException(msg)
-                } else {
-                    logger.info(msg)
+        }
+
+        files.forEach {
+            when (it.extension) {
+                "zip" -> deployPackage(it)
+                "jar" -> deployBundle(it)
+                else -> {
+                    val msg =
+                        "File '$it' has unsupported type ('${it.extension}') and cannot be deployed to instance(s)!"
+                    if (!aem.commonOptions.verbose.get()) logger.info(msg) else throw InstanceException(msg)
                 }
             }
         }
+
+        if (pkgZip.isPresent) deployPackage(pkgZip.get().asFile)
+        if (bundleJar.isPresent) deployBundle(bundleJar.get().asFile)
     }
 
     private fun deployPackage(zip: File) {
