@@ -32,12 +32,17 @@ open class InstanceDeploy : Instance() {
 
     @TaskAction
     fun deploy() {
+        instanceManager.examine(anyInstances)
+
         when {
             !files.isEmpty -> files.forEach {
                 when (it.extension) {
                     "zip" -> deployPackage(it)
                     "jar" -> deployBundle(it)
-                    else -> throw InstanceException("File '$it' has unsupported type and cannot be deployed to instance(s)!")
+                    else -> {
+                        val msg = "File '$it' has unsupported type ('${it.extension}') and cannot be deployed to instance(s)!"
+                        if(!aem.commonOptions.verbose.get()) logger.info(msg) else throw InstanceException(msg)
+                    }
                 }
             }
             pkgZip.isPresent -> deployPackage(pkgZip.get().asFile)
@@ -54,13 +59,11 @@ open class InstanceDeploy : Instance() {
     }
 
     private fun deployPackage(zip: File) {
-        instanceManager.examine(anyInstances)
         instanceManager.fileSync { deployPackage(zip) }
         common.notifier.notify("Package deployed", "${zip.name} on ${anyInstances.names}")
     }
 
     private fun deployBundle(jar: File) {
-        instanceManager.examine(anyInstances)
         instanceManager.fileSync { installBundle(jar) }
         common.notifier.notify("Bundle deployed", "${jar.name} on ${anyInstances.names}")
     }
