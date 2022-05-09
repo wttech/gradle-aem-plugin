@@ -5,5 +5,7 @@ enum class ResourceType(val value: String) {
     PAGE("cq:Page"),
     FILE("nt:file"),
     PAGE_CONTENT("cq:PageContent"),
-    ASSET_CONTENT("dam:AssetContent")
+    ASSET_CONTENT("dam:AssetContent"),
+    WORKFLOW("cq:WorkflowModel"),
+    USER("rep:User")
 }

@@ -1,55 +1,64 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
+import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 import org.apache.http.HttpStatus
 
-object WorkflowScheduler {
+class WorkflowScheduler(val workflow: Workflow) {
 
-    const val WORKFLOW_POST_URI = "/etc/workflow/instances.json"
+    private val instance = workflow.instance
+    private val logger = workflow.logger
 
-    fun execute(workflow: Workflow, path: String, type: String) {
-
-        val nodes = getResources(path, type, workflow.instance)
-
-        workflow.logger.lifecycle(
-            "Instance: ${workflow.instance.id}, Resources to be processed:\n${
-            nodes.map { node -> node.path }.joinToString("\n")
-            }"
-        )
-
-        nodes.forEach { scheduleForNode(workflow, it) }
+    fun execute(nodes: Sequence<Node>): Int {
+        nodes.forEach { scheduleForNode(it) }
+        return nodes.count()
     }
 
-    private fun getResources(path: String, type: String, instance: Instance): Sequence<Node> {
-
-        var nodes = sequenceOf<Node>()
-
-        instance.sync.repository {
-            nodes = query {
-                path(path)
-                type(type)
-            }.nodeSequence()
-        }
-        return when (nodes.count()) {
-            0 -> throw WorkflowException("No resources found under given path!")
-            else -> nodes
-        }
+    fun execute(path: String, type: ResourceType): Int {
+        val nodes = getNodes(path, type)
+        return execute(nodes)
     }
 
-    private fun scheduleForNode(workflow: Workflow, node: Node) {
+    fun scheduleForNode(node: Node) {
 
-        workflow.instance.sync.http {
-            val params =
-                mutableMapOf("payload" to node.path, "model" to workflow.model.path, "payloadType" to "JCR_PATH")
-            post(WORKFLOW_POST_URI, params) {
+        instance.sync.http {
+            val params = mapOf(
+                "payload" to node.path,
+                "model" to workflow.model.path,
+                "payloadType" to "JCR_PATH"
+            )
+
+            post(INSTANCE_URI, params) {
                 if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
                     throw WorkflowException(
-                        "Workflow creating failed for ${params.get("payload")} and workflow model: ${workflow.model.name}" +
+                        "Workflow scheduling failed for ${params.get("payload")} and workflow model: $workflow" +
                             "\nStatus: ${it.statusLine}!"
                     )
                 }
             }
         }
+    }
+
+    fun getNodes(path: String, type: ResourceType): Sequence<Node> {
+        return instance.sync.repository {
+            query {
+                path(path)
+                type(type)
+            }.nodeSequence()
+        }.also {
+            var message =
+                "Resources found:\n${it.map { it.name }.take(RESOURCES_DISPLAYED_LIMIT).joinToString("\n")}"
+
+            if (it.count() > RESOURCES_DISPLAYED_LIMIT) message += " and ${it.count() - RESOURCES_DISPLAYED_LIMIT} more...\n"
+
+            if (it.count() == 0) message = "No resources found "
+
+            logger.lifecycle("${message}on $instance")
+        }
+    }
+
+    companion object {
+        const val RESOURCES_DISPLAYED_LIMIT = 5
+        const val INSTANCE_URI = "/etc/workflow/instances.json"
     }
 }

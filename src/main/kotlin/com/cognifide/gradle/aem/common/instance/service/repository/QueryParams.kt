@@ -24,19 +24,23 @@ open class QueryParams(private val enumerated: Boolean) {
 
     // Node type filtering params
 
+    fun type(type: ResourceType) = param {
+        params["type"] = type.value
+    }
+
     fun type(value: String) = param {
         params["type"] = value
     }
 
-    fun file() = type(ResourceType.FILE.value)
+    fun file() = type(ResourceType.FILE)
 
-    fun page() = type(ResourceType.PAGE.value)
+    fun page() = type(ResourceType.PAGE)
 
-    fun pageContent() = type(ResourceType.PAGE_CONTENT.value)
+    fun pageContent() = type(ResourceType.PAGE_CONTENT)
 
-    fun damAsset() = type(ResourceType.ASSET.value)
+    fun damAsset() = type(ResourceType.ASSET)
 
-    fun damAssetContent() = type(ResourceType.ASSET_CONTENT.value)
+    fun damAssetContent() = type(ResourceType.ASSET_CONTENT)
 
     // Specialized filtering params
 

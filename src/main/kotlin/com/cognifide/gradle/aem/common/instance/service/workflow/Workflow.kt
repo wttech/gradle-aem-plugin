@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
+import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
+
 class Workflow(val manager: WorkflowManager, val id: String) {
 
     val instance = manager.instance
@@ -8,6 +10,8 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     val logger = manager.aem.logger
 
+    private val common = manager.aem.common
+
     val launcher = repository.node(
         when {
             manager.instance.version.frozen -> "/conf/global/settings/workflow/launcher/config/$id"
@@ -15,11 +19,16 @@ class Workflow(val manager: WorkflowManager, val id: String) {
         }
     )
 
-    val model get() = repository.node(WORKFLOWS_PATH) {
-        query { type(WORKFLOW_RESOURCE_TYPE) }
-    }.filter { it.name == id }.firstOrNull() ?: throw WorkflowException("No workflow model found!")
+    val model
+        get() = repository.node(WORKFLOWS_PATH) {
+            query { type(ResourceType.WORKFLOW) }
+        }.filter { it.name == id }.firstOrNull()
+            ?: throw WorkflowException("No workflow model found in $WORKFLOWS_PATH!")
 
-    var resourceType = DEFAULT_RESOURCE_TYPE
+    val resourceType = common.obj.typed<ResourceType> {
+        convention(ResourceType.ASSET)
+        common.prop.string("instance.workflow.resourceType")?.let { set(ResourceType.valueOf(it)) }
+    }
 
     val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
 
@@ -33,8 +42,9 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     internal var toggleIntended: Boolean? = null
 
-    fun schedule(path: String, type: String = resourceType) {
-        WorkflowScheduler.execute(this, path, type)
+    fun schedule(path: String, type: ResourceType = resourceType.get()) {
+        val count = WorkflowScheduler(this).execute(path, type)
+        logger.info("Succesfully scheduled $count workflows on $instance")
     }
 
     fun toggle() {
@@ -83,8 +93,6 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     companion object {
 
         const val ENABLED_PROP = "enabled"
-        const val WORKFLOW_RESOURCE_TYPE = "cq:WorkflowModel"
         const val WORKFLOWS_PATH = "/var/workflow/models"
-        const val DEFAULT_RESOURCE_TYPE = "dam:Asset"
     }
 }
