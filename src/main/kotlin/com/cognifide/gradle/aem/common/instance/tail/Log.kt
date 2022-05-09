@@ -69,7 +69,7 @@ class Log(
             }
 
             val fullLog = logLines.joinToString("\n")
-            val result = matchLogLine(logLines.first())?.groups ?: throw TailerException("Nothing to parse")
+            val result = matchLogLine(logLines.first())?.groups ?: throw TailerException("Cannot get any values from passed log entry!")
 
             val timestamp = result.get("timestamp")?.value?.trim() ?: throw TailerException("Cannot get `timestamp` value from log")
             val level = result.get("level")?.value ?: throw TailerException("Cannot get `level` value from log")
