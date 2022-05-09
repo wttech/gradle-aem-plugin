@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
+import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowException
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowScheduler
 import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.Internal
@@ -35,6 +36,8 @@ open class InstanceWorkflow : Instance() {
     fun run() {
         instanceManager.examine(anyInstances)
 
+        if(!model.isPresent) throw WorkflowException("Workflow model is not specified, please specify it via `instance.worflow` property")
+
         logger.lifecycle("Workflow details:\nmodel: '${model.get()}', resourceType: '${resourceType.get().value}', resources path: '${path.get()}'\n")
 
         common.progress {
@@ -64,7 +67,7 @@ open class InstanceWorkflow : Instance() {
     }
 
     init {
-        description = "Executes given workflow on resources under the specified path."
+        description = "Executes given workflow on resources under the specified path (or default: ${Node.DAM_PATH})."
     }
 
     companion object {
