@@ -36,11 +36,7 @@ open class InstanceDeploy : Instance() {
 
         if (files.isEmpty && !pkgZip.isPresent && !bundleJar.isPresent) {
             val msg = "Neither URL of package nor bundle provided so nothing to deploy to instance(s)!"
-            if (aem.commonOptions.verbose.get()) {
-                throw InstanceException(msg)
-            } else {
-                logger.info(msg)
-            }
+            if (!aem.commonOptions.verbose.get()) logger.info(msg) else throw InstanceException(msg)
         }
 
         files.forEach {
