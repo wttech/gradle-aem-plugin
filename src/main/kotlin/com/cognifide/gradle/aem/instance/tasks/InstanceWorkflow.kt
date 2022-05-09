@@ -36,7 +36,7 @@ open class InstanceWorkflow : Instance() {
     fun run() {
         instanceManager.examine(anyInstances)
 
-        if(!model.isPresent) throw WorkflowException("Workflow model is not specified, please specify it via `instance.worflow` property")
+        if (!model.isPresent) throw WorkflowException("Workflow model is not specified, please specify it via `instance.worflow` property")
 
         logger.lifecycle("Workflow details:\nmodel: '${model.get()}', resourceType: '${resourceType.get().value}', resources path: '${path.get()}'\n")
 
