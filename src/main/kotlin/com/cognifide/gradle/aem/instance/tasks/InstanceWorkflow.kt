@@ -30,7 +30,7 @@ open class InstanceWorkflow : Instance() {
         common.prop.string("instance.workflow.resourceType")?.let {
             set(
                 ResourceType.of(it)
-                    ?: throw WorkflowException("Invalid resourceType declared via property 'instance.workflow.resourceType'")
+                    ?: throw WorkflowException("Invalid resourceType property!")
             )
         }
     }

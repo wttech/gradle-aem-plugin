@@ -12,6 +12,8 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     private val common = manager.aem.common
 
+    val scheduler = WorkflowScheduler(this)
+
     val launcher = repository.node(
         when {
             manager.instance.version.frozen -> "/conf/global/settings/workflow/launcher/config/$id"
@@ -43,7 +45,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     internal var toggleIntended: Boolean? = null
 
     fun schedule(path: String, type: ResourceType = resourceType.get()) {
-        val count = WorkflowScheduler(this).schedule(path, type)
+        val count = scheduler.schedule(path, type)
         logger.info("Succesfully scheduled $count workflows on $instance")
     }
 
