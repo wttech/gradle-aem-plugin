@@ -9,25 +9,25 @@ class WorkflowScheduler(val workflow: Workflow) {
     private val instance = workflow.instance
     private val logger = workflow.logger
 
-    fun execute(nodes: Sequence<Node>): Int {
+    fun schedule(nodes: Sequence<Node>): Int {
         nodes.forEach { scheduleForNode(it) }
         return nodes.count()
     }
 
-    fun execute(path: String, type: ResourceType): Int {
-        val nodes = getNodes(path, type)
-        return execute(nodes)
+    fun schedule(path: String, type: ResourceType): Int {
+        val nodes = queryNodes(path, type)
+        return schedule(nodes)
     }
 
     fun scheduleForNode(node: Node) {
 
-        instance.sync.http {
-            val params = mapOf(
-                "payload" to node.path,
-                "model" to workflow.model.path,
-                "payloadType" to "JCR_PATH"
-            )
+        val params = mapOf(
+            "payload" to node.path,
+            "model" to workflow.model.path,
+            "payloadType" to "JCR_PATH"
+        )
 
+        instance.sync.http {
             post(INSTANCE_URI, params) {
                 if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
                     throw WorkflowException(
@@ -39,7 +39,7 @@ class WorkflowScheduler(val workflow: Workflow) {
         }
     }
 
-    fun getNodes(path: String, type: ResourceType): Sequence<Node> {
+    fun queryNodes(path: String, type: ResourceType): Sequence<Node> {
         return instance.sync.repository {
             query {
                 path(path)

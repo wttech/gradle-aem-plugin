@@ -27,7 +27,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     val resourceType = common.obj.typed<ResourceType> {
         convention(ResourceType.ASSET)
-        common.prop.string("instance.workflow.resourceType")?.let { set(ResourceType.valueOf(it)) }
+        common.prop.string("instance.workflow.resourceType")?.let { set(ResourceType.of(it)) }
     }
 
     val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
@@ -43,7 +43,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     internal var toggleIntended: Boolean? = null
 
     fun schedule(path: String, type: ResourceType = resourceType.get()) {
-        val count = WorkflowScheduler(this).execute(path, type)
+        val count = WorkflowScheduler(this).schedule(path, type)
         logger.info("Succesfully scheduled $count workflows on $instance")
     }
 

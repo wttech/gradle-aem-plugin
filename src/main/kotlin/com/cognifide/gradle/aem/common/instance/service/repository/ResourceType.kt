@@ -7,5 +7,9 @@ enum class ResourceType(val value: String) {
     PAGE_CONTENT("cq:PageContent"),
     ASSET_CONTENT("dam:AssetContent"),
     WORKFLOW("cq:WorkflowModel"),
-    USER("rep:User")
+    USER("rep:User");
+
+    companion object {
+        fun of(type: String) = values().find { it.value.equals(type, ignoreCase = true) }
+    }
 }
