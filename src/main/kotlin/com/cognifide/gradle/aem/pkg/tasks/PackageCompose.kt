@@ -8,13 +8,7 @@ import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalled
-import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalledBuilt
-import com.cognifide.gradle.aem.pkg.tasks.compose.BundleInstalledResolved
-import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNested
-import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNestedBuilt
-import com.cognifide.gradle.aem.pkg.tasks.compose.PackageNestedResolved
-import com.cognifide.gradle.aem.pkg.tasks.compose.RepositoryArchive
+import com.cognifide.gradle.aem.pkg.tasks.compose.*
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.using
 import org.apache.commons.lang3.StringUtils
@@ -26,7 +20,6 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.util.GradleVersion
-import java.lang.IllegalStateException
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
@@ -169,9 +162,14 @@ open class PackageCompose : ZipTask(), AemTask {
     private fun fromArchive(archive: RepositoryArchive) {
         val dirPath = archive.dirPath.map { path ->
             if (archive is BundleInstalled) {
-                var installPath = StringUtils.appendIfMissing(path, "/install")
-                if (archive.runMode.isPresent) {
-                    installPath = "$path.${archive.runMode.get()}"
+                var installPath = path
+                if (StringUtils.endsWith(path, "/install")) {
+                    if (archive.runMode.isPresent) {
+                        installPath = "$installPath.${archive.runMode.get()}"
+                    }
+                    if (archive.startLevel.isPresent) {
+                        installPath = "$installPath/${archive.startLevel.get()}"
+                    }
                 }
                 installPath
             } else {
@@ -241,10 +239,10 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) {
         if (GradleVersion.current() >= GradleVersion.version("7.0")) {
             throw IllegalStateException(
-                listOf(
-                    "Merging packages does not work properly since Gradle 7.x.",
-                    "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
-                ).joinToString("\n")
+                    listOf(
+                            "Merging packages does not work properly since Gradle 7.x.",
+                            "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
+                    ).joinToString("\n")
             )
         }
 
