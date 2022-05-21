@@ -23,10 +23,13 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.util.GradleVersion
-import java.lang.IllegalStateException
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
@@ -169,9 +172,14 @@ open class PackageCompose : ZipTask(), AemTask {
     private fun fromArchive(archive: RepositoryArchive) {
         val dirPath = archive.dirPath.map { path ->
             if (archive is BundleInstalled) {
-                var installPath = StringUtils.appendIfMissing(path, "/install")
-                if (archive.runMode.isPresent) {
-                    installPath = "$path.${archive.runMode.get()}"
+                var installPath = path
+                if (StringUtils.endsWith(path, "/install")) {
+                    if (archive.runMode.isPresent) {
+                        installPath = "$installPath.${archive.runMode.get()}"
+                    }
+                    if (archive.startLevel.isPresent) {
+                        installPath = "$installPath/${archive.startLevel.get()}"
+                    }
                 }
                 installPath
             } else {
