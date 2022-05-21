@@ -7,7 +7,11 @@ import com.cognifide.gradle.aem.common.utils.normalizeSeparators
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 import aQute.bnd.gradle.BundleTaskConvention as BndConvention
