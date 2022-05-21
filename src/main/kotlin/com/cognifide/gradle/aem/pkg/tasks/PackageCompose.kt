@@ -239,10 +239,10 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) {
         if (GradleVersion.current() >= GradleVersion.version("7.0")) {
             throw IllegalStateException(
-                    listOf(
-                            "Merging packages does not work properly since Gradle 7.x.",
-                            "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
-                    ).joinToString("\n")
+                listOf(
+                    "Merging packages does not work properly since Gradle 7.x.",
+                    "See: https://github.com/wttech/gradle-aem-plugin/issues/884"
+                ).joinToString("\n")
             )
         }
 
