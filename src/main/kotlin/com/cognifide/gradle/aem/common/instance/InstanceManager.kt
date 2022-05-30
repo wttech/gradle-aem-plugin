@@ -93,7 +93,7 @@ open class InstanceManager(val aem: AemExtension) {
     /**
      * Map of AEM instances with names as a keys.
      */
-    val all = defined.map { p -> p.map { it.name to it }.toMap() }
+    val all = defined.map { p -> p.associateBy { it.name } }
 
     /**
      * Customize default options for instance services.

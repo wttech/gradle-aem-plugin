@@ -32,8 +32,12 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         else -> "${httpUrl.get()}${openPath.get()}"
     }
 
+    val jvmOpts = common.obj.strings { convention(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true")) }
+
+    val jvmAgentOpt: String? get() = jvmAgents.get().joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
+
     @Suppress("MagicNumber")
-    private val jvmDebugOpt: String? get() = when (debugPort.orNull) {
+    val jvmDebugOpt: String? get() = when (debugPort.orNull) {
         in 1..65535 -> {
             val address = when {
                 localManager.javaLauncher.get().metadata.languageVersion >= JavaLanguageVersion.of(9) -> {
@@ -52,19 +56,15 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         else -> null
     }
 
-    val jvmOpts = common.obj.strings { convention(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true")) }
-
-    val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNotNull().joinToString(" ")
+    val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
 
     val jvmAgents = common.obj.strings { convention(listOf()) }
-
-    private val jvmAgentOpt: String? get() = jvmAgents.get().joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
 
     val javaExecutablePath: String get() = localManager.javaExecutablePath
 
     val startOpts = common.obj.strings { convention(listOf()) }
 
-    val startOptsString: String get() = startOpts.get().joinToString(" ")
+    val startOptsString: String get() = startOpts.get().filterNot { it.isNullOrBlank() }.joinToString(" ")
 
     val runModes = common.obj.strings { convention(listOf()) }
 
@@ -246,7 +246,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
             aem.project.javaexec { spec ->
                 spec.executable(localManager.javaExecutablePath)
                 spec.workingDir = dir
-                spec.main = "-jar"
+                spec.mainClass.set("-jar")
                 spec.args = listOf(tmpJar.absolutePath, "-unpack")
             }
 
