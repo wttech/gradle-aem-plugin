@@ -13,7 +13,7 @@ open class InstanceHttpClient(private val aem: AemExtension, val instance: Insta
     }
 
     init {
-        baseUrl.set(instance.httpUrl)
+        baseUrl.set(instance.httpUrl.get())
         escapeUrl.set(true)
         authorizationPreemptive.set(true)
         basicCredentials = instance.credentials

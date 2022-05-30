@@ -58,15 +58,15 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    val jvmAgents = common.obj.strings { convention(listOf()) }
+    val jvmAgents = common.obj.strings { set(common.obj.provider { localManager.javaAgent.files.map { it.absolutePath } }) }
 
     val javaExecutablePath: String get() = localManager.javaExecutablePath
 
-    val startOpts = common.obj.strings { convention(listOf()) }
+    val startOpts = common.obj.strings { set(listOf()) }
 
     val startOptsString: String get() = startOpts.get().filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    val runModes = common.obj.strings { convention(listOf()) }
+    val runModes = common.obj.strings { set(listOf()) }
 
     val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase(), aem.commonOptions.env.get())).joinToString(",")
 

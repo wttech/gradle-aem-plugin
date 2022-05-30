@@ -174,7 +174,7 @@ open class Instance(protected val aem: AemExtension) : Serializable {
 
         return EqualsBuilder()
             .append(name, other.name)
-            .append(httpUrl, other.httpUrl)
+            .append(httpUrl.orNull, other.httpUrl.orNull)
             .isEquals
     }
 

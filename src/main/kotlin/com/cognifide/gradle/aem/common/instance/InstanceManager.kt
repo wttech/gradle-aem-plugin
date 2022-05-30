@@ -234,7 +234,7 @@ open class InstanceManager(val aem: AemExtension) {
         if (unavailable.isNotEmpty()) {
             throw InstanceException(
                 "Some instances (${unavailable.size}) are unavailable:\n" +
-                    unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
+                    unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl.get()}'" } + "\n\n" +
                     "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
             )
         }
