@@ -82,7 +82,7 @@ open class InstanceManager(val aem: AemExtension) {
         convention(
             aem.obj.provider {
                 val fromCmd = aem.prop.string("instance.list")?.let {
-                    factory.parse(it) { env = Instance.ENV_CMD }
+                    factory.parse(it) { env.set(Instance.ENV_CMD) }
                 } ?: listOf()
                 val fromProperties = factory.parseProperties()
                 (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }

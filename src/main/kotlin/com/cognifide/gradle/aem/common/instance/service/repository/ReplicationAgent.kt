@@ -40,7 +40,7 @@ class ReplicationAgent(val page: Node) {
 
     fun configure(instance: Instance, enabled: Boolean = true) = configure(
         enabled, "${instance.httpUrl}/bin/receive?sling:authRequestLogin=1",
-        instance.user, instance.password, instance.user
+        instance.user.get(), instance.password.get(), instance.user.get()
     )
 
     fun configure(propName: String, propValue: Any?) = configure(mapOf(propName to propValue))
