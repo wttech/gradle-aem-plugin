@@ -30,7 +30,7 @@ class JavaAgentResolver(private val aem: AemExtension) {
     val files get() = fileResolver.files
 
     fun jacoco(version: String = "0.8.8") = files(aem.prop.string("localInstance.javaAgent.jacocoUrl")
-        ?: "https://repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/$version/org.jacoco.agent-$version.jar")
+        ?: "https://repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/$version/org.jacoco.agent-$version-runtime.jar")
 
     fun newRelic() = files(aem.prop.string("localInstance.javaAgent.newRelicUrl")
         ?: "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-agent.jar")

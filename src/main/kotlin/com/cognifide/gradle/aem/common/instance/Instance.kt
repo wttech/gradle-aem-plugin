@@ -91,6 +91,10 @@ open class Instance(protected val aem: AemExtension) : Serializable {
 
     val slingSettings: Map<String, String> get() = sync.status.slingSettings
 
+    fun property(key: String, value: String) {
+        properties.put(key, value)
+    }
+
     fun property(key: String): String? = properties.get()[key]
         ?: systemProperties[key]
         ?: slingProperties[key]
