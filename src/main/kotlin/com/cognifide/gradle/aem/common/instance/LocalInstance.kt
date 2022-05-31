@@ -68,7 +68,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     val runModes = common.obj.strings { set(listOf()) }
 
-    val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase(), aem.commonOptions.env.get())).joinToString(",")
+    val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase())).joinToString(",")
 
     val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id.get())
 

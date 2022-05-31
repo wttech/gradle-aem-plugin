@@ -85,9 +85,18 @@ open class InstanceManager(val aem: AemExtension) {
                     factory.parse(it) { env.set(Instance.ENV_CMD) }
                 } ?: listOf()
                 val fromProperties = factory.parseProperties()
-                (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }
+                (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }.onEach { it.apply(definedOptions) }
             }
         )
+    }
+
+    private var definedOptions: Instance.() -> Unit = {}
+
+    /**
+     * Hook for additional configuration for defined instances.
+     */
+    fun defined(options: Instance.() -> Unit) {
+        this.definedOptions = options
     }
 
     /**

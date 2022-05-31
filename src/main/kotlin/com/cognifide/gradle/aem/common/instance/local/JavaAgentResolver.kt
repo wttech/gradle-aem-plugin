@@ -27,15 +27,9 @@ class JavaAgentResolver(private val aem: AemExtension) {
 
     val files get() = fileResolver.files
 
-    fun newRelic() = files("https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-agent.jar")
-
-    fun newRelic(version: String) = files("https://download.newrelic.com/newrelic/java-agent/newrelic-agent/$version/newrelic-agent-$version.jar")
-
     fun openTelemetry() = files("https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar")
 
     fun openTelemetry(version: String) = files("https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v$version/opentelemetry-javaagent.jar")
-
-    fun elasticApm(version: String) = files("https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/$version/elastic-apm-agent-$version.jar")
 
     fun jacoco(version: String) = files("https://repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/$version/org.jacoco.agent-$version-runtime.jar")
 }
