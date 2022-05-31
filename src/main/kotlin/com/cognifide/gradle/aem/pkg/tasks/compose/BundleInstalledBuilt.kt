@@ -21,4 +21,6 @@ class BundleInstalledBuilt(target: PackageCompose, private val task: TaskProvide
     override val vaultFilterType = aem.obj.typed<FilterType> { convention(FilterType.FILE) }
 
     override val runMode = aem.obj.string { convention(task.flatMap { it.bundle.installRunMode }) }
+
+    override val startLevel = aem.obj.int { convention(task.flatMap { it.bundle.installStartLevel }) }
 }
