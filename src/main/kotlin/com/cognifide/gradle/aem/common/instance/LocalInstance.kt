@@ -274,7 +274,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
             aem.project.javaexec { spec ->
                 spec.executable(localManager.javaExecutablePath)
                 spec.workingDir = dir
-                spec.main = "-jar"
+                spec.mainClass.set("-jar")
                 spec.args = listOf(tmpJar.absolutePath, "-unpack")
             }
 

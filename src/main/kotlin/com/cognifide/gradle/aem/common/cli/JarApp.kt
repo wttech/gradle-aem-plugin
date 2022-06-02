@@ -31,7 +31,7 @@ open class JarApp(val aem: AemExtension) {
                     standardInput = SafeStreams.emptyInput()
                     standardOutput = SafeStreams.systemOut()
                     errorOutput = SafeStreams.systemErr()
-                    main = "-jar"
+                    mainClass.set("-jar")
                     options()
                 }
             }
