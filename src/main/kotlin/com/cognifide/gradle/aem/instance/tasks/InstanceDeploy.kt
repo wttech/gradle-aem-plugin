@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.Internal
@@ -30,9 +31,18 @@ open class InstanceDeploy : Instance() {
         }
     }
 
+    private var awaitUpOptions: AwaitUpAction.() -> Unit = {
+        unchanged { enabled.set(false) }
+    }
+
+    fun awaitUp(options: AwaitUpAction.() -> Unit) {
+        this.awaitUpOptions = options
+    }
+
     @TaskAction
     fun deploy() {
         instanceManager.examine(anyInstances)
+        instanceManager.awaitUp(anyInstances, awaitUpOptions)
 
         when {
             pkgZip.isPresent -> deployPackage(pkgZip.get().asFile)
