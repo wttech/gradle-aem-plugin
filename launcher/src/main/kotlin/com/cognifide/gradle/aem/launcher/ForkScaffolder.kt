@@ -30,6 +30,8 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.local-publish.enabled={{instancePublishEnabled}}
             instance.local-publish.httpUrl={{instancePublishHttpUrl}}
             instance.local-publish.openPath=/crx/packmgr
+            
+            javaSupport.version=11
 
             mvnBuild.args={{mvnBuildArgs}}
 
