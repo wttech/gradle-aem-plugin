@@ -71,10 +71,10 @@ class Log(
             val fullLog = logLines.joinToString("\n")
             val result = matchLogLine(logLines.first())?.groups ?: throw TailerException("Cannot get any values from passed log entry!")
 
-            val timestamp = result.get("timestamp")?.value?.trim() ?: throw TailerException("Cannot get `timestamp` value from log")
-            val level = result.get("level")?.value ?: throw TailerException("Cannot get `level` value from log")
-            val source = result.get("source")?.value ?: throw TailerException("Cannot get `source` value from log")
-            val message = result.get("message")?.value ?: throw TailerException("Cannot get `message` value from log")
+            val timestamp = result["timestamp"]?.value?.trim() ?: throw TailerException("Cannot get 'timestamp' value from log")
+            val level = result["level"]?.value ?: throw TailerException("Cannot get 'level' value from log")
+            val source = result["source"]?.value ?: throw TailerException("Cannot get 'source' value from log")
+            val message = result["message"]?.value ?: throw TailerException("Cannot get 'message' value from log")
             val followingMessageLines = logLines.slice(1 until logLines.size)
 
             return Log(info, fullLog, parseTimestamp(timestamp, aem.datePattern.get(), info), level, source, listOf(message) + followingMessageLines)
