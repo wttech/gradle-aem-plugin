@@ -6,7 +6,7 @@ enum class ResourceType(val value: String) {
     FILE("nt:file"),
     PAGE_CONTENT("cq:PageContent"),
     ASSET_CONTENT("dam:AssetContent"),
-    WORKFLOW("cq:WorkflowModel"),
+    WORKFLOW_MODEL("cq:WorkflowModel"),
     USER("rep:User");
 
     companion object {

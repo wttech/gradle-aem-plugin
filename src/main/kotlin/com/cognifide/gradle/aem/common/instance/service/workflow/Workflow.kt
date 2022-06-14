@@ -21,15 +21,13 @@ class Workflow(val manager: WorkflowManager, val id: String) {
         }
     )
 
-    val model
-        get() = repository.node(WORKFLOWS_PATH) {
-            query { type(ResourceType.WORKFLOW) }
-        }.filter { it.name == id }.firstOrNull()
-            ?: throw WorkflowException("No workflow model found in $WORKFLOWS_PATH!")
+    val model get() = repository.node(WORKFLOWS_PATH) { query { type(ResourceType.WORKFLOW_MODEL) } }
+        .filter { it.name == id }
+        .firstOrNull() ?: throw WorkflowException("No workflow model found at $WORKFLOWS_PATH!")
 
-    val resourceType = common.obj.typed<ResourceType> {
-        convention(ResourceType.ASSET)
-        common.prop.string("instance.workflow.resourceType")?.let { set(ResourceType.of(it)) }
+    val resourceType = common.obj.string {
+        convention(ResourceType.ASSET.value)
+        common.prop.string("instance.workflow.resourceType")?.let { set(it) }
     }
 
     val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
@@ -44,9 +42,9 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     internal var toggleIntended: Boolean? = null
 
-    fun schedule(path: String, type: ResourceType = resourceType.get()) {
+    fun schedule(path: String, type: String = resourceType.get()) {
         val count = scheduler.schedule(path, type)
-        logger.info("Succesfully scheduled $count workflows on $instance")
+        logger.info("Successfully scheduled $count workflows on $instance")
     }
 
     fun toggle() {

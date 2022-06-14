@@ -1,15 +1,16 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowException
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowScheduler
-import com.cognifide.gradle.aem.common.tasks.Instance
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import com.cognifide.gradle.aem.common.tasks.Instance as InstanceTask
 
-open class InstanceWorkflow : Instance() {
+open class InstanceWorkflow : InstanceTask() {
 
     private val notifier = common.notifier
 
@@ -25,14 +26,9 @@ open class InstanceWorkflow : Instance() {
     }
 
     @Internal
-    val resourceType = aem.obj.typed<ResourceType>() {
-        convention(ResourceType.ASSET)
-        common.prop.string("instance.workflow.resourceType")?.let {
-            set(
-                ResourceType.of(it)
-                    ?: throw WorkflowException("Invalid resourceType property!")
-            )
-        }
+    val resourceType = aem.obj.string {
+        convention(ResourceType.ASSET.value)
+        common.prop.string("instance.workflow.resourceType")?.let { set(it) }
     }
 
     @TaskAction
@@ -41,22 +37,22 @@ open class InstanceWorkflow : Instance() {
 
         if (!model.isPresent) throw WorkflowException("Workflow model is not specified, please specify it via 'instance.workflow' property")
 
-        logger.lifecycle("Workflow details:\nmodel: '${model.get()}', resourceType: '${resourceType.get().value}', resources path: '${path.get()}'\n")
+        logger.lifecycle("Workflow details:\nmodel: '${model.get()}', resourceType: '${resourceType.get()}', resources path: '${path.get()}'\n")
 
         common.progress {
             step = "Fetching nodes"
-            val nodes = mutableMapOf<com.cognifide.gradle.aem.common.instance.Instance, Sequence<Node>>()
+            val nodes = mutableMapOf<Instance, Sequence<Node>>()
 
-            aem.sync {
+            aem.sync(anyInstances) {
                 val resources =
                     WorkflowScheduler(workflowManager.workflow(model.get())).queryNodes(path.get(), resourceType.get())
                 nodes[this.instance] = resources
             }
 
-            total = nodes.values.map { it.count() }.sum().toLong()
+            total = nodes.values.sumOf { it.count() }.toLong()
             step = "Scheduling workflows"
 
-            aem.sync {
+            aem.sync(anyInstances) {
                 nodes[this.instance]?.forEach {
                     WorkflowScheduler(workflowManager.workflow(model.get())).scheduleForNode(it)
                     increment()
@@ -65,7 +61,7 @@ open class InstanceWorkflow : Instance() {
 
             notifier.notify(
                 "$total workflows scheduled properly!",
-                "Instances: '${anyInstances.names}', model: '${model.get()}', path: '${path.get()}', resources type: '${resourceType.get().value}'"
+                "Instances: '${anyInstances.names}', model: '${model.get()}', path: '${path.get()}', resources type: '${resourceType.get()}'"
             )
         }
     }
