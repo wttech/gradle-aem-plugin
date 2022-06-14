@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.launcher
 
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 class BuildScaffolder(private val launcher: Launcher) {
 
