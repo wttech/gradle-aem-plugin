@@ -3,14 +3,8 @@ package com.cognifide.gradle.aem.launcher
 class ForkScaffolder(private val launcher: Launcher) {
 
     fun scaffold() {
-        addGradleProperties()
         savePropertiesTemplate()
         savePropertiesDefinitions()
-    }
-
-    private fun addGradleProperties() = launcher.workFile("gradle.properties") {
-        println("Adding gradle properties '$this'")
-        appendText("javaSupport.version=11")
     }
 
     private fun savePropertiesTemplate() = launcher.workFileOnce("gradle/fork/gradle.user.properties.peb") {

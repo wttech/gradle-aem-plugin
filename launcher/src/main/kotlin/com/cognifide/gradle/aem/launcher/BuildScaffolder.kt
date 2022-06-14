@@ -32,6 +32,7 @@ class BuildScaffolder(private val launcher: Launcher) {
                 if (savePropsFlag) {
                     putAll(saveProps)
                 }
+                putAll(projectProps)
                 store(output, null)
             }
         }
@@ -52,6 +53,11 @@ class BuildScaffolder(private val launcher: Launcher) {
             "org.gradle.parallel" to "true",
             "org.gradle.caching" to "true",
             "org.gradle.jvmargs" to "-Xmx2048m -Dfile.encoding=UTF-8"
+        )
+
+    private val projectProps
+        get() = mapOf(
+            "javaSupport.version" to "11"
         )
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
