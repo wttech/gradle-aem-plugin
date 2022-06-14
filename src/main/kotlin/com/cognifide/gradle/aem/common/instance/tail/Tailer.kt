@@ -186,7 +186,7 @@ class Tailer(val manager: InstanceManager) {
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
-        return LogTailer(source, destination, InstanceLogInfo(instance), logAnalyzerChannel, consolePrinter(instance))
+        return LogTailer(aem, source, destination, InstanceLogInfo(instance), logAnalyzerChannel, consolePrinter(instance))
     }
 
     private fun consolePrinter(instance: Instance) = when {
