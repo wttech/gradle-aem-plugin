@@ -40,10 +40,9 @@ class BuildScaffolder(private val launcher: Launcher) {
 
     private val savePropsFlag get() = launcher.args.contains(Launcher.ARG_SAVE_PROPS)
 
-    private val saveProps
-        get() = launcher.args.filter { it.startsWith(Launcher.ARG_SAVE_PREFIX) }
-            .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
-            .associate { it.substringBefore("=") to it.substringAfter("=") }
+    private val saveProps get() = launcher.args.filter { it.startsWith(Launcher.ARG_SAVE_PREFIX) }
+        .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
+        .associate { it.substringBefore("=") to it.substringAfter("=") }
 
     private val defaultProps get() = mapOf(
         "org.gradle.logging.level" to "info",
