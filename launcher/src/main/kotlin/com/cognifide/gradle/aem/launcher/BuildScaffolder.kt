@@ -43,22 +43,17 @@ class BuildScaffolder(private val launcher: Launcher) {
     private val saveProps
         get() = launcher.args.filter { it.startsWith(Launcher.ARG_SAVE_PREFIX) }
             .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
-            .map { it.substringBefore("=") to it.substringAfter("=") }
-            .toMap()
+            .associate { it.substringBefore("=") to it.substringAfter("=") }
 
-    private val defaultProps
-        get() = mapOf(
-            "org.gradle.logging.level" to "info",
-            "org.gradle.daemon" to "true",
-            "org.gradle.parallel" to "true",
-            "org.gradle.caching" to "true",
-            "org.gradle.jvmargs" to "-Xmx2048m -Dfile.encoding=UTF-8"
-        )
+    private val defaultProps get() = mapOf(
+        "org.gradle.logging.level" to "info",
+        "org.gradle.daemon" to "true",
+        "org.gradle.parallel" to "true",
+        "org.gradle.caching" to "true",
+        "org.gradle.jvmargs" to "-Xmx2048m -Dfile.encoding=UTF-8"
+    )
 
-    private val projectProps
-        get() = mapOf(
-            "javaSupport.version" to "11"
-        )
+    private val projectProps get() = mapOf("javaSupport.version" to "11")
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
         println("Saving root Gradle build script file '$this'")
