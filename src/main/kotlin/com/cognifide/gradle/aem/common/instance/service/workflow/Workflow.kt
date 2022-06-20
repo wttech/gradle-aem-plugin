@@ -22,9 +22,9 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     )
 
     val model get() = repository
-            .node(WORKFLOW_MODEL_ROOT) { query { type(ResourceType.WORKFLOW_MODEL) } }
-            .filter { it.name == id }
-            .firstOrNull() ?: throw WorkflowException("No workflow model found at '$WORKFLOW_MODEL_ROOT!'")
+        .node(WORKFLOW_MODEL_ROOT) { query { type(ResourceType.WORKFLOW_MODEL) } }
+        .filter { it.name == id }
+        .firstOrNull() ?: throw WorkflowException("No workflow model found at '$WORKFLOW_MODEL_ROOT!'")
 
     val resourceType = common.obj.string {
         convention(ResourceType.ASSET.value)
