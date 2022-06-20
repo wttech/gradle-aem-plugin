@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowException
-import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowScheduler
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import com.cognifide.gradle.aem.common.tasks.Instance as InstanceTask
@@ -16,7 +15,7 @@ open class InstanceWorkflow : InstanceTask() {
 
     @Internal
     val model = aem.obj.string {
-        common.prop.string("instance.workflow")?.let { set(it) }
+        common.prop.string("instance.workflow.model")?.let { set(it) }
     }
 
     @Internal
@@ -35,7 +34,15 @@ open class InstanceWorkflow : InstanceTask() {
     fun run() {
         instanceManager.examine(anyInstances)
 
-        if (!model.isPresent) throw WorkflowException("Workflow model is not specified, please specify it via 'instance.workflow' property")
+        if (model.orNull.isNullOrBlank()) {
+            throw WorkflowException("Workflow model is not defined, specify it via property 'instance.workflow.model'")
+        }
+        if (path.orNull.isNullOrBlank()) {
+            throw WorkflowException("Workflow path is not defined, specify it via property 'instance.workflow.path'")
+        }
+        if (resourceType.orNull.isNullOrBlank()) {
+            throw WorkflowException("Workflow resource type is not defined, specify it via property 'instance.workflow.resourceType'")
+        }
 
         logger.lifecycle("Workflow details:\nmodel: '${model.get()}', resourceType: '${resourceType.get()}', resources path: '${path.get()}'\n")
 
@@ -44,9 +51,7 @@ open class InstanceWorkflow : InstanceTask() {
             val nodes = mutableMapOf<Instance, Sequence<Node>>()
 
             aem.sync(anyInstances) {
-                val resources =
-                    WorkflowScheduler(workflowManager.workflow(model.get())).queryNodes(path.get(), resourceType.get())
-                nodes[this.instance] = resources
+                nodes[this.instance] = workflowManager.queryNodes(model.get(), path.get(), resourceType.get())
             }
 
             total = nodes.values.sumOf { it.count() }.toLong()
@@ -54,20 +59,20 @@ open class InstanceWorkflow : InstanceTask() {
 
             aem.sync(anyInstances) {
                 nodes[this.instance]?.forEach {
-                    WorkflowScheduler(workflowManager.workflow(model.get())).scheduleForNode(it)
+                    workflowManager.schedule(model.get(), it)
                     increment()
                 }
             }
 
             notifier.notify(
-                "$total workflows scheduled properly!",
+                "Scheduled workflows: $total!",
                 "Instances: '${anyInstances.names}', model: '${model.get()}', path: '${path.get()}', resources type: '${resourceType.get()}'"
             )
         }
     }
 
     init {
-        description = "Schedules given workflow on resources under the specified path (or default: ${Node.DAM_PATH})."
+        description = "Schedules workflow model on resources under the specified path (or default: '${Node.DAM_PATH}')."
     }
 
     companion object {

@@ -21,9 +21,10 @@ class Workflow(val manager: WorkflowManager, val id: String) {
         }
     )
 
-    val model get() = repository.node(WORKFLOWS_PATH) { query { type(ResourceType.WORKFLOW_MODEL) } }
-        .filter { it.name == id }
-        .firstOrNull() ?: throw WorkflowException("No workflow model found at $WORKFLOWS_PATH!")
+    val model get() = repository
+            .node(WORKFLOW_MODEL_ROOT) { query { type(ResourceType.WORKFLOW_MODEL) } }
+            .filter { it.name == id }
+            .firstOrNull() ?: throw WorkflowException("No workflow model found at '$WORKFLOW_MODEL_ROOT!'")
 
     val resourceType = common.obj.string {
         convention(ResourceType.ASSET.value)
@@ -43,8 +44,9 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     internal var toggleIntended: Boolean? = null
 
     fun schedule(path: String, type: String = resourceType.get()) {
+        logger.info("Scheduling workflow(s) of type '$type' on $instance")
         val count = scheduler.schedule(path, type)
-        logger.info("Successfully scheduled $count workflows on $instance")
+        logger.info("Scheduled $count workflow(s) of '$type' on $instance")
     }
 
     fun toggle() {
@@ -93,6 +95,6 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     companion object {
 
         const val ENABLED_PROP = "enabled"
-        const val WORKFLOWS_PATH = "/var/workflow/models"
+        const val WORKFLOW_MODEL_ROOT = "/var/workflow/models"
     }
 }

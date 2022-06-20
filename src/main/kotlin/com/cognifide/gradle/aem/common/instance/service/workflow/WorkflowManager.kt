@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.common.CommonException
 import java.util.*
 
@@ -17,6 +18,10 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         convention(false)
         aem.prop.boolean("instance.workflowManager.restoreIntended")?.let { set(it) }
     }
+
+    fun schedule(modelId: String, node: Node) = WorkflowScheduler(workflow(modelId)).schedule(node)
+
+    fun queryNodes(modelId: String, path: String, resourceType: String) = WorkflowScheduler(workflow(modelId)).queryNodes(path, resourceType)
 
     fun workflow(id: String) = Workflow(this, id)
 

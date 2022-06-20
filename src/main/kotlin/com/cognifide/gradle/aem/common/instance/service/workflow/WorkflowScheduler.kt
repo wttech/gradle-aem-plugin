@@ -10,13 +10,17 @@ class WorkflowScheduler(private val workflow: Workflow) {
     private val logger = workflow.logger
 
     fun schedule(nodes: Iterable<Node>): Int {
-        nodes.forEach { scheduleForNode(it) }
-        return nodes.count()
+        var count = 0
+        nodes.forEach {
+            schedule(it)
+            count++
+        }
+        return count
     }
 
     fun schedule(path: String, type: String): Int = schedule(queryNodes(path, type).asIterable())
 
-    fun scheduleForNode(node: Node) {
+    fun schedule(node: Node) {
 
         val params = mapOf(
             "payload" to node.path,
