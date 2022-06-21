@@ -67,7 +67,7 @@ open class InstanceWorkflow : InstanceTask() {
 
             notifier.notify(
                 "Scheduled workflows: $total!",
-                "Instances: '${anyInstances.names}', model: '${model.get()}', path: '${path.get()}', resources type: '${resourceType.get()}'"
+                "Instances: '${anyInstances.names}', model: '${model.get()}' on '${path.get()}'"
             )
         }
     }
