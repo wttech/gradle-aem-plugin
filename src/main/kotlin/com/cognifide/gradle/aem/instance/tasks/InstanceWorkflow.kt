@@ -51,15 +51,16 @@ open class InstanceWorkflow : InstanceTask() {
             val nodes = mutableMapOf<Instance, Sequence<Node>>()
 
             aem.sync(anyInstances) {
-                nodes[this.instance] = workflowManager.queryNodes(model.get(), path.get(), resourceType.get())
+                nodes[this.instance] = workflowManager.queryNodes(path.get(), resourceType.get())
             }
 
             total = nodes.values.sumOf { it.count() }.toLong()
             step = "Scheduling workflows"
 
             aem.sync(anyInstances) {
+                val workflow = workflowManager.workflow(model.get())
                 nodes[this.instance]?.forEach {
-                    workflowManager.schedule(model.get(), it)
+                    workflow.schedule(it)
                     increment()
                 }
             }

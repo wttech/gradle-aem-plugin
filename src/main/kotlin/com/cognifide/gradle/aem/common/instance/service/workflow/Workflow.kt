@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
+import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 
 class Workflow(val manager: WorkflowManager, val id: String) {
@@ -48,6 +49,8 @@ class Workflow(val manager: WorkflowManager, val id: String) {
         val count = scheduler.schedule(path, type)
         logger.info("Scheduled $count workflow(s) of '$type' on $instance")
     }
+
+    fun schedule(node: Node) = scheduler.schedule(node)
 
     fun toggle() {
         toggleIntended?.let { toggle(it) }

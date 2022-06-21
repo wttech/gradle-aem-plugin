@@ -19,9 +19,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         aem.prop.boolean("instance.workflowManager.restoreIntended")?.let { set(it) }
     }
 
-    fun schedule(modelId: String, node: Node) = WorkflowScheduler(workflow(modelId)).schedule(node)
-
-    fun queryNodes(modelId: String, path: String, resourceType: String) = WorkflowScheduler(workflow(modelId)).queryNodes(path, resourceType)
+    fun schedule(modelId: String, node: Node) = workflow(modelId).schedule(node)
 
     fun workflow(id: String) = Workflow(this, id)
 
@@ -32,6 +30,25 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     fun workflows(types: Iterable<String>) = WorkflowType.ids(types).map { Workflow(this, it) }
 
     fun workflows(vararg types: String) = workflows(types.asIterable())
+
+    fun queryNodes(path: String, type: String): Sequence<Node> = instance.sync.repository {
+        query {
+            path(path)
+            type(type)
+        }.nodeSequence()
+    }.also {
+        if (it.count() == 0) {
+            logger.lifecycle("No resources found on $instance")
+        } else {
+            var message = "Resources found on $instance\":\n" +
+                it.map { it.name }.take(RESOURCES_DISPLAY_LIMIT).joinToString("\n")
+
+            if (it.count() > RESOURCES_DISPLAY_LIMIT) {
+                message += " and ${it.count() - RESOURCES_DISPLAY_LIMIT} more"
+            }
+            logger.lifecycle(message)
+        }
+    }
 
     // ----- DSL shorthands -----
 
@@ -54,7 +71,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
      */
-    fun toggleTemporarily(type: String, flag: Boolean, action: () -> Unit) = toggleTemporarily(mapOf(type to flag), action)
+    fun toggleTemporarily(type: String, flag: Boolean, action: () -> Unit) =
+        toggleTemporarily(mapOf(type to flag), action)
 
     /**
      * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
@@ -110,5 +128,9 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
                 stack.pop()
             }
         }
+    }
+
+    companion object {
+        const val RESOURCES_DISPLAY_LIMIT = 5
     }
 }
