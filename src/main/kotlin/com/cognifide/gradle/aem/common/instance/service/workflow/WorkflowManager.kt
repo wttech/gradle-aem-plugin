@@ -31,20 +31,20 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun workflows(vararg types: String) = workflows(types.asIterable())
 
-    fun queryNodes(path: String, type: String): Sequence<Node> = instance.sync.repository {
+    fun findPayloadResources(path: String, type: String): Sequence<Node> = instance.sync.repository {
         query {
             path(path)
             type(type)
         }.nodeSequence()
     }.also {
         if (it.count() == 0) {
-            logger.lifecycle("No resources found on $instance")
+            logger.lifecycle("No resources of type '$type' found under path '$path' on $instance")
         } else {
-            var message = "Resources found on $instance\":\n" +
-                it.map { it.name }.take(RESOURCES_DISPLAY_LIMIT).joinToString("\n")
+            var message = "Resources of type '$type' under path '$path' on $instance\":\n" +
+                it.map { it.name }.take(PAYLOAD_DISPLAY_LIMIT).joinToString("\n")
 
-            if (it.count() > RESOURCES_DISPLAY_LIMIT) {
-                message += " and ${it.count() - RESOURCES_DISPLAY_LIMIT} more"
+            if (it.count() > PAYLOAD_DISPLAY_LIMIT) {
+                message += " and ${it.count() - PAYLOAD_DISPLAY_LIMIT} more"
             }
             logger.lifecycle(message)
         }
@@ -131,6 +131,6 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     companion object {
-        const val RESOURCES_DISPLAY_LIMIT = 5
+        const val PAYLOAD_DISPLAY_LIMIT = 5
     }
 }

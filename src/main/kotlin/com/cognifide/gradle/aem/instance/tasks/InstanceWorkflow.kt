@@ -51,7 +51,7 @@ open class InstanceWorkflow : InstanceTask() {
             val nodes = mutableMapOf<Instance, Sequence<Node>>()
 
             aem.sync(anyInstances) {
-                nodes[this.instance] = workflowManager.queryNodes(path.get(), resourceType.get())
+                nodes[this.instance] = workflowManager.findPayloadResources(path.get(), resourceType.get())
             }
 
             total = nodes.values.sumOf { it.count() }.toLong()

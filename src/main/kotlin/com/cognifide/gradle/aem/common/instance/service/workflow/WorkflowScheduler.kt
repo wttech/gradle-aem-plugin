@@ -16,7 +16,8 @@ class WorkflowScheduler(private val workflow: Workflow) {
         return count
     }
 
-    fun schedule(path: String, type: String): Int = schedule(workflow.manager.queryNodes(path, type).asIterable())
+    fun schedule(path: String, type: String): Int =
+        schedule(workflow.manager.findPayloadResources(path, type).asIterable())
 
     fun schedule(node: Node) {
 
