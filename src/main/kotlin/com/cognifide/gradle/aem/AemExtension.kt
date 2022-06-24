@@ -36,6 +36,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 import java.io.Serializable
+import java.time.format.DateTimeFormatter
 
 /**
  * Core of library, facade for implementing tasks.
@@ -442,6 +443,12 @@ class AemExtension(val project: Project) : Serializable {
      * Configure wrapped Maven build with added capability to execute it incrementally.
      */
     fun mvnBuild(options: MvnBuild.() -> Unit) = mvnBuild.using(options)
+
+    /* log options */
+    val datePattern = obj.typed<DateTimeFormatter> {
+        convention(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS"))
+        prop.string("instance.tail.datePattern")?.let { set(DateTimeFormatter.ofPattern(it)) }
+    }
 
     companion object {
 

@@ -17,7 +17,7 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
             aem.prop.long("instance.awaitDown.timeout.unavailableTime")?.let { set(it) }
         }
         stateTime.apply {
-            convention(TimeUnit.MINUTES.toMillis(2))
+            convention(TimeUnit.MINUTES.toMillis(5))
             aem.prop.long("instance.awaitDown.timeout.stateTime")?.let { set(it) }
         }
         constantTime.apply {
