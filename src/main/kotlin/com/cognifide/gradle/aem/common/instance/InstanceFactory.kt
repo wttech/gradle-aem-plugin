@@ -19,6 +19,7 @@ class InstanceFactory(val aem: AemExtension) {
             this.httpUrl = instanceUrl.httpUrl
             this.user = instanceUrl.user
             this.password = instanceUrl.password
+            this.bearerToken = InstanceIMSClient.generateBearerTokenOrNull(aem)
             this.env = instanceUrl.env
             this.id = instanceUrl.id
 

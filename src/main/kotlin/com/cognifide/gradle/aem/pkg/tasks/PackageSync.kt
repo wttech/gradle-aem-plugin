@@ -168,8 +168,8 @@ open class PackageSync : AemDefaultTask() {
                     "Instance: ${instance.get().name}. Directory: ${Formats.rootProjectPath(contentDir.get().asFile, project)}"
                 )
             } finally {
-                step = "Cleaning content"
                 if (mode.get() != Mode.COPY_ONLY) {
+                    step = "Cleaning content"
                     cleanContent()
                 }
             }

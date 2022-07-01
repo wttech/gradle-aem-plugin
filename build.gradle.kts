@@ -60,7 +60,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.20.0-RC1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
-    implementation("com.cognifide.gradle:common-plugin:1.1.3")
+    implementation("com.cognifide.gradle:common-plugin:1.1.6")
 
     // External dependencies
     implementation("org.jsoup:jsoup:1.14.3")
@@ -73,6 +73,10 @@ dependencies {
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.3.0")
     implementation("net.lingala.zip4j:zip4j:2.9.1")
     implementation("org.osgi:org.osgi.core:6.0.0")
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+    implementation("io.jsonwebtoken:jjwt:0.9.1")
+    implementation("org.json:json:20220320")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 }
 
 tasks {

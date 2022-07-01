@@ -15,8 +15,13 @@ open class InstanceHttpClient(private val aem: AemExtension, val instance: Insta
     init {
         baseUrl.set(instance.httpUrl)
         escapeUrl.set(true)
-        authorizationPreemptive.set(true)
-        basicCredentials = instance.credentials
+
+        if (instance.bearerToken != null) {
+            bearerToken = instance.bearerToken
+        } else {
+            authorizationPreemptive.set(true)
+            basicCredentials = instance.credentials
+        }
 
         connectionTimeout.apply {
             convention(30_000)

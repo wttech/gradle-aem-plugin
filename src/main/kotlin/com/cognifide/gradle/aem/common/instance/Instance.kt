@@ -54,6 +54,9 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
     }
 
     @get:JsonIgnore
+    var bearerToken: String? = null
+
+    @get:JsonIgnore
     val credentialsString get() = "$user:$password"
 
     @get:JsonIgnore
