@@ -64,7 +64,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
 
     private fun readProperties() {
         if (serviceTokenFile == null) {
-            throw InstanceException("No secret file available in ${aem.anyInstance}")
+            throw InstanceException("No secret file available for generating access token")
         }
         val jsonString = Files.readString(serviceTokenFile!!.toPath())
         val obj = JSONObject(jsonString)
@@ -151,7 +151,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
                     } catch (e: Exception) {
                         println("Couldn't generate the access token")
                         println(e.message)
-                        println("Consider checking service token file")
+                        println("Consider checking the provided file")
                     }
                 }
                 return null
