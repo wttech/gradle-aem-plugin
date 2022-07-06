@@ -110,7 +110,7 @@ open class PackageSync : AemDefaultTask() {
             command.convention(
                 aem.obj.provider {
                     "--credentials ${instance.get().credentialsString} checkout --force" +
-                        " --filter ${filter.get().file} ${instance.get().httpUrl}/crx/server/crx.default"
+                        " --filter ${filter.get().file} ${instance.get().httpUrl.get()}/crx/server/crx.default"
                 }
             )
         }

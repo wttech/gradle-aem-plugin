@@ -34,7 +34,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         if (aem.commonOptions.offline.get()) {
             return false
         }
-        return common.buildScope.tryGetOrPut("${instance.httpUrl}${reachablePath.get()}") {
+        return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}${reachablePath.get()}") {
             if (checkReachable()) true else null
         } ?: false
     }
@@ -87,7 +87,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             if (aem.commonOptions.offline.get()) {
                 return false
             }
-            return common.buildScope.tryGetOrPut("${instance.httpUrl}${OsgiFramework.BUNDLES_PATH}") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}${OsgiFramework.BUNDLES_PATH}") {
                 if (checkAvailable()) true else null
             } ?: false
         }
@@ -139,7 +139,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             return mapOf()
         }
 
-        return common.buildScope.tryGetOrPut("${instance.httpUrl}$path") {
+        return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}$path") {
             try {
                 readProperties(path).apply {
                     aem.logger.info("Successfully read status properties at path '$path' on $instance.")
@@ -186,7 +186,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                 return PRODUCT_VERSION_UNKNOWN
             }
 
-            return common.buildScope.tryGetOrPut("${instance.httpUrl}$PRODUCT_INFO_PATH") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}$PRODUCT_INFO_PATH") {
                 try {
                     readProductVersion().apply {
                         aem.logger.info("Successfully read product version '$this' of $instance")
