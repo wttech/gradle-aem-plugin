@@ -90,7 +90,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      */
     fun query(criteria: QueryCriteria): Query = try {
         val path = "$QUERY_BUILDER_PATH?${criteria.queryString}"
-        log("Querying repository using URL '${instance.httpUrl}$path'")
+        log("Querying repository using URL '${instance.httpUrl.get()}$path'")
         val result = http.get(path) { asObjectFromJson<QueryResult>(it) }
         Query(this, criteria, result)
     } catch (e: RequestException) {

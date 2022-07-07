@@ -8,17 +8,17 @@ class Auth(val instance: LocalInstance) {
 
     val credentials: Pair<String, String>
         get() = when {
-            updateNeeded -> instance.user to passwordPrevious
-            else -> instance.user to instance.password
+            updateNeeded -> instance.user.get() to passwordPrevious
+            else -> instance.user.get() to instance.password.get()
         }
 
-    val updateNeeded: Boolean get() = instance.password != passwordPrevious
+    val updateNeeded: Boolean get() = instance.password.get() != passwordPrevious
 
     val passwordPrevious: String get() = passwordProperty ?: Instance.PASSWORD_DEFAULT
 
     fun update() {
         if (updateNeeded) {
-            instance.sync.authManager.updatePassword(instance.user, passwordPrevious, instance.password)
+            instance.sync.authManager.updatePassword(instance.user.get(), passwordPrevious, instance.password.get())
             saveProperties()
         }
     }

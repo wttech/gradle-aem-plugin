@@ -17,12 +17,12 @@ class InstanceFactory(val aem: AemExtension) {
             val instanceUrl = InstanceUrl.parse(httpUrl)
             val bearerToken = InstanceIMSClient.generateBearerTokenOrNull(aem)
 
-            this.httpUrl = instanceUrl.httpUrl
-            this.user = instanceUrl.user
-            this.password = instanceUrl.password
+            this.httpUrl.set(instanceUrl.httpUrl)
+            this.user.set(instanceUrl.user)
+            this.password.set(instanceUrl.password)
             this.bearerToken.set(bearerToken)
-            this.env = instanceUrl.env
-            this.id = instanceUrl.id
+            this.env.set(instanceUrl.env)
+            this.id.set(instanceUrl.id)
 
             configurer()
             validate()
@@ -36,11 +36,11 @@ class InstanceFactory(val aem: AemExtension) {
                 throw LocalInstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
             }
 
-            this.httpUrl = instanceUrl.httpUrl
-            this.password = instanceUrl.password
-            this.id = instanceUrl.id
-            this.debugPort = instanceUrl.debugPort
-            this.env = instanceUrl.env
+            this.httpUrl.set(instanceUrl.httpUrl)
+            this.password.set(instanceUrl.password)
+            this.id.set(instanceUrl.id)
+            this.debugPort.set(instanceUrl.debugPort)
+            this.env.set(instanceUrl.env)
 
             configurer()
             validate()
@@ -97,14 +97,14 @@ class InstanceFactory(val aem: AemExtension) {
         val httpUrl = props["httpUrl"] ?: httpUrlProperty(name, others)
         return local(httpUrl) {
             this.name = name
-            props["enabled"]?.let { this.enabled = it.toBoolean() }
-            props["password"]?.let { this.password = it }
-            props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
-            props["startOpts"]?.let { this.startOpts = it.split(" ") }
-            props["runModes"]?.let { this.runModes = it.split(",") }
-            props["debugPort"]?.let { this.debugPort = it.toInt() }
-            props["debugAddress"]?.let { this.debugAddress = it }
-            props["openPath"]?.let { this.openPath = it }
+            props["enabled"]?.let { this.enabled.set(it.toBoolean()) }
+            props["password"]?.let { this.password.set(it) }
+            props["jvmOpts"]?.let { this.jvmOpts.set(it.split(" ")) }
+            props["startOpts"]?.let { this.startOpts.set(it.split(" ")) }
+            props["runModes"]?.let { this.runModes.set(it.split(",")) }
+            props["debugPort"]?.let { this.debugPort.set(it.toInt()) }
+            props["debugAddress"]?.let { this.debugAddress.set(it) }
+            props["openPath"]?.let { this.openPath.set(it) }
             this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
         }
     }
@@ -113,16 +113,16 @@ class InstanceFactory(val aem: AemExtension) {
         val httpUrl = props["httpUrl"] ?: httpUrlProperty(name, others)
         return remote(httpUrl) {
             this.name = name
-            props["enabled"]?.let { this.enabled = it.toBoolean() }
-            props["user"]?.let { this.user = it }
-            props["password"]?.let { this.password = it }
+            props["enabled"]?.let { this.enabled.set(it.toBoolean()) }
+            props["user"]?.let { this.user.set(it) }
+            props["password"]?.let { this.password.set(it) }
             this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
         }
     }
 
     private fun httpUrlProperty(name: String, others: List<Instance>): String {
         val type = IdType.byId(name.split("-")[1])
-        val port = others.filter { it.type == type }.map { it.httpPort }.maxOrNull()?.let { it + 1 } ?: type.httpPortDefault
+        val port = others.filter { it.type == type }.maxOfOrNull { it.httpPort }?.let { it + 1 } ?: type.httpPortDefault
         return "${InstanceUrl.HTTP_HOST_DEFAULT}:$port"
     }
 

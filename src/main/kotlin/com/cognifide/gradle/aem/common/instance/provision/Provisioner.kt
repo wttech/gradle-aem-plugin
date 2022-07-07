@@ -215,14 +215,14 @@ class Provisioner(val manager: InstanceManager) {
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
         description.set("Enabling CRX DE")
-        condition { once() && instance.env != "prod" }
+        condition { once() && instance.env.get() != "prod" }
         sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx/server") }
         options()
     }
 
     fun disableCrxDe(options: Step.() -> Unit = {}) = step("disableCrxDe") {
         description.set("Disabling CRX DE")
-        condition { once() && instance.env != "local" }
+        condition { once() && instance.env.get() != "local" }
         sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx") }
         options()
     }

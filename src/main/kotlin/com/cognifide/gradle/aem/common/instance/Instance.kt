@@ -9,9 +9,6 @@ import com.cognifide.gradle.aem.common.instance.action.CheckAction
 import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.cognifide.gradle.aem.common.instance.check.CheckRunner
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.common.utils.formats.JsonPassword
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.io.Serializable
@@ -19,64 +16,49 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 
-open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) : Serializable {
+open class Instance(protected val aem: AemExtension) : Serializable {
 
-    @Transient
-    @JsonIgnore
     protected val common = aem.common
 
-    @Transient
-    @JsonIgnore
     protected val logger = aem.logger
 
-    lateinit var httpUrl: String
+    val httpUrl = common.obj.string {}
 
-    private val httpUrlDetails get() = InstanceUrl.parse(httpUrl)
+    private val httpUrlDetails get() = InstanceUrl.parse(httpUrl.get())
 
-    @get:JsonIgnore
     val httpPort get() = httpUrlDetails.httpPort
 
-    @get:JsonIgnore
     val httpHost get() = httpUrlDetails.httpHost
 
-    @get:JsonIgnore
-    val httpBasicAuthUrl: String get() = httpUrlDetails.basicAuth(user, password)
+    val httpBasicAuthUrl: String get() = httpUrlDetails.basicAuth(user.get(), password.get())
 
-    open lateinit var user: String
+    val user = common.obj.string { }
 
-    @get:JsonSerialize(using = JsonPassword::class, `as` = String::class)
-    lateinit var password: String
+    val password = common.obj.string {}
 
-    @get:JsonIgnore
-    val credentials: Pair<String, String> get() = when (this) {
-        is LocalInstance -> auth.credentials
-        else -> user to password
-    }
-
-    @get:JsonIgnore
     var bearerToken = common.obj.string {}
 
-    @get:JsonIgnore
+    val credentials: Pair<String, String> get() = when (this) {
+        is LocalInstance -> auth.credentials
+        else -> user.get() to password.get()
+    }
+
     val credentialsString get() = "$user:$password"
 
-    @get:JsonIgnore
-    val hiddenPassword: String get() = "*".repeat(password.length)
+    val hiddenPassword: String get() = "*".repeat(password.get().length)
 
-    lateinit var env: String
+    val env = common.obj.string {}
 
-    @get:JsonIgnore
-    val cmd: Boolean get() = env == ENV_CMD
+    val cmd: Boolean get() = env.get() == ENV_CMD
 
-    lateinit var id: String
+    val id = common.obj.string {}
 
-    val type: IdType get() = IdType.byId(id)
+    val type: IdType get() = IdType.byId(id.get())
 
     val physicalType: PhysicalType get() = PhysicalType.byInstance(this)
 
-    @get:JsonIgnore
-    var enabled: Boolean = true
+    val enabled = common.obj.boolean { convention(true) }
 
-    @get:JsonIgnore
     val local: Boolean get() = physicalType == PhysicalType.LOCAL
 
     fun <T> local(action: LocalInstance.() -> T) = when (this) {
@@ -90,56 +72,45 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         }
     }
 
-    @get:JsonIgnore
     val author: Boolean get() = type == IdType.AUTHOR
 
-    @get:JsonIgnore
     val publish: Boolean get() = type == IdType.PUBLISH
 
     var name: String
-        get() = "$env-$id"
+        get() = "${env.get()}-${id.get()}"
         set(value) {
-            env = value.substringBefore("-")
-            id = value.substringAfter("-")
+            env.set(value.substringBefore("-"))
+            id.set(value.substringAfter("-"))
         }
 
-    @get:JsonIgnore
     val sync get() = InstanceSync(aem, this)
 
-    var properties = mutableMapOf<String, String?>()
+    val properties = common.obj.map<String, String?> { convention(mapOf()) }
 
-    @get:JsonIgnore
     val systemProperties: Map<String, String> get() = sync.status.systemProperties
 
-    @get:JsonIgnore
     val slingProperties: Map<String, String> get() = sync.status.slingProperties
 
-    @get:JsonIgnore
     val slingSettings: Map<String, String> get() = sync.status.slingSettings
 
-    fun property(key: String, value: String?) {
-        properties[key] = value
+    fun property(key: String, value: String) {
+        properties.put(key, value)
     }
 
-    fun property(key: String): String? = properties[key]
+    fun property(key: String): String? = properties.get()[key]
         ?: systemProperties[key]
         ?: slingProperties[key]
         ?: slingSettings[key]
 
-    @get:JsonIgnore
     val reachable: Boolean get() = sync.status.reachable
 
-    @get:JsonIgnore
     val available: Boolean get() = sync.status.available
 
-    @get:JsonIgnore
     val zoneId: ZoneId get() = systemProperties["user.timezone"]?.let { ZoneId.of(it) }
         ?: throw InstanceException("Cannot read timezone of $this!")
 
-    @get:JsonIgnore
     val zoneOffset: ZoneOffset get() = zoneId.rules.getOffset(LocalDateTime.now())
 
-    @get:JsonIgnore
     val zoneInfo: String get() = "${zoneId.id} (GMT${zoneOffset.id})"
 
     fun date(timestamp: Long) = try {
@@ -149,33 +120,27 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         Formats.dateAt(timestamp, ZoneId.systemDefault())
     }
 
-    @get:JsonIgnore
     val osInfo: String get() = mutableListOf<String>().apply {
         systemProperties["os.name"]?.let { add(it) }
         systemProperties["os.arch"]?.let { add(it) }
         systemProperties["os.version"]?.let { add("($it)") }
     }.joinToString(" ")
 
-    @get:JsonIgnore
     val javaInfo: String get() = mutableListOf<String>().apply {
         systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
         systemProperties["java.version"]?.let { add("($it)") }
     }.joinToString(" ")
 
-    @get:JsonIgnore
     val runningPath: String get() = systemProperties["user.dir"]
         ?: throw InstanceException("Cannot read running path of $this!")
 
-    @get:JsonIgnore
     val runningModes: List<String> get() = slingSettings["Run_Modes"]
         ?.removeSurrounding("[", "]")
         ?.split(",")?.map { it.trim() }
         ?: throw InstanceException("Cannot read running modes of $this!")
 
-    @get:JsonIgnore
     open val version: AemVersion get() = AemVersion(sync.status.productVersion)
 
-    @get:JsonIgnore
     val manager: InstanceManager get() = aem.instanceManager
 
     fun awaitUp(options: AwaitUpAction.() -> Unit = {}) = manager.awaitUp(this, options)
@@ -195,7 +160,6 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
         options()
     }.check(this)
 
-    @get:JsonIgnore
     val state: String get() = checkState().summary
 
     fun provision() = manager.provisioner.provision(this)
@@ -216,7 +180,7 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
 
         return EqualsBuilder()
             .append(name, other.name)
-            .append(httpUrl, other.httpUrl)
+            .append(httpUrl.orNull, other.httpUrl.orNull)
             .isEquals
     }
 
@@ -227,30 +191,27 @@ open class Instance(@Transient @get:JsonIgnore protected val aem: AemExtension) 
             .toHashCode()
     }
 
-    override fun toString(): String = "Instance(name='$name', httpUrl='$httpUrl')"
-
-    @get:JsonIgnore
-    val json get() = Formats.toJson(this)
+    override fun toString(): String = "Instance(name='$name', httpUrl='${httpUrl.get()}')"
 
     @Suppress("ThrowsCount")
     fun validate() {
-        if (httpUrl.isBlank()) {
+        if (httpUrl.orNull.isNullOrBlank()) {
             throw AemException("HTTP URL cannot be blank in $this")
         }
 
-        if (user.isBlank()) {
+        if (user.orNull.isNullOrBlank()) {
             throw AemException("User cannot be blank in $this")
         }
 
-        if (password.isBlank()) {
+        if (password.orNull.isNullOrBlank()) {
             throw AemException("Password cannot be blank in $this")
         }
 
-        if (env.isBlank()) {
+        if (env.orNull.isNullOrBlank()) {
             throw AemException("Environment cannot be blank in $this")
         }
 
-        if (id.isBlank()) {
+        if (id.orNull.isNullOrBlank()) {
             throw AemException("ID cannot be blank in $this")
         }
     }

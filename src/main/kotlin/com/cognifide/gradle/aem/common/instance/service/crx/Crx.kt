@@ -21,7 +21,7 @@ class Crx(sync: InstanceSync) : InstanceService(sync) {
                 return NODE_TYPES_UNKNOWN
             }
 
-            return common.buildScope.tryGetOrPut("${instance.httpUrl}$EXPORT_NODE_TYPE_PATH") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}$EXPORT_NODE_TYPE_PATH") {
                 try {
                     readNodeTypes().apply {
                         aem.logger.info("Successfully read CRX node types of $instance")
