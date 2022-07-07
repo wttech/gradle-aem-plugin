@@ -30,7 +30,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
      * URI pointing to key file copied from AEMaaCS console.
      */
     val keyPath = aem.obj.string {
-        aem.prop.string("instance.local-author.keyPath")?.let { set(it) }
+        aem.prop.string("instance.remote-author.keyPath")?.let { set(it) }
     }
 
     /**
