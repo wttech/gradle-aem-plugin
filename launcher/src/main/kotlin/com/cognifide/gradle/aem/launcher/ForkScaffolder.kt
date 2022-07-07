@@ -24,7 +24,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.default.type={{instanceType}}
             instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
-            instance.cloud.keyPath={{keyPath}}
+            instance.local-author.keyPath={{keyPath}}
             instance.local-author.enabled={{instanceAuthorEnabled}}
             instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
             instance.local-author.openPath=/aem/start.html
@@ -92,7 +92,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                         }
                         define("keyPath") {
                             label = "AEMaaCS Key Path"
-                            description = "Path to the service_token.json file downloaded from AEMaaCS developer console"
+                            description = "Path to the 'service_token.json' file downloaded from AEMaaCS developer console"
                             optional()
                         }
                         define("localInstanceQuickstartJarUri") {

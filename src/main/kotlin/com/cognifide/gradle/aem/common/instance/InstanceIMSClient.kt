@@ -30,7 +30,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
      * URI pointing to key file copied from AEMaaCS console.
      */
     val keyPath = aem.obj.string {
-        aem.prop.string("instance.cloud.keyPath")?.let { set(it) }
+        aem.prop.string("instance.local-author.keyPath")?.let { set(it) }
     }
 
     /**
@@ -80,7 +80,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
         metaScopes = integration.getString("metascopes").split(",")
     }
 
-    private fun getJWTToken(): String {
+    private fun generateJWTToken(): String {
         var privateKeyContent: ByteArray
         PEMParser(StringReader(privateKey)).use { pemParser ->
             val keyPair: KeyPair = JcaPEMKeyConverter().getKeyPair(pemParser.readObject() as PEMKeyPair)
@@ -90,14 +90,16 @@ class InstanceIMSClient(private val aem: AemExtension) {
         val keySpec: KeySpec = PKCS8EncodedKeySpec(privateKeyContent)
         val rsaPrivateKey = keyFactory.generatePrivate(keySpec) as RSAPrivateKey
 
-        val jwtClaims: MutableMap<String, Any> = HashMap()
-        jwtClaims["iss"] = orgId
-        jwtClaims["sub"] = technicalAccountId
-        jwtClaims["exp"] = expirationTime
-        jwtClaims["aud"] = "https://$imsHost/c/$clientId"
-        for (scope in metaScopes) {
-            jwtClaims["https://$imsHost/s/$scope"] = true
+        val jwtClaims = mutableMapOf<String, Any>(
+            "iss" to orgId,
+            "sub" to technicalAccountId,
+            "exp" to expirationTime,
+            "aud" to "https://$imsHost/c/$clientId",
+        )
+        val scopes = metaScopes.associate {
+            "https://$imsHost/s/$it" to true
         }
+        jwtClaims.putAll(scopes)
 
         return Jwts.builder()
             .setClaims(jwtClaims)
@@ -105,7 +107,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
             .compact()
     }
 
-    private fun getAccessToken(jwtToken: String): String? {
+    private fun fetchAccessToken(jwtToken: String): String? {
         val connection = URL(imsExchangeEndpoint).openConnection() as HttpsURLConnection
         connection.requestMethod = HttpMethods.POST
         val urlParameters = "client_id=$clientId&client_secret=$clientSecret&jwt_token=$jwtToken"
@@ -120,7 +122,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
         var responseError = false
 
         val inputStream: InputStream
-        if (connection.responseCode < HttpsURLConnection.HTTP_BAD_REQUEST) {
+        if (connection.responseCode != HttpsURLConnection.HTTP_OK) {
             inputStream = connection.inputStream
         } else {
             inputStream = connection.errorStream
@@ -146,8 +148,8 @@ class InstanceIMSClient(private val aem: AemExtension) {
                 if (keyPath.isPresent) {
                     try {
                         readProperties()
-                        val jwtToken = getJWTToken()
-                        return getAccessToken(jwtToken)
+                        val jwtToken = generateJWTToken()
+                        return fetchAccessToken(jwtToken)
                     } catch (e: Exception) {
                         println("Couldn't generate the access token")
                         println(e.message)
