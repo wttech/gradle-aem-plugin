@@ -5,7 +5,12 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.local.*
+import com.cognifide.gradle.aem.common.instance.local.BackupManager
+import com.cognifide.gradle.aem.common.instance.local.InstallResolver
+import com.cognifide.gradle.aem.common.instance.local.JavaAgentResolver
+import com.cognifide.gradle.aem.common.instance.local.OpenMode
+import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
+import com.cognifide.gradle.aem.common.instance.local.Source
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.pluginProject
@@ -96,7 +101,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     val javaExecutablePath get() = javaLauncher.get().executablePath.asFile.absolutePath
-
 
     /**
      * Automatically delete Quickstart JAR after unpacking.
