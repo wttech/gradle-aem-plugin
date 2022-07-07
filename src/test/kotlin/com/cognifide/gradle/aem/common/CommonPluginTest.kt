@@ -21,12 +21,10 @@ class CommonPluginTest : AemTest() {
             instances[0].apply {
                 assertEquals("local-author", name)
                 assertTrue(author)
-                assertNotNull(json)
             }
             instances[1].apply {
                 assertEquals("local-publish", name)
                 assertTrue(publish)
-                assertNotNull(json)
             }
 
             assertEquals("/apps/test/install", packageOptions.installPath.get())
