@@ -122,7 +122,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
         var responseError = false
 
         val inputStream: InputStream
-        if (connection.responseCode != HttpsURLConnection.HTTP_OK) {
+        if (connection.responseCode == HttpsURLConnection.HTTP_OK) {
             inputStream = connection.inputStream
         } else {
             inputStream = connection.errorStream
