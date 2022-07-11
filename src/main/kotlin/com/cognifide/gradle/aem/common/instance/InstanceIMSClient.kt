@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.service.ims.Secret
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.bouncycastle.openssl.PEMKeyPair
@@ -43,23 +45,9 @@ class InstanceIMSClient(private val aem: AemExtension) {
         common.fileTransfer.downloadTo(it, secretDir.get().asFile)
     }
 
-    private lateinit var privateKey: String
-
-    private lateinit var orgId: String
-
-    private lateinit var technicalAccountId: String
-
-    private lateinit var clientId: String
-
-    private lateinit var clientSecret: String
-
-    private lateinit var imsHost: String
-
-    private lateinit var imsExchangeEndpoint: String
+    private lateinit var secret: Secret
 
     private val expirationTime = System.currentTimeMillis() / 1000 + 86400L
-
-    private lateinit var metaScopes: List<String>
 
     private fun readProperties() {
         if (serviceTokenFile == null) {
@@ -68,23 +56,13 @@ class InstanceIMSClient(private val aem: AemExtension) {
         if (!File(serviceTokenFile!!.toURI()).exists()) {
             throw InstanceException("The secret file doesn't exist")
         }
-        val jsonString = File(serviceTokenFile!!.toURI()).readText()
-        val obj = JSONObject(jsonString)
-        val integration = obj.getJSONObject("integration")
-
-        privateKey = integration.getString("privateKey")
-        orgId = integration.getString("org")
-        technicalAccountId = integration.getString("id")
-        clientId = integration.getJSONObject("technicalAccount").getString("clientId")
-        clientSecret = integration.getJSONObject("technicalAccount").getString("clientSecret")
-        imsHost = integration.getString("imsEndpoint")
-        imsExchangeEndpoint = "https://$imsHost/ims/exchange/jwt"
-        metaScopes = integration.getString("metascopes").split(",")
+        val jsonString = File(serviceTokenFile!!.toURI())
+        secret = jacksonObjectMapper().readValue(jsonString.readBytes(), Secret::class.java)
     }
 
     private fun generateJWTToken(): String {
-        var privateKeyContent: ByteArray
-        PEMParser(StringReader(privateKey)).use { pemParser ->
+        val privateKeyContent: ByteArray
+        PEMParser(StringReader(secret.integration.privateKey)).use { pemParser ->
             val keyPair: KeyPair = JcaPEMKeyConverter().getKeyPair(pemParser.readObject() as PEMKeyPair)
             privateKeyContent = keyPair.private.encoded
         }
@@ -92,11 +70,14 @@ class InstanceIMSClient(private val aem: AemExtension) {
         val keySpec: KeySpec = PKCS8EncodedKeySpec(privateKeyContent)
         val rsaPrivateKey = keyFactory.generatePrivate(keySpec) as RSAPrivateKey
 
+        val imsHost = secret.integration.imsHost
+        val metaScopes = secret.integration.metascopes.split(",")
+
         val jwtClaims = mutableMapOf<String, Any>(
-            "iss" to orgId,
-            "sub" to technicalAccountId,
+            "iss" to secret.integration.orgId,
+            "sub" to secret.integration.technicalAccountId,
             "exp" to expirationTime,
-            "aud" to "https://$imsHost/c/$clientId",
+            "aud" to "https://$imsHost/c/${secret.integration.technicalAccount.clientId}",
         )
         val scopes = metaScopes.associate {
             "https://$imsHost/s/$it" to true
@@ -110,6 +91,10 @@ class InstanceIMSClient(private val aem: AemExtension) {
     }
 
     private fun fetchAccessToken(jwtToken: String): String? {
+        val imsExchangeEndpoint = "https://${secret.integration.imsHost}/ims/exchange/jwt"
+        val clientId = secret.integration.technicalAccount.clientId
+        val clientSecret = secret.integration.technicalAccount.clientSecret
+
         val connection = URL(imsExchangeEndpoint).openConnection() as HttpsURLConnection
         connection.requestMethod = HttpMethods.POST
         val urlParameters = "client_id=$clientId&client_secret=$clientSecret&jwt_token=$jwtToken"
