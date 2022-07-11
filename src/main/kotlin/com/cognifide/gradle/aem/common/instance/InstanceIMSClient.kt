@@ -49,6 +49,22 @@ class InstanceIMSClient(private val aem: AemExtension) {
 
     private val expirationTime = System.currentTimeMillis() / 1000 + 86400L
 
+    @Suppress("TooGenericExceptionCaught")
+    fun generateToken(): String? {
+        if (keyPath.isPresent) {
+            try {
+                readProperties()
+                val jwtToken = generateJWTToken()
+                return fetchAccessToken(jwtToken)
+            } catch (e: Exception) {
+                println("Couldn't generate the access token")
+                println(e.message)
+                println("Consider checking the provided file")
+            }
+        }
+        return null
+    }
+
     private fun readProperties() {
         if (serviceTokenFile == null) {
             throw InstanceException("No URI to the secret file is specified")
@@ -123,27 +139,5 @@ class InstanceIMSClient(private val aem: AemExtension) {
         }
 
         return JSONObject(response).getString("access_token")
-    }
-
-    companion object {
-
-        @Suppress("TooGenericExceptionCaught")
-        fun generateBearerTokenOrNull(aem: AemExtension): String? {
-            val client = InstanceIMSClient(aem)
-            with(client) {
-                if (keyPath.isPresent) {
-                    try {
-                        readProperties()
-                        val jwtToken = generateJWTToken()
-                        return fetchAccessToken(jwtToken)
-                    } catch (e: Exception) {
-                        println("Couldn't generate the access token")
-                        println(e.message)
-                        println("Consider checking the provided file")
-                    }
-                }
-                return null
-            }
-        }
     }
 }

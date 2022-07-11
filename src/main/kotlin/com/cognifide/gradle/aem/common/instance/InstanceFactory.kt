@@ -15,7 +15,7 @@ class InstanceFactory(val aem: AemExtension) {
     fun remote(httpUrl: String, configurer: Instance.() -> Unit = {}): Instance {
         return Instance(aem).apply {
             val instanceUrl = InstanceUrl.parse(httpUrl)
-            val bearerToken = InstanceIMSClient.generateBearerTokenOrNull(aem)
+            val bearerToken = aem.instanceManager.ims.generateToken()
 
             this.httpUrl.set(instanceUrl.httpUrl)
             this.user.set(instanceUrl.user)

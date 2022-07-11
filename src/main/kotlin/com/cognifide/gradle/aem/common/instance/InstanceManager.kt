@@ -21,6 +21,8 @@ open class InstanceManager(val aem: AemExtension) {
 
     val factory by lazy { InstanceFactory(aem) }
 
+    val ims by lazy { InstanceIMSClient(aem) }
+
     /**
      * Using remote AEM instances is acceptable in any project, so that lookup for project applying local instance plugin is required
      * Needed to determine common directory storing instance related resources (tailer incident filter, Groovy scripts etc).
