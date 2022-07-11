@@ -10,7 +10,6 @@ import org.gradle.internal.impldep.com.google.api.client.http.HttpMethods
 import org.json.JSONObject
 import java.io.*
 import java.net.URL
-import java.nio.file.Files
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
@@ -64,9 +63,12 @@ class InstanceIMSClient(private val aem: AemExtension) {
 
     private fun readProperties() {
         if (serviceTokenFile == null) {
-            throw InstanceException("No secret file available for generating access token")
+            throw InstanceException("No URI to the secret file is specified")
         }
-        val jsonString = Files.readString(serviceTokenFile!!.toPath())
+        if (!File(serviceTokenFile!!.toURI()).exists()) {
+            throw InstanceException("The secret file doesn't exist")
+        }
+        val jsonString = File(serviceTokenFile!!.toURI()).readText()
         val obj = JSONObject(jsonString)
         val integration = obj.getJSONObject("integration")
 
@@ -114,19 +116,18 @@ class InstanceIMSClient(private val aem: AemExtension) {
 
         // Send post request
         connection.doOutput = true
-        val writer = DataOutputStream(connection.outputStream)
-        writer.writeBytes(urlParameters)
-        writer.flush()
-        writer.close()
+        DataOutputStream(connection.outputStream).use {
+            it.writeBytes(urlParameters)
+            it.flush()
+        }
 
         var responseError = false
 
-        val inputStream: InputStream
-        if (connection.responseCode == HttpsURLConnection.HTTP_OK) {
-            inputStream = connection.inputStream
+        val inputStream = if (connection.responseCode == HttpsURLConnection.HTTP_OK) {
+            connection.inputStream
         } else {
-            inputStream = connection.errorStream
             responseError = true
+            connection.errorStream
         }
 
         val response = inputStream.bufferedReader().use { it.readText() }
