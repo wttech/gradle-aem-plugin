@@ -97,7 +97,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     val javaExecutablePath get() = javaLauncher.get().executablePath.asFile.absolutePath
 
-
     /**
      * Automatically delete Quickstart JAR after unpacking.
      */
