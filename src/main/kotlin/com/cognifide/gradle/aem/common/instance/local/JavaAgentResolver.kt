@@ -27,9 +27,12 @@ class JavaAgentResolver(private val aem: AemExtension) {
 
     val files get() = fileResolver.files
 
-    fun openTelemetry() = files("https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar")
+    fun openTelemetry() =
+        files("https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar")
 
-    fun openTelemetry(version: String) = files("https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v$version/opentelemetry-javaagent.jar")
+    fun openTelemetry(version: String) =
+        files("https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v$version/opentelemetry-javaagent.jar")
 
-    fun jacoco(version: String) = files("https://repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/$version/org.jacoco.agent-$version-runtime.jar")
+    fun jacoco(version: String) =
+        files("https://repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/$version/org.jacoco.agent-$version-runtime.jar")
 }

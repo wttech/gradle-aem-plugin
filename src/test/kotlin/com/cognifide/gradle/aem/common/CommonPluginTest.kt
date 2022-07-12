@@ -3,7 +3,9 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.test.AemTest
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class CommonPluginTest : AemTest() {
@@ -21,12 +23,12 @@ class CommonPluginTest : AemTest() {
             instances[0].apply {
                 assertEquals("local-author", name)
                 assertTrue(author)
-                assertNotNull(json)
+                assertNotNull(this.toString())
             }
             instances[1].apply {
                 assertEquals("local-publish", name)
                 assertTrue(publish)
-                assertNotNull(json)
+                assertNotNull(this.toString())
             }
 
             assertEquals("/apps/test/install", packageOptions.installPath.get())
