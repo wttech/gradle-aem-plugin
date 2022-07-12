@@ -23,9 +23,8 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     )
 
     val model by lazy {
-        repository
-            .node(WORKFLOW_MODEL_ROOT) { query { type(ResourceType.WORKFLOW_MODEL) } }
-            .find { it.name == id } ?: throw WorkflowException("No workflow model found at '$WORKFLOW_MODEL_ROOT!'")
+        repository.node(WORKFLOW_MODEL_ROOT) { query { name(id) } }
+            .firstOrNull() ?: throw WorkflowException("No workflow model found at '$WORKFLOW_MODEL_ROOT!'")
     }
 
     val resourceType = common.obj.string {

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
+import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 import com.cognifide.gradle.common.CommonException
 import java.util.*
 
@@ -20,6 +21,9 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun schedule(modelId: String, node: Node) = workflow(modelId).schedule(node)
+
+    fun schedule(modelId: String, resourcePath: String, resourceType: String = ResourceType.ASSET.value) =
+        workflow(modelId).schedule(resourcePath, resourceType)
 
     fun workflow(id: String) = Workflow(this, id)
 
