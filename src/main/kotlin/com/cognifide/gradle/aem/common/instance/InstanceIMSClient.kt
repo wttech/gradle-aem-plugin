@@ -117,10 +117,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
 
         // Send post request
         connection.doOutput = true
-        DataOutputStream(connection.outputStream).use {
-            it.writeBytes(urlParameters)
-            it.flush()
-        }
+        DataOutputStream(connection.outputStream).use { it.writeBytes(urlParameters) }
 
         var responseError = false
 
