@@ -32,7 +32,7 @@ class WorkflowScheduler(private val workflow: Workflow) {
                 if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
                     throw WorkflowException(
                         "Workflow scheduling failed for '${params["payload"]}' and model: '$workflow'" +
-                                "\nStatus: ${it.statusLine}!"
+                            "\nStatus: ${it.statusLine}!"
                     )
                 }
             }
