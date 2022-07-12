@@ -8,16 +8,13 @@ import io.jsonwebtoken.SignatureAlgorithm
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
-import org.gradle.internal.impldep.com.google.api.client.http.HttpMethods
 import org.json.JSONObject
 import java.io.*
-import java.net.URL
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.spec.KeySpec
 import java.security.spec.PKCS8EncodedKeySpec
-import javax.net.ssl.HttpsURLConnection
 
 /**
  * Generates Bearer token based on the credentials fetched from AEMaaCS
@@ -111,30 +108,18 @@ class InstanceIMSClient(private val aem: AemExtension) {
         val clientId = secret.integration.technicalAccount.clientId
         val clientSecret = secret.integration.technicalAccount.clientSecret
 
-        val connection = URL(imsExchangeEndpoint).openConnection() as HttpsURLConnection
-        connection.requestMethod = HttpMethods.POST
-        val urlParameters = "client_id=$clientId&client_secret=$clientSecret&jwt_token=$jwtToken"
+        val params = mapOf(
+            "client_id" to clientId,
+            "client_secret" to clientSecret,
+            "jwt_token" to jwtToken
+        )
 
-        // Send post request
-        connection.doOutput = true
-        DataOutputStream(connection.outputStream).use { it.writeBytes(urlParameters) }
-
-        var responseError = false
-
-        val inputStream = if (connection.responseCode == HttpsURLConnection.HTTP_OK) {
-            connection.inputStream
-        } else {
-            responseError = true
-            connection.errorStream
+        return common.http {
+            return@http post(imsExchangeEndpoint, params) { response ->
+                return@post JSONObject(
+                    asStream(response).bufferedReader().use { it.readText() }
+                ).getString("access_token")
+            }
         }
-
-        val response = inputStream.bufferedReader().use { it.readText() }
-
-        if (responseError) {
-            println(response)
-            return null
-        }
-
-        return JSONObject(response).getString("access_token")
     }
 }
