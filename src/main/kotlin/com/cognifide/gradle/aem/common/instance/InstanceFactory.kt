@@ -6,6 +6,8 @@ import com.cognifide.gradle.common.utils.Patterns
 
 class InstanceFactory(val aem: AemExtension) {
 
+    private val bearerToken = aem.instanceManager.ims.generateToken()
+
     fun defaultPair() = listOf(defaultAuthor(), defaultPublish())
 
     fun defaultAuthor() = remote(InstanceUrl.HTTP_AUTHOR_DEFAULT)
@@ -15,12 +17,11 @@ class InstanceFactory(val aem: AemExtension) {
     fun remote(httpUrl: String, configurer: Instance.() -> Unit = {}): Instance {
         return Instance(aem).apply {
             val instanceUrl = InstanceUrl.parse(httpUrl)
-            val bearerToken = aem.instanceManager.ims.generateToken()
 
             this.httpUrl.set(instanceUrl.httpUrl)
             this.user.set(instanceUrl.user)
             this.password.set(instanceUrl.password)
-            this.bearerToken.set(bearerToken)
+            this.bearerToken.set(this@InstanceFactory.bearerToken)
             this.env.set(instanceUrl.env)
             this.id.set(instanceUrl.id)
 
