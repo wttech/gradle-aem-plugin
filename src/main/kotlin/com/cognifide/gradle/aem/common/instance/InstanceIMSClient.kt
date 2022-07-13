@@ -114,12 +114,12 @@ class InstanceIMSClient(private val aem: AemExtension) {
             "jwt_token" to jwtToken
         )
 
-        return common.http {
-            return@http post(imsExchangeEndpoint, params) { response ->
-                return@post JSONObject(
-                    asStream(response).bufferedReader().use { it.readText() }
-                ).getString("access_token")
+        val response = common.http {
+            post(imsExchangeEndpoint, params) { httpResponse ->
+                asStream(httpResponse).bufferedReader().use { it.readText() }
             }
         }
+
+        return JSONObject(response).getString("access_token")
     }
 }
