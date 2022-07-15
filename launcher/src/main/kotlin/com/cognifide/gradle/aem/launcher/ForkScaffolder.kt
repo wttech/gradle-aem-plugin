@@ -50,6 +50,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             """
             import com.cognifide.gradle.aem.common.instance.local.OpenMode
             import com.neva.gradle.fork.ForkExtension
+            import com.cognifide.gradle.common.utils.Patterns
 
             configure<ForkExtension> {
                 properties {
@@ -71,6 +72,10 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Author HTTP URL"
                             url("http://localhost:4502")
                             optional()
+                            controller {
+                                toggle(Patterns.wildcard(value,"*.adobeaemcloud.com"), "serviceCredentialsUri")
+                                toggle(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instancePassword")
+                            }
                         }
                         define("instanceAuthorEnabled") {
                             label = "Author Enabled"
