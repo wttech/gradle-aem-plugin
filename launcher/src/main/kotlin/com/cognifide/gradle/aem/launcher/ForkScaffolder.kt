@@ -24,7 +24,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.default.type={{instanceType}}
             instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
-            instanceIMSClient.serviceCredentialsUrl={{serviceCredentialsUri}}
+            instanceIMSClient.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
             instance.local-author.enabled={{instanceAuthorEnabled}}
             instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
             instance.local-author.openPath=/aem/start.html
@@ -60,7 +60,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                             description = "Local - instance will be created on local file system\nRemote - connecting to remote instance only"
                             controller { 
                                 toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") 
-                                toggle(value == "remote", "serviceCredentialsUri") 
+                                toggle(value == "remote", "instanceServiceCredentialsUri") 
                             }
                         }
                         define("localInstanceRunModes") {
@@ -90,7 +90,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                             password("admin")
                             optional()
                         }
-                        define("serviceCredentialsUri") {
+                        define("instanceServiceCredentialsUri") {
                             label = "Service Credentials Uri"
                             description = "JSON file downloaded from AEMaaCS developer console"
                             optional()
