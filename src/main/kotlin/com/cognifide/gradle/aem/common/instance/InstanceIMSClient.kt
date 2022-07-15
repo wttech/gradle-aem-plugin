@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.ims.Secret
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.bouncycastle.openssl.PEMKeyPair
@@ -25,52 +24,53 @@ class InstanceIMSClient(private val aem: AemExtension) {
     private val common = aem.common
 
     /**
-     * URI pointing to key file copied from AEMaaCS console.
+     * URI pointing to credentials file copied from AEMaaCS console.
      */
-    val keyPath = aem.obj.string {
-        aem.prop.string("instance.default.keyPath")?.let { set(it) }
+    val serviceCredentialsUrl = aem.obj.string {
+        aem.prop.string("instanceIMSClient.serviceCredentialsUrl")?.let { set(it) }
     }
 
     /**
      * Directory storing the fetched secret file from AEMaaCS instance.
      */
     private val secretDir = aem.obj.dir {
-        convention(aem.obj.buildDir("instance/secret"))
+        convention(aem.obj.buildDir("instance/ims"))
     }
 
-    private val serviceTokenFile: File? get() = keyPath.orNull?.let {
+    private val serviceTokenFile: File get() = serviceCredentialsUrl.orNull?.let {
         common.fileTransfer.downloadTo(it, secretDir.get().asFile)
-    }
+    } ?: throw InstanceException("The secret file doesn't exist")
 
     private lateinit var secret: Secret
 
-    private val expirationTime = System.currentTimeMillis() / 1000 + 86400L
+    private val expirationTime = aem.obj.long {
+        convention(86400L)
+        aem.prop.long("instanceIMSClient.expirationTime")?.let { set(it) }
+    }
+
+    /**
+     * This is how Adobe calculates expTime in an example they provided for generating token.
+     */
+    private val expTime get() = System.currentTimeMillis() / 1000 + expirationTime.get()
 
     @Suppress("TooGenericExceptionCaught")
     fun generateToken(): String? {
-        if (keyPath.isPresent) {
+        if (!serviceCredentialsUrl.orNull.isNullOrBlank()) {
             try {
                 readProperties()
                 val jwtToken = generateJWTToken()
                 return fetchAccessToken(jwtToken)
             } catch (e: Exception) {
-                println("Couldn't generate the access token")
-                println(e.message)
-                println("Consider checking the provided file")
+                throw InstanceException("Couldn't generate the access token, consider checking the provided secret file", e)
             }
         }
         return null
     }
 
     private fun readProperties() {
-        if (serviceTokenFile == null) {
-            throw InstanceException("No URI to the secret file is specified")
+        secret = serviceTokenFile.inputStream().use {
+            common.formats.toObjectFromJson(it, Secret::class.java)
         }
-        if (!File(serviceTokenFile!!.toURI()).exists()) {
-            throw InstanceException("The secret file doesn't exist")
-        }
-        val jsonString = File(serviceTokenFile!!.toURI())
-        secret = jacksonObjectMapper().readValue(jsonString.readBytes(), Secret::class.java)
     }
 
     private fun generateJWTToken(): String {
@@ -89,7 +89,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
         val jwtClaims = mutableMapOf<String, Any>(
             "iss" to secret.integration.orgId,
             "sub" to secret.integration.technicalAccountId,
-            "exp" to expirationTime,
+            "exp" to expTime,
             "aud" to "https://$imsHost/c/${secret.integration.technicalAccount.clientId}",
         )
         val scopes = metaScopes.associate {

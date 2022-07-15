@@ -6,7 +6,7 @@ import com.cognifide.gradle.common.utils.Patterns
 
 class InstanceFactory(val aem: AemExtension) {
 
-    private val bearerToken = aem.instanceManager.ims.generateToken()
+    private val bearerToken by lazy { aem.instanceManager.ims.generateToken() }
 
     fun defaultPair() = listOf(defaultAuthor(), defaultPublish())
 
@@ -21,7 +21,7 @@ class InstanceFactory(val aem: AemExtension) {
             this.httpUrl.set(instanceUrl.httpUrl)
             this.user.set(instanceUrl.user)
             this.password.set(instanceUrl.password)
-            this.bearerToken.set(this@InstanceFactory.bearerToken)
+            this.bearerToken.set(aem.obj.provider { this@InstanceFactory.bearerToken })
             this.env.set(instanceUrl.env)
             this.id.set(instanceUrl.id)
 
