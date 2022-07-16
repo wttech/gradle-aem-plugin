@@ -19,7 +19,7 @@ import java.security.spec.PKCS8EncodedKeySpec
  * Generates Bearer token based on the credentials fetched from AEMaaCS
  * by communicating with Adobe Identity Management Services.
  */
-class InstanceIMSClient(private val aem: AemExtension) {
+class Ims(private val aem: AemExtension) {
 
     private val common = aem.common
 
@@ -27,7 +27,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
      * URI pointing to credentials file copied from AEMaaCS console.
      */
     val serviceCredentialsUrl = aem.obj.string {
-        aem.prop.string("instanceIMSClient.serviceCredentialsUrl")?.let { set(it) }
+        aem.prop.string("ims.serviceCredentialsUrl")?.let { set(it) }
     }
 
     /**
@@ -45,7 +45,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
 
     private val expirationTime = aem.obj.long {
         convention(86400L)
-        aem.prop.long("instanceIMSClient.expirationTime")?.let { set(it) }
+        aem.prop.long("ims.expirationTime")?.let { set(it) }
     }
 
     /**

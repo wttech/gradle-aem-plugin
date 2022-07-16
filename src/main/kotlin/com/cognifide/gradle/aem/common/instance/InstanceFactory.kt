@@ -6,7 +6,7 @@ import com.cognifide.gradle.common.utils.Patterns
 
 class InstanceFactory(val aem: AemExtension) {
 
-    private val bearerToken by lazy { aem.instanceManager.ims.generateToken() }
+    private val bearerToken by lazy { aem.ims.generateToken() }
 
     fun defaultPair() = listOf(defaultAuthor(), defaultPublish())
 

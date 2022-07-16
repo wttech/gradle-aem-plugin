@@ -64,6 +64,8 @@ class AemExtension(val project: Project) : Serializable {
 
     val processKiller by lazy { ProcessKiller(this) }
 
+    val ims by lazy { Ims(this) }
+
     /**
      * Defines common settings like environment name, line endings when generating files etc
      */
