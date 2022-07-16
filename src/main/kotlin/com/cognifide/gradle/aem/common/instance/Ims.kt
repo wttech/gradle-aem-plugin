@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.service.ims.AccessObject
 import com.cognifide.gradle.aem.common.instance.service.ims.Secret
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
-import org.json.JSONObject
 import java.io.*
 import java.security.KeyFactory
 import java.security.KeyPair
@@ -59,7 +59,8 @@ class Ims(private val aem: AemExtension) {
             try {
                 secret = readCredentialsFile()
                 val jwtToken = generateJWTToken()
-                return fetchAccessToken(jwtToken)
+                val accessObject = fetchAccessObject(jwtToken)
+                return accessObject.accessToken
             } catch (e: Exception) {
                 throw ImsException("Couldn't generate the access token, consider checking the provided secret file", e)
             }
@@ -103,7 +104,7 @@ class Ims(private val aem: AemExtension) {
             .compact()
     }
 
-    private fun fetchAccessToken(jwtToken: String): String? {
+    private fun fetchAccessObject(jwtToken: String): AccessObject {
         val imsExchangeEndpoint = "https://${secret.integration.imsHost}/ims/exchange/jwt"
         val clientId = secret.integration.technicalAccount.clientId
         val clientSecret = secret.integration.technicalAccount.clientSecret
@@ -120,6 +121,6 @@ class Ims(private val aem: AemExtension) {
             }
         }
 
-        return JSONObject(response).getString("access_token")
+        return common.formats.toObjectFromJson(response, AccessObject::class.java)
     }
 }
