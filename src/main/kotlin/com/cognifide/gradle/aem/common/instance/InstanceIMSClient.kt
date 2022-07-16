@@ -57,7 +57,7 @@ class InstanceIMSClient(private val aem: AemExtension) {
     fun generateToken(): String? {
         if (!serviceCredentialsUrl.orNull.isNullOrBlank()) {
             try {
-                readProperties()
+                secret = readCredentialsFile()
                 val jwtToken = generateJWTToken()
                 return fetchAccessToken(jwtToken)
             } catch (e: Exception) {
@@ -67,8 +67,8 @@ class InstanceIMSClient(private val aem: AemExtension) {
         return null
     }
 
-    private fun readProperties() {
-        secret = serviceTokenFile.inputStream().use {
+    private fun readCredentialsFile(): Secret {
+        return serviceTokenFile.inputStream().use {
             common.formats.toObjectFromJson(it, Secret::class.java)
         }
     }
