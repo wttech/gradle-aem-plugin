@@ -39,7 +39,7 @@ class Ims(private val aem: AemExtension) {
 
     private val serviceTokenFile: File get() = serviceCredentialsUrl.orNull?.let {
         common.fileTransfer.downloadTo(it, secretDir.get().asFile)
-    } ?: throw InstanceException("The secret file doesn't exist")
+    } ?: throw ImsException("The secret file doesn't exist")
 
     private lateinit var secret: Secret
 
@@ -61,7 +61,7 @@ class Ims(private val aem: AemExtension) {
                 val jwtToken = generateJWTToken()
                 return fetchAccessToken(jwtToken)
             } catch (e: Exception) {
-                throw InstanceException("Couldn't generate the access token, consider checking the provided secret file", e)
+                throw ImsException("Couldn't generate the access token, consider checking the provided secret file", e)
             }
         }
         return null
