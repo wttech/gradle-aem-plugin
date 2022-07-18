@@ -53,19 +53,18 @@ class Ims(private val aem: AemExtension) {
      */
     private val expTime get() = System.currentTimeMillis() / 1000 + expirationTime.get()
 
+    val isConfigured get() = !serviceCredentialsUrl.orNull.isNullOrBlank()
+
     @Suppress("TooGenericExceptionCaught")
-    fun generateToken(): String? {
-        if (!serviceCredentialsUrl.orNull.isNullOrBlank()) {
-            try {
-                secret = readCredentialsFile()
-                val jwtToken = generateJWTToken()
-                val accessObject = fetchAccessObject(jwtToken)
-                return accessObject.accessToken
-            } catch (e: Exception) {
-                throw ImsException("Couldn't generate the access token, consider checking the provided secret file", e)
-            }
+    fun generateToken(): String {
+        try {
+            secret = readCredentialsFile()
+            val jwtToken = generateJWTToken()
+            val accessObject = fetchAccessObject(jwtToken)
+            return accessObject.accessToken
+        } catch (e: Exception) {
+            throw ImsException("Couldn't generate the access token, consider checking the provided secret file", e)
         }
-        return null
     }
 
     private fun readCredentialsFile(): Secret {
