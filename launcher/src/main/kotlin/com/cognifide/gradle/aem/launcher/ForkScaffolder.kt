@@ -75,6 +75,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                             controller {
                                 toggle(Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
                                 toggle(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instancePassword")
+                                clear(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
                             }
                         }
                         define("instanceAuthorEnabled") {
