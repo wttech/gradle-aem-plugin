@@ -73,7 +73,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                             url("http://localhost:4502")
                             optional()
                             controller {
-                                toggle(Patterns.wildcard(value,"*.adobeaemcloud.com"), "serviceCredentialsUri")
+                                toggle(Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
                                 toggle(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instancePassword")
                             }
                         }
