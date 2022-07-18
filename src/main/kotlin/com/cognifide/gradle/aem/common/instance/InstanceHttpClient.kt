@@ -16,7 +16,7 @@ open class InstanceHttpClient(private val aem: AemExtension, val instance: Insta
         baseUrl.set(instance.httpUrl.get())
         escapeUrl.set(true)
 
-        if (aem.ims.isConfigured) {
+        if (instance.serviceCredentials.isPresent) {
             bearerToken.set(instance.bearerToken)
         } else {
             authorizationPreemptive.set(true)

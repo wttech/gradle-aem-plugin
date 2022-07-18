@@ -36,7 +36,11 @@ open class Instance(protected val aem: AemExtension) : Serializable {
 
     val password = common.obj.string {}
 
-    var bearerToken = common.obj.string {}
+    val bearerToken = common.obj.string {}
+
+    val serviceCredentials = common.obj.file {
+        aem.prop.file("instance.default.serviceCredentialsUrl")?.let { set(it) }
+    }
 
     val credentials: Pair<String, String> get() = when (this) {
         is LocalInstance -> auth.credentials

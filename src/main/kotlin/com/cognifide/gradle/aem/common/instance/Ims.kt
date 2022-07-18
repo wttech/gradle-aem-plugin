@@ -23,24 +23,6 @@ class Ims(private val aem: AemExtension) {
 
     private val common = aem.common
 
-    /**
-     * URI pointing to credentials file copied from AEMaaCS console.
-     */
-    val serviceCredentialsUrl = aem.obj.string {
-        aem.prop.string("ims.serviceCredentialsUrl")?.let { set(it) }
-    }
-
-    /**
-     * Directory storing the fetched secret file from AEMaaCS instance.
-     */
-    private val secretDir = aem.obj.dir {
-        convention(aem.obj.buildDir("instance/ims"))
-    }
-
-    private val serviceTokenFile: File get() = serviceCredentialsUrl.orNull?.let {
-        common.fileTransfer.downloadTo(it, secretDir.get().asFile)
-    } ?: throw ImsException("The secret file doesn't exist")
-
     private lateinit var secret: Secret
 
     private val expirationTime = aem.obj.long {
@@ -53,12 +35,10 @@ class Ims(private val aem: AemExtension) {
      */
     private val expTime get() = System.currentTimeMillis() / 1000 + expirationTime.get()
 
-    val isConfigured get() = !serviceCredentialsUrl.orNull.isNullOrBlank()
-
     @Suppress("TooGenericExceptionCaught")
-    fun generateToken(): String {
+    fun generateToken(serviceCredentials: File): String {
         try {
-            secret = readCredentialsFile()
+            secret = readCredentialsFile(serviceCredentials)
             val jwtToken = generateJWTToken()
             val accessObject = fetchAccessObject(jwtToken)
             return accessObject.accessToken
@@ -67,8 +47,8 @@ class Ims(private val aem: AemExtension) {
         }
     }
 
-    private fun readCredentialsFile(): Secret {
-        return serviceTokenFile.inputStream().use {
+    private fun readCredentialsFile(serviceCredentials: File): Secret {
+        return serviceCredentials.inputStream().use {
             common.formats.toObjectFromJson(it, Secret::class.java)
         }
     }
