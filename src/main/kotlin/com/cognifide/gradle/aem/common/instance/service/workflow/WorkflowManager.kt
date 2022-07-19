@@ -25,7 +25,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun launchers(type: String) = launchers(listOf(type))
 
-    fun launchers(types: Iterable<String>) = WorkflowType.ids(types).map { WorkflowLauncher(this, it) }
+    fun launchers(types: Iterable<String>) = WorkflowLauncherType.ids(types).map { WorkflowLauncher(this, it) }
 
     fun launchers(vararg types: String) = launchers(types.asIterable())
 

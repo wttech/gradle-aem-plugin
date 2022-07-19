@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-enum class WorkflowType(val ids: List<String>) {
+enum class WorkflowLauncherType(val ids: List<String>) {
     DAM_ASSET(
         listOf(
+            "asset_processing_on_sdk_mod",
+            "asset_processing_on_sdk_create",
             "update_asset_create",
             "update_asset_create_without_DM",
             "update_asset_mod",
