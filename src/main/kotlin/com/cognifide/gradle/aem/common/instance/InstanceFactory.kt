@@ -19,7 +19,6 @@ class InstanceFactory(val aem: AemExtension) {
             this.httpUrl.set(instanceUrl.httpUrl)
             this.user.set(instanceUrl.user)
             this.password.set(instanceUrl.password)
-            this.bearerToken.set(aem.obj.provider { aem.ims.generateToken(serviceCredentials.asFile.get()) })
             this.env.set(instanceUrl.env)
             this.id.set(instanceUrl.id)
 
