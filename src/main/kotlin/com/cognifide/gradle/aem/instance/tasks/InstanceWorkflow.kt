@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
-import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -19,61 +18,73 @@ open class InstanceWorkflow : InstanceTask() {
     }
 
     @Internal
-    val path = aem.obj.string {
-        convention(Node.DAM_PATH)
-        common.prop.string("instance.workflow.path")?.let { set(it) }
+    val resourcePath = aem.obj.string {
+        common.prop.string("instance.workflow.resourcePath")?.let { set(it) }
     }
 
     @Internal
     val resourceType = aem.obj.string {
-        convention(ResourceType.ASSET.value)
         common.prop.string("instance.workflow.resourceType")?.let { set(it) }
     }
 
     @TaskAction
-    fun run() {
-        instanceManager.examine(anyInstances)
+    fun doAction() {
+        checkInputs()
+        scheduleWorkflows()
+    }
 
+    private fun checkInputs() {
         if (model.orNull.isNullOrBlank()) {
-            throw WorkflowException("Workflow model is not defined, specify it via property 'instance.workflow.model'")
+            throw WorkflowException("Workflow model is not defined, specify it via property 'instance.workflow.model'!")
         }
-        if (path.orNull.isNullOrBlank()) {
-            throw WorkflowException("Workflow path is not defined, specify it via property 'instance.workflow.path'")
+        if (resourcePath.orNull.isNullOrBlank()) {
+            throw WorkflowException("Workflow resource path is not defined, specify it via property 'instance.workflow.resourcePath'!")
         }
         if (resourceType.orNull.isNullOrBlank()) {
-            throw WorkflowException("Workflow resource type is not defined, specify it via property 'instance.workflow.resourceType'")
+            throw WorkflowException("Workflow resource type is not defined, specify it via property 'instance.workflow.resourceType'!")
         }
+    }
 
-        logger.lifecycle("Workflow details:\nmodel: '${model.get()}', resourceType: '${resourceType.get()}', resources path: '${path.get()}'\n")
+    private fun scheduleWorkflows() {
+        instanceManager.examine(anyInstances)
+
+        logger.lifecycle(
+            listOf(
+                "Scheduling workflows with following details:",
+                "Workflow model: '${model.get()}'",
+                "Resource path: '${resourcePath.get()}'",
+                "Resource type: '${resourceType.get()}'",
+            ).joinToString("\n")
+        )
 
         common.progress {
-            step = "Fetching nodes"
+            step = "Fetching workflow payloads"
             val nodes = mutableMapOf<Instance, Sequence<Node>>()
 
             aem.sync(anyInstances) {
-                nodes[this.instance] = workflowManager.findPayloadResources(path.get(), resourceType.get())
+                nodes[instance] = workflowManager.payloads(resourcePath.get(), resourceType.get())
             }
 
             total = nodes.values.sumOf { it.count() }.toLong()
             step = "Scheduling workflows"
 
             aem.sync(anyInstances) {
-                val workflow = workflowManager.workflow(model.get())
+                val model = workflowManager.model(model.get())
                 nodes[this.instance]?.forEach {
-                    workflow.schedule(it)
+                    model.schedule(it)
                     increment()
                 }
             }
 
             notifier.notify(
-                "Scheduled workflows: $total!",
-                "Instances: '${anyInstances.names}', model: '${model.get()}' on '${path.get()}'"
+                "Scheduled workflows: $total",
+                "Instances: '${anyInstances.names}', Model: '${model.get()}', Path '${resourcePath.get()}'"
             )
         }
     }
 
     init {
-        description = "Schedules workflow model on resources under the specified path (or default: '${Node.DAM_PATH}')."
+        description = "Schedules workflow model on resources under the specified path"
     }
 
     companion object {

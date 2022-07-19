@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
-import com.cognifide.gradle.aem.common.instance.service.repository.ResourceType
 import com.cognifide.gradle.common.CommonException
 import java.util.*
 
@@ -20,37 +19,34 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         aem.prop.boolean("instance.workflowManager.restoreIntended")?.let { set(it) }
     }
 
-    fun schedule(modelId: String, node: Node) = workflow(modelId).schedule(node)
+    fun launcher(id: String) = WorkflowLauncher(this, id)
 
-    fun schedule(modelId: String, resourcePath: String, resourceType: String = ResourceType.ASSET.value) =
-        workflow(modelId).schedule(resourcePath, resourceType)
+    fun launcher(id: String, options: WorkflowLauncher.() -> Unit) = WorkflowLauncher(this, id).run(options)
 
-    fun workflow(id: String) = Workflow(this, id)
+    fun launchers(type: String) = launchers(listOf(type))
 
-    fun workflow(id: String, options: Workflow.() -> Unit) = Workflow(this, id).run(options)
+    fun launchers(types: Iterable<String>) = WorkflowType.ids(types).map { WorkflowLauncher(this, it) }
 
-    fun workflows(type: String) = workflows(listOf(type))
+    fun launchers(vararg types: String) = launchers(types.asIterable())
 
-    fun workflows(types: Iterable<String>) = WorkflowType.ids(types).map { Workflow(this, it) }
+    fun model(id: String) = WorkflowModel(this, id)
 
-    fun workflows(vararg types: String) = workflows(types.asIterable())
-
-    fun findPayloadResources(path: String, type: String): Sequence<Node> = instance.sync.repository {
+    fun payloads(path: String, type: String): Sequence<Node> = instance.sync.repository {
         query {
             path(path)
             type(type)
         }.nodeSequence()
-    }.also {
-        if (it.count() == 0) {
-            logger.lifecycle("No resources of type '$type' found under path '$path' on $instance")
+    }.also { nodes ->
+        if (nodes.count() == 0) {
+            logger.info("No workflow payloads found of type '$type' under path '$path' on $instance")
         } else {
-            var message = "Resources of type '$type' under path '$path' on $instance\":\n" +
-                it.map { it.name }.take(PAYLOAD_DISPLAY_LIMIT).joinToString("\n")
+            var message = "Workflow payloads of type '$type' under path '$path' on $instance\":\n" +
+                nodes.map { it.name }.take(PAYLOAD_DISPLAY_LIMIT).joinToString("\n")
 
-            if (it.count() > PAYLOAD_DISPLAY_LIMIT) {
-                message += " and ${it.count() - PAYLOAD_DISPLAY_LIMIT} more"
+            if (nodes.count() > PAYLOAD_DISPLAY_LIMIT) {
+                message += "\nand ${nodes.count() - PAYLOAD_DISPLAY_LIMIT} more"
             }
-            logger.lifecycle(message)
+            logger.info(message)
         }
     }
 
@@ -63,7 +59,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     fun toggle(type: String, flag: Boolean) = toggle(listOf(type), flag)
 
     fun toggle(types: Iterable<String>, flag: Boolean) {
-        workflows(types).forEach { workflow ->
+        launchers(types).forEach { workflow ->
             if (workflow.exists) {
                 workflow.toggle(flag)
             }
@@ -88,7 +84,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         }
 
         val workflows = typeFlags.flatMap { (type, flag) ->
-            workflows(type).filter { it.exists }.onEach { it.toggleIntended = flag }
+            launchers(type).filter { it.exists }.onEach { it.toggleIntended = flag }
         }
         try {
             toggle(workflows)
@@ -98,13 +94,13 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun toggle(workflows: List<Workflow>) {
-        val stack = Stack<Workflow>().apply { addAll(workflows) }
+    private fun toggle(workflows: List<WorkflowLauncher>) {
+        val stack = Stack<WorkflowLauncher>().apply { addAll(workflows) }
         toggleRetry.withCountdown<Unit, CommonException>("workflow toggle on '${instance.name}'") { no ->
             if (no > 1) {
                 aem.logger.info(
                     "Retrying to toggle workflow launchers (${stack.size}) on $instance:\n" +
-                        stack.joinToString("\n") { it.launcher.path }
+                        stack.joinToString("\n") { it.node.path }
                 )
             }
 
@@ -116,13 +112,13 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun restore(workflows: List<Workflow>) {
-        val stack = Stack<Workflow>().apply { addAll(workflows) }
+    private fun restore(workflows: List<WorkflowLauncher>) {
+        val stack = Stack<WorkflowLauncher>().apply { addAll(workflows) }
         restoreRetry.withCountdown<Unit, CommonException>("workflow restore on '${instance.name}'") { no ->
             if (no > 1) {
                 aem.logger.info(
                     "Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
-                        stack.joinToString("\n") { it.launcher.path }
+                        stack.joinToString("\n") { it.node.path }
                 )
             }
 

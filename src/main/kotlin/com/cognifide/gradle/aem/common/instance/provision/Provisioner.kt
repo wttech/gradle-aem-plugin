@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
 import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureReplicationAgentStep
-import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureWorkflowStep
+import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureWorkflowLauncherStep
 import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
 import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
 import com.cognifide.gradle.aem.common.instance.provision.step.ImportMappingsStep
@@ -321,8 +321,8 @@ class Provisioner(val manager: InstanceManager) {
         }
     }
 
-    fun configureWorkflow(id: String, options: ConfigureWorkflowStep.() -> Unit) {
-        steps.add(ConfigureWorkflowStep(this, id).apply(options))
+    fun configureWorkflowLauncher(id: String, options: ConfigureWorkflowLauncherStep.() -> Unit) {
+        steps.add(ConfigureWorkflowLauncherStep(this, id).apply(options))
     }
 
     fun configureOsgi(pid: String, properties: Map<String, Any?>, options: Step.() -> Unit = {}) = step("configureOsgi/$pid") {
