@@ -52,38 +52,40 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- DSL shorthands -----
 
-    fun toggle(typeFlags: Map<String, Boolean>) {
-        typeFlags.forEach { (type, flag) -> toggle(type, flag) }
+    fun schedule(modelId: String, resourcePath: String, resourceType: String) = model(modelId).schedule(resourcePath, resourceType)
+
+    fun toggle(launcherTypeFlags: Map<String, Boolean>) {
+        launcherTypeFlags.forEach { (type, flag) -> toggle(type, flag) }
     }
 
-    fun toggle(type: String, flag: Boolean) = toggle(listOf(type), flag)
+    fun toggle(launcherType: String, flag: Boolean) = toggle(listOf(launcherType), flag)
 
-    fun toggle(types: Iterable<String>, flag: Boolean) {
-        launchers(types).forEach { workflow ->
+    fun toggle(launcherTypes: Iterable<String>, flag: Boolean) {
+        launchers(launcherTypes).forEach { workflow ->
             if (workflow.exists) {
                 workflow.toggle(flag)
             }
         }
     }
 
-    fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
+    fun toggle(vararg launcherTypes: String, flag: Boolean) = toggle(launcherTypes.asIterable(), flag)
 
     /**
      * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
      */
-    fun toggleTemporarily(type: String, flag: Boolean, action: () -> Unit) =
-        toggleTemporarily(mapOf(type to flag), action)
+    fun toggleTemporarily(launcherType: String, flag: Boolean, action: () -> Unit) =
+        toggleTemporarily(mapOf(launcherType to flag), action)
 
     /**
      * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
      */
-    fun toggleTemporarily(typeFlags: Map<String, Boolean>, action: () -> Unit) {
-        if (typeFlags.isEmpty()) {
+    fun toggleTemporarily(launcherTypeFlags: Map<String, Boolean>, action: () -> Unit) {
+        if (launcherTypeFlags.isEmpty()) {
             action()
             return
         }
 
-        val workflows = typeFlags.flatMap { (type, flag) ->
+        val workflows = launcherTypeFlags.flatMap { (type, flag) ->
             launchers(type).filter { it.exists }.onEach { it.toggleIntended = flag }
         }
         try {
@@ -94,8 +96,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun toggle(workflows: List<WorkflowLauncher>) {
-        val stack = Stack<WorkflowLauncher>().apply { addAll(workflows) }
+    private fun toggle(launchers: List<WorkflowLauncher>) {
+        val stack = Stack<WorkflowLauncher>().apply { addAll(launchers) }
         toggleRetry.withCountdown<Unit, CommonException>("workflow toggle on '${instance.name}'") { no ->
             if (no > 1) {
                 aem.logger.info(
