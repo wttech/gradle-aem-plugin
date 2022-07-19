@@ -37,7 +37,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             }
             
             val instancePassword = common.prop.string("instance.default.password")
-            val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl ?: "http://127.0.0.1:4503"
+            val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl?.orNull ?: "http://127.0.0.1:4503"
             val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
             val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.4.tar.gz"
             val servicePackUrl = common.prop.string("localInstance.spUrl")
@@ -179,7 +179,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             writeText(
                 """
                       Define DOCROOT /var/www/localhost/cache
-                      Define AEM_HOST publish.aem.local
+                      Define AEM_HOST host.docker.internal
                       Define AEM_IP *.*.*.*
                       Define AEM_PORT 4503
                       Define DISP_LOG_LEVEL Warn

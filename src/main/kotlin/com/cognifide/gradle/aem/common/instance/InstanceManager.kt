@@ -82,18 +82,27 @@ open class InstanceManager(val aem: AemExtension) {
         convention(
             aem.obj.provider {
                 val fromCmd = aem.prop.string("instance.list")?.let {
-                    factory.parse(it) { env = Instance.ENV_CMD }
+                    factory.parse(it) { env.set(Instance.ENV_CMD) }
                 } ?: listOf()
                 val fromProperties = factory.parseProperties()
-                (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }
+                (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }.onEach { it.apply(definedOptions) }
             }
         )
+    }
+
+    private var definedOptions: Instance.() -> Unit = {}
+
+    /**
+     * Hook for additional configuration for defined instances.
+     */
+    fun defined(options: Instance.() -> Unit) {
+        this.definedOptions = options
     }
 
     /**
      * Map of AEM instances with names as a keys.
      */
-    val all = defined.map { p -> p.map { it.name to it }.toMap() }
+    val all = defined.map { p -> p.associateBy { it.name } }
 
     /**
      * Customize default options for instance services.
@@ -234,7 +243,7 @@ open class InstanceManager(val aem: AemExtension) {
         if (unavailable.isNotEmpty()) {
             throw InstanceException(
                 "Some instances (${unavailable.size}) are unavailable:\n" +
-                    unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
+                    unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl.get()}'" } + "\n\n" +
                     "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
             )
         }

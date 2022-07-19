@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FileUtils
 import org.gradle.testfixtures.ProjectBuilder
@@ -43,7 +44,7 @@ class InstanceTailTest {
     @Test
     fun shouldParseLogs() {
         // given
-        val parser = LogParser()
+        val parser = LogParser(aem)
         val logsChunk = MockSource.text("logs-chunk.txt").byteInputStream().bufferedReader()
 
         // when
@@ -53,7 +54,7 @@ class InstanceTailTest {
         assertEquals(10, logsList.size)
 
         logsList.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350", aem.datePattern.get()), timestamp)
             assertEquals("INFO", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1]", source)
             assertEquals(
@@ -64,7 +65,7 @@ class InstanceTailTest {
             assertEquals("c298a80e1b5083dea0c9dbf12b045a67", checksum)
         }
         logsList.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:20:43.111"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:43.111", aem.datePattern.get()), timestamp)
             assertEquals("ERROR", level)
             assertEquals("[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker [6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]]", source)
             assertEquals("SragkerEgrgg REGISTERED", message)
@@ -75,7 +76,7 @@ class InstanceTailTest {
     @Test
     fun shouldParseMultilineLogs() {
         // given
-        val parser = LogParser()
+        val parser = LogParser(aem)
         val logsChunk = MockSource.reader("aggregating/multiline/multiline-logs-error.log")
 
         // when
@@ -85,14 +86,14 @@ class InstanceTailTest {
         assertEquals(4, logsList.size)
 
         logsList[0].apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242", aem.datePattern.get()), timestamp)
             assertEquals("WARN", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464792884] GET /llr.resllleskr/resllleskr/rcslsll/rrcsess3.fsl.cr HTTP/1.1]", source)
             assertEqualsIgnoringCr(MockSource.text("aggregating/multiline/multiline-short.log"), message)
             assertEquals("148a7ab608478f4a609d428a28773fc8", checksum)
         }
         logsList[2].apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535", aem.datePattern.get()), timestamp)
             assertEquals("WARN", level)
             assertEquals("[reslr-rsf-rkrlcsslsrl-2]", source)
             assertEqualsIgnoringCr(MockSource.text("aggregating/multiline/multiline-long.log"), message)
@@ -103,7 +104,7 @@ class InstanceTailTest {
     @Test
     fun shouldSkipIncompleteMultilineLogs() {
         // given
-        val parser = LogParser()
+        val parser = LogParser(aem)
         val logsChunk = MockSource.reader("aggregating/multiline/incomplete-multiline-logs-error.log")
 
         // when
@@ -113,7 +114,7 @@ class InstanceTailTest {
         assertEquals(3, logsList.size)
 
         logsList.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242", aem.datePattern.get()), timestamp)
             assertEquals("6fe84dd875d8ca95b4f061a57b3c815d", checksum)
         }
     }
@@ -126,7 +127,7 @@ class InstanceTailTest {
             "aggregating/overlapping/second-chunk-error.log"
         )
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination)
+        val tailer = LogTailer(aem, source, destination)
 
         // when
         tailer.tail()
@@ -137,11 +138,11 @@ class InstanceTailTest {
         assertEquals(11, logs.size)
 
         logs.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613", aem.datePattern.get()), timestamp)
             assertEquals("d37f9ce5287800493de0b6ef5bb43338", checksum)
         }
         logs.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773", aem.datePattern.get()), timestamp)
             assertEquals("68b331e94d5fe5ec182207198b149535", checksum)
         }
     }
@@ -154,7 +155,7 @@ class InstanceTailTest {
             "aggregating/disjoint/second-chunk-error.log"
         )
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination)
+        val tailer = LogTailer(aem, source, destination)
 
         // when
         tailer.tail()
@@ -165,11 +166,11 @@ class InstanceTailTest {
         assertEquals(10, logs.size)
 
         logs.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613", aem.datePattern.get()), timestamp)
             assertEquals("1310668b557d5e87686385dfd8c82bdb", checksum)
         }
         logs.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773", aem.datePattern.get()), timestamp)
             assertEquals("7071e8cc64b8d3821dea686b20ba5b58", checksum)
         }
     }
@@ -182,7 +183,7 @@ class InstanceTailTest {
             "aggregating/disjoint/first-chunk-error.log"
         )
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination)
+        val tailer = LogTailer(aem, source, destination)
 
         // when
         tailer.tail()
@@ -193,11 +194,11 @@ class InstanceTailTest {
         assertEquals(5, logs.size)
 
         logs.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613", aem.datePattern.get()), timestamp)
             assertEquals("1310668b557d5e87686385dfd8c82bdb", checksum)
         }
         logs.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.519"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.519", aem.datePattern.get()), timestamp)
             assertEquals("b410a72d5bc75b608c2c6f0014f9d88b", checksum)
         }
     }
@@ -214,6 +215,7 @@ class InstanceTailTest {
         assertTrue(
             logFilter.isExcluded(
                 Log.create(
+                    aem,
                     NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
@@ -237,6 +239,7 @@ class InstanceTailTest {
         assertFalse(
             blacklist.isExcluded(
                 Log.create(
+                    aem,
                     NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
@@ -260,6 +263,7 @@ class InstanceTailTest {
         assertTrue(
             logFilter.isExcluded(
                 Log.create(
+                    aem,
                     NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
@@ -283,6 +287,7 @@ class InstanceTailTest {
         assertFalse(
             blacklist.isExcluded(
                 Log.create(
+                    aem,
                     NoLogInfo(),
                     listOf(
                         "14.01.2019 12:20:43.111 *ERROR* " +
@@ -301,4 +306,5 @@ class InstanceTailTest {
     private fun removeCr(expected: String) = expected.replace("\r", "")
 
     private val project get() = ProjectBuilder.builder().build()
+    private val aem get() = AemExtension(project.also { it.plugins.apply("com.cognifide.common") })
 }

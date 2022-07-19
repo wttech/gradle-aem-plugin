@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.BackupManager
 import com.cognifide.gradle.aem.common.instance.local.InstallResolver
+import com.cognifide.gradle.aem.common.instance.local.JavaAgentResolver
 import com.cognifide.gradle.aem.common.instance.local.OpenMode
 import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.instance.local.Source
@@ -681,7 +682,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                 val javaVersionCompatibles = aemVersion.javaCompatibleVersions(javaCompatibility.get())
                 if (javaVersionCurrent !in javaVersionCompatibles) {
                     result.add(
-                        "Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
+                        "Instance '${instance.name}' using URL '${instance.httpUrl.get()}' is AEM $aemVersion" +
                             " and requires Java ${javaVersionCompatibles.joinToString("|")}!"
                     )
                 }
@@ -716,9 +717,23 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         if (running.isNotEmpty()) {
             throw LocalInstanceException(
                 "Other instances (${running.size}) are running:\n" +
-                    running.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl.get()}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure having these instances down."
             )
         }
+    }
+
+    val javaAgent by lazy { JavaAgentResolver(aem) }
+
+    /**
+     * Configure Java agents for instrumenting AEM instances.
+     */
+    fun javaAgent(options: JavaAgentResolver.() -> Unit) = javaAgent.using(options)
+
+    /**
+     * Hook for additional configuration for defined instances.
+     */
+    fun defined(options: LocalInstance.() -> Unit) {
+        base.defined { whenLocal(options) }
     }
 }

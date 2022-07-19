@@ -78,20 +78,12 @@ open class PackageSync : AemDefaultTask() {
 
     fun contentDir(dir: File) {
         contentDir.set(dir)
-        filter.set(
-            project.provider {
-                FilterFile.cmd(aem) ?: FilterFile(dir.resolve("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}"))
-            }
-        )
+        filter.set(project.provider { FilterFile.cmd(aem) ?: FilterFile.convention(aem, dir.resolve(Package.VLT_PATH)) })
     }
 
     fun contentDir(dir: Directory) {
         contentDir.set(dir)
-        filter.set(
-            contentDir.map {
-                aem.filter(it.file("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}").asFile)
-            }
-        )
+        filter.set(contentDir.map { FilterFile.cmd(aem) ?: FilterFile.convention(aem, it.dir(Package.VLT_PATH).asFile) })
     }
 
     private val filterRootFiles: List<File>
@@ -118,7 +110,7 @@ open class PackageSync : AemDefaultTask() {
             command.convention(
                 aem.obj.provider {
                     "--credentials ${instance.get().credentialsString} checkout --force" +
-                        " --filter ${filter.get().file} ${instance.get().httpUrl}/crx/server/crx.default"
+                        " --filter ${filter.get().file} ${instance.get().httpUrl.get()}/crx/server/crx.default"
                 }
             )
         }

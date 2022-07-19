@@ -36,6 +36,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 import java.io.Serializable
+import java.time.format.DateTimeFormatter
 
 /**
  * Core of library, facade for implementing tasks.
@@ -215,10 +216,10 @@ class AemExtension(val project: Project) : Serializable {
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
     fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: commonOptions.envFilter): List<Instance> {
-        val all = instanceManager.defined.get().filter { it.enabled }
+        val all = instanceManager.defined.get().filter { it.enabled.get() }
 
         // Specified by command line should not be filtered
-        val cmd = all.filter { it.env == Instance.ENV_CMD }
+        val cmd = all.filter { it.env.get() == Instance.ENV_CMD }
         if (cmd.isNotEmpty()) {
             return cmd
         }
@@ -442,6 +443,12 @@ class AemExtension(val project: Project) : Serializable {
      * Configure wrapped Maven build with added capability to execute it incrementally.
      */
     fun mvnBuild(options: MvnBuild.() -> Unit) = mvnBuild.using(options)
+
+    /* log options */
+    val datePattern = obj.typed<DateTimeFormatter> {
+        convention(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS"))
+        prop.string("instance.tail.datePattern")?.let { set(DateTimeFormatter.ofPattern(it)) }
+    }
 
     companion object {
 

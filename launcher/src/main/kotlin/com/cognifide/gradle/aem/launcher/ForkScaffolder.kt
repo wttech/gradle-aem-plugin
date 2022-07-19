@@ -22,6 +22,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             localInstance.coreComponentsUrl={{ localInstanceCoreComponentsUri }}
             localInstance.openMode={{ localInstanceOpenMode }}
             instance.default.type={{instanceType}}
+            instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
             instance.local-author.enabled={{instanceAuthorEnabled}}
             instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
@@ -57,6 +58,10 @@ class ForkScaffolder(private val launcher: Launcher) {
                             select("local", "remote")
                             description = "Local - instance will be created on local file system\nRemote - connecting to remote instance only"
                             controller { toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") }
+                        }
+                        define("localInstanceRunModes") {
+                            label = "Run Modes"
+                            optional()
                         }
                         define("instanceAuthorHttpUrl") {
                             label = "Author HTTP URL"
