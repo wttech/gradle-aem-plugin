@@ -27,8 +27,6 @@ class WorkflowLauncher(val manager: WorkflowManager, val id: String) {
 
     internal var toggleIntended: Boolean? = null
 
-    val scheduler by lazy { WorkflowScheduler(this) }
-
     fun toggle() {
         toggleIntended?.let { toggle(it) }
     }
