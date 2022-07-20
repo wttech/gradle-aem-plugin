@@ -43,7 +43,7 @@ class Ims(private val aem: AemExtension) {
             val accessObject = fetchAccessObject(jwtToken)
             return accessObject.accessToken
         } catch (e: Exception) {
-            throw ImsException("Couldn't generate the access token, consider checking the provided secret file", e)
+            throw ImsException("Could not generate the access token, consider checking the provided secret file", e)
         }
     }
 
