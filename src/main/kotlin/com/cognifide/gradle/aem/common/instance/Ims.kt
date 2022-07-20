@@ -80,14 +80,15 @@ class Ims(private val aem: AemExtension) {
         val clientId = secret.integration.technicalAccount.clientId
         val clientSecret = secret.integration.technicalAccount.clientSecret
 
-        val params = mapOf(
-            "client_id" to clientId,
-            "client_secret" to clientSecret,
-            "jwt_token" to jwtToken
-        )
-
         val response = common.http {
-            post(imsExchangeEndpoint, params) { httpResponse ->
+            post(
+                imsExchangeEndpoint,
+                mapOf(
+                    "client_id" to clientId,
+                    "client_secret" to clientSecret,
+                    "jwt_token" to jwtToken
+                )
+            ) { httpResponse ->
                 asStream(httpResponse).bufferedReader().use { it.readText() }
             }
         }

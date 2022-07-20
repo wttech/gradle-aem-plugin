@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * This class serves as a placeholder for json response from
+ * Serves as a placeholder for json response from
  * Adobe Identity Management Services
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
