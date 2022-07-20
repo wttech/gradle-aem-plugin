@@ -24,7 +24,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.default.type={{instanceType}}
             instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
-            instance.default.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
+            instance.local-author.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
             instance.local-author.enabled={{instanceAuthorEnabled}}
             instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
             instance.local-author.openPath=/aem/start.html

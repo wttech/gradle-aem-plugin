@@ -20,8 +20,6 @@ class Ims(private val aem: AemExtension) {
 
     private val common = aem.common
 
-    private lateinit var secret: Secret
-
     private val expirationTime = aem.obj.long {
         convention(86400L)
         aem.prop.long("ims.expirationTime")?.let { set(it) }
@@ -30,14 +28,14 @@ class Ims(private val aem: AemExtension) {
     /**
      * This is how Adobe calculates expTime in an example they provided for generating token.
      */
-    private val expTime get() = System.currentTimeMillis() / 1000 + expirationTime.get()
+    private val expirationTimeNormalized get() = System.currentTimeMillis() / 1000 + expirationTime.get()
 
     @Suppress("TooGenericExceptionCaught")
     fun generateToken(serviceCredentials: File): String {
         try {
-            secret = readCredentialsFile(serviceCredentials)
-            val jwtToken = generateJWTToken()
-            val accessObject = fetchAccessObject(jwtToken)
+            val secret = readCredentialsFile(serviceCredentials)
+            val jwtToken = generateJWTToken(secret)
+            val accessObject = fetchAccessObject(jwtToken, secret)
             return accessObject.accessToken
         } catch (e: Exception) {
             throw ImsException("Could not generate the access token, consider checking the provided secret file", e)
@@ -48,7 +46,7 @@ class Ims(private val aem: AemExtension) {
         common.formats.toObjectFromJson(it, Secret::class.java)
     }
 
-    private fun generateJWTToken(): String {
+    private fun generateJWTToken(secret: Secret): String {
         val privateKeyContent = PEMParser(StringReader(secret.integration.privateKey)).use { pemParser ->
             val keyPair = JcaPEMKeyConverter().getKeyPair(pemParser.readObject() as PEMKeyPair)
             keyPair.private.encoded
@@ -63,7 +61,7 @@ class Ims(private val aem: AemExtension) {
         val jwtClaims = mapOf<String, Any>(
             "iss" to secret.integration.orgId,
             "sub" to secret.integration.technicalAccountId,
-            "exp" to expTime,
+            "exp" to expirationTimeNormalized,
             "aud" to "https://$imsHost/c/${secret.integration.technicalAccount.clientId}",
         ) + metaScopes.associate {
             "https://$imsHost/s/$it" to true
@@ -75,7 +73,7 @@ class Ims(private val aem: AemExtension) {
             .compact()
     }
 
-    private fun fetchAccessObject(jwtToken: String): AccessObject {
+    private fun fetchAccessObject(jwtToken: String, secret: Secret): AccessObject {
         val imsExchangeEndpoint = "https://${secret.integration.imsHost}/ims/exchange/jwt"
         val clientId = secret.integration.technicalAccount.clientId
         val clientSecret = secret.integration.technicalAccount.clientSecret
