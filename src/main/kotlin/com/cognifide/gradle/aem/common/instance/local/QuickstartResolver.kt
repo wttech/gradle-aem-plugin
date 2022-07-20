@@ -55,7 +55,9 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
 
     private val sdkWorkDir: File get() = sdkDir.get().asFile
 
-    val sdkJar: File? get() = sdk?.also { unpackSdkZip(it) }?.listFiles { _, name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull()
+    val sdkJar: File get() = sdk?.also { unpackSdkZip(it) }
+            .let { sdkWorkDir.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull()
+            ?: throw LocalInstanceException("AEM SDK ZIP file provided doesn't contain any quickstart (*.jar) files!") }
 
     val sdkDispatcherImage: File? get() = sdk
         ?.also { unpackSdkZip(it) }
