@@ -39,14 +39,10 @@ class WorkflowModel(val manager: WorkflowManager, val id: String) {
                 )
                 post(INSTANCES_PATH, params) {
                     if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
-                        throw WorkflowException(
-                            "Workflow scheduling failed for '${node.path}' and model: '$id'" +
-                                    "\nStatus: ${it.statusLine}!"
-                        )
+                        throw WorkflowException("Workflow scheduling failed for '${node.path}' and model: '$id'\nStatus: ${it.statusLine}!")
                     }
                 }
             }
-            logger.info("Scheduled workflow '$id' with payload '${node.path}' on $instance")
         } catch (e: RepositoryException) {
             throw WorkflowException("Cannot schedule workflow '$id' with payload '${node.path}' on $instance!")
         }

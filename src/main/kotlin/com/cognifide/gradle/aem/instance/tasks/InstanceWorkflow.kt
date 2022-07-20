@@ -19,8 +19,8 @@ open class InstanceWorkflow : InstanceTask() {
     }
 
     @Internal
-    val resourcePath = aem.obj.string {
-        common.prop.string("instance.workflow.resourcePath")?.let { set(it) }
+    val resourcePath = aem.obj.strings {
+        common.prop.list("instance.workflow.resourcePath")?.let { set(it) }
     }
 
     @Internal
@@ -38,7 +38,7 @@ open class InstanceWorkflow : InstanceTask() {
         if (model.orNull.isNullOrBlank()) {
             throw WorkflowException("Workflow model is not defined, specify it via property 'instance.workflow.model'!")
         }
-        if (resourcePath.orNull.isNullOrBlank()) {
+        if (resourcePath.orNull?.isEmpty() != false) {
             throw WorkflowException("Workflow resource path is not defined, specify it via property 'instance.workflow.resourcePath'!")
         }
     }
@@ -50,7 +50,7 @@ open class InstanceWorkflow : InstanceTask() {
             listOf(
                 "Scheduling workflows with following details:",
                 "Workflow model: '${model.orNull}'",
-                "Resource path: '${resourcePath.orNull}'",
+                "Resource paths: '${resourcePath.get().joinToString(", ")}'",
                 "Resource type: '${resourceType.orNull ?: "<unspecified>"}'",
             ).joinToString("\n")
         )
@@ -61,15 +61,14 @@ open class InstanceWorkflow : InstanceTask() {
 
             aem.sync(anyInstances) {
                 nodes[instance] = if (resourceType.orNull.isNullOrBlank()) {
-                    repository.node(resourcePath.get())
-                        .takeIf { it.exists }
-                        ?.let { sequenceOf(it) }
-                        ?: sequenceOf()
+                    resourcePath.get().mapNotNull { rp -> repository.node(rp).takeIf { it.exists } }.asSequence()
                 } else {
-                    repository.query {
-                        path(resourcePath.get())
-                        type(resourceType.get())
-                    }.nodeSequence()
+                    resourcePath.get().asSequence().map { rp ->
+                        repository.query {
+                            path(rp)
+                            type(resourceType.get())
+                        }.nodeSequence()
+                    }.flatten()
                 }
             }
 
