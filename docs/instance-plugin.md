@@ -414,6 +414,8 @@ Allows to quickly execute workflow models in batch.
 Might be useful as scheduling workflows in AEM authoring has constrained number of resources for which workflows might be scheduled at once.
 This task has no such limitation and eliminates a need to implement Groovy Script as a workaround.
 
+![Instance workflow task](instance-workflow-task.png)
+
 Sample usages below.
 
 Scheduling workflows for a single resource:
@@ -432,7 +434,7 @@ gradlew instanceWorkflow \
   -Pinstance.workflow.resourcePath=[/content/dam/wknd/en/adventures/beervana-portland/AdobeStock_239751461.jpeg,/content/dam/wknd/en/adventures/climbing-new-zealand/AdobeStock_277948178.jpeg]
 ```
 
-Scheduling workflows for multiple resources of specified type under root:
+Scheduling workflows for multiple resources of specified type under root(s):
 
 ```shell
 gradlew instanceWorkflow \
