@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.common.CommonException
 import java.util.*
 
@@ -31,28 +30,17 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun model(id: String) = WorkflowModel(this, id)
 
-    fun payloads(path: String, type: String): Sequence<Node> = instance.sync.repository {
-        query {
-            path(path)
-            type(type)
-        }.nodeSequence()
-    }.also { nodes ->
-        if (nodes.count() == 0) {
-            logger.info("No workflow payloads found of type '$type' under path '$path' on $instance")
-        } else {
-            var message = "Workflow payloads of type '$type' under path '$path' on $instance\":\n" +
-                nodes.map { it.name }.take(PAYLOAD_DISPLAY_LIMIT).joinToString("\n")
-
-            if (nodes.count() > PAYLOAD_DISPLAY_LIMIT) {
-                message += "\nand ${nodes.count() - PAYLOAD_DISPLAY_LIMIT} more"
-            }
-            logger.info(message)
-        }
-    }
-
     // ----- DSL shorthands -----
 
-    fun schedule(modelId: String, resourcePath: String, resourceType: String) = model(modelId).schedule(resourcePath, resourceType)
+    /**
+     * Schedule workflow for resource at given path.
+     */
+    fun schedule(modelId: String, resourcePath: String) = model(modelId).schedule(resourcePath)
+
+    /**
+     * Schedule workflows for resources under given path.
+     */
+    fun schedule(modelId: String, resourceRoot: String, resourceType: String) = model(modelId).schedule(resourceRoot, resourceType)
 
     fun toggle(launcherTypeFlags: Map<String, Boolean>) {
         launcherTypeFlags.forEach { (type, flag) -> toggle(type, flag) }
@@ -130,9 +118,5 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
                 stack.pop()
             }
         }
-    }
-
-    companion object {
-        const val PAYLOAD_DISPLAY_LIMIT = 5
     }
 }

@@ -16,20 +16,19 @@ class WorkflowModel(val manager: WorkflowManager, val id: String) {
         repository.node("$ROOT/$id").takeIf { it.exists }
             ?: throw WorkflowException("Workflow model '$id' not found under path '$ROOT!'")
     }
+    fun schedule(resourceRoot: String, resourceType: String) = repository.query {
+        path(resourceRoot)
+        type(resourceType)
+    }.nodeSequence().forEach { schedule(it) }
 
-    fun schedule(nodes: Iterable<Node>): Int {
-        var count = 0
-        nodes.forEach {
-            schedule(it)
-            count++
-        }
-        return count
-    }
+    fun schedule(path: String) = schedule(repository.node(path))
 
-    fun schedule(path: String, resourceType: String): Int =
-        schedule(manager.payloads(path, resourceType).asIterable())
 
     fun schedule(node: Node) {
+        if (!node.exists) {
+            throw WorkflowException("Workflow cannot be scheduled as node does not exist at path '${node.path}'!")
+        }
+
         try {
             logger.info("Scheduling workflow '$id' with payload '${node.path}' on $instance")
             instance.sync.http {
@@ -42,7 +41,7 @@ class WorkflowModel(val manager: WorkflowManager, val id: String) {
                     if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
                         throw WorkflowException(
                             "Workflow scheduling failed for '${node.path}' and model: '$id'" +
-                                "\nStatus: ${it.statusLine}!"
+                                    "\nStatus: ${it.statusLine}!"
                         )
                     }
                 }

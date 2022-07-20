@@ -41,9 +41,6 @@ open class InstanceWorkflow : InstanceTask() {
         if (resourcePath.orNull.isNullOrBlank()) {
             throw WorkflowException("Workflow resource path is not defined, specify it via property 'instance.workflow.resourcePath'!")
         }
-        if (resourceType.orNull.isNullOrBlank()) {
-            throw WorkflowException("Workflow resource type is not defined, specify it via property 'instance.workflow.resourceType'!")
-        }
     }
 
     private fun scheduleWorkflows() {
@@ -52,9 +49,9 @@ open class InstanceWorkflow : InstanceTask() {
         logger.lifecycle(
             listOf(
                 "Scheduling workflows with following details:",
-                "Workflow model: '${model.get()}'",
-                "Resource path: '${resourcePath.get()}'",
-                "Resource type: '${resourceType.get()}'",
+                "Workflow model: '${model.orNull}'",
+                "Resource path: '${resourcePath.orNull}'",
+                "Resource type: '${resourceType.orNull ?: "<unspecified>"}'",
             ).joinToString("\n")
         )
 
@@ -63,7 +60,17 @@ open class InstanceWorkflow : InstanceTask() {
             val nodes = mutableMapOf<Instance, Sequence<Node>>()
 
             aem.sync(anyInstances) {
-                nodes[instance] = workflowManager.payloads(resourcePath.get(), resourceType.get())
+                nodes[instance] = if (resourceType.orNull.isNullOrBlank()) {
+                    repository.node(resourcePath.get())
+                        .takeIf { it.exists }
+                        ?.let { sequenceOf(it) }
+                        ?: sequenceOf()
+                } else {
+                    repository.query {
+                        path(resourcePath.get())
+                        type(resourceType.get())
+                    }.nodeSequence()
+                }
             }
 
             total = nodes.values.sumOf { it.count() }.toLong()

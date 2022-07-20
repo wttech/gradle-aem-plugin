@@ -414,7 +414,15 @@ Allows to quickly execute workflow models in batch.
 Might be useful as scheduling workflows in AEM authoring has constrained number of resources for which workflows might be scheduled at once.
 This task has no such limitation and eliminates a need to implement Groovy Script as a workaround.
 
-Sample usage:
+Sample usages:
+
+```shell
+gradlew instanceWorkflow \
+  -Pinstance.workflow.model=dam/asset_processing_on_sdk \
+  -Pinstance.workflow.resourcePath=/content/dam/wknd \
+  -Pinstance.workflow.resourceType=dam:Asset
+```
+
 
 ```shell
 gradlew instanceWorkflow \
