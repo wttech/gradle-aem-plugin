@@ -64,7 +64,7 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
         aem.prop.boolean("instance.provision.step.rerunOnFail")?.let { set(it) }
     }
 
-    override val actionRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.actionRetry") ?: 1L) }
+    override val actionRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.actionRetry") ?: 3L) }
 
     override val conditionRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.conditionRetry") ?: 3L) }
 

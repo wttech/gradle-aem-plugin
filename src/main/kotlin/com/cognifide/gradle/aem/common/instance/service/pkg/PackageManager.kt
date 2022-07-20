@@ -193,6 +193,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         aem.prop.file("instance.packageManager.responseDir")?.let { set(it) }
     }
 
+    /**
+     * Repeat reading package metadata when failed (brute-forcing).
+     */
+    var metadataRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.metadataRetry") ?: 3) }
+
     fun get(file: File): Package {
         if (!file.exists()) {
             throw PackageException("Package '$file' does not exist so it cannot be resolved on $instance!")
@@ -460,22 +465,23 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             return true
         } else {
             val path = pkg.path
-            val metadata = PackageMetadata(this, path)
-            val checksumChanged = !metadata.validChecksum(checksum)
-            val installedExternally = metadata.installedExternally
-
-            if (checksumChanged || installedExternally) {
-                if (checksumChanged) {
+            val deployment = metadataRetry.withCountdown<PackageDeployment, InstanceException>(
+                "examine deployment of package '${pkg.path}' on '${instance.name}'"
+            ) {
+                PackageMetadata(this, path).examineDeployment(checksum)
+            }
+            return if (deployment.needed) {
+                if (deployment.checksumChanged) {
                     logger.info("Deploying package '$path' on $instance (changed checksum)")
                 }
-                if (installedExternally) {
-                    logger.warn("Deploying package '$path' on $instance (installed externally at '${metadata.installedCurrent}')")
+                if (deployment.installedExternally) {
+                    logger.warn("Deploying package '$path' on $instance (installed externally at '${deployment.installedExternallyAt}')")
                 }
                 deployRegularly(file, activate, checksum)
-                return true
+                true
             } else {
                 logger.lifecycle("No need to deploy package '$path' on $instance (no changes)")
-                return false
+                false
             }
         }
     }

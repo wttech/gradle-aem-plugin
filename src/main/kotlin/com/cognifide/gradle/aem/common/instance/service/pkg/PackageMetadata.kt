@@ -22,7 +22,7 @@ class PackageMetadata(val manager: PackageManager, val pkgPath: String) {
     val installedExternally: Boolean get() = (installedCurrent != null) && (installedPrevious != null) && (installedCurrent != installedPrevious)
 
     fun update(checksumLocal: String, action: () -> Unit) = try {
-        saveChecksum(checksumLocal)
+        maybeSaveChecksum(checksumLocal)
         action()
         maybeSaveInstalledDate()
     } catch (e: Exception) {
@@ -30,7 +30,11 @@ class PackageMetadata(val manager: PackageManager, val pkgPath: String) {
         throw e
     }
 
-    private fun saveChecksum(checksumLocal: String) = save(mapOf(CHECKSUM_PROP to checksumLocal))
+    private fun maybeSaveChecksum(checksumLocal: String) = try {
+        save(mapOf(CHECKSUM_PROP to checksumLocal))
+    } catch (e: Exception) {
+        logger.debug("Cannot save checksum '$checksumLocal' of package '$pkgPath'!", e)
+    }
 
     private fun maybeRestoreChecksum() = try {
         save(mapOf(CHECKSUM_PROP to checksumRemote))
@@ -55,6 +59,8 @@ class PackageMetadata(val manager: PackageManager, val pkgPath: String) {
             PATH_PROP to pkgPath
         ) + props
     )
+
+    fun examineDeployment(checksum: String) = PackageDeployment(this, checksum)
 
     companion object {
 
