@@ -10,9 +10,6 @@ import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import java.io.*
 import java.security.KeyFactory
-import java.security.KeyPair
-import java.security.interfaces.RSAPrivateKey
-import java.security.spec.KeySpec
 import java.security.spec.PKCS8EncodedKeySpec
 
 /**
@@ -47,35 +44,30 @@ class Ims(private val aem: AemExtension) {
         }
     }
 
-    private fun readCredentialsFile(serviceCredentials: File): Secret {
-        return serviceCredentials.inputStream().use {
-            common.formats.toObjectFromJson(it, Secret::class.java)
-        }
+    private fun readCredentialsFile(serviceCredentials: File): Secret = serviceCredentials.inputStream().use {
+        common.formats.toObjectFromJson(it, Secret::class.java)
     }
 
     private fun generateJWTToken(): String {
-        val privateKeyContent: ByteArray
-        PEMParser(StringReader(secret.integration.privateKey)).use { pemParser ->
-            val keyPair: KeyPair = JcaPEMKeyConverter().getKeyPair(pemParser.readObject() as PEMKeyPair)
-            privateKeyContent = keyPair.private.encoded
+        val privateKeyContent = PEMParser(StringReader(secret.integration.privateKey)).use { pemParser ->
+            val keyPair = JcaPEMKeyConverter().getKeyPair(pemParser.readObject() as PEMKeyPair)
+            keyPair.private.encoded
         }
         val keyFactory = KeyFactory.getInstance("RSA")
-        val keySpec: KeySpec = PKCS8EncodedKeySpec(privateKeyContent)
-        val rsaPrivateKey = keyFactory.generatePrivate(keySpec) as RSAPrivateKey
+        val keySpec = PKCS8EncodedKeySpec(privateKeyContent)
+        val rsaPrivateKey = keyFactory.generatePrivate(keySpec)
 
         val imsHost = secret.integration.imsHost
         val metaScopes = secret.integration.metascopes.split(",")
 
-        val jwtClaims = mutableMapOf<String, Any>(
+        val jwtClaims = mapOf<String, Any>(
             "iss" to secret.integration.orgId,
             "sub" to secret.integration.technicalAccountId,
             "exp" to expTime,
             "aud" to "https://$imsHost/c/${secret.integration.technicalAccount.clientId}",
-        )
-        val scopes = metaScopes.associate {
+        ) + metaScopes.associate {
             "https://$imsHost/s/$it" to true
         }
-        jwtClaims.putAll(scopes)
 
         return Jwts.builder()
             .setClaims(jwtClaims)
