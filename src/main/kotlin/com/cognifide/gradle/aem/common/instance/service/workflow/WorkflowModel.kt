@@ -23,7 +23,6 @@ class WorkflowModel(val manager: WorkflowManager, val id: String) {
 
     fun schedule(resourcePath: String) = schedule(repository.node(resourcePath))
 
-
     fun schedule(resourceNode: Node) {
         if (!resourceNode.exists) {
             throw WorkflowException("Workflow cannot be scheduled as node does not exist at path '${resourceNode.path}'!")
@@ -31,11 +30,14 @@ class WorkflowModel(val manager: WorkflowManager, val id: String) {
         try {
             logger.info("Scheduling workflow '$id' with payload '${resourceNode.path}' on $instance")
             instance.sync.http {
-                post(INSTANCES_PATH, mapOf(
-                    "payload" to resourceNode.path,
-                    "model" to this@WorkflowModel.node.path,
-                    "payloadType" to "JCR_PATH"
-                )) {
+                post(
+                    INSTANCES_PATH,
+                    mapOf(
+                        "payload" to resourceNode.path,
+                        "model" to this@WorkflowModel.node.path,
+                        "payloadType" to "JCR_PATH"
+                    )
+                ) {
                     if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
                         throw WorkflowException("Workflow scheduling failed for '${resourceNode.path}' and model: '$id'\nStatus: ${it.statusLine}!")
                     }

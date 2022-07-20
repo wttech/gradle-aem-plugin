@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowException
-import com.cognifide.gradle.aem.common.utils.fileNames
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import com.cognifide.gradle.aem.common.tasks.Instance as InstanceTask
