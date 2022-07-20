@@ -21,30 +21,28 @@ class WorkflowModel(val manager: WorkflowManager, val id: String) {
         type(resourceType)
     }.nodeSequence().forEach { schedule(it) }
 
-    fun schedule(path: String) = schedule(repository.node(path))
+    fun schedule(resourcePath: String) = schedule(repository.node(resourcePath))
 
 
-    fun schedule(node: Node) {
-        if (!node.exists) {
-            throw WorkflowException("Workflow cannot be scheduled as node does not exist at path '${node.path}'!")
+    fun schedule(resourceNode: Node) {
+        if (!resourceNode.exists) {
+            throw WorkflowException("Workflow cannot be scheduled as node does not exist at path '${resourceNode.path}'!")
         }
-
         try {
-            logger.info("Scheduling workflow '$id' with payload '${node.path}' on $instance")
+            logger.info("Scheduling workflow '$id' with payload '${resourceNode.path}' on $instance")
             instance.sync.http {
-                val params = mapOf(
-                    "payload" to node.path,
+                post(INSTANCES_PATH, mapOf(
+                    "payload" to resourceNode.path,
                     "model" to this@WorkflowModel.node.path,
                     "payloadType" to "JCR_PATH"
-                )
-                post(INSTANCES_PATH, params) {
+                )) {
                     if (it.statusLine.statusCode != HttpStatus.SC_CREATED) {
-                        throw WorkflowException("Workflow scheduling failed for '${node.path}' and model: '$id'\nStatus: ${it.statusLine}!")
+                        throw WorkflowException("Workflow scheduling failed for '${resourceNode.path}' and model: '$id'\nStatus: ${it.statusLine}!")
                     }
                 }
             }
         } catch (e: RepositoryException) {
-            throw WorkflowException("Cannot schedule workflow '$id' with payload '${node.path}' on $instance!")
+            throw WorkflowException("Cannot schedule workflow '$id' with payload '${resourceNode.path}' on $instance!")
         }
     }
 
