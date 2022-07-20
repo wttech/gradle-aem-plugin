@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-class Workflow(val manager: WorkflowManager, val id: String) {
+class WorkflowLauncher(val manager: WorkflowManager, val id: String) {
 
     val instance = manager.instance
 
@@ -8,20 +8,20 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     private val logger = manager.aem.logger
 
-    val launcher = repository.node(
+    val node = repository.node(
         when {
             manager.instance.version.frozen -> "/conf/global/settings/workflow/launcher/config/$id"
             else -> "/etc/workflow/launcher/config/$id"
         }
     )
 
-    val launcherFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
+    val nodeFrozen = repository.node("/libs/settings/workflow/launcher/config/$id")
 
     val exists: Boolean
-        get() = launcher.exists || (manager.instance.version.frozen && launcherFrozen.exists)
+        get() = node.exists || (manager.instance.version.frozen && nodeFrozen.exists)
 
     val enabled: Boolean
-        get() = launcher.properties.boolean(ENABLED_PROP) ?: false
+        get() = node.properties.boolean(ENABLED_PROP) ?: false
 
     private var toggleInitial: Boolean? = null
 
@@ -32,29 +32,29 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     }
 
     fun toggle(flag: Boolean) {
-        if (manager.instance.version.frozen && !launcher.exists) {
-            logger.info("Copying workflow launcher from '${launcherFrozen.path}' to ${launcher.path} on $instance")
-            launcher.copyFrom(launcherFrozen.path)
+        if (manager.instance.version.frozen && !node.exists) {
+            logger.info("Copying workflow launcher from '${nodeFrozen.path}' to ${node.path} on $instance")
+            node.copyFrom(nodeFrozen.path)
         }
 
         if (flag) {
             if (enabled == flag) {
-                logger.info("Enabling workflow launcher '${launcher.path}' not needed on $instance")
+                logger.info("Enabling workflow launcher '${node.path}' not needed on $instance")
                 return
             } else {
-                logger.info("Enabling workflow launcher '${launcher.path}' on $instance")
+                logger.info("Enabling workflow launcher '${node.path}' on $instance")
             }
         } else {
             if (enabled == flag) {
-                logger.info("Disabling workflow launcher '${launcher.path}' not needed on $instance")
+                logger.info("Disabling workflow launcher '${node.path}' not needed on $instance")
                 return
             } else {
-                logger.info("Disabling workflow launcher '${launcher.path}' on $instance")
+                logger.info("Disabling workflow launcher '${node.path}' on $instance")
             }
         }
 
         toggleInitial = enabled
-        launcher.apply { saveProperty(ENABLED_PROP, flag); reload() }
+        node.apply { saveProperty(ENABLED_PROP, flag); reload() }
     }
 
     fun restore() {

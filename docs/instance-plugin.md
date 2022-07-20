@@ -19,6 +19,7 @@
      * [Standalone tailer tool](#standalone-tailer-tool)
 * [Task instanceRcp](#task-instancercp)
 * [Task instanceGroovyEval](#task-instancegroovyeval)
+* [Task instanceWorkflow](#task-instanceworkflow)
 
 ## About
 
@@ -403,3 +404,41 @@ gradlew instanceGroovyEval -i -Pinstance.groovyEval.script=iteration-17/* -Pinst
 
 By default, any failed script evaluation will cause that task will also fail.
 To avoid that (ignore failures), add parameter `-Pinstance.groovyEval.faulty=false`.
+
+
+## Task `instanceWorkflow`
+
+Schedules workflow model on resources under the specified path.
+Allows to quickly execute workflow models in batch.
+
+Might be useful as scheduling workflows in AEM authoring has constrained number of resources for which workflows might be scheduled at once.
+This task has no such limitation and eliminates a need to implement Groovy Script as a workaround.
+
+![Instance workflow task](instance-workflow-task.png)
+
+Sample usages below.
+
+Scheduling workflows for a single resource:
+
+```shell
+gradlew instanceWorkflow \
+  -Pinstance.workflow.model=dam/asset_processing_on_sdk \
+  -Pinstance.workflow.resourcePath=/content/dam/wknd/en/adventures/beervana-portland/AdobeStock_239751461.jpeg
+```
+
+Scheduling workflows for multiple resources:
+
+```shell
+gradlew instanceWorkflow \
+  -Pinstance.workflow.model=dam/asset_processing_on_sdk \
+  -Pinstance.workflow.resourcePath=[/content/dam/wknd/en/adventures/beervana-portland/AdobeStock_239751461.jpeg,/content/dam/wknd/en/adventures/climbing-new-zealand/AdobeStock_277948178.jpeg]
+```
+
+Scheduling workflows for multiple resources of specified type under root(s):
+
+```shell
+gradlew instanceWorkflow \
+  -Pinstance.workflow.model=dam/asset_processing_on_sdk \
+  -Pinstance.workflow.resourcePath=[/content/dam/wknd] \
+  -Pinstance.workflow.resourceType=dam:Asset
+```

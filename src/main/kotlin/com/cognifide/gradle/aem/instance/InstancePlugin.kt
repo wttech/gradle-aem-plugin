@@ -11,6 +11,7 @@ import com.cognifide.gradle.aem.instance.tasks.InstanceReload
 import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceStatus
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
+import com.cognifide.gradle.aem.instance.tasks.InstanceWorkflow
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import com.cognifide.gradle.common.CommonDefaultPlugin
@@ -75,6 +76,8 @@ class InstancePlugin : CommonDefaultPlugin() {
         register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
             mustRunAfter(provision)
         }.apply(mustRunAfterPackageDeploy)
+
+        register<InstanceWorkflow>(InstanceWorkflow.NAME)
     }
 
     companion object {
