@@ -10,8 +10,6 @@ import com.cognifide.gradle.aem.common.tasks.Instance as InstanceTask
 
 open class InstanceWorkflow : InstanceTask() {
 
-    private val notifier = common.notifier
-
     @Internal
     val model = aem.obj.string {
         common.prop.string("instance.workflow.model")?.let { set(it) }
