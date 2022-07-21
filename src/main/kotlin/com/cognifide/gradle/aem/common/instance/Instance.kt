@@ -187,7 +187,7 @@ open class Instance(protected val aem: AemExtension) : Serializable {
     override fun hashCode(): Int {
         return HashCodeBuilder()
             .append(name)
-            .append(httpUrl)
+            .append(httpUrl.orNull)
             .toHashCode()
     }
 

@@ -21,6 +21,8 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.file("localInstance.quickstart.downloadDir")?.let { set(it) }
     }
 
+    val anyJar: File? = sdkJar ?: jar
+
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
      */
@@ -55,9 +57,10 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
 
     private val sdkWorkDir: File get() = sdkDir.get().asFile
 
-    val sdkJar: File get() = sdk?.also { unpackSdkZip(it) }
-            .let { sdkWorkDir.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull()
-            ?: throw LocalInstanceException("AEM SDK ZIP file provided doesn't contain any quickstart (*.jar) files!") }
+    val sdkJar: File? get() = sdk?.also { unpackSdkZip(it) }
+        .let {
+            sdkWorkDir.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull()
+        }
 
     val sdkDispatcherImage: File? get() = sdk
         ?.also { unpackSdkZip(it) }

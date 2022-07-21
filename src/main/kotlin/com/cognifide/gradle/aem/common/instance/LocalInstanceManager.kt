@@ -336,7 +336,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
-        if (quickstart.sdkJar == null && quickstart.jar == null) {
+        if (quickstart.anyJar == null) {
             throw LocalInstanceException(
                 "Cannot create instances due to lacking source files. " +
                     "Ensure having specified AEM SDK or Quickstart JAR url."
@@ -656,7 +656,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     fun determineJavaCompatibleVersions(): List<JavaVersion> {
         val aemVersion = try {
-            (quickstart.jar ?: quickstart.sdkJar)?.let { AemVersion.fromJar(it) }
+            quickstart.anyJar?.let { AemVersion.fromJar(it) }
         } catch (e: CommonException) {
             logger.info("Determining Java compatible versions for specified AEM quickstart JAR is not possible.")
             logger.debug("Cannot determine Java compatible versions basing on AEM quickstart JAR!", e)
