@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstanceManager
+import com.cognifide.gradle.common.os.OS
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.internal.os.OperatingSystem
@@ -21,12 +22,20 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.file("localInstance.quickstart.downloadDir")?.let { set(it) }
     }
 
-    val anyJar: File? = sdkJar ?: jar
+    val distJar: File? get() = sdkJar ?: jar
+
+    /**
+     * URI pointing to AEM distribution (AEM SDK zip or AEM jar)
+     */
+    val distUrl = aem.obj.string {
+        aem.prop.string("localInstance.quickstart.distUrl")?.let { set(it) }
+    }
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
      */
     val jarUrl = aem.obj.string {
+        convention(distUrl.map { it.takeIf { it.endsWith(".jar") } })
         aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
     }
 
@@ -45,6 +54,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
      * URI pointing to AEM SDK ZIP containing AEM instance JAR and Dispatcher Docker image.
      */
     val sdkUrl = aem.obj.string {
+        convention(distUrl.map { it.takeIf { it.endsWith(".zip") } })
         aem.prop.string("localInstance.quickstart.sdkUrl")?.let { set(it) }
     }
 
@@ -65,7 +75,12 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
     val sdkDispatcherImage: File? get() = sdk
         ?.also { unpackSdkZip(it) }
         ?.also { unpackSdkDispatcher() }
-        ?.let { sdkWorkDir.resolve("$DISPATCHER_DIR/bin/dispatcher-publish.tar.gz").takeIf { it.exists() } }
+        ?.let { sdkWorkDir.resolve(sdkDispatcherImagePath.get()).takeIf { it.exists() } }
+
+    val sdkDispatcherImagePath = aem.obj.string {
+        convention(aem.obj.provider { "$DISPATCHER_DIR/lib/dispatcher-publish-${OS.archOfHost()}.tar.gz" })
+        aem.prop.string("localInstance.quickstart.sdkDispatcherImagePath")?.let { set(it) }
+    }
 
     private fun unpackSdkZip(zip: File) {
         if (!sdkWorkDir.exists()) {
