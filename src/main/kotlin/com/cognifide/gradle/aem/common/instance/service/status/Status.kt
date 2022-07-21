@@ -46,7 +46,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      */
     fun checkReachableStatus(): Int = try {
         instance.sync {
-            http.basicCredentials = null to null
+            http.basicCredentials = null
             http.authorizationPreemptive.set(false)
             http.get(reachablePath.get()) { it.statusLine.statusCode }
         }

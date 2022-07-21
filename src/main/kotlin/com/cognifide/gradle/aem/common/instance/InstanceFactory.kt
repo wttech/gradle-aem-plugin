@@ -114,6 +114,7 @@ class InstanceFactory(val aem: AemExtension) {
             props["enabled"]?.let { this.enabled.set(it.toBoolean()) }
             props["user"]?.let { this.user.set(it) }
             props["password"]?.let { this.password.set(it) }
+            props["serviceCredentialsUrl"]?.let { this.serviceCredentials.set(aem.project.file(it)) }
             this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
         }
     }
@@ -134,7 +135,7 @@ class InstanceFactory(val aem: AemExtension) {
             "debugPort", "debugAddress", "openPath"
         )
 
-        val REMOTE_PROPS = listOf("httpUrl", "enabled", "type", "user", "password")
+        val REMOTE_PROPS = listOf("httpUrl", "enabled", "type", "user", "password", "serviceCredentialsUrl")
 
         val ALL_PROPS = (LOCAL_PROPS + REMOTE_PROPS).toSet()
     }

@@ -36,6 +36,8 @@ open class Instance(protected val aem: AemExtension) : Serializable {
 
     val password = common.obj.string {}
 
+    val serviceCredentials = common.obj.file {}
+
     val credentials: Pair<String, String> get() = when (this) {
         is LocalInstance -> auth.credentials
         else -> user.get() to password.get()

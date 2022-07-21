@@ -24,6 +24,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.default.type={{instanceType}}
             instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
+            instance.local-author.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
             instance.local-author.enabled={{instanceAuthorEnabled}}
             instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
             instance.local-author.openPath=/aem/start.html
@@ -49,6 +50,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             """
             import com.cognifide.gradle.aem.common.instance.local.OpenMode
             import com.neva.gradle.fork.ForkExtension
+            import com.cognifide.gradle.common.utils.Patterns
 
             configure<ForkExtension> {
                 properties {
@@ -57,7 +59,10 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Type"
                             select("local", "remote")
                             description = "Local - instance will be created on local file system\nRemote - connecting to remote instance only"
-                            controller { toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") }
+                            controller { 
+                                toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") 
+                                toggle(value == "remote", "instanceServiceCredentialsUri") 
+                            }
                         }
                         define("localInstanceRunModes") {
                             label = "Run Modes"
@@ -67,6 +72,11 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Author HTTP URL"
                             url("http://localhost:4502")
                             optional()
+                            controller {
+                                toggle(Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
+                                toggle(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instancePassword")
+                                clear(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
+                            }
                         }
                         define("instanceAuthorEnabled") {
                             label = "Author Enabled"
@@ -84,6 +94,11 @@ class ForkScaffolder(private val launcher: Launcher) {
                         define("instancePassword") {
                             label = "Password"
                             password("admin")
+                            optional()
+                        }
+                        define("instanceServiceCredentialsUri") {
+                            label = "Service Credentials Uri"
+                            description = "JSON file downloaded from AEMaaCS developer console"
                             optional()
                         }
                         define("localInstanceQuickstartJarUri") {
