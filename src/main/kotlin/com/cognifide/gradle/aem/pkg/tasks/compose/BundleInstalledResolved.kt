@@ -21,4 +21,6 @@ class BundleInstalledResolved(private val target: PackageCompose, @Input val not
     override val vaultFilterType = aem.obj.typed<FilterType> { convention(FilterType.FILE) }
 
     override val runMode = aem.obj.string()
+
+    override val startLevel = aem.obj.int()
 }

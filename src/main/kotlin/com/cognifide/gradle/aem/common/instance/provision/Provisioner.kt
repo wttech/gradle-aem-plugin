@@ -4,11 +4,17 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.provision.step.*
+import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
+import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureReplicationAgentStep
+import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureWorkflowLauncherStep
+import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
+import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
+import com.cognifide.gradle.aem.common.instance.provision.step.ImportMappingsStep
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.Patterns
+import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -82,10 +88,12 @@ class Provisioner(val manager: InstanceManager) {
      * Define custom provision step.
      */
     fun step(id: String, options: CustomStep.() -> Unit) {
-        steps.add(CustomStep(this).apply {
-            this.id.set(id)
-            options()
-        })
+        steps.add(
+            CustomStep(this).apply {
+                this.id.set(id)
+                options()
+            }
+        )
     }
 
     /**
@@ -195,9 +203,9 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     private fun stepsFor(instances: Collection<Instance>) = steps
-            .filter { Patterns.wildcard(it.id.get(), stepName.get()) }
-            .map { step -> step to instances.map { InstanceStep(it, step) } }
-            .toMap()
+        .filter { Patterns.wildcard(it.id.get(), stepName.get()) }
+        .map { step -> step to instances.map { InstanceStep(it, step) } }
+        .toMap()
 
     // Predefined steps
 
@@ -207,14 +215,14 @@ class Provisioner(val manager: InstanceManager) {
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
         description.set("Enabling CRX DE")
-        condition { once() && instance.env != "prod" }
+        condition { once() && instance.env.get() != "prod" }
         sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx/server") }
         options()
     }
 
     fun disableCrxDe(options: Step.() -> Unit = {}) = step("disableCrxDe") {
         description.set("Disabling CRX DE")
-        condition { once() && instance.env != "local" }
+        condition { once() && instance.env.get() != "local" }
         sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx") }
         options()
     }
@@ -231,6 +239,25 @@ class Provisioner(val manager: InstanceManager) {
     fun deployPackages(vararg sources: Any, options: DeployPackageStep.() -> Unit = {}) = deployPackages(sources.asIterable(), options)
 
     fun deployPackages(sources: Iterable<Any>, options: DeployPackageStep.() -> Unit = {}) = sources.forEach { deployPackage(it, options) }
+
+    fun deployPackagesFrom(dir: File, options: DeployPackageStep.() -> Unit = {}) {
+        checkPackagesDir(dir)
+        dir.walkTopDown()
+            .filter { it.isFile && it.extension == "zip" }
+            .sortedBy { it.absolutePath }
+            .forEach { deployPackage(it, options) }
+    }
+
+    fun deployPackagesNamed(parentDir: File, fileNames: Iterable<String>, options: DeployPackageStep.() -> Unit = {}) {
+        checkPackagesDir(parentDir)
+        fileNames.map { parentDir.resolve(it) }.forEach { deployPackage(it, options) }
+    }
+
+    private fun checkPackagesDir(dir: File) {
+        if (!dir.exists()) {
+            throw ProvisionException("Packages directory does not exist at path '$dir'!")
+        }
+    }
 
     fun evalGroovyScript(fileName: String, options: Step.() -> Unit = {}) = evalGroovyScript(fileName, mapOf(), options)
 
@@ -265,10 +292,12 @@ class Provisioner(val manager: InstanceManager) {
     }
 
     fun configureCrypto(options: ConfigureCryptoStep.() -> Unit) {
-        steps.add(ConfigureCryptoStep(this).apply {
-            condition { onLocal() && once() }
-            options()
-        })
+        steps.add(
+            ConfigureCryptoStep(this).apply {
+                condition { onLocal() && once() }
+                options()
+            }
+        )
     }
 
     fun configureCrypto(hmac: Any, master: Any, options: ConfigureCryptoStep.() -> Unit = {}) = configureCrypto {
@@ -292,8 +321,8 @@ class Provisioner(val manager: InstanceManager) {
         }
     }
 
-    fun configureWorkflow(id: String, options: ConfigureWorkflowStep.() -> Unit) {
-        steps.add(ConfigureWorkflowStep(this, id).apply(options))
+    fun configureWorkflowLauncher(id: String, options: ConfigureWorkflowLauncherStep.() -> Unit) {
+        steps.add(ConfigureWorkflowLauncherStep(this, id).apply(options))
     }
 
     fun configureOsgi(pid: String, properties: Map<String, Any?>, options: Step.() -> Unit = {}) = step("configureOsgi/$pid") {

@@ -10,11 +10,13 @@ class InstancePluginTest : AemBuildTest() {
         val projectDir = prepareProject("instance-minimal") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance")
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {
@@ -27,7 +29,8 @@ class InstancePluginTest : AemBuildTest() {
         val projectDir = prepareProject("instance-provisioner") {
             settingsGradle("")
 
-            buildGradle("""
+            buildGradle(
+                """
                 plugins {
                     id("com.cognifide.aem.instance")
                 }
@@ -51,7 +54,7 @@ class InstancePluginTest : AemBuildTest() {
                                 }
                             }
                             step("disable-unsecure-bundles") {
-                                condition { once() && instance.env == "prod" }
+                                condition { once() && instance.env.get() == "prod" }
                                 sync {
                                     osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                                     osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
@@ -62,7 +65,8 @@ class InstancePluginTest : AemBuildTest() {
                         }
                     }
                 }
-                """)
+                """
+            )
         }
 
         runBuild(projectDir, "tasks", "-Poffline") {

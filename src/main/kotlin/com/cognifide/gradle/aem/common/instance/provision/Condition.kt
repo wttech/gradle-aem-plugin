@@ -22,7 +22,7 @@ class Condition(val step: InstanceStep) {
 
     fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
 
-    fun onEnv(env: String) = Patterns.wildcard(instance.env, env)
+    fun onEnv(env: String) = Patterns.wildcard(instance.env.get(), env)
 
     fun onImage() = step.definition.provisioner.aem.commonOptions.envImage
 

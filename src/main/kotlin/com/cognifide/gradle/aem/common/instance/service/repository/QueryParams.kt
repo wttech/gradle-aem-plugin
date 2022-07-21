@@ -15,26 +15,31 @@ open class QueryParams(private val enumerated: Boolean) {
         }
     }
 
-    private val paramIndex: Int get() = (params.keys
-            .filter { it.matches(Regex("^\\d+_\\w+$")) }
+    private val paramIndex: Int get() = (
+        params.keys.filter { it.matches(Regex("^\\d+_\\w+$")) }
             .map { it.split("_")[0].toInt() }
-            .maxOrNull() ?: 0) + 1
+            .maxOrNull() ?: 0
+        ) + 1
 
     // Node type filtering params
 
-    fun type(value: String) = param {
+    fun type(type: ResourceType) {
+        params["type"] = type.value
+    }
+
+    fun type(value: String) {
         params["type"] = value
     }
 
-    fun file() = type("nt:file")
+    fun file() = type(ResourceType.FILE)
 
-    fun page() = type("cq:Page")
+    fun page() = type(ResourceType.PAGE)
 
-    fun pageContent() = type("cq:PageContent")
+    fun pageContent() = type(ResourceType.PAGE_CONTENT)
 
-    fun damAsset() = type("dam:Asset")
+    fun damAsset() = type(ResourceType.ASSET)
 
-    fun damAssetContent() = type("dam:AssetContent")
+    fun damAssetContent() = type(ResourceType.ASSET_CONTENT)
 
     // Specialized filtering params
 
@@ -108,5 +113,6 @@ open class QueryParams(private val enumerated: Boolean) {
         }
     }
 
-    fun propertyContains(name: String, vararg values: String, all: Boolean = true) = propertyContains(name, values.asIterable(), all)
+    fun propertyContains(name: String, vararg values: String, all: Boolean = true) =
+        propertyContains(name, values.asIterable(), all)
 }

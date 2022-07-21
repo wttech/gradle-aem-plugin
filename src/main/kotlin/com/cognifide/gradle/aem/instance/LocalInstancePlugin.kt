@@ -3,14 +3,35 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.instance.tasks.InstanceAwait
+import com.cognifide.gradle.aem.instance.tasks.InstanceBackup
+import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
+import com.cognifide.gradle.aem.instance.tasks.InstanceDestroy
+import com.cognifide.gradle.aem.instance.tasks.InstanceDown
+import com.cognifide.gradle.aem.instance.tasks.InstanceGroovyEval
+import com.cognifide.gradle.aem.instance.tasks.InstanceKill
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
+import com.cognifide.gradle.aem.instance.tasks.InstanceResetup
+import com.cognifide.gradle.aem.instance.tasks.InstanceResolve
+import com.cognifide.gradle.aem.instance.tasks.InstanceRestart
+import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
-import com.cognifide.gradle.aem.instance.tasks.*
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.common.*
+import com.cognifide.gradle.common.CommonDefaultPlugin
+import com.cognifide.gradle.common.RuntimePlugin
+import com.cognifide.gradle.common.checkForce
 import com.cognifide.gradle.common.java.JavaSupport
-import com.cognifide.gradle.common.tasks.runtime.*
+import com.cognifide.gradle.common.pluginProjects
+import com.cognifide.gradle.common.tasks.runtime.Await
+import com.cognifide.gradle.common.tasks.runtime.Destroy
+import com.cognifide.gradle.common.tasks.runtime.Down
+import com.cognifide.gradle.common.tasks.runtime.Resetup
+import com.cognifide.gradle.common.tasks.runtime.Resolve
+import com.cognifide.gradle.common.tasks.runtime.Restart
+import com.cognifide.gradle.common.tasks.runtime.Setup
+import com.cognifide.gradle.common.tasks.runtime.Up
 import com.cognifide.gradle.common.utils.onEachApply
 import org.gradle.api.Project
 
@@ -109,7 +130,7 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupJavaEnforcement() {
-        val enabled = aem.prop.boolean("localInstance.javaEnforcement.enabled") ?: true
+        val enabled = aem.prop.boolean("localInstance.javaEnforcement.enabled") ?: false
         if (!enabled) {
             return
         }
@@ -118,7 +139,10 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
             val enforcedVersion by lazy {
                 val compatibleVersions = aem.localInstanceManager.determineJavaCompatibleVersions()
                 val desiredVersion = compatibleVersions.lastOrNull()?.toString()
-                val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version") ?: JavaSupport.VERSION_DEFAULT
+                val fallbackVersion = aem.prop.string("localInstance.javaEnforcement.version")
+                    ?: aem.prop.string("javaSupport.version")
+                    ?: JavaSupport.VERSION_DEFAULT
+
                 desiredVersion ?: fallbackVersion
             }
             pluginProjects(CommonPlugin.ID).onEachApply {

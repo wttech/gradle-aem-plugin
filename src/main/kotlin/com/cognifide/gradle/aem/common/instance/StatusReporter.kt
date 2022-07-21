@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.utils.Formats
 import org.gradle.api.Task
 import java.io.File
@@ -18,12 +17,13 @@ class StatusReporter(private val aem: AemExtension) {
         from(aem.obj.provider { aem.packagesBuilt.map { it.archiveFile.get().asFile } })
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun packageBuiltBy(taskPath: String, strict: Boolean = false) = aem.project.gradle.projectsEvaluated {
         try {
             packages.from(aem.common.tasks.pathed<Task>(taskPath).map { it.outputs.files.first() })
-        } catch (e: CommonException) {
+        } catch (e: Exception) {
             if (strict) throw e
-            else logger.debug("Cannot find a package building task at path '$taskPath'!")
+            else logger.debug("Cannot find a package building task at path '$taskPath'!", e)
         }
     }
 
@@ -82,20 +82,20 @@ class StatusReporter(private val aem: AemExtension) {
             sync {
                 packageManager.listRetry.never()
                 packageFiles
-                        .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
-                        .sortedWith(
-                                compareByDescending<PackageFile> {
-                                    it.pkg?.lastUnpacked ?: 0L
-                                }.thenBy { it.file.name }
-                        )
-                        .joinToString("\n") { (file, pkg) ->
-                            when {
-                                !file.exists() -> "${file.name} | not built"
-                                pkg == null -> "${file.name} | not uploaded | ${Formats.fileSize(file)}"
-                                !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
-                                else -> "${file.name} | ${pkg.installedDate} | ${Formats.fileSize(file)}"
-                            }
+                    .map { file -> PackageFile(file, if (file.exists()) packageManager.find(file) else null) }
+                    .sortedWith(
+                        compareByDescending<PackageFile> {
+                            it.pkg?.lastUnpacked ?: 0L
+                        }.thenBy { it.file.name }
+                    )
+                    .joinToString("\n") { (file, pkg) ->
+                        when {
+                            !file.exists() -> "${file.name} | not built"
+                            pkg == null -> "${file.name} | not uploaded | ${Formats.fileSize(file)}"
+                            !pkg.installed -> "${file.name} | not yet | ${Formats.fileSize(file)}"
+                            else -> "${file.name} | ${pkg.installedDate} | ${Formats.fileSize(file)}"
                         }
+                    }
             }.ifBlank { "none" }
         } catch (e: Exception) {
             logger.debug("Installed packages error", e)

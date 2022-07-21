@@ -34,7 +34,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         if (aem.commonOptions.offline.get()) {
             return false
         }
-        return common.buildScope.tryGetOrPut("${instance.httpUrl}${reachablePath.get()}") {
+        return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}${reachablePath.get()}") {
             if (checkReachable()) true else null
         } ?: false
     }
@@ -46,7 +46,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      */
     fun checkReachableStatus(): Int = try {
         instance.sync {
-            http.basicCredentials = null to null
+            http.basicCredentials = null
             http.authorizationPreemptive.set(false)
             http.get(reachablePath.get()) { it.statusLine.statusCode }
         }
@@ -87,7 +87,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             if (aem.commonOptions.offline.get()) {
                 return false
             }
-            return common.buildScope.tryGetOrPut("${instance.httpUrl}${OsgiFramework.BUNDLES_PATH}") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}${OsgiFramework.BUNDLES_PATH}") {
                 if (checkAvailable()) true else null
             } ?: false
         }
@@ -139,7 +139,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             return mapOf()
         }
 
-        return common.buildScope.tryGetOrPut("${instance.httpUrl}$path") {
+        return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}$path") {
             try {
                 readProperties(path).apply {
                     aem.logger.info("Successfully read status properties at path '$path' on $instance.")
@@ -168,14 +168,14 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      * Windows paths with backslash. Below code is fixing 'Malformed \uxxxx encoding.' exception.
      */
     private fun statusPropertiesAsIni(text: String) = text.lineSequence()
-            .filter { Patterns.wildcard(it, "* = *") } // Filter headings starting with '*** '
-            .map {
-                val key = it.substringBefore("=").trim().replace(" ", "_") // Spaces in keys fix
-                val value = it.substringAfter("=").trim().replace("\\", "\\\\") // Windows paths fix
-                "$key=$value"
-            }
-            .joinToString("\n")
-            .byteInputStream()
+        .filter { Patterns.wildcard(it, "* = *") } // Filter headings starting with '*** '
+        .map {
+            val key = it.substringBefore("=").trim().replace(" ", "_") // Spaces in keys fix
+            val value = it.substringAfter("=").trim().replace("\\", "\\\\") // Windows paths fix
+            "$key=$value"
+        }
+        .joinToString("\n")
+        .byteInputStream()
 
     /**
      * Instance version read once across whole build, fail-safe.
@@ -186,7 +186,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                 return PRODUCT_VERSION_UNKNOWN
             }
 
-            return common.buildScope.tryGetOrPut("${instance.httpUrl}$PRODUCT_INFO_PATH") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl.get()}$PRODUCT_INFO_PATH") {
                 try {
                     readProductVersion().apply {
                         aem.logger.info("Successfully read product version '$this' of $instance")

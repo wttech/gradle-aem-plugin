@@ -39,8 +39,10 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      */
     fun requireAvailable() {
         if (!available) {
-            throw GroovyConsoleException("Groovy console is not available on $instance!\n" +
-                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
+            throw GroovyConsoleException(
+                "Groovy console is not available on $instance!\n" +
+                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)"
+            )
         }
     }
 
@@ -64,10 +66,13 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun evalCodeInternal(code: String, data: Map<String, Any?>): GroovyEvalResult {
-        return sync.http.postMultipart(EVAL_PATH, mapOf(
+        return sync.http.postMultipart(
+            EVAL_PATH,
+            mapOf(
                 "script" to code,
                 "data" to Formats.toJson(data)
-        )) { asObjectFromJson(it, GroovyEvalResult::class.java) }
+            )
+        ) { asObjectFromJson(it, GroovyEvalResult::class.java) }
     }
 
     /**
@@ -105,9 +110,9 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      * Find scripts matching file pattern in pre-configured directory.
      */
     fun findScripts(pathPattern: String): List<File> = project.fileTree(scriptDir)
-            .matching { it.include(pathPattern) }
-            .sortedBy { it.absolutePath }
-            .toList()
+        .matching { it.include(pathPattern) }
+        .sortedBy { it.absolutePath }
+        .toList()
 
     /**
      * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.

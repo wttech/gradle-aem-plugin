@@ -5,8 +5,14 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.local.*
+import com.cognifide.gradle.aem.common.instance.local.BackupManager
+import com.cognifide.gradle.aem.common.instance.local.InstallResolver
+import com.cognifide.gradle.aem.common.instance.local.JavaAgentResolver
+import com.cognifide.gradle.aem.common.instance.local.OpenMode
+import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
+import com.cognifide.gradle.aem.common.instance.local.Source
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
@@ -34,12 +40,14 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Needed to determine e.g directory in which AEM quickstart will be stored and override files.
      */
     val projectDir = aem.obj.dir {
-        convention(aem.obj.provider {
-            project.pluginProject(LocalInstancePlugin.ID)?.layout?.projectDirectory ?: throw LocalInstanceException(
+        convention(
+            aem.obj.provider {
+                project.pluginProject(LocalInstancePlugin.ID)?.layout?.projectDirectory ?: throw LocalInstanceException(
                     "Using local AEM instances requires having at least one project applying plugin '${LocalInstancePlugin.ID}'" +
-                    " or setting property 'localInstance.projectDir'!"
-            )
-        })
+                        " or setting property 'localInstance.projectDir'!"
+                )
+            }
+        )
         aem.prop.string("localInstance.projectDir")?.let { set(project.rootProject.file(it)) }
     }
 
@@ -169,16 +177,19 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Collection of files potentially needed to create instance
      */
     val sourceFiles = aem.obj.files {
-        from(aem.obj.provider {
-            listOfNotNull(backupZip) + quickstart.files + install.files
-        })
+        from(
+            aem.obj.provider {
+                listOfNotNull(backupZip) + quickstart.files + install.files
+            }
+        )
     }
 
     /**
      * Determines files in which properties can be injected.
      */
     val expandFiles = aem.obj.strings {
-        set(listOf(
+        set(
+            listOf(
                 "control/*.sh",
                 "control/*.bat",
                 "service/*.sh",
@@ -188,14 +199,16 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                 "crx-quickstart/bin/start",
                 "crx-quickstart/bin/status",
                 "crx-quickstart/bin/stop"
-        ))
+            )
+        )
     }
 
     /**
      * Determines files which executable rights will be applied.
      */
     val executableFiles = aem.obj.strings {
-        set(listOf(
+        set(
+            listOf(
                 "control/*.sh",
                 "control/*.bat",
                 "service/*.sh",
@@ -204,7 +217,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                 "crx-quickstart/bin/start",
                 "crx-quickstart/bin/status",
                 "crx-quickstart/bin/stop"
-        ))
+            )
+        )
     }
 
     /**
@@ -288,12 +302,12 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
         Source.BACKUP_LOCAL -> {
             val backupZip = backup.local
-                    ?: throw LocalInstanceException("Cannot create instance(s) because no local backups available!")
+                ?: throw LocalInstanceException("Cannot create instance(s) because no local backups available!")
             createFromBackup(instances, backupZip)
         }
         Source.BACKUP_REMOTE -> {
             val backupZip = backup.remote
-                    ?: throw LocalInstanceException("Cannot create instance(s) because no remote backups available!")
+                ?: throw LocalInstanceException("Cannot create instance(s) because no remote backups available!")
             createFromBackup(instances, backupZip)
         }
         Source.SCRATCH -> createFromScratch(instances)
@@ -323,12 +337,16 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
         if (quickstart.sdkJar == null && quickstart.jar == null) {
-            throw LocalInstanceException("Cannot create instances due to lacking source files. " +
-                    "Ensure having specified AEM SDK or Quickstart JAR url.")
+            throw LocalInstanceException(
+                "Cannot create instances due to lacking source files. " +
+                    "Ensure having specified AEM SDK or Quickstart JAR url."
+            )
         }
         if (quickstart.license == null) {
-            throw LocalInstanceException("Cannot create instances due to lacking source files. " +
-                    "Ensure having specified AEM Quickstart license url.")
+            throw LocalInstanceException(
+                "Cannot create instances due to lacking source files. " +
+                    "Ensure having specified AEM Quickstart license url."
+            )
         }
 
         common.progress(instances.size) {
@@ -412,9 +430,9 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                             }
                         }
                         controlTrigger.trigger(
-                                action = { triggerUp() },
-                                verify = { this@sync.status.reachable },
-                                fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
+                            action = { triggerUp() },
+                            verify = { this@sync.status.reachable },
+                            fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
                         )
                     }
                 }
@@ -471,9 +489,9 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     sync {
                         val initReachableStatus = status.checkReachableStatus()
                         controlTrigger.trigger(
-                                action = { triggerDown() },
-                                verify = { initReachableStatus != status.checkReachableStatus() },
-                                fail = { throw LocalInstanceException("Instance cannot be triggered down: $instance!") }
+                            action = { triggerDown() },
+                            verify = { initReachableStatus != status.checkReachableStatus() },
+                            fail = { throw LocalInstanceException("Instance cannot be triggered down: $instance!") }
                         )
                     }
                 }
@@ -524,8 +542,10 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             }
         }
         if (openedInstances.isNotEmpty()) {
-            logger.lifecycle("Opened instances (${openedInstances.size}) in web browser (tabs):\n" +
-                    openedInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpOpenUrl}'" })
+            logger.lifecycle(
+                "Opened instances (${openedInstances.size}) in web browser (tabs):\n" +
+                    openedInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpOpenUrl}'" }
+            )
         }
 
         return openedInstances
@@ -603,14 +623,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             logger.debug("Examining Java properly installed")
 
             val result = ProcBuilder(javaExecutablePath, "-version")
-                    .withWorkingDirectory(rootDir.get().asFile.apply { mkdirs() })
-                    .withTimeoutMillis(statusTimeout.get())
-                    .withExpectedExitStatuses(0)
-                    .run()
+                .withWorkingDirectory(rootDir.get().asFile.apply { mkdirs() })
+                .withTimeoutMillis(statusTimeout.get())
+                .withExpectedExitStatuses(0)
+                .run()
             logger.debug("Installed Java:\n${result.outputString.ifBlank { result.errorString }}")
         } catch (e: Exception) {
-            throw LocalInstanceException("Local instances support requires Java properly installed! Cause: '${e.message}'\n" +
-                    "Ensure having directory with 'java' executable listed in 'PATH' environment variable.", e)
+            throw LocalInstanceException(
+                "Local instances support requires Java properly installed! Cause: '${e.message}'\n" +
+                    "Ensure having directory with 'java' executable listed in 'PATH' environment variable.",
+                e
+            )
         }
     }
 
@@ -621,17 +644,25 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
      * Java Version is definable as list of supported versions pipe delimited.
      */
     val javaCompatibility = aem.obj.map<String, String> {
-        convention(mapOf(
+        convention(
+            mapOf(
                 "6.0.0-6.5.0" to "1.7|1.8",
                 "6.5.0-6.6.0" to "1.8|11",
                 "*.*.*.*T*Z" to "1.8|11" // cloud service
-        ))
+            )
+        )
         aem.prop.map("localInstance.javaCompatibility")?.let { set(it) }
     }
 
     fun determineJavaCompatibleVersions(): List<JavaVersion> {
-        val aemVersion = (quickstart.jar ?: quickstart.sdkJar)?.let { AemVersion.fromJar(it) } ?: return listOf()
-        return aemVersion.javaCompatibleVersions(javaCompatibility.get())
+        val aemVersion = try {
+            (quickstart.jar ?: quickstart.sdkJar)?.let { AemVersion.fromJar(it) }
+        } catch (e: CommonException) {
+            logger.info("Determining Java compatible versions for specified AEM quickstart JAR is not possible.")
+            logger.debug("Cannot determine Java compatible versions basing on AEM quickstart JAR!", e)
+            null
+        }
+        return aemVersion?.javaCompatibleVersions(javaCompatibility.get()) ?: listOf()
     }
 
     fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
@@ -650,14 +681,17 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             } else {
                 val javaVersionCompatibles = aemVersion.javaCompatibleVersions(javaCompatibility.get())
                 if (javaVersionCurrent !in javaVersionCompatibles) {
-                    result.add("Instance '${instance.name}' using URL '${instance.httpUrl}' is AEM $aemVersion" +
-                            " and requires Java ${javaVersionCompatibles.joinToString("|")}!")
+                    result.add(
+                        "Instance '${instance.name}' using URL '${instance.httpUrl.get()}' is AEM $aemVersion" +
+                            " and requires Java ${javaVersionCompatibles.joinToString("|")}!"
+                    )
                 }
             }
             result
         }
         if (errors.isNotEmpty()) {
-            throw LocalInstanceException("Some instances (${errors.size}) require different Java version than current $javaVersionCurrent:\n" +
+            throw LocalInstanceException(
+                "Some instances (${errors.size}) require different Java version than current $javaVersionCurrent:\n" +
                     errors.joinToString("\n")
             )
         }
@@ -665,15 +699,15 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     fun examineStatusUncorecognized(instances: Collection<LocalInstance>) {
         val unrecognized = instances.filter { it.created }
-                .map { it to it.checkStatus() }
-                .filter { it.second.unrecognized }
+            .map { it to it.checkStatus() }
+            .filter { it.second.unrecognized }
         if (unrecognized.isNotEmpty()) {
             throw LocalInstanceException(
-                    "Some instances are created but their status is unrecognized:\n" +
-                            unrecognized.joinToString("\n") { (i, s) ->
-                                "Instance '${i.name}' located at path '${i.dir}' reports status exit code ${s.exitValue}"
-                            } + "\n\n" +
-                            "Ensure that shell scripts have an ability to execute 'java' process or try rebooting machine."
+                "Some instances are created but their status is unrecognized:\n" +
+                    unrecognized.joinToString("\n") { (i, s) ->
+                        "Instance '${i.name}' located at path '${i.dir}' reports status exit code ${s.exitValue}"
+                    } + "\n\n" +
+                    "Ensure that shell scripts have an ability to execute 'java' process or try rebooting machine."
             )
         }
     }
@@ -681,10 +715,25 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun examineRunningOther(instances: Collection<LocalInstance> = aem.localInstances) {
         val running = instances.filter { it.runningOther }
         if (running.isNotEmpty()) {
-            throw LocalInstanceException("Other instances (${running.size}) are running:\n" +
-                    running.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+            throw LocalInstanceException(
+                "Other instances (${running.size}) are running:\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' using URL '${it.httpUrl.get()}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure having these instances down."
             )
         }
+    }
+
+    val javaAgent by lazy { JavaAgentResolver(aem) }
+
+    /**
+     * Configure Java agents for instrumenting AEM instances.
+     */
+    fun javaAgent(options: JavaAgentResolver.() -> Unit) = javaAgent.using(options)
+
+    /**
+     * Hook for additional configuration for defined instances.
+     */
+    fun defined(options: LocalInstance.() -> Unit) {
+        base.defined { whenLocal(options) }
     }
 }

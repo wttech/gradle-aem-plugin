@@ -1,15 +1,13 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.tasks.Instance
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.gradle.api.tasks.TaskAction
 
-@OptIn(ExperimentalCoroutinesApi::class)
 open class InstanceTail : Instance() {
 
     @TaskAction
     fun tail() {
-        logger.lifecycle("Tailing logs from:\n${anyInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" }}")
+        logger.lifecycle("Tailing logs from:\n${anyInstances.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl.get()}'" }}")
         logger.lifecycle("Filter incidents using file: ${instanceManager.tailer.incidentFilter.get()}")
 
         instanceManager.tailer.tail(anyInstances)

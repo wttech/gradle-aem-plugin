@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.cognifide.gradle.common.build.Retry
 import org.gradle.api.provider.Property
 
@@ -45,6 +46,12 @@ interface Step {
     val rerunOnFail: Property<Boolean>
 
     /**
+     * Controls if instances should be reloaded after applying step.
+     * By default, only instance up state is awaited.
+     */
+    val reload: Property<Boolean>
+
+    /**
      * Allows to redo step action after delay if exception is thrown.
      */
     val actionRetry: Retry
@@ -62,6 +69,8 @@ interface Step {
     fun awaitIf(callback: () -> Boolean)
 
     fun awaitUp(options: AwaitUpAction.() -> Unit)
+
+    fun awaitReload(options: ReloadAction.() -> Unit)
 
     fun condition(callback: Condition.() -> Boolean)
 

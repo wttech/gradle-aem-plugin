@@ -3,13 +3,13 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
-import com.cognifide.gradle.aem.common.instance.service.workflow.Workflow
+import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowLauncher
 
-class ConfigureWorkflowStep(provisioner: Provisioner, val wid: String) : AbstractStep(provisioner) {
+class ConfigureWorkflowLauncherStep(provisioner: Provisioner, val wid: String) : AbstractStep(provisioner) {
 
-    lateinit var workflowAction: Workflow.() -> Unit
+    lateinit var workflowAction: WorkflowLauncher.() -> Unit
 
-    fun workflow(action: Workflow.() -> Unit) {
+    fun workflow(action: WorkflowLauncher.() -> Unit) {
         this.workflowAction = action
     }
 
@@ -21,12 +21,12 @@ class ConfigureWorkflowStep(provisioner: Provisioner, val wid: String) : Abstrac
 
     override fun action(instance: Instance) {
         instance.sync {
-            workflowManager.workflow(wid).apply(workflowAction)
+            workflowManager.launcher(wid).apply(workflowAction)
         }
     }
 
     init {
-        id.set("configureWorkflow/$wid")
-        description.convention("Configuring workflow with id '$wid'")
+        id.set("configureWorkflowLauncher/$wid")
+        description.convention("Configuring workflow launcher with id '$wid'")
     }
 }

@@ -13,10 +13,16 @@ open class InstanceHttpClient(private val aem: AemExtension, val instance: Insta
     }
 
     init {
-        baseUrl.set(instance.httpUrl)
+        baseUrl.set(instance.httpUrl.get())
         escapeUrl.set(true)
-        authorizationPreemptive.set(true)
-        basicCredentials = instance.credentials
+
+        if (instance.serviceCredentials.isPresent) {
+            val token = aem.obj.provider { aem.ims.generateToken(instance.serviceCredentials.asFile.get()) }
+            bearerToken.set(token)
+        } else {
+            authorizationPreemptive.set(true)
+            basicCredentials = instance.credentials
+        }
 
         connectionTimeout.apply {
             convention(30_000)

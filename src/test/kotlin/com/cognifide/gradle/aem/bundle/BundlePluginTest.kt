@@ -20,9 +20,8 @@ class BundlePluginTest : AemTest() {
 
         extensions.getByName(AemExtension.NAME)
 
-        tasks.named(JavaPlugin.JAR_TASK_NAME, Jar::class.java).get().apply {
-            assertEquals("test.jar", archiveFile.get().asFile.name)
-        }
+        val jar = tasks.named(JavaPlugin.JAR_TASK_NAME, Jar::class.java).get()
+        assertEquals("test.jar", jar.archiveFile.get().asFile.name)
 
         tasks.getByName(BundleInstall.NAME)
         tasks.getByName(BundleUninstall.NAME)

@@ -14,7 +14,7 @@ enum class LineSeparator(val value: String) {
     companion object {
 
         fun of(name: String?) = find(name)
-                ?: throw IllegalArgumentException("Unsupported line separator specified: $name. Valid are: ${values()}")
+            ?: throw IllegalArgumentException("Unsupported line separator specified: $name. Valid are: ${values()}")
 
         fun find(name: String?) = values().find { it.name.equals(name, true) }
     }

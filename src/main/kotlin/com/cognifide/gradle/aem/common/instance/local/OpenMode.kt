@@ -25,7 +25,7 @@ enum class OpenMode {
     companion object {
         fun of(name: String): OpenMode {
             return values().find { it.name.equals(name, true) }
-                    ?: throw LocalInstanceException("Unsupported local instance open mode named: $name")
+                ?: throw LocalInstanceException("Unsupported local instance open mode named: $name")
         }
     }
 }

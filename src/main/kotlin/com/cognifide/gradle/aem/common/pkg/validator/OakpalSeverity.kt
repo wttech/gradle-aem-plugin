@@ -9,6 +9,6 @@ enum class OakpalSeverity {
 
     companion object {
         fun of(value: String) = values().find { it.name.equals(value, ignoreCase = true) }
-                ?: throw PackageException("OakPAL severity named '$value' is not supported!")
+            ?: throw PackageException("OakPAL severity named '$value' is not supported!")
     }
 }

@@ -41,11 +41,14 @@ open class InstanceProvision : Instance() {
 
         if (performed > 0) {
             val succedded = Formats.percentExplained(ended - failed, ended)
-            common.notifier.notify("Instances provisioned", listOf(
+            common.notifier.notify(
+                "Instances provisioned",
+                listOf(
                     "Steps: $succedded succeeded on ${instances.size} instance(s)",
                     "${skippedActions.size} skipped",
                     "${allActions.size} in total"
-            ).joinToString(", "))
+                ).joinToString(", ")
+            )
         }
     }
 

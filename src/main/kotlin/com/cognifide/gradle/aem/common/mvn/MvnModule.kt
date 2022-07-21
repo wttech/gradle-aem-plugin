@@ -14,6 +14,7 @@ import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.mvn.MvnExec
 import com.cognifide.gradle.common.pathPrefix
 import com.cognifide.gradle.common.pluginProject
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
@@ -81,7 +82,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         description = "Installs POM to local repository"
         invoker.args("clean", "install")
         inputs.file(descriptor.pom)
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
     }
 
     fun buildJar(options: MvnExec.() -> Unit = {}) = buildArtifact(Artifact.JAR) {
@@ -99,7 +100,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(extension))
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         options()
     }
 
@@ -108,7 +109,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.file(targetFile(Artifact.ZIP))
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         options()
     }
 
@@ -125,8 +126,13 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         val outputFile = targetFile(Artifact.ZIP)
         inputs.files(inputFiles)
         outputs.file(outputFile)
-        outputs.dir(repositoryDir)
-        doLast { aem.common.checksumFile(outputFile.get().asFile, true) }
+        outputs.file(repositoryPom)
+
+        doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
+            override fun execute(task: Task) {
+                aem.common.checksumFile(outputFile.get().asFile, true)
+            }
+        })
         options()
     }
 
@@ -144,9 +150,11 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
                 mustRunAfter(listOf(InstanceProvision.NAME).map { "${instanceProject.pathPrefix}$it" })
             }
         }
-        doLast {
-            common.notifier.notify("Package deployed", "${files.fileNames} on ${instances.names}")
-        }
+        doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
+            override fun execute(task: Task) {
+                common.notifier.notify("Package deployed", "${files.fileNames} on ${instances.names}")
+            }
+        })
         options()
     }
 
@@ -168,7 +176,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         invoker.args("clean", "install")
         inputs.files(inputFiles)
         outputs.files(outputFiles)
-        outputs.dir(repositoryDir)
+        outputs.file(repositoryPom)
         options()
     }
 

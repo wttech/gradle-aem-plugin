@@ -53,6 +53,7 @@ class Launcher(val args: Array<String>) {
      * On Windows later build execution might fail without it, because Gradle files might not be ready.
      * Do not remove it!
      */
+    @Suppress("MagicNumber")
     private fun awaitFileSystem() {
         Thread.sleep(1_000)
     }
@@ -72,6 +73,29 @@ class Launcher(val args: Array<String>) {
         }
     }
 
+    fun workFileBackupOnce(path: String, action: File.() -> Unit) {
+        workDir.resolve(path).apply {
+            if (exists()) {
+                renameTo(parentFile.resolve("$name.bak"))
+            }
+        }
+        workFileOnce(path, action)
+    }
+
+    fun workFileBackupAndReplaceStrings(path: String, vararg strings: Pair<String, String>) {
+        workDir.resolve(path).apply {
+            if (exists()) {
+                var text = readText()
+                for (stringPair in strings) {
+                    text = text.replace(stringPair.first, stringPair.second)
+                }
+                workFileBackupOnce(path) {
+                    writeText(text)
+                }
+            }
+        }
+    }
+
     fun runBuildWrapperOnce() = workFile("gradle/wrapper/gradle-wrapper.properties") {
         if (!exists()) {
             println("Generating Gradle wrapper files")
@@ -79,6 +103,7 @@ class Launcher(val args: Array<String>) {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught", "PrintStackTrace")
     fun runBuildAndExit(): Unit = try {
         runBuild(gradleArgs)
         exitProcess(0)
@@ -107,15 +132,15 @@ class Launcher(val args: Array<String>) {
 
     companion object {
 
-        val ARG_WORK_DIR = "--work-dir"
+        const val ARG_WORK_DIR = "--work-dir"
 
-        val ARG_PRINT_STACKTRACE = "--print-stacktrace"
+        const val ARG_PRINT_STACKTRACE = "--print-stacktrace"
 
-        val ARG_NO_COLOR_OUTPUT = "--no-color"
+        const val ARG_NO_COLOR_OUTPUT = "--no-color"
 
-        val ARG_SAVE_PROPS = "--save-props"
+        const val ARG_SAVE_PROPS = "--save-props"
 
-        val ARG_SAVE_PREFIX = "-P"
+        const val ARG_SAVE_PREFIX = "-P"
 
         val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
 
@@ -123,4 +148,3 @@ class Launcher(val args: Array<String>) {
         fun main(args: Array<String>) = Launcher(args).launch()
     }
 }
-

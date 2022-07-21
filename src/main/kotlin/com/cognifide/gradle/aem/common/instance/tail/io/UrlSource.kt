@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.tail.io
 
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.common.instance.tail.LogSource
+import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.common.http.RequestException
 import java.io.BufferedReader
 
@@ -34,7 +34,7 @@ class UrlSource(
             chunk
         } catch (ex: RequestException) {
             if (wasStable) {
-                logger.warn("Tailing paused for $instance due to '${ex.message}'. Awaiting resumption.")
+                logger.warn("Tailing paused for $instance due to:\n '${ex.message}'\nAwaiting resumption.")
             }
             wasStable = false
             emptyList<T>()

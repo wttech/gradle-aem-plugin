@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.instance.FileSync as Base
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import com.cognifide.gradle.aem.common.instance.FileSync as Base
 
 open class InstanceFileSync : AemDefaultTask() {
 

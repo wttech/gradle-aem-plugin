@@ -9,4 +9,8 @@ interface BundleInstalled : RepositoryArchive {
     @get:Input
     @get:Optional
     val runMode: Property<String>
+
+    @get:Input
+    @get:Optional
+    val startLevel: Property<Int>
 }

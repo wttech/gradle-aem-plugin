@@ -6,8 +6,8 @@ import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.common.utils.using
-import java.io.File
 import org.gradle.api.tasks.Internal
+import java.io.File
 
 class Downloader(@Internal private val aem: AemExtension) {
 
@@ -91,8 +91,8 @@ class Downloader(@Internal private val aem: AemExtension) {
 
         aem.project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)
-                    .from(aem.project.zipTree(downloadedPackage.path))
-                    .include("${Package.JCR_ROOT}/**")
+                .from(aem.project.zipTree(downloadedPackage.path))
+                .include("${Package.JCR_ROOT}/**")
         }
     }
 }

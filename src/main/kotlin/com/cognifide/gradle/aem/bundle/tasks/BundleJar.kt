@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
-import aQute.bnd.gradle.BundleTaskConvention as BndConvention
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
@@ -8,9 +7,14 @@ import com.cognifide.gradle.aem.common.utils.normalizeSeparators
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Jar
 import java.io.File
+import aQute.bnd.gradle.BundleTaskConvention as BndConvention
 
 @Suppress("LargeClass", "TooManyFunctions")
 open class BundleJar(private val jar: Jar) {
@@ -52,6 +56,10 @@ open class BundleJar(private val jar: Jar) {
     @Optional
     val installRunMode = aem.obj.string()
 
+    @Input
+    @Optional
+    val installStartLevel = aem.obj.int()
+
     /**
      * Determines if Vault workspace filter entry pointing directly to JAR file should be added automatically
      * for built OSGi bundle.
@@ -87,15 +95,17 @@ open class BundleJar(private val jar: Jar) {
      */
     @Input
     val javaPackage = aem.obj.string {
-        convention(aem.obj.provider {
-            val group = aem.project.group.toString()
-            val name = aem.project.name
+        convention(
+            aem.obj.provider {
+                val group = aem.project.group.toString()
+                val name = aem.project.name
 
-            when {
-                group.isNotBlank() -> "$group.$name"
-                else -> name
-            }.normalizeSeparators(".")
-        })
+                when {
+                    group.isNotBlank() -> "$group.$name"
+                    else -> name
+                }.normalizeSeparators(".")
+            }
+        )
     }
 
     /**
@@ -137,9 +147,11 @@ open class BundleJar(private val jar: Jar) {
             bndConvention.setBndfile(instructionFile)
         }
 
-        bndConvention.bnd(mapOf(
+        bndConvention.bnd(
+            mapOf(
                 "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
-        ))
+            )
+        )
     }
 
     fun applyEvaluated() {
@@ -164,8 +176,8 @@ open class BundleJar(private val jar: Jar) {
     private fun combinePackageAttribute(name: String, pkgs: Iterable<String>) {
         val combinedPkgs = mutableSetOf<String>().apply {
             val existing = (attribute(name) ?: "")
-                    .split(",")
-                    .map { it.trim() }
+                .split(",")
+                .map { it.trim() }
 
             addAll(pkgs)
             addAll(existing)
@@ -205,20 +217,28 @@ open class BundleJar(private val jar: Jar) {
      * Combine package attributes set explicitly with generated ones.
      */
     private fun combinePackageAttributes() {
-        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages.get().toMutableList().apply {
-            if (importPackageSuffix.get().isNotBlank()) {
-                add(importPackageSuffix.get())
+        combinePackageAttribute(
+            Bundle.ATTRIBUTE_IMPORT_PACKAGE,
+            importPackages.get().toMutableList().apply {
+                if (importPackageSuffix.get().isNotBlank()) {
+                    add(importPackageSuffix.get())
+                }
             }
-        })
+        )
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages.get())
-        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.get().toMutableList().apply {
-            if (attributesConvention.get() && !javaPackage.orNull.isNullOrBlank()) {
-                add(when {
-                    javaPackageOptions.isPresent -> "${javaPackage.get()}.*;${javaPackageOptions.get()}"
-                    else -> "${javaPackage.get()}.*"
-                })
+        combinePackageAttribute(
+            Bundle.ATTRIBUTE_EXPORT_PACKAGE,
+            exportPackages.get().toMutableList().apply {
+                if (attributesConvention.get() && !javaPackage.orNull.isNullOrBlank()) {
+                    add(
+                        when {
+                            javaPackageOptions.isPresent -> "${javaPackage.get()}.*;${javaPackageOptions.get()}"
+                            else -> "${javaPackage.get()}.*"
+                        }
+                    )
+                }
             }
-        })
+        )
     }
 
     @Input
@@ -228,11 +248,13 @@ open class BundleJar(private val jar: Jar) {
 
     @Input
     val activatorSourceSets = aem.obj.map<String, String> {
-        convention(mapOf(
+        convention(
+            mapOf(
                 "java" to "java",
                 "kotlin" to "kt",
                 "scala" to "scala"
-        ))
+            )
+        )
     }
 
     /**

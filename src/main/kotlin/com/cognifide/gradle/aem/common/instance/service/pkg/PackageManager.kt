@@ -16,15 +16,14 @@ import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
-import java.io.File
-import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.input.TeeInputStream
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
 import org.gradle.api.tasks.Input
 import org.gradle.process.internal.streams.SafeStreams
-import java.util.*
+import java.io.File
+import java.io.FileNotFoundException
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -51,8 +50,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     fun requireAvailable() {
         if (!available) {
-            throw InstanceException("Package manager is not available on $instance!\n" +
-                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)")
+            throw InstanceException(
+                "Package manager is not available on $instance!\n" +
+                    "Ensure having correct URLs defined & credentials, granted access and networking in correct state (internet accessible, VPN on/off)"
+            )
         }
     }
 
@@ -136,12 +137,14 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      * retries will be applied.
      */
     val errors = aem.obj.strings {
-        convention(listOf(
+        convention(
+            listOf(
                 "javax.jcr.nodetype.*Exception",
                 "org.apache.jackrabbit.oak.api.*Exception",
                 "org.apache.jackrabbit.vault.packaging.*Exception",
                 "org.xml.sax.*Exception"
-        ))
+            )
+        )
         aem.prop.list("instance.packageManager.errors")?.let { set(it) }
     }
 
@@ -190,6 +193,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         aem.prop.file("instance.packageManager.responseDir")?.let { set(it) }
     }
 
+    /**
+     * Repeat reading package metadata when failed (brute-forcing).
+     */
+    var metadataRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.packageManager.metadataRetry") ?: 3) }
+
     fun get(file: File): Package {
         if (!file.exists()) {
             throw PackageException("Package '$file' does not exist so it cannot be resolved on $instance!")
@@ -202,7 +210,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun get(group: String, name: String, version: String): Package {
         return find(group, name, version)
-                ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance!")
+            ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance!")
     }
 
     fun find(file: File): Package? = PackageFile(file).run { find(group, name, version) }
@@ -219,13 +227,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun contains(pkg: Package, checkSize: Boolean = true): Boolean = all
-            .firstOrNull { it == pkg }
-            ?.let { !checkSize || it.size == pkg.size }
-            ?: false
+        .firstOrNull { it == pkg }
+        ?.let { !checkSize || it.size == pkg.size }
+        ?: false
 
     fun contains(file: File, checkSize: Boolean): Boolean = find(file)
-            ?.let { !checkSize || it.size == file.length() }
-            ?: false
+        ?.let { !checkSize || it.size == file.length() }
+        ?: false
 
     operator fun contains(file: File): Boolean = contains(file, true)
 
@@ -255,10 +263,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             logger.info("Uploading package '$file' to $instance'")
 
             val response = try {
-                http.postMultipart(url, mapOf(
+                http.postMultipart(
+                    url,
+                    mapOf(
                         "package" to file,
                         "force" to (uploadForce.get() || isSnapshot(file))
-                )) { asObjectFromJson(it, UploadResponse::class.java) }
+                    )
+                ) { asObjectFromJson(it, UploadResponse::class.java) }
             } catch (e: FileNotFoundException) {
                 throw PackageException("Package '$file' to be uploaded not found!", e)
             } catch (e: RequestException) {
@@ -267,7 +278,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 throw InstanceException("Malformed response after uploading package '$file' to $instance. Cause: ${e.message}", e)
             }
 
-            if (!response.isSuccess) {
+            if (!response.success) {
                 throw InstanceException("Cannot upload package '$file' to $instance. Reason: ${interpretFail(response.msg)}.")
             }
 
@@ -280,10 +291,12 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      * Next built package is downloaded - replacing initially created package.
      * Finally built package is deleted on instance (preventing messing up).
      */
-    fun download(definition: PackageDefinition.() -> Unit) = download(PackageDefinition(aem).apply {
-        version.set(Formats.dateFileName())
-        definition()
-    })
+    fun download(definition: PackageDefinition.() -> Unit) = download(
+        PackageDefinition(aem).apply {
+            version.set(Formats.dateFileName())
+            definition()
+        }
+    )
 
     /**
      * Create package on the fly, upload it to instance then build it.
@@ -348,7 +361,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             throw InstanceException("Malformed response after building package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
-        if (!response.isSuccess) {
+        if (!response.success) {
             throw InstanceException("Cannot build package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
@@ -386,13 +399,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     private fun HttpClient.handleInstallResponse(remotePath: String, response: HttpResponse): InstallResponse = when (responseHandling.get()) {
         ResponseHandling.FILE -> {
             val dumpFile = responseDir.map { it.dir("$it/${instance.name}") }
-                    .get().asFile
-                    .resolve(remotePath.removePrefix("/"))
-                    .apply {
-                        delete()
-                        parentFile.mkdirs()
-                    }
-                    .run { parentFile.resolve("$nameWithoutExtension.html") }
+                .get().asFile
+                .resolve(remotePath.removePrefix("/"))
+                .apply {
+                    delete()
+                    parentFile.mkdirs()
+                }
+                .run { parentFile.resolve("$nameWithoutExtension.html") }
             logger.info("Dumping package installation response to file '$dumpFile'")
             val teeOut = dumpFile.outputStream().buffered()
             val teeIn = TeeInputStream(asStream(response).buffered(), teeOut, true)
@@ -452,22 +465,23 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             return true
         } else {
             val path = pkg.path
-            val metadata = PackageMetadata(this, path)
-            val checksumChanged = !metadata.validChecksum(checksum)
-            val installedExternally = metadata.installedExternally
-
-            if (checksumChanged || installedExternally) {
-                if (checksumChanged) {
+            val deployment = metadataRetry.withCountdown<PackageDeployment, InstanceException>(
+                "examine deployment of package '${pkg.path}' on '${instance.name}'"
+            ) {
+                PackageMetadata(this, path).examineDeployment(checksum)
+            }
+            return if (deployment.needed) {
+                if (deployment.checksumChanged) {
                     logger.info("Deploying package '$path' on $instance (changed checksum)")
                 }
-                if (installedExternally) {
-                    logger.warn("Deploying package '$path' on $instance (installed externally at '${metadata.installedCurrent}')")
+                if (deployment.installedExternally) {
+                    logger.warn("Deploying package '$path' on $instance (installed externally at '${deployment.installedExternallyAt}')")
                 }
                 deployRegularly(file, activate, checksum)
-                return true
+                true
             } else {
                 logger.lifecycle("No need to deploy package '$path' on $instance (no changes)")
-                return false
+                false
             }
         }
     }
@@ -508,7 +522,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             throw InstanceException("Malformed response after activating package '$remotePath' on $instance. Cause: ${e.message}", e)
         }
 
-        if (!response.isSuccess) {
+        if (!response.success) {
             throw InstanceException("Cannot activate package '$remotePath' on $instance. Cause: ${interpretFail(response.msg)}")
         }
 

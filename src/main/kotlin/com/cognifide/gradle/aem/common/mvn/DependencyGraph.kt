@@ -74,25 +74,31 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     val dotDependencies = aem.obj.list<Dependency> {
-        set(aem.obj.provider {
-            generateDotFile().lineSequence().mapNotNull { line ->
-                line.takeIf { it.contains(" -> ") }?.trim()?.split(" -> ")?.let {
-                    it[0].removeSurrounding("\"") to it[1].removeSurrounding("\"")
-                }
-            }.mapNotNull { (d1, d2) ->
-                val d1n = normalizeArtifact(d1)
-                val d2n = normalizeArtifact(d2)
-                if (d1n != null && d2n != null) Dependency(d1n, d2n) else null
-            }.toList()
-        })
+        finalizeValueOnRead()
+        set(
+            aem.obj.provider {
+                generateDotFile().lineSequence().mapNotNull { line ->
+                    line.takeIf { it.contains(" -> ") }?.trim()?.split(" -> ")?.let {
+                        it[0].removeSurrounding("\"") to it[1].removeSurrounding("\"")
+                    }
+                }.mapNotNull { (d1, d2) ->
+                    val d1n = normalizeArtifact(d1)
+                    val d2n = normalizeArtifact(d2)
+                    if (d1n != null && d2n != null) Dependency(d1n, d2n) else null
+                }.toList()
+            }
+        )
     }
 
     val dotArtifacts = aem.obj.list<Artifact> {
-        set(aem.obj.provider {
-            generateDotFile().lineSequence().mapNotNull { line ->
-                line.takeIf { it.contains("[label=") }?.trim()?.substringBefore("[label=")?.removeSurrounding("\"")
-            }.mapNotNull { normalizeArtifact(it) }.toList()
-        })
+        finalizeValueOnRead()
+        set(
+            aem.obj.provider {
+                generateDotFile().lineSequence().mapNotNull { line ->
+                    line.takeIf { it.contains("[label=") }?.trim()?.substringBefore("[label=")?.removeSurrounding("\"")
+                }.mapNotNull { normalizeArtifact(it) }.toList()
+            }
+        )
     }
 
     private fun normalizeArtifact(value: String) = value

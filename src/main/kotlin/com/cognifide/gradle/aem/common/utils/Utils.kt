@@ -7,10 +7,10 @@ val Collection<File>.fileNames
     get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
 
 fun String.normalizeSeparators(separator: String): String = this.replace(":", separator)
-        .replace("-", separator)
-        .replace(".", separator)
-        .removePrefix(separator)
-        .removeSuffix(separator)
+    .replace("-", separator)
+    .replace(".", separator)
+    .removePrefix(separator)
+    .removeSuffix(separator)
 
 @Suppress("MagicNumber")
 fun String.shortenClass(maxLength: Int = 32): String {

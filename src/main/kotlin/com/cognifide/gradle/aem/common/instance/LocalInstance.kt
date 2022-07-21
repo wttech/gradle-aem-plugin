@@ -9,119 +9,96 @@ import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.oak.OakRun
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.common.utils.Formats
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
-import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import java.io.File
 import java.io.FileFilter
 
 @Suppress("TooManyFunctions")
 class LocalInstance(aem: AemExtension) : Instance(aem) {
-
-    override var user: String = USER
-
-    var debugPort: Int = 5005
-
-    var debugAddress: String = ""
-
-    var openPath: String = "/"
-
-    val httpOpenUrl get() = when (openPath) {
-        "/" -> httpUrl
-        else -> "${httpUrl}$openPath"
+    init {
+        user.set(USER)
     }
 
-    private val debugSocketAddress: String get() = when (debugAddress) {
-        "*" -> "0.0.0.0:$debugPort"
-        "" -> "$debugPort"
-        else -> "$debugAddress:$debugPort"
+    val debugPort = common.obj.int { convention(5005) }
+
+    val debugAddress = common.obj.string {}
+
+    val openPath = common.obj.string { convention("/") }
+
+    val httpOpenUrl get() = when (openPath.get()) {
+        "/" -> httpUrl.get()
+        else -> "${httpUrl.get()}${openPath.get()}"
     }
 
-    @get:JsonIgnore
-    val jvmOptsDefaults: List<String> get() = mutableListOf<String>().apply {
-        if (debugPort in 1..65535) {
-            add(jvmDebugOpt)
+    val jvmOpts = common.obj.strings { convention(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true")) }
+
+    val jvmAgentOpt: String? get() = jvmAgents.get().joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
+
+    @Suppress("MagicNumber")
+    val jvmDebugOpt: String? get() = when (debugPort.orNull) {
+        in 1..65535 -> {
+            val address = when {
+                localManager.javaLauncher.get().metadata.languageVersion >= JavaLanguageVersion.of(9) -> {
+                    when {
+                        debugAddress.orNull == "*" -> "0.0.0.0:${debugPort.get()}"
+                        debugAddress.orNull.isNullOrBlank() -> "${debugPort.get()}"
+                        else -> "${debugAddress.orNull}:${debugPort.get()}"
+                    }
+                }
+                else -> {
+                    "${debugPort.get()}"
+                }
+            }
+            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$address"
         }
+        else -> null
     }
 
-    @get:JsonIgnore
-    private val jvmDebugOpt: String get() = when {
-          localManager.javaLauncher.get().metadata.languageVersion >= JavaLanguageVersion.of(9) ->
-            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
-        else ->
-            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
-    }
+    val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    @get:JsonIgnore
-    var jvmOpts: List<String> = listOf(
-            "-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true"
-    )
+    val jvmAgents = common.obj.strings { set(common.obj.provider { localManager.javaAgent.files.map { it.absolutePath } }) }
 
-    @get:JsonProperty("jvmOpts")
-    val jvmOptsString: String get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
-
-    @get:JsonIgnore
     val javaExecutablePath: String get() = localManager.javaExecutablePath
 
-    @get:JsonIgnore
-    var startOpts: List<String> = listOf()
+    val startOpts = common.obj.strings { set(listOf()) }
 
-    @get:JsonProperty("startOpts")
-    val startOptsString: String get() = startOpts.joinToString(" ")
+    val startOptsString: String get() = startOpts.get().filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    @get:JsonIgnore
-    val runModesDefault get() = listOf(type.name.toLowerCase(), aem.commonOptions.env.get())
+    val runModes = common.obj.strings { set(listOf()) }
 
-    @get:JsonIgnore
-    var runModes: List<String> = listOf()
+    val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase())).joinToString(",")
 
-    @get:JsonProperty("runModes")
-    val runModesString: String get() = (runModesDefault + runModes).joinToString(",")
+    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id.get())
 
-    @get:JsonIgnore
-    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
-
-    @get:JsonIgnore
     val controlDir: File get() = dir.resolve("control")
 
-    @get:JsonIgnore
-    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
+    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id.get())) }
 
-    @get:JsonIgnore
     val jar: File? get() = quickstartDir.resolve("app").takeIf { it.exists() }?.listFiles(FileFilter { it.extension == "jar" })?.firstOrNull()
 
-    @get:JsonIgnore
     val license: File get() = dir.resolve("license.properties")
 
-    @get:JsonIgnore
     val quickstartDir: File get() = dir.resolve("crx-quickstart")
 
-    @get:JsonIgnore
     val bundlesDir: File get() = quickstartDir.resolve("launchpad/felix")
 
     fun bundleDir(bundle: Bundle) = bundleDir(bundle.id.toInt())
 
     fun bundleDir(no: Int) = bundlesDir.resolve("bundle$no")
 
-    @get:JsonIgnore
     val pidFile: File get() = quickstartDir.resolve("conf/cq.pid")
 
-    @get:JsonIgnore
     val pid: Int get() = pidFile.takeIf { it.exists() }?.readText()
-            ?.trim()?.ifBlank { null }?.toInt() ?: 0
+        ?.trim()?.ifBlank { null }?.toInt() ?: 0
 
-    @get:JsonIgnore
     val logsDir: File get() = quickstartDir.resolve("logs")
 
-    @get:JsonIgnore
     val stdoutLog: File get() = logsDir.resolve("stdout.log")
 
-    @get:JsonIgnore
     val errorLog: File get() = logsDir.resolve("error.log")
 
-    @get:JsonIgnore
     val requestLog: File get() = logsDir.resolve("request.log")
 
     override val version: AemVersion
@@ -166,16 +143,12 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     private val statusScript: Script get() = script("status")
 
-    @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
 
-    @get:JsonIgnore
     val created: Boolean get() = locked(LOCK_CREATE)
 
-    @get:JsonIgnore
     val installDir get() = quickstartDir.resolve("install")
 
-    @get:JsonIgnore
     val oakRun get() = OakRun(aem, this)
 
     private fun script(name: String, os: OperatingSystem = OperatingSystem.current()) = if (os.isWindows) {
@@ -185,13 +158,12 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     private val quickstartJar get() = localManager.quickstart.jar?.takeIf { it.exists() }
-            ?: localManager.quickstart.sdkJar?.takeIf { it.exists() }
-            ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
+        ?: localManager.quickstart.sdkJar?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
 
     private val quickstartLicense get() = localManager.quickstart.license?.takeIf { it.exists() }
-            ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
+        ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
 
-    @get:JsonIgnore
     val localManager: LocalInstanceManager get() = aem.localInstanceManager
 
     fun create() = localManager.create(this)
@@ -210,24 +182,24 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
             // Update 'timeout' to 'ping' as of it does not work when called from process without GUI
             result = result.replace(
-                    "timeout /T 1 /NOBREAK >nul",
-                    "ping 127.0.0.1 -n 3 > nul"
+                "timeout /T 1 /NOBREAK >nul",
+                "ping 127.0.0.1 -n 3 > nul"
             )
 
             // Force AEM to be launched in background
             result = result.replace(
-                    "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
+                "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM <= 6.2
             result = result.replace(
-                    "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                    "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
+                "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                "cbp.exe cmd.exe /C \"java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS% 1> %CurrDirName%\\logs\\stdout.log 2>&1\""
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
             result = result.replace(
-                    "set START_OPTS=start -c %CurrDirName% -i launchpad",
-                    "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%"
+                "set START_OPTS=start -c %CurrDirName% -i launchpad",
+                "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%"
             )
 
             result
@@ -238,8 +210,8 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
             result = result.replace(
-                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
-                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
+                "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
+                "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
             )
 
             result
@@ -247,15 +219,18 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
         // Use java executable path explicitly to make instance working even when running from non-interactive shells (e.g as systemd service).
         aem.project.fileTree(dir)
-                .matching { it.include(localManager.executableFiles.get()) }
-                .forEach { file ->
-                    FileOperations.amendFile(file) {
-                        it.replace("java ", when (file.extension) {
+            .matching { it.include(localManager.executableFiles.get()) }
+            .forEach { file ->
+                FileOperations.amendFile(file) {
+                    it.replace(
+                        "java ",
+                        when (file.extension) {
                             "bat" -> "%JAVA_EXECUTABLE% "
                             else -> "\$JAVA_EXECUTABLE "
-                        })
-                    }
+                        }
+                    )
                 }
+            }
 
         // Ensure that 'logs' directory exists
         logsDir.mkdirs()
@@ -279,7 +254,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
             aem.project.javaexec { spec ->
                 spec.executable(localManager.javaExecutablePath)
                 spec.workingDir = dir
-                spec.main = "-jar"
+                spec.mainClass.set("-jar")
                 spec.args = listOf(tmpJar.absolutePath, "-unpack")
             }
 
@@ -321,17 +296,17 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     private fun expandFiles() {
         val propertiesAll = mapOf(
-                "instance" to this,
-                "service" to localManager.serviceComposer
-        ) + properties + localManager.expandProperties.get()
+            "instance" to this,
+            "service" to localManager.serviceComposer
+        ) + properties.get() + localManager.expandProperties.get()
 
         aem.project.fileTree(dir)
-                .matching { it.include(localManager.expandFiles.get()) }
-                .forEach { file ->
-                    FileOperations.amendFile(file) { content ->
-                        aem.prop.expand(content, propertiesAll, file.absolutePath)
-                    }
+            .matching { it.include(localManager.expandFiles.get()) }
+            .forEach { file ->
+                FileOperations.amendFile(file) { content ->
+                    aem.prop.expand(content, propertiesAll, file.absolutePath)
                 }
+            }
     }
 
     private fun copyInstallFiles() {
@@ -373,7 +348,6 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     fun kill() = localManager.kill(this)
 
-    @get:JsonIgnore
     val status: Status get() = checkStatus()
 
     fun checkStatus(): Status {
@@ -394,21 +368,16 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         return result
     }
 
-    @get:JsonIgnore
     val running: Boolean get() = created && checkStatus().running
 
-    @get:JsonIgnore
     val runnable: Boolean get() = created && checkStatus().runnable
 
-    @get:JsonIgnore
     val runningDir get() = aem.project.file(runningPath)
 
-    @get:JsonIgnore
     val runningOther get() = available && (dir != runningDir)
 
     fun destroy() = localManager.destroy(this)
 
-    @get:JsonIgnore
     val initialized: Boolean get() = locked(LOCK_INIT)
 
     internal fun init(callback: LocalInstance.() -> Unit) {
@@ -416,7 +385,6 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         lock(LOCK_INIT)
     }
 
-    @get:JsonIgnore
     val auth by lazy { Auth(this) }
 
     private fun lockFile(name: String) = dir.resolve("$name.lock")
@@ -432,10 +400,10 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         if (!initialized) {
             throw LocalInstanceException("Instance is not initialized so resetting password is not possible for $this!")
         }
-        oakRun.resetPassword(user, password)
+        oakRun.resetPassword(user.get(), password.get())
     }
 
-    override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"
+    override fun toString() = "LocalInstance(name='$name', httpUrl='${httpUrl.get()}')"
 
     companion object {
 

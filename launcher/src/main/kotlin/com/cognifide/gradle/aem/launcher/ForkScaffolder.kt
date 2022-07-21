@@ -9,7 +9,8 @@ class ForkScaffolder(private val launcher: Launcher) {
 
     private fun savePropertiesTemplate() = launcher.workFileOnce("gradle/fork/gradle.user.properties.peb") {
         println("Saving user-specific properties template '$this'")
-        writeText("""
+        writeText(
+            """
             # === Gradle AEM Plugin ===
             package.manager.deployAvoidance={{packageDeployAvoidance}}
             {% if packageDamAssetToggle == 'true' %}
@@ -17,9 +18,13 @@ class ForkScaffolder(private val launcher: Launcher) {
             {% endif %}
             localInstance.quickstart.jarUrl={{ localInstanceQuickstartJarUri }}
             localInstance.quickstart.licenseUrl={{ localInstanceQuickstartLicenseUri }}
+            localInstance.spUrl={{ localInstanceSpUri }}
+            localInstance.coreComponentsUrl={{ localInstanceCoreComponentsUri }}
             localInstance.openMode={{ localInstanceOpenMode }}
             instance.default.type={{instanceType}}
+            instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
+            instance.local-author.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
             instance.local-author.enabled={{instanceAuthorEnabled}}
             instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
             instance.local-author.openPath=/aem/start.html
@@ -28,28 +33,24 @@ class ForkScaffolder(private val launcher: Launcher) {
             instance.local-publish.openPath=/crx/packmgr
 
             mvnBuild.args={{mvnBuildArgs}}
-            mvnBuild.profiles={{mvnBuildProfiles}}
-            
-            dispatcher.tarUrl={{ dispatcherTarUri }}
-
-            # === Gradle Environment Plugin ===
-            {% if dockerSafeVolumes == 'true' %}
-            docker.desktop.safeVolumes=true
-            {% endif %}
 
             # === Gradle Common Plugin ===
             notifier.enabled=true
             fileTransfer.user={{companyUser}}
             fileTransfer.password={{companyPassword}}
             fileTransfer.domain={{companyDomain}}
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 
+    @Suppress("LongMethod")
     private fun savePropertiesDefinitions() = launcher.workFileOnce("gradle/fork/props.gradle.kts") {
         println("Saving user-specific property definitions '$this'")
-        writeText("""
+        writeText(
+            """
             import com.cognifide.gradle.aem.common.instance.local.OpenMode
             import com.neva.gradle.fork.ForkExtension
+            import com.cognifide.gradle.common.utils.Patterns
 
             configure<ForkExtension> {
                 properties {
@@ -58,12 +59,24 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Type"
                             select("local", "remote")
                             description = "Local - instance will be created on local file system\nRemote - connecting to remote instance only"
-                            controller { toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") }
+                            controller { 
+                                toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") 
+                                toggle(value == "remote", "instanceServiceCredentialsUri") 
+                            }
+                        }
+                        define("localInstanceRunModes") {
+                            label = "Run Modes"
+                            optional()
                         }
                         define("instanceAuthorHttpUrl") {
                             label = "Author HTTP URL"
                             url("http://localhost:4502")
                             optional()
+                            controller {
+                                toggle(Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
+                                toggle(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instancePassword")
+                                clear(!Patterns.wildcard(value,"*.adobeaemcloud.com"), "instanceServiceCredentialsUri")
+                            }
                         }
                         define("instanceAuthorEnabled") {
                             label = "Author Enabled"
@@ -83,31 +96,33 @@ class ForkScaffolder(private val launcher: Launcher) {
                             password("admin")
                             optional()
                         }
+                        define("instanceServiceCredentialsUri") {
+                            label = "Service Credentials Uri"
+                            description = "JSON file downloaded from AEMaaCS developer console"
+                            optional()
+                        }
                         define("localInstanceQuickstartJarUri") {
                             label = "Quickstart URI"
-                            description = "Typically file named 'cq-quickstart-*.jar' or 'aem-sdk-quickstart-*.jar"
+                            description = "Typically file named 'cq-quickstart-*.jar' or 'aem-sdk-quickstart-*.jar'"
                         }
                         define("localInstanceQuickstartLicenseUri") {
                             label = "Quickstart License URI"
                             description = "Typically file named 'license.properties'"
                         }
+                        define("localInstanceSpUri") {
+                            label = "Service Pack URI"
+                            description = "Only for on-prem AEM instances. Typically file named 'aem-service-pkg-*.zip'"
+                            optional()
+                        }
+                        define("localInstanceCoreComponentsUri") {
+                            label = "Core Components package URI"
+                            description = "Only for on-prem AEM instances. Typically file named 'core.wcm.components.all-*.zip'"
+                            optional()
+                        }
                         define("localInstanceOpenMode") {
                             label = "Open Automatically"
                             description = "Open web browser when instances are up."
                             select(OpenMode.values().map { it.name.toLowerCase() }, OpenMode.ALWAYS.name.toLowerCase())
-                        }
-                    }
-                    group("Dispatcher") {
-                        define("dispatcherTarUri") {
-                            label = "Tar Archive URI"
-                            description = "Typically file named 'dispatcher-apache2.4-linux-x86_64-*.tar.gz'"
-                            text("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.3.tar.gz")
-                        }
-                        define("dockerSafeVolumes") {
-                            label = "Docker Safe Volumes"
-                            description = "Enables volumes for easily previewing e.g cache and logs (requires WSL2)"
-                            checkbox(false)
-                            dynamic("props")
                         }
                     }
                     group("Build") {
@@ -169,6 +184,7 @@ class ForkScaffolder(private val launcher: Launcher) {
                     }
                 }
             }
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 }

@@ -53,15 +53,15 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      */
     fun <T> node(path: String, action: Node.() -> T): T = node(path).run(action)
 
-     /**
+    /**
      * Shorthand method for creating or updating node at given path.
      */
     fun save(path: String, properties: Map<String, Any?>): RepositoryResult {
-         val (dir, name) = splitPath(path)
-         return when {
-             name.contains(".") -> node(dir).import(properties, name, replace = true, replaceProperties = true)
-             else -> node(path).save(properties)
-         }
+        val (dir, name) = splitPath(path)
+        return when {
+            name.contains(".") -> node(dir).import(properties, name, replace = true, replaceProperties = true)
+            else -> node(path).save(properties)
+        }
     }
 
     /**
@@ -90,7 +90,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      */
     fun query(criteria: QueryCriteria): Query = try {
         val path = "$QUERY_BUILDER_PATH?${criteria.queryString}"
-        log("Querying repository using URL '${instance.httpUrl}$path'")
+        log("Querying repository using URL '${instance.httpUrl.get()}$path'")
         val result = http.get(path) { asObjectFromJson<QueryResult>(it) }
         Query(this, criteria, result)
     } catch (e: RequestException) {
@@ -102,8 +102,8 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     fun replicationAgent(location: String, name: String) = ReplicationAgent(node("/etc/replication/agents.$location/$name"))
 
     fun replicationAgents(location: String): Sequence<ReplicationAgent> = node("/etc/replication/agents.$location").children()
-            .filter { it.type == "cq:Page" }
-            .map { ReplicationAgent(it) }
+        .filter { it.type == "cq:Page" }
+        .map { ReplicationAgent(it) }
 
     fun replicationAgents(): Sequence<ReplicationAgent> {
         return replicationAgents(ReplicationAgent.LOCATION_AUTHOR) + replicationAgents(ReplicationAgent.LOCATION_PUBLISH)

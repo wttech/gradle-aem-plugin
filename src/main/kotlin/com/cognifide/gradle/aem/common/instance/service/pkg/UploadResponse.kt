@@ -7,7 +7,7 @@ import java.io.InputStream
 @JsonIgnoreProperties(ignoreUnknown = true)
 class UploadResponse private constructor() {
 
-    var isSuccess: Boolean = false
+    var success: Boolean = false
 
     lateinit var msg: String
 

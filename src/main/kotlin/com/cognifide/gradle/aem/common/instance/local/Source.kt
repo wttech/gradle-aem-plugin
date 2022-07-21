@@ -34,7 +34,7 @@ enum class Source {
     companion object {
         fun of(name: String): Source {
             return values().find { it.name.equals(name, true) }
-                    ?: throw LocalInstanceException("Unsupported local instance source named: $name")
+                ?: throw LocalInstanceException("Unsupported local instance source named: $name")
         }
     }
 }

@@ -5,16 +5,16 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
-import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.using
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
-import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class PackageSync : AemDefaultTask() {
 
@@ -78,16 +78,12 @@ open class PackageSync : AemDefaultTask() {
 
     fun contentDir(dir: File) {
         contentDir.set(dir)
-        filter.set(project.provider {
-            FilterFile.cmd(aem) ?: FilterFile(dir.resolve("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}"))
-        })
+        filter.set(project.provider { FilterFile.cmd(aem) ?: FilterFile.convention(aem, dir.resolve(Package.VLT_PATH)) })
     }
 
     fun contentDir(dir: Directory) {
         contentDir.set(dir)
-        filter.set(contentDir.map {
-            aem.filter(it.file("${Package.VLT_PATH}/${FilterFile.BUILD_NAME}").asFile)
-        })
+        filter.set(contentDir.map { FilterFile.cmd(aem) ?: FilterFile.convention(aem, it.dir(Package.VLT_PATH).asFile) })
     }
 
     private val filterRootFiles: List<File>
@@ -111,10 +107,12 @@ open class PackageSync : AemDefaultTask() {
     val vaultClient by lazy {
         VaultClient(aem).apply {
             contentDir.convention(this@PackageSync.contentDir)
-            command.convention(aem.obj.provider {
-                "--credentials ${instance.get().credentialsString} checkout --force" +
-                        " --filter ${filter.get().file} ${instance.get().httpUrl}/crx/server/crx.default"
-            })
+            command.convention(
+                aem.obj.provider {
+                    "--credentials ${instance.get().credentialsString} checkout --force" +
+                        " --filter ${filter.get().file} ${instance.get().httpUrl.get()}/crx/server/crx.default"
+                }
+            )
         }
     }
 
@@ -170,8 +168,8 @@ open class PackageSync : AemDefaultTask() {
                     "Instance: ${instance.get().name}. Directory: ${Formats.rootProjectPath(contentDir.get().asFile, project)}"
                 )
             } finally {
-                step = "Cleaning content"
                 if (mode.get() != Mode.COPY_ONLY) {
+                    step = "Cleaning content"
                     cleanContent()
                 }
             }
@@ -209,7 +207,7 @@ open class PackageSync : AemDefaultTask() {
         companion object {
             fun of(name: String): Transfer {
                 return values().find { it.name.equals(name, true) }
-                        ?: throw AemException("Unsupported sync transport: $name")
+                    ?: throw AemException("Unsupported sync transport: $name")
             }
         }
     }
@@ -222,7 +220,7 @@ open class PackageSync : AemDefaultTask() {
         companion object {
             fun of(name: String): Mode {
                 return values().find { it.name.equals(name, true) }
-                        ?: throw AemException("Unsupported sync mode: $name")
+                    ?: throw AemException("Unsupported sync mode: $name")
             }
         }
     }

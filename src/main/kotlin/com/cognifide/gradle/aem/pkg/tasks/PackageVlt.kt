@@ -22,8 +22,8 @@ open class PackageVlt : AemDefaultTask() {
         val summary = run()
 
         common.notifier.notify(
-                "Executing Vault command",
-                "Command '${summary.command}' finished. Duration: ${summary.durationString}"
+            "Executing Vault command",
+            "Command '${summary.command}' finished. Duration: ${summary.durationString}"
         )
     }
 
