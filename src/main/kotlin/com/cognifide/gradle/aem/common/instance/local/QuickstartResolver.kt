@@ -134,7 +134,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
             }
     }
 
-    val files: List<File> get() = listOfNotNull(sdkJar, sdkDispatcherImage, jar, license)
+    val files: List<File> get() = listOfNotNull(distJar, license, sdkDispatcherImage)
 
     companion object {
         const val DISPATCHER_DIR = "dispatcher"

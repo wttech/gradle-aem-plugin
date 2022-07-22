@@ -140,7 +140,7 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
 
     private fun readVersionFromExtractedJar() = jar?.name?.let { AemVersion.fromJarFileName(it) }
 
-    private fun readVersionFromProvidedJar() = localManager.quickstart.jar?.let { AemVersion.fromJar(it) }
+    private fun readVersionFromProvidedJar() = localManager.quickstart.distJar?.let { AemVersion.fromJar(it) }
 
     private val startScript: Script get() = script("start")
 
@@ -179,7 +179,7 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
         Script(this, listOf("sh"), controlDir.resolve("$name.sh"), quickstartDir.resolve("bin/$name"))
     }
 
-    private val quickstartJar get() = localManager.quickstart.jar?.takeIf { it.exists() }
+    private val quickstartJar get() = localManager.quickstart.distJar?.takeIf { it.exists() }
         ?: localManager.quickstart.sdkJar?.takeIf { it.exists() }
         ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
 
