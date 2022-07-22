@@ -69,10 +69,6 @@ class ForkScaffolder(private val launcher: Launcher) {
                                 toggle(value == "remote", "instanceServiceCredentialsUri") 
                             }
                         }
-                        define("localInstanceRunModes") {
-                            label = "Run Modes"
-                            optional()
-                        }
                         define("instanceAuthorHttpUrl") {
                             label = "Author HTTP URL"
                             url("http://localhost:4502")
@@ -104,6 +100,10 @@ class ForkScaffolder(private val launcher: Launcher) {
                         define("instanceServiceCredentialsUri") {
                             label = "Service Credentials Uri"
                             description = "JSON file downloaded from AEMaaCS developer console"
+                            optional()
+                        }
+                        define("localInstanceRunModes") {
+                            label = "Run Modes"
                             optional()
                         }
                         define("localInstanceQuickstartJarUri") {
