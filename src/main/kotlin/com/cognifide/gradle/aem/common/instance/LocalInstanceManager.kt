@@ -11,6 +11,7 @@ import com.cognifide.gradle.aem.common.instance.local.JavaAgentResolver
 import com.cognifide.gradle.aem.common.instance.local.OpenMode
 import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.instance.local.Source
+import com.cognifide.gradle.aem.common.utils.FileUtil
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.pluginProject
@@ -424,15 +425,21 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     }
 
                     sync {
-                        instance.whenLocal {
-                            if (!initialized) {
-                                http.basicCredentials = Instance.CREDENTIALS_DEFAULT
-                            }
+                        if (!initialized) {
+                            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
                         }
                         controlTrigger.trigger(
                             action = { triggerUp() },
                             verify = { this@sync.status.reachable },
-                            fail = { throw LocalInstanceException("Instance cannot be triggered up: $instance!") }
+                            fail = {
+                                val message = listOf(
+                                    "Instance cannot be triggered up: $instance!",
+                                    "Consider troubleshooting using file: '$stdoutLog'",
+                                    "Last lines (30):"
+                                )
+                                val stdoutLines = FileUtil.readLastLines(stdoutLog, 30)
+                                throw LocalInstanceException((message + stdoutLines).joinToString("\n"))
+                            }
                         )
                     }
                 }
