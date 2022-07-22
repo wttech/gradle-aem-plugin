@@ -44,7 +44,7 @@ class InstanceUrl(raw: String) {
         }
     }
 
-    val name: String get() = "$id-$env"
+    val name: String get() = "$env-$id"
 
     val id: String get() = type.name.lowercase()
 

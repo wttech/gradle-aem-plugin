@@ -54,7 +54,7 @@ class InstancePluginTest : AemBuildTest() {
                                 }
                             }
                             step("disable-unsecure-bundles") {
-                                condition { once() && instance.env.get() == "prod" }
+                                condition { once() && instance.env == "prod" }
                                 sync {
                                     osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                                     osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
