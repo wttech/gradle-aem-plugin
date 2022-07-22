@@ -13,8 +13,6 @@ class ForkScaffolder(private val launcher: Launcher) {
             """
             # === Gradle AEM Plugin ===
             
-            env={{instanceType}}
-            
             package.manager.deployAvoidance={{packageDeployAvoidance}}
             {% if packageDamAssetToggle == 'true' %}
             package.manager.workflowToggle=[dam_asset=false]
