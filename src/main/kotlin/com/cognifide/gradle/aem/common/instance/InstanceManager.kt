@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.common.pluginProject
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.using
 
 open class InstanceManager(val aem: AemExtension) {
@@ -81,8 +82,8 @@ open class InstanceManager(val aem: AemExtension) {
     val defined = aem.obj.list<Instance> {
         convention(
             aem.obj.provider {
-                val fromCmd = aem.prop.string("instance.list")?.let {
-                    factory.parse(it) { env.set(Instance.ENV_CMD) }
+                val fromCmd = aem.prop.string("instance.list")?.let { httpUrls ->
+                    (Formats.toList(httpUrls) ?: listOf()).map { factory.createByUrl(it) { cmd.set(true) } }
                 } ?: listOf()
                 val fromProperties = factory.parseProperties()
                 (fromCmd + fromProperties).ifEmpty { factory.defaultPair() }.onEach { it.apply(definedOptions) }
@@ -116,47 +117,20 @@ open class InstanceManager(val aem: AemExtension) {
     /**
      * Define local instance (created on local file system).
      */
-    fun local(httpUrl: String) = local(httpUrl) {}
-
-    /**
-     * Define local instance (created on local file system).
-     */
-    fun local(httpUrl: String, name: String) = local(httpUrl) { this.name = name }
-
-    /**
-     * Define local instance (created on local file system).
-     */
-    fun local(httpUrl: String, options: LocalInstance.() -> Unit) {
-        defined.add(aem.obj.provider { factory.local(httpUrl, options) })
+    fun local(name: String, options: LocalInstance.() -> Unit = {}) {
+        defined.add(aem.obj.provider { factory.local(name, options) })
     }
 
     /**
      * Define remote instance (available on any host).
      */
-    fun remote(httpUrl: String) = remote(httpUrl) {}
-
-    /**
-     * Define remote instance (available on any host).
-     */
-    fun remote(httpUrl: String, name: String) = remote(httpUrl) { this.name = name }
-
-    /**
-     * Define remote instance (available on any host).
-     */
-    fun remote(httpUrl: String, options: Instance.() -> Unit) {
-        defined.add(aem.obj.provider { factory.remote(httpUrl, options) })
+    fun remote(name: String, options: Instance.() -> Unit = {}) {
+        defined.add(aem.obj.provider { factory.remote(name, options) })
     }
 
     fun find(name: String) = defined.get().firstOrNull { it.name == name }
 
     fun get(name: String) = find(name) ?: throw InstanceException("Instance named '$name' is not defined!")
-
-    /**
-     * Get defined instance by name or create temporary definition if URL provided.
-     */
-    fun parse(url: String): Instance = factory.parse(url).ifEmpty {
-        throw InstanceException("Instance URL cannot be parsed properly '$url'!")
-    }.single()
 
     // ===== Actions API =====
 

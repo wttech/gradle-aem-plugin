@@ -197,7 +197,7 @@ class Provisioner(val manager: InstanceManager) {
 
     val fileResolver = FileResolver(aem.common).apply {
         downloadDir.apply {
-            convention(aem.obj.buildDir("instance/provision/files"))
+            convention(aem.project.layout.buildDirectory.dir("instance/provision/files"))
             aem.prop.file("instance.provision.filesDir")?.let { set(it) }
         }
     }
@@ -215,14 +215,14 @@ class Provisioner(val manager: InstanceManager) {
 
     fun enableCrxDe(options: Step.() -> Unit = {}) = step("enableCrxDe") {
         description.set("Enabling CRX DE")
-        condition { once() && instance.env.get() != "prod" }
+        condition { once() && instance.env != "prod" }
         sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx/server") }
         options()
     }
 
     fun disableCrxDe(options: Step.() -> Unit = {}) = step("disableCrxDe") {
         description.set("Disabling CRX DE")
-        condition { once() && instance.env.get() != "local" }
+        condition { once() && instance.env != "local" }
         sync { osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", "alias", "/crx") }
         options()
     }

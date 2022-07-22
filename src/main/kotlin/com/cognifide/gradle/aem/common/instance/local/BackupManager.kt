@@ -8,7 +8,6 @@ import com.cognifide.gradle.common.file.FileException
 import com.cognifide.gradle.common.file.transfer.FileEntry
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.onEachApply
-import com.cognifide.gradle.common.zip.ZipFile
 import java.io.File
 
 class BackupManager(private val manager: LocalInstanceManager) {
@@ -204,7 +203,7 @@ class BackupManager(private val manager: LocalInstanceManager) {
             throw LocalInstanceException("Cannot create local instance backup, because there are instances still running: ${running.names}")
         }
 
-        val zip = ZipFile(file)
+        val zip = common.zip(file)
 
         common.progress(instances.size) {
             instances.onEachApply {
@@ -244,7 +243,7 @@ class BackupManager(private val manager: LocalInstanceManager) {
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Restoring instance '$name'") {
-                    ZipFile(backupZip).unpackDir(id.get(), rootDir)
+                    common.zip(backupZip).unpackDir(id, rootDir)
                 }
             }
         }

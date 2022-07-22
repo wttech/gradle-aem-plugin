@@ -16,23 +16,31 @@ import java.io.File
 import java.io.FileFilter
 
 @Suppress("TooManyFunctions")
-class LocalInstance(aem: AemExtension) : Instance(aem) {
-    init {
-        user.set(USER)
+class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
+
+    val debugPort = common.obj.int {
+        convention(5005)
+        prop.int("debugPort")?.let { set(it) }
     }
 
-    val debugPort = common.obj.int { convention(5005) }
+    val debugAddress = common.obj.string {
+        prop.string("debugAddress")?.let { set(it) }
+    }
 
-    val debugAddress = common.obj.string {}
-
-    val openPath = common.obj.string { convention("/") }
+    val openPath = common.obj.string {
+        convention("/")
+        prop.string("openPath")?.let { set(it) }
+    }
 
     val httpOpenUrl get() = when (openPath.get()) {
         "/" -> httpUrl.get()
         else -> "${httpUrl.get()}${openPath.get()}"
     }
 
-    val jvmOpts = common.obj.strings { convention(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true")) }
+    val jvmOpts = common.obj.strings {
+        set(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true"))
+        prop.strings("jvmOpts")?.let { set(it) }
+    }
 
     val jvmAgentOpt: String? get() = jvmAgents.get().joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
 
@@ -58,23 +66,37 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    val jvmAgents = common.obj.strings { set(common.obj.provider { localManager.javaAgent.files.map { it.absolutePath } }) }
+    val jvmAgents = common.obj.strings {
+        set(
+            common.obj.provider {
+                val dsl = localManager.javaAgent.files.map { it.absolutePath }
+                val props = prop.strings("jvmAgents") ?: listOf()
+                dsl + props
+            }
+        )
+    }
 
     val javaExecutablePath: String get() = localManager.javaExecutablePath
 
-    val startOpts = common.obj.strings { set(listOf()) }
+    val startOpts = common.obj.strings {
+        set(listOf())
+        prop.strings("startOpts")?.let { set(it) }
+    }
 
     val startOptsString: String get() = startOpts.get().filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    val runModes = common.obj.strings { set(listOf()) }
+    val runModes = common.obj.strings {
+        set(listOf())
+        prop.strings("runModes")?.let { set(it) }
+    }
 
     val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase())).joinToString(",")
 
-    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id.get())
+    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
 
     val controlDir: File get() = dir.resolve("control")
 
-    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id.get())) }
+    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
 
     val jar: File? get() = quickstartDir.resolve("app").takeIf { it.exists() }?.listFiles(FileFilter { it.extension == "jar" })?.firstOrNull()
 
@@ -114,11 +136,11 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
             return AemVersion.UNKNOWN
         }
 
-    private fun readVersionFromJar() = readVersionFromExtractedJar() ?: readVersionFromQuickstartJar() ?: AemVersion.UNKNOWN
+    private fun readVersionFromJar() = readVersionFromExtractedJar() ?: readVersionFromProvidedJar() ?: AemVersion.UNKNOWN
 
     private fun readVersionFromExtractedJar() = jar?.name?.let { AemVersion.fromJarFileName(it) }
 
-    private fun readVersionFromQuickstartJar() = AemVersion.fromJar(quickstartJar)
+    private fun readVersionFromProvidedJar() = localManager.quickstart.jar?.let { AemVersion.fromJar(it) }
 
     private val startScript: Script get() = script("start")
 
@@ -158,7 +180,8 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     private val quickstartJar get() = localManager.quickstart.jar?.takeIf { it.exists() }
-        ?: throw LocalInstanceException("Instance JAR file not found! Is instance JAR URL configured?")
+        ?: localManager.quickstart.sdkJar?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
 
     private val quickstartLicense get() = localManager.quickstart.license?.takeIf { it.exists() }
         ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
@@ -236,6 +259,13 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     private fun unpackFiles() {
+        unpackQuickstartJar()
+
+        logger.info("Copying quickstart license from '$quickstartLicense' to '$license'")
+        FileUtils.copyFile(quickstartLicense, license)
+    }
+
+    private fun unpackQuickstartJar() {
         logger.info("Unpacking quickstart from JAR '$quickstartJar' to directory '$quickstartDir'")
         common.progressIndicator {
             step = "Copying quickstart JAR"
@@ -255,9 +285,6 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
                 tmpJar.delete()
             }
         }
-
-        logger.info("Copying quickstart license from '$quickstartLicense' to '$license'")
-        FileUtils.copyFile(quickstartLicense, license)
     }
 
     internal fun delete() = cleanDir(create = false)
@@ -293,7 +320,7 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
         val propertiesAll = mapOf(
             "instance" to this,
             "service" to localManager.serviceComposer
-        ) + properties.get() + localManager.expandProperties.get()
+        ) + localManager.expandProperties.get()
 
         aem.project.fileTree(dir)
             .matching { it.include(localManager.expandFiles.get()) }
@@ -399,6 +426,13 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='${httpUrl.get()}')"
+
+    init {
+        user.apply {
+            set(USER)
+            finalizeValue() // only 'admin' is allowed
+        }
+    }
 
     companion object {
 

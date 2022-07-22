@@ -53,7 +53,7 @@ class StatusReporter(private val aem: AemExtension) {
     }
 
     private fun Instance.details() = mutableListOf<String>().apply {
-        add("URL: $httpUrl")
+        add("URL: ${httpUrl.get()}")
         if (version != AemVersion.UNKNOWN) {
             add("Version: $version")
         }
@@ -62,7 +62,7 @@ class StatusReporter(private val aem: AemExtension) {
             else -> add("Status: ${if (available) "available" else "unavailable"}")
         }
         if (this@details is LocalInstance) {
-            add("Debug port: $debugPort")
+            add("Debug port: ${debugPort.get()}")
             if (pid > 0) add("Process ID: $pid")
         }
         if (available) {

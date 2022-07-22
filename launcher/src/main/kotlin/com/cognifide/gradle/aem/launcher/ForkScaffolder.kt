@@ -12,29 +12,34 @@ class ForkScaffolder(private val launcher: Launcher) {
         writeText(
             """
             # === Gradle AEM Plugin ===
+            
             package.manager.deployAvoidance={{packageDeployAvoidance}}
             {% if packageDamAssetToggle == 'true' %}
             package.manager.workflowToggle=[dam_asset=false]
             {% endif %}
+            
             localInstance.quickstart.jarUrl={{ localInstanceQuickstartJarUri }}
             localInstance.quickstart.licenseUrl={{ localInstanceQuickstartLicenseUri }}
+            localInstance.openMode={{ localInstanceOpenMode }}
+            
             localInstance.spUrl={{ localInstanceSpUri }}
             localInstance.coreComponentsUrl={{ localInstanceCoreComponentsUri }}
-            localInstance.openMode={{ localInstanceOpenMode }}
-            instance.default.type={{instanceType}}
+            
             instance.default.runModes={{ localInstanceRunModes }}
             instance.default.password={{instancePassword}}
-            instance.local-author.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
-            instance.local-author.enabled={{instanceAuthorEnabled}}
-            instance.local-author.httpUrl={{instanceAuthorHttpUrl}}
-            instance.local-author.openPath=/aem/start.html
-            instance.local-publish.enabled={{instancePublishEnabled}}
-            instance.local-publish.httpUrl={{instancePublishHttpUrl}}
-            instance.local-publish.openPath=/crx/packmgr
+            
+            instance.{{instanceType}}-author.serviceCredentialsUrl={{instanceServiceCredentialsUri}}
+            instance.{{instanceType}}-author.enabled={{instanceAuthorEnabled}}
+            instance.{{instanceType}}-author.httpUrl={{instanceAuthorHttpUrl}}
+            instance.{{instanceType}}-author.openPath=/aem/start.html
+            instance.{{instanceType}}-publish.enabled={{instancePublishEnabled}}
+            instance.{{instanceType}}-publish.httpUrl={{instancePublishHttpUrl}}
+            instance.{{instanceType}}-publish.openPath=/crx/packmgr
 
             mvnBuild.args={{mvnBuildArgs}}
 
             # === Gradle Common Plugin ===
+            
             notifier.enabled=true
             fileTransfer.user={{companyUser}}
             fileTransfer.password={{companyPassword}}
@@ -63,10 +68,6 @@ class ForkScaffolder(private val launcher: Launcher) {
                                 toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") 
                                 toggle(value == "remote", "instanceServiceCredentialsUri") 
                             }
-                        }
-                        define("localInstanceRunModes") {
-                            label = "Run Modes"
-                            optional()
                         }
                         define("instanceAuthorHttpUrl") {
                             label = "Author HTTP URL"
@@ -99,6 +100,10 @@ class ForkScaffolder(private val launcher: Launcher) {
                         define("instanceServiceCredentialsUri") {
                             label = "Service Credentials Uri"
                             description = "JSON file downloaded from AEMaaCS developer console"
+                            optional()
+                        }
+                        define("localInstanceRunModes") {
+                            label = "Run Modes"
                             optional()
                         }
                         define("localInstanceQuickstartJarUri") {

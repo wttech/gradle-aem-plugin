@@ -30,7 +30,7 @@ open class InstanceRcp : AemDefaultTask() {
 
         logger.info("RCP details: $summary")
 
-        if (!summary.source.cmd && !summary.target.cmd) {
+        if (!summary.source.cmd.get() && !summary.target.cmd.get()) {
             notifier.lifecycle(
                 "RCP finished",
                 "Copied ${summary.copiedPaths} JCR root(s) from instance ${summary.source.name} to ${summary.target.name}." +

@@ -165,7 +165,7 @@ class AemExtension(val project: Project) : Serializable {
      *
      * Note that this method intentionally allows to read details of instance which is even not enabled.
      */
-    fun instance(urlOrName: String): Instance = instanceManager.find(urlOrName) ?: instanceManager.parse(urlOrName)
+    fun instance(urlOrName: String): Instance = instanceManager.find(urlOrName) ?: instanceManager.factory.createByUrl(urlOrName)
 
     /**
      * Shorthand method for getting defined instances or creating temporary instances by URLs.
@@ -221,7 +221,7 @@ class AemExtension(val project: Project) : Serializable {
         val all = instanceManager.defined.get().filter { it.enabled.get() }
 
         // Specified by command line should not be filtered
-        val cmd = all.filter { it.env.get() == Instance.ENV_CMD }
+        val cmd = all.filter { it.cmd.get() }
         if (cmd.isNotEmpty()) {
             return cmd
         }
