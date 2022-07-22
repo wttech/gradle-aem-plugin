@@ -26,7 +26,6 @@ class InstanceFactory(val aem: AemExtension) {
 
     fun remoteByUrl(httpUrl: String, options: Instance.() -> Unit = {}) = remote(InstanceUrl.parse(httpUrl).name, options)
 
-
     fun local(name: String, options: LocalInstance.() -> Unit = {}) = LocalInstance(aem, name).apply {
         options()
         validate()

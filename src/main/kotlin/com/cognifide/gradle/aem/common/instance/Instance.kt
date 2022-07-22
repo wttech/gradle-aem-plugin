@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance
 
-import com.cognifide.gradle.common.build.PropertyGroup
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
@@ -9,6 +8,7 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.action.CheckAction
 import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.cognifide.gradle.aem.common.instance.check.CheckRunner
+import com.cognifide.gradle.common.build.PropertyGroup
 import com.cognifide.gradle.common.utils.Formats
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
@@ -37,12 +37,14 @@ open class Instance(val aem: AemExtension, val name: String) {
     val physicalType get() = PhysicalType.byInstance(this)
 
     val httpUrl = common.obj.string {
-        convention(aem.obj.provider {
-            when (type) {
-                IdType.AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
-                else -> InstanceUrl.HTTP_PUBLISH_DEFAULT
+        convention(
+            aem.obj.provider {
+                when (type) {
+                    IdType.AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
+                    else -> InstanceUrl.HTTP_PUBLISH_DEFAULT
+                }
             }
-        })
+        )
         prop.string("httpUrl")?.let { set(it) }
     }
 
@@ -105,20 +107,7 @@ open class Instance(val aem: AemExtension, val name: String) {
 
     val slingSettings get() = sync.status.slingSettings
 
-    val properties = common.obj.map<String, String?> {
-        set(aem.obj.provider {
-            mapOf() // todo extract properties like in instance factory
-        })
-    }
-
-    fun property(key: String, value: String) {
-        properties.put(key, value)
-    }
-
-    fun property(key: String): String? = properties.get()[key]
-        ?: systemProperties[key]
-        ?: slingProperties[key]
-        ?: slingSettings[key]
+    fun property(key: String): String? = systemProperties[key] ?: slingProperties[key] ?: slingSettings[key] ?: prop.string(key)
 
     val reachable: Boolean get() = sync.status.reachable
 

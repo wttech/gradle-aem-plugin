@@ -67,11 +67,13 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
     val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
 
     val jvmAgents = common.obj.strings {
-        set(common.obj.provider {
-            val dsl = localManager.javaAgent.files.map { it.absolutePath }
-            val props = prop.strings("jvmAgents") ?: listOf()
-            dsl + props
-        })
+        set(
+            common.obj.provider {
+                val dsl = localManager.javaAgent.files.map { it.absolutePath }
+                val props = prop.strings("jvmAgents") ?: listOf()
+                dsl + props
+            }
+        )
     }
 
     val javaExecutablePath: String get() = localManager.javaExecutablePath
@@ -318,7 +320,7 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
         val propertiesAll = mapOf(
             "instance" to this,
             "service" to localManager.serviceComposer
-        ) + properties.get() + localManager.expandProperties.get()
+        ) + localManager.expandProperties.get()
 
         aem.project.fileTree(dir)
             .matching { it.include(localManager.expandFiles.get()) }
