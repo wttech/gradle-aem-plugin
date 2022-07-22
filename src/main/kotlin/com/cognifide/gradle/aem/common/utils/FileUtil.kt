@@ -1,6 +1,9 @@
 package com.cognifide.gradle.aem.common.utils
 
 import org.apache.commons.io.FilenameUtils
+import org.apache.commons.io.input.ReversedLinesFileReader
+import java.io.File
+import java.nio.charset.StandardCharsets
 
 object FileUtil {
 
@@ -15,4 +18,8 @@ object FileUtil {
     }
 
     fun systemPath(path: String) = FilenameUtils.separatorsToSystem(path)
+
+    fun readLastLines(file: File, count: Int): List<String> {
+        return ReversedLinesFileReader(file, StandardCharsets.UTF_8).readLines(count)
+    }
 }

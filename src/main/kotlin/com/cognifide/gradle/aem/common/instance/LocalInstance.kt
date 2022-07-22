@@ -19,7 +19,7 @@ import java.io.FileFilter
 class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
 
     val debugPort = common.obj.int {
-        convention(5005)
+        convention(aem.obj.provider { httpUrlDetails.debugPort })
         prop.int("debugPort")?.let { set(it) }
     }
 
