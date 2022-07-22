@@ -136,11 +136,11 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
             return AemVersion.UNKNOWN
         }
 
-    private fun readVersionFromJar() = readVersionFromExtractedJar() ?: readVersionFromQuickstartJar() ?: AemVersion.UNKNOWN
+    private fun readVersionFromJar() = readVersionFromExtractedJar() ?: readVersionFromProvidedJar() ?: AemVersion.UNKNOWN
 
     private fun readVersionFromExtractedJar() = jar?.name?.let { AemVersion.fromJarFileName(it) }
 
-    private fun readVersionFromQuickstartJar() = AemVersion.fromJar(quickstartJar)
+    private fun readVersionFromProvidedJar() = localManager.quickstart.jar?.let { AemVersion.fromJar(it) }
 
     private val startScript: Script get() = script("start")
 
