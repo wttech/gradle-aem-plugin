@@ -10,24 +10,25 @@ class InstanceUrl(raw: String) {
 
     val config = URL(raw)
 
-    val user: String get() = userPart(0) ?: Instance.USER_DEFAULT
+    val user: String? get() = userPart(0)
 
-    val password: String get() = userPart(1) ?: Instance.PASSWORD_DEFAULT
+    val password: String? get() = userPart(1)
 
     val httpUrl: String get() = when {
         config.port != -1 -> "${config.protocol}://${config.host}:${config.port}"
         else -> "${config.protocol}://${config.host}"
     }
 
-    val basicAuth: String get() = basicAuth(user, password)
+    val basicAuth: String? get() = when {
+        user != null && password != null -> basicAuth(user!!, password!!)
+        else -> null
+    }
 
     fun basicAuth(user: String, password: String): String {
         val userInfo = "${encode(user)}:${encode(password)}"
-
-        return if (config.port != -1) {
-            "${config.protocol}://$userInfo@${config.host}:${config.port}"
-        } else {
-            "${config.protocol}://$userInfo@${config.host}"
+        return when {
+            config.port != -1 -> "${config.protocol}://$userInfo@${config.host}:${config.port}"
+            else -> "${config.protocol}://$userInfo@${config.host}"
         }
     }
 
@@ -42,6 +43,8 @@ class InstanceUrl(raw: String) {
             }
         }
     }
+
+    val name: String get() = "$id-$env"
 
     val id: String get() = type.name.lowercase()
 

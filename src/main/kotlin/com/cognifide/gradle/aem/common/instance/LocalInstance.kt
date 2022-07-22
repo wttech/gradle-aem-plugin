@@ -16,23 +16,31 @@ import java.io.File
 import java.io.FileFilter
 
 @Suppress("TooManyFunctions")
-class LocalInstance(aem: AemExtension) : Instance(aem) {
-    init {
-        user.set(USER)
+class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
+
+    val debugPort = common.obj.int {
+        convention(5005)
+        prop.int("debugPort")?.let { set(it) }
     }
 
-    val debugPort = common.obj.int { convention(5005) }
+    val debugAddress = common.obj.string {
+        prop.string("debugAddress")?.let { set(it) }
+    }
 
-    val debugAddress = common.obj.string {}
-
-    val openPath = common.obj.string { convention("/") }
+    val openPath = common.obj.string {
+        convention("/")
+        prop.string("openPath")?.let { set(it) }
+    }
 
     val httpOpenUrl get() = when (openPath.get()) {
         "/" -> httpUrl.get()
         else -> "${httpUrl.get()}${openPath.get()}"
     }
 
-    val jvmOpts = common.obj.strings { convention(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true")) }
+    val jvmOpts = common.obj.strings {
+        set(listOf("-server", "-Xmx2048m", "-XX:MaxPermSize=512M", "-Djava.awt.headless=true"))
+        prop.strings("jvmOpts")?.let { set(it) }
+    }
 
     val jvmAgentOpt: String? get() = jvmAgents.get().joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
 
@@ -58,23 +66,35 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
 
     val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    val jvmAgents = common.obj.strings { set(common.obj.provider { localManager.javaAgent.files.map { it.absolutePath } }) }
+    val jvmAgents = common.obj.strings {
+        set(common.obj.provider {
+            val dsl = localManager.javaAgent.files.map { it.absolutePath }
+            val props = prop.strings("jvmAgents") ?: listOf()
+            dsl + props
+        })
+    }
 
     val javaExecutablePath: String get() = localManager.javaExecutablePath
 
-    val startOpts = common.obj.strings { set(listOf()) }
+    val startOpts = common.obj.strings {
+        set(listOf())
+        prop.strings("startOpts")?.let { set(it) }
+    }
 
     val startOptsString: String get() = startOpts.get().filterNot { it.isNullOrBlank() }.joinToString(" ")
 
-    val runModes = common.obj.strings { set(listOf()) }
+    val runModes = common.obj.strings {
+        set(listOf())
+        prop.strings("runModes")?.let { set(it) }
+    }
 
     val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase())).joinToString(",")
 
-    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id.get())
+    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
 
     val controlDir: File get() = dir.resolve("control")
 
-    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id.get())) }
+    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
 
     val jar: File? get() = quickstartDir.resolve("app").takeIf { it.exists() }?.listFiles(FileFilter { it.extension == "jar" })?.firstOrNull()
 
@@ -404,6 +424,13 @@ class LocalInstance(aem: AemExtension) : Instance(aem) {
     }
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='${httpUrl.get()}')"
+
+    init {
+        user.apply {
+            set(USER)
+            finalizeValue() // only 'admin' is allowed
+        }
+    }
 
     companion object {
 

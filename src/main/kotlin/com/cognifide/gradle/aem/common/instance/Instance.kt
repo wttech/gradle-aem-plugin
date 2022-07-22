@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
+import com.cognifide.gradle.common.build.PropertyGroup
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
@@ -11,32 +12,66 @@ import com.cognifide.gradle.aem.common.instance.check.CheckRunner
 import com.cognifide.gradle.common.utils.Formats
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import java.io.Serializable
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 
-open class Instance(protected val aem: AemExtension) : Serializable {
+open class Instance(val aem: AemExtension, val name: String) {
 
     protected val common = aem.common
 
     protected val logger = aem.logger
 
-    val httpUrl = common.obj.string {}
+    protected val prop = PropertyGroup(common.prop, InstanceFactory.PROP_GROUP, name)
 
-    private val httpUrlDetails get() = InstanceUrl.parse(httpUrl.get())
+    val env get() = name.substringBefore("-")
+
+    val id get() = name.substringAfter("-")
+
+    val cmd = common.obj.boolean {
+        convention(false)
+    }
+
+    val type get() = IdType.byId(id)
+
+    val physicalType get() = PhysicalType.byInstance(this)
+
+    val httpUrl = common.obj.string {
+        convention(aem.obj.provider {
+            when (type) {
+                IdType.AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
+                else -> InstanceUrl.HTTP_PUBLISH_DEFAULT
+            }
+        })
+        prop.string("httpUrl")?.let { set(it) }
+    }
+
+    val httpUrlDetails get() = InstanceUrl.parse(httpUrl.get())
 
     val httpPort get() = httpUrlDetails.httpPort
 
     val httpHost get() = httpUrlDetails.httpHost
 
-    val httpBasicAuthUrl: String get() = httpUrlDetails.basicAuth(user.get(), password.get())
+    val httpUrlBasicAuth get() = httpUrlDetails.basicAuth(user.get(), password.get())
 
-    val user = common.obj.string { }
+    val enabled = common.obj.boolean {
+        convention(true)
+        prop.boolean("enabled")?.let { set(it) }
+    }
 
-    val password = common.obj.string {}
+    val user = common.obj.string {
+        convention(USER_DEFAULT)
+        prop.string("user")?.let { set(it) }
+    }
 
-    val serviceCredentials = common.obj.file {}
+    val password = common.obj.string {
+        convention(PASSWORD_DEFAULT)
+        prop.string("password")?.let { set(it) }
+    }
+
+    val serviceCredentials = common.obj.file {
+        prop.file("serviceCredentialsUrl")?.let { set(it) }
+    }
 
     val credentials: Pair<String, String> get() = when (this) {
         is LocalInstance -> auth.credentials
@@ -45,21 +80,7 @@ open class Instance(protected val aem: AemExtension) : Serializable {
 
     val credentialsString get() = "$user:$password"
 
-    val hiddenPassword: String get() = "*".repeat(password.get().length)
-
-    val env = common.obj.string {}
-
-    val cmd: Boolean get() = env.get() == ENV_CMD
-
-    val id = common.obj.string {}
-
-    val type: IdType get() = IdType.byId(id.get())
-
-    val physicalType: PhysicalType get() = PhysicalType.byInstance(this)
-
-    val enabled = common.obj.boolean { convention(true) }
-
-    val local: Boolean get() = physicalType == PhysicalType.LOCAL
+    val local get() = physicalType == PhysicalType.LOCAL
 
     fun <T> local(action: LocalInstance.() -> T) = when (this) {
         is LocalInstance -> this.run(action)
@@ -72,26 +93,23 @@ open class Instance(protected val aem: AemExtension) : Serializable {
         }
     }
 
-    val author: Boolean get() = type == IdType.AUTHOR
+    val author get() = type == IdType.AUTHOR
 
-    val publish: Boolean get() = type == IdType.PUBLISH
-
-    var name: String
-        get() = "${env.get()}-${id.get()}"
-        set(value) {
-            env.set(value.substringBefore("-"))
-            id.set(value.substringAfter("-"))
-        }
+    val publish get() = type == IdType.PUBLISH
 
     val sync get() = InstanceSync(aem, this)
 
-    val properties = common.obj.map<String, String?> { convention(mapOf()) }
+    val systemProperties get() = sync.status.systemProperties
 
-    val systemProperties: Map<String, String> get() = sync.status.systemProperties
+    val slingProperties get() = sync.status.slingProperties
 
-    val slingProperties: Map<String, String> get() = sync.status.slingProperties
+    val slingSettings get() = sync.status.slingSettings
 
-    val slingSettings: Map<String, String> get() = sync.status.slingSettings
+    val properties = common.obj.map<String, String?> {
+        set(aem.obj.provider {
+            mapOf() // todo extract properties like in instance factory
+        })
+    }
 
     fun property(key: String, value: String) {
         properties.put(key, value)
@@ -120,28 +138,28 @@ open class Instance(protected val aem: AemExtension) : Serializable {
         Formats.dateAt(timestamp, ZoneId.systemDefault())
     }
 
-    val osInfo: String get() = mutableListOf<String>().apply {
+    val osInfo get() = mutableListOf<String>().apply {
         systemProperties["os.name"]?.let { add(it) }
         systemProperties["os.arch"]?.let { add(it) }
         systemProperties["os.version"]?.let { add("($it)") }
     }.joinToString(" ")
 
-    val javaInfo: String get() = mutableListOf<String>().apply {
+    val javaInfo get() = mutableListOf<String>().apply {
         systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
         systemProperties["java.version"]?.let { add("($it)") }
     }.joinToString(" ")
 
-    val runningPath: String get() = systemProperties["user.dir"]
+    val runningPath get() = systemProperties["user.dir"]
         ?: throw InstanceException("Cannot read running path of $this!")
 
-    val runningModes: List<String> get() = slingSettings["Run_Modes"]
+    val runningModes get() = slingSettings["Run_Modes"]
         ?.removeSurrounding("[", "]")
         ?.split(",")?.map { it.trim() }
         ?: throw InstanceException("Cannot read running modes of $this!")
 
-    open val version: AemVersion get() = AemVersion(sync.status.productVersion)
+    open val version get() = AemVersion(sync.status.productVersion)
 
-    val manager: InstanceManager get() = aem.instanceManager
+    val manager get() = aem.instanceManager
 
     fun awaitUp(options: AwaitUpAction.() -> Unit = {}) = manager.awaitUp(this, options)
 
@@ -206,21 +224,11 @@ open class Instance(protected val aem: AemExtension) : Serializable {
         if (password.orNull.isNullOrBlank()) {
             throw AemException("Password cannot be blank in $this")
         }
-
-        if (env.orNull.isNullOrBlank()) {
-            throw AemException("Environment cannot be blank in $this")
-        }
-
-        if (id.orNull.isNullOrBlank()) {
-            throw AemException("ID cannot be blank in $this")
-        }
     }
 
     companion object {
 
         const val FILTER_ANY = "*"
-
-        const val ENV_CMD = "cmd"
 
         const val USER_DEFAULT = "admin"
 

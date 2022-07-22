@@ -54,8 +54,8 @@ class RcpClient(private val aem: AemExtension) {
         checkInstances()
         stopWatch.apply { if (!isStarted) start() else resume() }
         aem.vlt(
-            "rcp $opts ${sourceInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$sourcePath " +
-                "${targetInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$targetPath"
+            "rcp $opts ${sourceInstance!!.httpUrlBasicAuth}/$workspace/-/jcr:root$sourcePath " +
+                "${targetInstance!!.httpUrlBasicAuth}/$workspace/-/jcr:root$targetPath"
         )
         copiedPaths++
         stopWatch.suspend()

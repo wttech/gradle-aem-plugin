@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.common.instance.LocalInstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstanceManager
-import com.cognifide.gradle.common.os.OS
+import com.cognifide.gradle.common.os.OSUtil
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.internal.os.OperatingSystem
@@ -78,7 +78,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         ?.let { sdkWorkDir.resolve(sdkDispatcherImagePath.get()).takeIf { it.exists() } }
 
     val sdkDispatcherImagePath = aem.obj.string {
-        convention(aem.obj.provider { "$DISPATCHER_DIR/lib/dispatcher-publish-${OS.archOfHost()}.tar.gz" })
+        convention(aem.obj.provider { "$DISPATCHER_DIR/lib/dispatcher-publish-${OSUtil.archOfHost()}.tar.gz" })
         aem.prop.string("localInstance.quickstart.sdkDispatcherImagePath")?.let { set(it) }
     }
 

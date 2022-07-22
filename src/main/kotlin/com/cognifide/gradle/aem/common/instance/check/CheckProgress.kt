@@ -53,8 +53,8 @@ class CheckProgress(val instance: Instance) {
         }
 
         val instanceName = (
-            instance.env.get().toLowerSnakeCase().replace("_", " ") + " " +
-                instance.id.get().toLowerSnakeCase().replace("_", " ")
+            instance.env.toLowerSnakeCase().replace("_", " ") + " " +
+                instance.id.toLowerSnakeCase().replace("_", " ")
             ).firstLetters()
 
         return "$instanceName: ${parts.joinToString(" ")}"
