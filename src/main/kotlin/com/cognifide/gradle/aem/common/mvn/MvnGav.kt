@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.mvn
 
 import groovy.util.*
+import groovy.xml.XmlParser
 import java.io.File
 
 data class MvnGav(

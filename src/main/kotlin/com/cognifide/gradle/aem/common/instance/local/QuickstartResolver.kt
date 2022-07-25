@@ -35,7 +35,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
      */
     val jarUrl = aem.obj.string {
-        convention(distUrl.map { it.takeIf { it.endsWith(".jar") } })
+        convention(distUrl.map { it.takeIf { it.endsWith(".jar") }.toString() })
         aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
     }
 
@@ -54,7 +54,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
      * URI pointing to AEM SDK ZIP containing AEM instance JAR and Dispatcher Docker image.
      */
     val sdkUrl = aem.obj.string {
-        convention(distUrl.map { it.takeIf { it.endsWith(".zip") } })
+        convention(distUrl.map { it.takeIf { it.endsWith(".zip") }.toString() })
         aem.prop.string("localInstance.quickstart.sdkUrl")?.let { set(it) }
     }
 

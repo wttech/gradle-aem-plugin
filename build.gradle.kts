@@ -1,5 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java-gradle-plugin")
@@ -27,7 +27,7 @@ allprojects {
             withJavadocJar()
             withSourcesJar()
         }
-        tasks.withType<JavaCompile>().configureEach{
+        tasks.withType<JavaCompile>().configureEach {
             sourceCompatibility = JavaVersion.VERSION_1_8.toString()
             targetCompatibility = JavaVersion.VERSION_1_8.toString()
         }
@@ -45,6 +45,12 @@ allprojects {
     }
 }
 
+kotlin {
+    sourceSets.all {
+        languageSettings.optIn("kotlin.RequiresOptIn")
+    }
+}
+
 val functionalTestSourceSet = sourceSets.create("functionalTest")
 gradlePlugin.testSourceSets(functionalTestSourceSet)
 
@@ -56,8 +62,7 @@ dependencies {
     // Build environment
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.20.0-RC1")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.20.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
     implementation("com.cognifide.gradle:common-plugin:1.1.8")
@@ -65,13 +70,13 @@ dependencies {
     // External dependencies
     implementation("org.jsoup:jsoup:1.14.3")
     implementation("org.buildobjects:jproc:2.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("commons-io:commons-io:2.11.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("org.apache.httpcomponents:httpclient:4.5.13")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.3.0")
-    implementation("net.lingala.zip4j:zip4j:2.9.1")
+    implementation("net.lingala.zip4j:zip4j:2.10.0")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
