@@ -56,7 +56,7 @@ open class CommonOptions(private val aem: AemExtension) {
 
     val envFilter get() = env.orNull.takeIf { !it.isNullOrBlank() }?.let { "$it-*" } ?: "*"
 
-    val envImage get() = env.get() == ENVIRONMENT_IMAGE
+    val envImage get() = env.orNull == ENVIRONMENT_IMAGE
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
