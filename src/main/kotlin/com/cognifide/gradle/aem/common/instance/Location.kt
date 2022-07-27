@@ -2,8 +2,19 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemException
 
-enum class PhysicalType {
+/**
+ * Indicates if particular instance should be managed by the local instance plugin or not.
+ */
+enum class Location {
+
+    /**
+     * Managed by the plugin which could change it state (make up/down and destroy).
+     */
     LOCAL,
+
+    /**
+     * Managed externally. Plugin is unable to control it state.
+     */
     REMOTE;
 
     companion object {

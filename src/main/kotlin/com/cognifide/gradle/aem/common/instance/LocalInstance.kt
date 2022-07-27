@@ -90,13 +90,13 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
         prop.strings("runModes")?.let { set(it) }
     }
 
-    val runModesString: String get() = (runModes.get() + listOf(type.name.lowercase())).joinToString(",")
+    val runModesString: String get() = (runModes.get() + listOf(purpose.name.lowercase())).joinToString(",")
 
-    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(id)
+    val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(purposeId)
 
     val controlDir: File get() = dir.resolve("control")
 
-    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
+    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(purposeId)) }
 
     val jar: File? get() = quickstartDir.resolve("app").takeIf { it.exists() }?.listFiles(FileFilter { it.extension == "jar" })?.firstOrNull()
 

@@ -12,10 +12,19 @@ class InstanceFactory(val aem: AemExtension) {
 
     fun defaultPublish() = remoteByUrl(InstanceUrl.HTTP_PUBLISH_DEFAULT)
 
-    fun create(name: String, options: Instance.() -> Unit = {}) = when (name.substringBefore("-")) {
-        CommonOptions.ENVIRONMENT_LOCAL -> local(name)
-        else -> remote(name)
-    }.apply(options)
+    fun create(name: String, options: Instance.() -> Unit = {}): Instance {
+        val props = PropertyGroup(aem.common.prop, PROP_GROUP, name)
+        return when (Location.find(props.string(LOCATION_PROP))) {
+            Location.LOCAL -> local(name)
+            Location.REMOTE -> remote(name)
+            else -> {
+                when (name.substringBefore("-")) {
+                    CommonOptions.ENVIRONMENT_LOCAL -> local(name)
+                    else -> remote(name)
+                }
+            }
+        }.apply(options)
+    }
 
     fun createByUrl(httpUrl: String, options: Instance.() -> Unit = {}) = create(InstanceUrl.parse(httpUrl).name, options)
 
@@ -35,17 +44,13 @@ class InstanceFactory(val aem: AemExtension) {
 
     fun parseProperties() = parseProperties(aem.project.rootProject.properties)
 
-    fun parseProperties(allProps: Map<String, *>) = allProps.filterKeys { prop ->
-        !prop.startsWith("$NAME_DEFAULT.") && (
-            ALL_PROPS.any {
-                Regex("^$PROP_GROUP.$NAME_REGEX.$it\$").matches(prop)
-            }
-            )
+    fun parseProperties(allProps: Map<String, *>) = allProps.filterKeys { p ->
+        !p.startsWith("$NAME_DEFAULT.") && (NAME_PROPS.any { Regex("^$PROP_GROUP.$NAME_REGEX.$it\$").matches(p) })
     }.keys.mapNotNull { prop ->
         val name = prop.split(".")[1]
         val nameParts = name.split("-")
         if (nameParts.size != 2) {
-            aem.logger.warn("Instance name has invalid format '$name' in property '$prop'.")
+            aem.logger.warn("AEM instance name has invalid format '$name' in property '$prop'.")
             return@mapNotNull null
         }
         name
@@ -59,13 +64,12 @@ class InstanceFactory(val aem: AemExtension) {
 
         const val NAME_REGEX = "[\\w_]+-[\\w_]+"
 
-        val LOCAL_PROPS = listOf(
-            "httpUrl", "enabled", "type", "password", "jvmOpts", "startOpts", "runModes",
-            "debugPort", "debugAddress", "openPath"
-        )
+        const val LOCATION_PROP = "location"
 
-        val REMOTE_PROPS = listOf("httpUrl", "enabled", "type", "user", "password", "serviceCredentialsUrl")
+        const val HTTP_URL_PROP = "httpUrl"
 
-        val ALL_PROPS = (LOCAL_PROPS + REMOTE_PROPS).toSet()
+        const val ENABLED_PROP = "enabled"
+
+        val NAME_PROPS = listOf(LOCATION_PROP, HTTP_URL_PROP, ENABLED_PROP).toSet()
     }
 }

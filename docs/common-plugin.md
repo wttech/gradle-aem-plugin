@@ -39,11 +39,11 @@ Apply other plugins to provide pre-defined, ready-to-use tasks.
 
 ## Instance conventions
 
-*   Instance **name** is a combination of _${environment}-${id}_ e.g _local-author_, _integration-publish_ etc.
-*   Instance **id** is an instance purpose identifier and must start with the prefix _author_ or _publish_. Sample valid names: _author_, _author1_, _author2_, _author-master_ and _publish_, _publish1_ _publish2,_ etc.
-*   Instance **type** indicates the physical type of instance and could be only: _local_ and _remote_. Local means that instance could be created by the plugin automatically under the local file system.
-*   Only instances defined as _local_ are considered in command `instanceSetup`, `instanceCreate`, `instanceUp` etc (that comes from the plugin `com.cognifide.aem.instance.local`).
-*   All instances defined as _local_ or _remote_ are considered in commands CRX package deployment-related like `instanceProvision`, `packageDeploy`, `packageUpload`, `packageInstall` etc.
+*   Instance **name** is a combination of _${environment}-${purposeId}_ e.g _local-author_, _integration-publish_ etc.
+*   Instance **purposeId** is an instance purpose identifier and must start with the prefix _author_ or _publish_. Sample valid names: _author_, _author1_, _author2_, _author-master_ and _publish_, _publish1_ _publish2,_ etc.
+*   Instance **location** indicates where instance is physically located, possible values are: _local_ and _remote_. Local means that instance could be created by the plugin automatically under the local file system.
+*   Only instances with location _local_ are considered in command `instanceSetup`, `instanceCreate`, `instanceUp` etc (that comes from the plugin `com.cognifide.aem.instance.local`).
+*   All instances with any location are considered in commands CRX package deployment-related like `instanceProvision`, `packageDeploy`, `packageUpload`, `packageInstall` etc.
 
 Instances could be defined in two ways, via:
 

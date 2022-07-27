@@ -26,21 +26,21 @@ open class Instance(val aem: AemExtension, val name: String) {
 
     val env get() = name.substringBefore("-")
 
-    val id get() = name.substringAfter("-")
+    val purposeId get() = name.substringAfter("-")
+
+    val purpose get() = Purpose.byId(purposeId)
+
+    val location get() = Location.byInstance(this)
 
     val cmd = common.obj.boolean {
         convention(false)
     }
 
-    val type get() = IdType.byId(id)
-
-    val physicalType get() = PhysicalType.byInstance(this)
-
     val httpUrl = common.obj.string {
         convention(
             aem.obj.provider {
-                when (type) {
-                    IdType.AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
+                when (purpose) {
+                    Purpose.AUTHOR -> InstanceUrl.HTTP_AUTHOR_DEFAULT
                     else -> InstanceUrl.HTTP_PUBLISH_DEFAULT
                 }
             }
@@ -82,7 +82,7 @@ open class Instance(val aem: AemExtension, val name: String) {
 
     val credentialsString get() = "$user:$password"
 
-    val local get() = physicalType == PhysicalType.LOCAL
+    val local get() = location == Location.LOCAL
 
     fun <T> local(action: LocalInstance.() -> T) = when (this) {
         is LocalInstance -> this.run(action)
@@ -95,9 +95,9 @@ open class Instance(val aem: AemExtension, val name: String) {
         }
     }
 
-    val author get() = type == IdType.AUTHOR
+    val author get() = purpose == Purpose.AUTHOR
 
-    val publish get() = type == IdType.PUBLISH
+    val publish get() = purpose == Purpose.PUBLISH
 
     val sync get() = InstanceSync(aem, this)
 

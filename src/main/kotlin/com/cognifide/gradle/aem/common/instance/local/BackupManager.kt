@@ -243,7 +243,7 @@ class BackupManager(private val manager: LocalInstanceManager) {
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Restoring instance '$name'") {
-                    common.zip(backupZip).unpackDir(id, rootDir)
+                    common.zip(backupZip).unpackDir(purposeId, rootDir)
                 }
             }
         }
