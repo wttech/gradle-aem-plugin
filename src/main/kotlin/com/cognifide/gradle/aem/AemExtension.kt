@@ -120,7 +120,7 @@ class AemExtension(val project: Project) : Serializable {
      */
     val bundlesBuilt: List<Jar> get() = project.pluginProjects(BundlePlugin.ID)
         .flatMap { p -> p.common.tasks.getAll<Jar>() }
-        .filter { jar -> jar.convention.plugins.containsKey(BundlePlugin.CONVENTION_PLUGIN) }
+        .filter { jar -> bundleJarMap.containsKey(jar) }
 
     /**
      * Collection of Vault definitions from all packages from all projects applying package plugin.
@@ -453,7 +453,7 @@ class AemExtension(val project: Project) : Serializable {
     }
 
     companion object {
-
+        val bundleJarMap = mutableMapOf<Jar, BundleJar>()
         const val NAME = "aem"
 
         private val PLUGIN_IDS = listOf(

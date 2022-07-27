@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
@@ -423,6 +424,6 @@ open class BundleJar(private val jar: Jar) {
     fun wildcardPackage(vararg pkgs: String): List<String> = wildcardPackage(pkgs.toList())
 }
 
-val Jar.bundle: BundleJar get() = convention.getPlugin(BundleJar::class.java)
+val Jar.bundle: BundleJar get() = AemExtension.bundleJarMap.getOrPut(this) { BundleJar(this) }
 
 fun Jar.bundle(action: BundleJar.() -> Unit) = this.bundle.apply(action)
