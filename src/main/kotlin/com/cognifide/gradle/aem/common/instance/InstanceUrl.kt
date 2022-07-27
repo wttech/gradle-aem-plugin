@@ -44,11 +44,11 @@ class InstanceUrl(raw: String) {
         }
     }
 
-    val name: String get() = "$env-$id"
+    val name: String get() = "$env-$purposeId"
 
-    val id: String get() = type.name.lowercase()
+    val purposeId: String get() = purpose.name.lowercase()
 
-    val type: IdType get() = IdType.byUrl(httpUrl)
+    val purpose: Purpose get() = Purpose.byUrl(httpUrl)
 
     val debugPort: Int
         get() = if (config.port != -1) {
@@ -63,7 +63,7 @@ class InstanceUrl(raw: String) {
 
     val env: String get() = when {
         ENV_LOCAL_HOSTS.contains(config.host) -> "local"
-        else -> IdType.trim(config.host)
+        else -> Purpose.trim(config.host)
             .replace(".", "_")
             .replace("-", "_")
     }

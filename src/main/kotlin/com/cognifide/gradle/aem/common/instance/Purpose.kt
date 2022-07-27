@@ -3,7 +3,11 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.common.utils.Patterns
 
-enum class IdType {
+/**
+ * Represents run mode used to launch AEM instance.
+ */
+enum class Purpose {
+
     AUTHOR,
     PUBLISH;
 
@@ -31,12 +35,12 @@ enum class IdType {
 
         val PUBLISH_HOST_SUFFIXES = listOf(".publish", "-publish")
 
-        fun byId(id: String): IdType {
+        fun byId(id: String): Purpose {
             return values().find { id.startsWith(it.name, ignoreCase = true) }
-                ?: throw AemException("Invalid instance ID '$id'! Must start with prefix 'author' or 'publish'.")
+                ?: throw AemException("Invalid instance purpose ID '$id'! Must start with prefix 'author' or 'publish'.")
         }
 
-        fun byUrl(url: String): IdType {
+        fun byUrl(url: String): Purpose {
             val urlDetails = InstanceUrl.parse(url)
 
             return when {
