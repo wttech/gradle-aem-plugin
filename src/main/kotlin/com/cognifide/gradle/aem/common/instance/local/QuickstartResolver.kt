@@ -67,7 +67,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
 
     val sdkWorkDir: File get() = sdkDir.get().asFile
 
-    private val sdkVersionFile: File get() = sdkWorkDir.parentFile.resolve("sdk.txt")
+    private val sdkVersionFile: File get() = sdkWorkDir.parentFile.resolve("sdk.md5")
 
     val sdkJar: File? get() = sdk
         ?.also { unpackSdkZip(it) }
