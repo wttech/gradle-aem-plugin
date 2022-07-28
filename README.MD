@@ -98,15 +98,16 @@ Still all features are **fully configurable**.
 
 ## Compatibility
 
-| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager  | Java |
-|-------------------|-------------------|---------------------------|------|
-| 4.x up to 5.x     | 4.0 up to 4.8     | 6.x and up                | 8    |
-| 6.0.0 up to 6.2.1 | 4.9 up to 5.0     | 6.x and up                | 8    |
-| 6.3.0 up to 6.x   | 5.1 up to 5.6     | 6.x and up                | 8    |
-| 7.2.0 up to 8.1.1 | 5.1 up to 5.6     | 6.x and up                | 8,11 |
-| 8.1.2 up to 13.x  | 6.0 and up        | 6.x and up                | 8,11 |
-| 14.1.0 and up     | 6.0 and up        | 6.x and up, Cloud Service | 8,11 |
-| 14.4.22 and up    | 6.7 and up        | 6.x and up, Cloud Service | 8,11 |
+| Gradle AEM Plugin | Gradle Build Tool | AEM On-Prem | AEMaaCS            | Java |
+|-------------------|-------------------|-------------|--------------------|------|
+| 4.x up to 5.x     | 4.0 up to 4.8     | 6.x and up  | not supported      | 8    |
+| 6.0.0 up to 6.2.1 | 4.9 up to 5.0     | 6.x and up  | not supported      | 8    |
+| 6.3.0 up to 6.x   | 5.1 up to 5.6     | 6.x and up  | not supported      | 8    |
+| 7.2.0 up to 8.1.1 | 5.1 up to 5.6     | 6.x and up  | not supported      | 8,11 |
+| 8.1.2 up to 13.x  | 6.0 and up        | 6.x and up  | not supported      | 8,11 |
+| 14.1.0 and up     | 6.0 and up        | 6.x and up  | 2021.x and up      | 8,11 |
+| 14.4.22 and up    | 6.7 and up        | 6.x and up  | 2021.x and up      | 8,11 |
+| 16.0.1 and up     | 6.7 and up        | 6.x and up  | 2022.7.8005 and up | 8,11 |
 
 Note that since GAP 14.4.22 default Java version used to compile and run AEM instances is Java 11.
 To instruct GAP to use Java 8, consider setting property:
