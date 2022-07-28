@@ -65,24 +65,32 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.file("localInstance.quickstart.sdkDir")?.let { set(it) }
     }
 
-    val sdkWorkDir: File? get() = sdk?.let { sdkDir.get().asFile.resolve(it.nameWithoutExtension) }
+    val sdkWorkDir: File get() = sdkDir.get().asFile
+
+    private val sdkVersionFile: File get() = sdkWorkDir.parentFile.resolve("sdk.txt")
 
     val sdkJar: File? get() = sdk
         ?.also { unpackSdkZip(it) }
-        ?.let { sdkWorkDir?.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull() }
+        ?.let { sdkWorkDir.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull() }
 
-    val sdkDispatcherDir: File? get() = sdkWorkDir?.resolve("dispatcher")
+    val sdkDispatcherDir: File? get() = sdkWorkDir.resolve("dispatcher")
 
     val sdkDispatcherImage: File? get() = sdk
         ?.also { unpackSdkZip(it) }
         ?.also { unpackSdkDispatcher() }
         ?.let { sdkDispatcherDir?.resolve("lib/dispatcher-publish-${OSUtil.archOfHost()}.tar.gz")?.takeIf { it.exists() } }
 
+
     private fun unpackSdkZip(zip: File) {
-        sdkWorkDir?.takeIf { !it.exists() }?.let { dir ->
+        val versionCurrent = Formats.toChecksum(zip)
+        val versionPrevious = sdkVersionFile.takeIf { it.exists() }?.readText()?.trim()
+
+        if (versionCurrent != versionPrevious) {
             common.progress {
                 step = "Unpacking AEM SDK: ${zip.name} (${Formats.fileSize(zip)})"
-                common.zip(zip).unpackAll(dir)
+                sdkWorkDir.apply { deleteRecursively(); mkdirs() }
+                common.zip(zip).unpackAll(sdkWorkDir)
+                sdkVersionFile.writeText(versionCurrent)
             }
         }
     }
@@ -96,7 +104,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
 
     @Suppress("TooGenericExceptionCaught")
     private fun findAndRunSdkDispatcherScript() {
-        sdkWorkDir?.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
+        sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
             ?.firstOrNull()
             ?.let { script ->
                 sdkDispatcherDir?.takeIf { !it.exists() }?.let {dir ->
@@ -116,7 +124,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
     }
 
     private fun findAndUnpackSdkDispatcherZip() {
-        sdkWorkDir?.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-windows.zip") }
+        sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-windows.zip") }
             ?.firstOrNull()
             ?.let { zip ->
                 sdkDispatcherDir?.takeIf { !it.exists() }?.let { dir ->
