@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
@@ -65,7 +65,7 @@ class BundlePlugin : CommonDefaultPlugin() {
     private fun Project.setupTasks() {
         tasks {
             val jar = named<Jar>(JavaPlugin.JAR_TASK_NAME) {
-                val bundle = BundleJar(this).also { AemExtension.bundleJarMap[this] = it }
+                val bundle = BundleJar(this).also { aem.bundleJars[this] = it }
                 bundle.applyDefaults()
                 doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
                     override fun execute(task: Task) {
@@ -73,7 +73,7 @@ class BundlePlugin : CommonDefaultPlugin() {
                     }
                 })
             }.apply {
-                afterEvaluate { configureApply { AemExtension.bundleJarMap[this]?.applyEvaluated() } }
+                afterEvaluate { configureApply { aem.bundleJars[this]?.applyEvaluated() } }
             }
             register<BundleInstall>(BundleInstall.NAME) {
                 dependsOn(jar)

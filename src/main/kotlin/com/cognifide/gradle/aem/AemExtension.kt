@@ -66,6 +66,8 @@ class AemExtension(val project: Project) : Serializable {
 
     val ims by lazy { Ims(this) }
 
+    internal val bundleJars = mutableMapOf<Jar, BundleJar>()
+
     /**
      * Defines common settings like environment name, line endings when generating files etc
      */
@@ -120,7 +122,7 @@ class AemExtension(val project: Project) : Serializable {
      */
     val bundlesBuilt: List<Jar> get() = project.pluginProjects(BundlePlugin.ID)
         .flatMap { p -> p.common.tasks.getAll<Jar>() }
-        .filter { jar -> bundleJarMap.containsKey(jar) }
+        .filter { jar -> bundleJars.containsKey(jar) }
 
     /**
      * Collection of Vault definitions from all packages from all projects applying package plugin.
@@ -453,7 +455,6 @@ class AemExtension(val project: Project) : Serializable {
     }
 
     companion object {
-        val bundleJarMap = mutableMapOf<Jar, BundleJar>()
         const val NAME = "aem"
 
         private val PLUGIN_IDS = listOf(
