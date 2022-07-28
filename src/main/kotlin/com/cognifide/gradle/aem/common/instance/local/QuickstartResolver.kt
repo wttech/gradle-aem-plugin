@@ -80,7 +80,6 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         ?.also { unpackSdkDispatcher() }
         ?.let { sdkDispatcherDir?.resolve("lib/dispatcher-publish-${OSUtil.archOfHost()}.tar.gz")?.takeIf { it.exists() } }
 
-
     private fun unpackSdkZip(zip: File) {
         val versionCurrent = Formats.toChecksum(zip)
         val versionPrevious = sdkVersionFile.takeIf { it.exists() }?.readText()?.trim()
@@ -107,7 +106,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
             ?.firstOrNull()
             ?.let { script ->
-                sdkDispatcherDir?.takeIf { !it.exists() }?.let {dir ->
+                sdkDispatcherDir?.takeIf { !it.exists() }?.let { dir ->
                     common.progress {
                         step = "Unpacking AEM SDK Dispatcher Tools: ${script.name} (${Formats.fileSize(script)})"
                         try {
