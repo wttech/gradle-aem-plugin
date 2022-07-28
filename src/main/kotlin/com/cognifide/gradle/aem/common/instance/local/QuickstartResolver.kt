@@ -65,23 +65,24 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.file("localInstance.quickstart.sdkDir")?.let { set(it) }
     }
 
-    val sdkWorkDir: File get() = sdkDir.get().asFile
+    val sdkWorkDir: File? get() = sdk?.let { sdkDir.get().asFile.resolve(it.nameWithoutExtension) }
 
-    val sdkJar: File? get() = sdk?.also { unpackSdkZip(it) }
-        .let { sdkWorkDir.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull() }
+    val sdkJar: File? get() = sdk
+        ?.also { unpackSdkZip(it) }
+        ?.let { sdkWorkDir?.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull() }
 
-    val sdkDispatcherDir: File get() = sdkWorkDir.resolve("dispatcher")
+    val sdkDispatcherDir: File? get() = sdkWorkDir?.resolve("dispatcher")
 
     val sdkDispatcherImage: File? get() = sdk
         ?.also { unpackSdkZip(it) }
         ?.also { unpackSdkDispatcher() }
-        ?.let { sdkDispatcherDir.resolve("lib/dispatcher-publish-${OSUtil.archOfHost()}.tar.gz").takeIf { it.exists() } }
+        ?.let { sdkDispatcherDir?.resolve("lib/dispatcher-publish-${OSUtil.archOfHost()}.tar.gz")?.takeIf { it.exists() } }
 
     private fun unpackSdkZip(zip: File) {
-        if (!sdkWorkDir.exists()) {
+        sdkWorkDir?.takeIf { !it.exists() }?.let { dir ->
             common.progress {
                 step = "Unpacking AEM SDK: ${zip.name} (${Formats.fileSize(zip)})"
-                common.zip(zip).unpackAll(sdkWorkDir)
+                common.zip(zip).unpackAll(dir)
             }
         }
     }
@@ -95,16 +96,16 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
 
     @Suppress("TooGenericExceptionCaught")
     private fun findAndRunSdkDispatcherScript() {
-        sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
+        sdkWorkDir?.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
             ?.firstOrNull()
             ?.let { script ->
-                if (!sdkDispatcherDir.exists()) {
+                sdkDispatcherDir?.takeIf { !it.exists() }?.let {dir ->
                     common.progress {
                         step = "Unpacking AEM SDK Dispatcher Tools: ${script.name} (${Formats.fileSize(script)})"
                         try {
                             aem.project.exec { spec ->
-                                spec.workingDir(sdkDispatcherDir.parentFile)
-                                spec.commandLine("sh", script.absolutePath, "--target", sdkDispatcherDir.absolutePath)
+                                spec.workingDir(dir.parentFile)
+                                spec.commandLine("sh", script.absolutePath, "--target", dir.absolutePath)
                             }.assertNormalExitValue()
                         } catch (e: Exception) {
                             throw LocalInstanceException("Cannot run AEM SDK Dispatcher unpacking script '${script.absolutePath}'!", e)
@@ -115,13 +116,13 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
     }
 
     private fun findAndUnpackSdkDispatcherZip() {
-        sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-windows.zip") }
+        sdkWorkDir?.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-windows.zip") }
             ?.firstOrNull()
             ?.let { zip ->
-                if (!sdkDispatcherDir.exists()) {
+                sdkDispatcherDir?.takeIf { !it.exists() }?.let { dir ->
                     common.progress {
                         step = "Unpacking AEM SDK Dispatcher Tools: ${zip.name} (${Formats.fileSize(zip)})"
-                        common.zip(zip).unpackAll(sdkDispatcherDir)
+                        common.zip(zip).unpackAll(dir)
                     }
                 }
             }

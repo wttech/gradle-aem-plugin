@@ -743,4 +743,22 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     fun defined(options: LocalInstance.() -> Unit) {
         base.defined { whenLocal(options) }
     }
+
+    // Null-safe accessors for easy DSL scripting
+
+    val jar get() = quickstart.distJar?.takeIf { it.exists() }
+        ?: quickstart.sdkJar?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
+
+    val license get() = quickstart.license?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("Instance license file not found! Is instance license URL configured?")
+
+    val sdkDir get() = quickstart.sdk?.parentFile?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("SDK dir not found! Is SDK URL configured?")
+
+    val dispatcherImage get() = quickstart.sdkDispatcherImage?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("Dispatcher image not found! Is SDK URL configured?")
+
+    val dispatcherDir get() = quickstart.sdkDispatcherDir?.takeIf { it.exists() }
+        ?: throw LocalInstanceException("Dispatcher dir not found! Is SDK URL configured?")
 }
