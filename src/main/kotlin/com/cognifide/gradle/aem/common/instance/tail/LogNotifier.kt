@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.instance.tail
 import com.cognifide.gradle.aem.common.instance.tail.io.LogFiles
 import com.cognifide.gradle.common.notifier.NotifierFacade
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -12,7 +11,7 @@ import org.gradle.api.logging.LogLevel
 import java.awt.Desktop
 import java.net.URI
 
-@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class)
 class LogNotifier(
     private val notificationChannel: ReceiveChannel<LogChunk>,
     private val notifier: NotifierFacade,

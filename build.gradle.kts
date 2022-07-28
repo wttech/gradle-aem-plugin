@@ -40,14 +40,9 @@ allprojects {
         tasks.withType<KotlinCompile>().configureEach {
             kotlinOptions {
                 jvmTarget = JavaVersion.VERSION_1_8.toString()
+                freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
             }
         }
-    }
-}
-
-kotlin {
-    sourceSets.all {
-        languageSettings.optIn("kotlin.RequiresOptIn")
     }
 }
 
@@ -76,7 +71,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("org.apache.httpcomponents:httpclient:4.5.13")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.3.0")
-    implementation("net.lingala.zip4j:zip4j:2.10.0")
+    implementation("net.lingala.zip4j:zip4j:2.9.1")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("io.jsonwebtoken:jjwt:0.9.1")

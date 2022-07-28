@@ -19,7 +19,7 @@ class AssetManager(private val aem: AemExtension) {
         zip.parentFile.mkdirs()
         zip.outputStream().use { output ->
             this@AssetManager.javaClass.getResourceAsStream("/$ZIP_PATH").use {
-                    input ->
+                input ->
                 input.copyTo(output)
             }
         }
