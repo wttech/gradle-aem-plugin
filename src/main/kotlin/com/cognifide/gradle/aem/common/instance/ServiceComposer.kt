@@ -70,7 +70,7 @@ class ServiceComposer(val manager: LocalInstanceManager) {
      * Build command relative to root project used to start process which runs AEM instance as a system service.
      */
     val startCommand = aem.obj.string {
-        convention("sh gradlew -i --console=plain ${projectPath}instanceUp")
+        convention("sh gradlew -i -s --console=plain ${projectPath}instanceUp")
         aem.prop.string("localInstance.service.startCommand")?.let { set(it) }
     }
 
@@ -78,7 +78,7 @@ class ServiceComposer(val manager: LocalInstanceManager) {
      * Build command relative to root project used to stop process which runs AEM instance as a system service.
      */
     val stopCommand = aem.obj.string {
-        convention("sh gradlew -i --console=plain ${projectPath}instanceDown")
+        convention("sh gradlew -i -s --console=plain ${projectPath}instanceDown")
         aem.prop.string("localInstance.service.stopCommand")?.let { set(it) }
     }
 

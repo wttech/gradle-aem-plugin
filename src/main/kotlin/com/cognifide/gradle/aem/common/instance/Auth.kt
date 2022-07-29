@@ -36,7 +36,7 @@ class Auth(val instance: LocalInstance) {
     private fun saveProperties() = try {
         propertiesFile.parentFile.mkdirs()
         propertiesFile.bufferedWriter().use {
-            Properties().apply { put("admin.password", instance.password) }.store(it, null)
+            Properties().apply { put("admin.password", instance.password.get()) }.store(it, null)
         }
     } catch (e: CommonException) {
         throw AuthException("Cannot save auth properties to file '$propertiesFile' for $instance!", e)

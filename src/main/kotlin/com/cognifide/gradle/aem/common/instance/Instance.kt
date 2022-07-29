@@ -80,7 +80,7 @@ open class Instance(val aem: AemExtension, val name: String) {
         else -> user.get() to password.get()
     }
 
-    val credentialsString get() = "$user:$password"
+    val credentialsString get() = "${user.get()}:${password.get()}"
 
     val local get() = location == Location.LOCAL
 
