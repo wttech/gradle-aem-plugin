@@ -4,11 +4,13 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.local.JavaAgentResolver
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.oak.OakRun
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.using
 import org.apache.commons.io.FileUtils
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.jvm.toolchain.JavaLanguageVersion
@@ -42,7 +44,13 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
         prop.strings("jvmOpts")?.let { set(it) }
     }
 
-    val jvmAgentOpt: String? get() = jvmAgents.get().joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
+    val jvmAgents = JavaAgentResolver(aem).apply {
+        prop.strings("jvmAgents")?.let { files(it) }
+    }
+
+    fun jvmAgents(options: JavaAgentResolver.() -> Unit) = jvmAgents.using(options)
+
+    val jvmAgentOpt: String? get() = jvmAgents.files.joinToString(" ") { "-javaagent:$it" }.ifBlank { null }
 
     @Suppress("MagicNumber")
     val jvmDebugOpt: String? get() = when (debugPort.orNull) {
@@ -65,16 +73,6 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
     }
 
     val jvmOptsString: String get() = (jvmOpts.get() + jvmDebugOpt + jvmAgentOpt).filterNot { it.isNullOrBlank() }.joinToString(" ")
-
-    val jvmAgents = common.obj.strings {
-        set(
-            common.obj.provider {
-                val dsl = localManager.javaAgent.files.map { it.absolutePath }
-                val props = prop.strings("jvmAgents") ?: listOf()
-                dsl + props
-            }
-        )
-    }
 
     val javaExecutablePath: String get() = localManager.javaExecutablePath
 
