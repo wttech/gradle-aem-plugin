@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleJar
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
@@ -15,7 +16,7 @@ import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
@@ -41,7 +42,7 @@ class BundlePlugin : CommonDefaultPlugin() {
     private fun Project.setupJavaDefaults() {
         val support by lazy { extensions.getByType(CommonExtension::class.java).javaSupport }
 
-        with(convention.getPlugin(JavaPluginConvention::class.java)) {
+        with(extensions.getByType(JavaPluginExtension::class.java)) {
             sourceCompatibility = support.compatibilityVersion.get()
             targetCompatibility = support.compatibilityVersion.get()
         }
@@ -64,7 +65,7 @@ class BundlePlugin : CommonDefaultPlugin() {
     private fun Project.setupTasks() {
         tasks {
             val jar = named<Jar>(JavaPlugin.JAR_TASK_NAME) {
-                val bundle = BundleJar(this).also { convention.plugins[CONVENTION_PLUGIN] = it }
+                val bundle = BundleJar(this).also { aem.bundleJars[this] = it }
                 bundle.applyDefaults()
                 doLast(object : Action<Task> { // https://docs.gradle.org/7.4.1/userguide/validation_problems.html#implementation_unknown
                     override fun execute(task: Task) {
@@ -72,7 +73,7 @@ class BundlePlugin : CommonDefaultPlugin() {
                     }
                 })
             }.apply {
-                afterEvaluate { configureApply { convention.getPlugin(BundleJar::class.java).applyEvaluated() } }
+                afterEvaluate { configureApply { aem.bundleJars[this]?.applyEvaluated() } }
             }
             register<BundleInstall>(BundleInstall.NAME) {
                 dependsOn(jar)
@@ -106,7 +107,5 @@ class BundlePlugin : CommonDefaultPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.bundle"
-
-        const val CONVENTION_PLUGIN = "bundle"
     }
 }

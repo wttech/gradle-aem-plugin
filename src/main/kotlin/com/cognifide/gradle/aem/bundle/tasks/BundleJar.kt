@@ -423,6 +423,6 @@ open class BundleJar(private val jar: Jar) {
     fun wildcardPackage(vararg pkgs: String): List<String> = wildcardPackage(pkgs.toList())
 }
 
-val Jar.bundle: BundleJar get() = convention.getPlugin(BundleJar::class.java)
+val Jar.bundle: BundleJar get() = project.aem.bundleJars.getOrPut(this) { BundleJar(this) }
 
 fun Jar.bundle(action: BundleJar.() -> Unit) = this.bundle.apply(action)
