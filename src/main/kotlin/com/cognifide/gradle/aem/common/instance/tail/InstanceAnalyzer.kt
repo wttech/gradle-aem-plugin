@@ -31,7 +31,7 @@ class InstanceAnalyzer(
         }
         GlobalScope.launch {
             while (isActive) {
-                val log = incidentChannel.poll()
+                val log = incidentChannel.tryReceive().getOrNull()
                 if (log != null) {
                     incidentCannonade.add(log)
                 }
