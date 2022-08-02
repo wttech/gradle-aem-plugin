@@ -65,8 +65,10 @@ class ForkScaffolder(private val launcher: Launcher) {
                             select("local", "remote")
                             description = "Local - instance will be created on local file system\nRemote - connecting to remote instance only"
                             controller { 
-                                toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*") 
-                                toggle(value == "remote", "instanceServiceCredentialsUri") 
+                                toggle(value == "local", "instanceRunModes", "instanceJvmOpts", "localInstance*")
+                                toggle(value == "remote", "instanceServiceCredentialsUri")
+                                force(value == "local", "http://localhost:4502", "instanceAuthorHttpUrl")
+                                force(value == "local", "http://localhost:4503", "instancePublishHttpUrl")
                             }
                         }
                         define("instanceAuthorHttpUrl") {
