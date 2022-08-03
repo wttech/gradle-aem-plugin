@@ -143,6 +143,7 @@ open class Instance(val aem: AemExtension, val name: String) {
 
     val runningModes get() = slingSettings["Run_Modes"]
         ?.removeSurrounding("[", "]")
+        ?.removePrefix(",")
         ?.split(",")?.map { it.trim() }
         ?: throw InstanceException("Cannot read running modes of $this!")
 
