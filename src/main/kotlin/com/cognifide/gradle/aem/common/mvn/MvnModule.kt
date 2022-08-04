@@ -186,6 +186,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
             workingDir.set(build.rootDir)
             args.addAll("-N", "-f", descriptor.pom.absolutePath)
             args.addAll(profileArgs)
+            if (aem.prop.flag("mvnBuild.skipTests")) args.add("-DskipTests")
             aem.prop.string("mvnBuild.args")?.let { args.addAll(it.split(" ")) }
         }
         inputs.property("pomPath", descriptor.pom.absolutePath)
