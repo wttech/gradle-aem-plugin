@@ -1,3 +1,4 @@
+import com.neva.gradle.fork.config.properties.PropertyValidator
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -51,6 +52,10 @@ gradlePlugin.testSourceSets(functionalTestSourceSet)
 
 configurations.getByName("functionalTestImplementation").apply {
     extendsFrom(configurations.getByName("testImplementation"))
+}
+
+fun PropertyValidator.extension(value: String = property.value, extension: String = ".jar") {
+    if (value.isNotBlank() && !value.endsWith(extension)) this.error("Wrong extension! It should be '$extension' file.")
 }
 
 dependencies {
@@ -237,6 +242,7 @@ fork {
                 "localInstanceQuickstartJarUri" to {
                     label = "Quickstart URI"
                     description = "For file named 'cq-quickstart-x.x.x.jar'"
+                    validator = { notBlank(); path(); extension() }
                 },
                 "localInstanceQuickstartLicenseUri" to {
                     label = "Quickstart License URI"
