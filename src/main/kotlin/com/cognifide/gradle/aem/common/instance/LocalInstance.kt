@@ -88,10 +88,8 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
         prop.strings("runModes")?.let { set(it) }
     }
 
-    val runModesString: String get() = if (runModes.get().isNotEmpty()) {
-        (runModes.get() + listOf(purpose.name.lowercase())).joinToString(",")
-    } else
-        listOf(purpose.name.lowercase()).joinToString(",")
+    val runModesString: String get() = (runModes.get() + listOf(purpose.name.lowercase()))
+        .filter { it.isNotBlank() }.joinToString(",")
 
     val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(purposeId)
 
