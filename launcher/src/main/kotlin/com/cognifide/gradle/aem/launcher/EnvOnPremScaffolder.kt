@@ -67,43 +67,11 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             environment { // https://github.com/Cognifide/gradle-environment-plugin
                 docker {
                     containers {
-                        "httpd" {
-                            resolve {
-                                resolveFiles {
-                                    download(dispatcherTarUrl).use {
-                                        copyArchiveFile(it, "**/dispatcher-apache*.so", workFile("modules/mod_dispatcher.so"))
-                                    }
-                                }
-                                ensureDir("htdocs", "cache", "logs")
-                            }
-                            up {
-                                ensureDir(
-                                    "/usr/local/apache2/logs",
-                                    "/var/www/localhost/htdocs",
-                                    "/var/www/localhost/author/cache",
-                                    "/var/www/localhost/publish/cache",
-                                    "/etc/httpd/conf.d/proxy",
-                                    "/mnt/var/www/default"
-                                )
-                                symlink(
-                                    "/etc/httpd.extra/conf.modules.d/02-dispatcher.conf" to "/etc/httpd/conf.modules.d/02-dispatcher.conf",
-                                    "/etc/httpd.extra/conf.d/proxy/mock.proxy" to "/etc/httpd/conf.d/proxy/mock.proxy",
-                                    "/etc/httpd.extra/conf.d/variables/default.vars" to "/etc/httpd/conf.d/variables/default.vars",
-                                    "/etc/httpd.extra/conf.d/custom.conf" to "/etc/httpd/conf.d/custom.conf"
-                                )
-                                execShell("Installing SSL module", "yum -y install mod_ssl openssh")
-                                execShell("Starting HTTPD server", "/usr/sbin/httpd -k start")
-                            }
-                            reload {
-                                cleanDir("/var/www/localhost/cache")
-                                execShell("Restarting HTTPD server", "/usr/sbin/httpd -k restart")
-                            }
-                            dev {
-                                watchRootDir(
-                                    "dispatcher/src/conf.d",
-                                    "dispatcher/src/conf.dispatcher.d",
-                                    "env/src/environment/httpd")
-                            }
+                        "dispatcher" {
+                            load("dispatcherImage") { aem.localInstanceManager.dispatcherImage }
+                            resolve { listOf("cache", "logs").forEach { ensureDir(aem.localInstanceManager.dispatcherDir.resolve(it)) } }
+                            reload { cleanDir("/mnt/var/www/html") }
+                            dev { watchRootDir("app/aem/maven/dispatcher/src") }
                         }
                     }
                 }
@@ -155,7 +123,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                 version: "3"
                 services:
                   httpd:
-                    image: centos/httpd:latest
+                    image: adobe/aem-ethos/dispatcher-publish:latest
                     command: ["tail", "-f", "--retry", "/usr/local/apache2/logs/error.log"]
                     deploy:
                       replicas: 1
