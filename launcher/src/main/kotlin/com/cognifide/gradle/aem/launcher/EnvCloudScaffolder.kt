@@ -111,6 +111,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
         )
     }
 
+    @Suppress("LongMethod", "MaxLineLength")
     private fun saveEnvSrcFiles() {
         launcher.workFileOnce("env/src/environment/docker-compose.yml.peb") {
             println("Saving environment Docker compose file '$this'")
