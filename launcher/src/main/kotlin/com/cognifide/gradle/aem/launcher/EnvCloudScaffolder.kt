@@ -120,21 +120,34 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                 services:
                   httpd:
                     image: adobe/aem-ethos/dispatcher-publish:latest
-                    command: ["tail", "-f", "--retry", "/usr/local/apache2/logs/error.log"]
                     deploy:
                       replicas: 1
                     ports:
-                      - "80:80"
+                      - 8080:80
+                    environment:
+                      - AEM_HOST=host.docker.internal
+                      - AEM_IP=*.*.*.*
+                      - AEM_PORT=4503
+                      - VHOST=publish
+                      - ENVIRONMENT_TYPE=dev
+                      - DISP_LOG_LEVEL=Warn
+                      - REWRITE_LOG_LEVEL=Warn
+                      - EXPIRATION_TIME=A2592000
+                      - FORWARDED_HOST_SETTING=Off
+                      - COMMERCE_ENDPOINT=http://localhost/graphql  
                     volumes:
-                      - "{{ rootPath }}/dispatcher/src/conf.d:/etc/httpd/conf.d"
-                      - "{{ rootPath }}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
-                      - "{{ sourcePath }}/httpd:/etc/httpd.extra"
-                      - "{{ workPath }}/httpd/modules/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
-                      - "{{ workPath }}/httpd/logs:/etc/httpd/logs"
-                      {% if docker.runtime.safeVolumes %}
-                      - "{{ workPath }}/httpd/cache:/var/www/localhost/cache"
-                      - "{{ workPath }}/httpd/htdocs:/var/www/localhost/htdocs"
-                      {% endif %}
+                      # Use project-specific dispatcher config
+                      - {{ rootPath }}/dispatcher/src:/mnt/dev/src:ro
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib:/usr/lib/dispatcher-sdk:ro
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/import_sdk_config.sh:/docker_entrypoint.d/zzz-import-sdk-config.sh:ro
+                      # Enable invalidation by any client
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/overwrite_cache_invalidation.sh:/docker_entrypoint.d/zzz-overwrite_cache_invalidation.sh:ro
+                      # Enable hot reload
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/httpd-reload-monitor:/usr/sbin/httpd-reload-monitor:ro
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/bin/validator-linux-amd64:/usr/sbin/validator:ro
+                      # Enable previewing logs and caches directly on host
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/logs:/var/log/apache2
+                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/cache:/mnt/var/www
                     {% if docker.runtime.hostInternalIpMissing %}
                     extra_hosts:
                       - "host.docker.internal:{{ docker.runtime.hostInternalIp }}"
