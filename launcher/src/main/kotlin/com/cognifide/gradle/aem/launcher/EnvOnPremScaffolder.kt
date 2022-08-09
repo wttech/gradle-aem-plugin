@@ -39,7 +39,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             val instancePassword = common.prop.string("instance.default.password")
             val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl?.orNull ?: "http://127.0.0.1:4503"
             val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
-            val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.4.tar.gz"
+            val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.5.tar.gz"
             val servicePackUrl = common.prop.string("localInstance.spUrl")
             val coreComponentsUrl = common.prop.string("localInstance.coreComponentsUrl")
 
