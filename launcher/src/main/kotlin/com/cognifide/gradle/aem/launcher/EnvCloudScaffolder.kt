@@ -118,7 +118,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                 """
                 version: "3"
                 services:
-                  httpd:
+                  dispatcher:
                     image: adobe/aem-ethos/dispatcher-publish:latest
                     deploy:
                       replicas: 1
