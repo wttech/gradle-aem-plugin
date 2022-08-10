@@ -18,7 +18,7 @@ class LauncherTest {
 
     @Test
     fun shouldGenerateCloudEnvProperly() = makeTestProject("cloud-env", "cloud") {
-        launch("env:environmentResolve")
+        launch()
         assertTrue(
             File("build/functionalTest/cloud-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("COMMERCE_ENDPOINT")
