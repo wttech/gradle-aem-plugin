@@ -29,16 +29,18 @@ class LocalInstancePluginTest : AemBuildTest() {
 
     @Test
     fun `should resolve instance files properly`() {
+        val aemSDKFile = System.getProperty("localInstance.quickstart.jarUrl") ?: "src/aem/files/cq-quickstart-6.5.0.jar"
+        val licenseFile = System.getProperty("localInstance.quickstart.licenseUrl") ?: "src/aem/files/license.properties"
         val projectDir = prepareProject("instance-resolve") {
             settingsGradle("")
 
-            file("src/aem/files/cq-quickstart-6.5.0.jar", "")
-            file("src/aem/files/license.properties", "")
+            file(aemSDKFile, "")
+            file(licenseFile, "")
 
             gradleProperties(
                 """
-                localInstance.quickstart.jarUrl=src/aem/files/cq-quickstart-6.5.0.jar
-                localInstance.quickstart.licenseUrl=src/aem/files/license.properties
+                localInstance.quickstart.jarUrl=$aemSDKFile
+                localInstance.quickstart.licenseUrl=$licenseFile
             """
             )
 
@@ -65,8 +67,8 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceResolve", "-Poffline") {
             assertTask(":instanceResolve")
 
-            assertFileExists("build/localInstance/quickstart/cq-quickstart-6.5.0.jar")
-            assertFileExists("build/localInstance/quickstart/license.properties")
+            assertFileExists("build/localInstance/quickstart/${aemSDKFile.substringAfterLast('/')}")
+            assertFileExists("build/localInstance/quickstart/${licenseFile.substringAfterLast('/')}")
 
             assertFileExists("build/instance/provision/files/4f135495/aem-groovy-console-14.0.0.zip")
             assertFileExists("build/instance/provision/files/6182d096/accesscontroltool-oakindex-package-2.3.2.zip")

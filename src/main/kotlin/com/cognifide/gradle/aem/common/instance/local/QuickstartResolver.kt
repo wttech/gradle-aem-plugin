@@ -22,7 +22,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.file("localInstance.quickstart.downloadDir")?.let { set(it) }
     }
 
-    val distJar: File? get() = sdkJar ?: jar
+    val distJar: File get() = sdkJar ?: jar
 
     /**
      * URI pointing to AEM distribution (AEM SDK zip or AEM jar)
@@ -40,7 +40,9 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
     }
 
-    val jar: File? get() = jarUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
+    val jar: File get() = requireNotNull(
+        jarUrl.get().let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
+    )  { "File with '.jar' extension is not selected." }
 
     /**
      * URI pointing to AEM quickstart license file.

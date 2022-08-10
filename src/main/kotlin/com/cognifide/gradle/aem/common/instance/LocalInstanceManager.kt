@@ -337,12 +337,13 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
-        if (quickstart.distJar == null) {
+        if (!quickstart.distJar.name.endsWith(".jar")) {
             throw LocalInstanceException(
                 "Cannot create instances due to lacking source files. " +
                     "Ensure having specified AEM SDK or Quickstart JAR url."
             )
         }
+
         if (quickstart.license == null) {
             throw LocalInstanceException(
                 "Cannot create instances due to lacking source files. " +
@@ -663,7 +664,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     fun determineJavaCompatibleVersions(): List<JavaVersion> {
         val aemVersion = try {
-            quickstart.distJar?.let { AemVersion.fromJar(it) }
+            quickstart.distJar.let { AemVersion.fromJar(it) }
         } catch (e: CommonException) {
             logger.info("Determining Java compatible versions for specified AEM quickstart JAR is not possible.")
             logger.debug("Cannot determine Java compatible versions basing on AEM quickstart JAR!", e)
@@ -746,7 +747,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     // Null-safe accessors for easy DSL scripting
 
-    val jar get() = quickstart.distJar?.takeIf { it.exists() }
+    val jar get() = quickstart.distJar.takeIf { it.exists() }
         ?: quickstart.sdkJar?.takeIf { it.exists() }
         ?: throw LocalInstanceException("Instance JAR file not found! Is instance AEM SDK or Quickstart JAR URL configured?")
 
