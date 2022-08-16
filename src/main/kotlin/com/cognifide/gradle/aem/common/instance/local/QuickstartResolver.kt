@@ -40,9 +40,11 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
     }
 
-    val jar: File get() = requireNotNull(
-        jarUrl.get().let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
-    )  { "File with '.jar' extension is not selected." }
+    val jar: File get() = jarUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
+        ?: throw LocalInstanceException(
+            "Cannot create instances due to lacking source files. " +
+                "Ensure having specified AEM SDK or Quickstart JAR url."
+        )
 
     /**
      * URI pointing to AEM quickstart license file.

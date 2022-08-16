@@ -337,13 +337,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
     }
 
     fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
-        if (!quickstart.distJar.name.endsWith(".jar")) {
-            throw LocalInstanceException(
-                "Cannot create instances due to lacking source files. " +
-                    "Ensure having specified AEM SDK or Quickstart JAR url."
-            )
-        }
-
         if (quickstart.license == null) {
             throw LocalInstanceException(
                 "Cannot create instances due to lacking source files. " +
