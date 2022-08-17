@@ -59,9 +59,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         set(descriptor.dir.resolve("target"))
     }
 
-    val skipTestsArg = aem.obj.string { convention("-DskipTests") }
-
-    val shouldSkipTests = aem.obj.boolean { convention(aem.prop.flag("mvnBuild.skipTests")) }
+    val skipTests = aem.obj.boolean { convention(aem.prop.flag("mvnBuild.skipTests")) }
 
     fun targetFileLocator(locator: MvnModule.(extension: String) -> Provider<RegularFile>) {
         this.targetFileLocator = locator
@@ -190,7 +188,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
             workingDir.set(build.rootDir)
             args.addAll("-N", "-f", descriptor.pom.absolutePath)
             args.addAll(profileArgs)
-            if (shouldSkipTests.get()) args.add(skipTestsArg)
+            if (skipTests.get()) args.add("-DskipTests")
             aem.prop.string("mvnBuild.args")?.let { args.addAll(it.split(" ")) }
         }
         inputs.property("pomPath", descriptor.pom.absolutePath)
