@@ -2,7 +2,9 @@ package com.cognifide.gradle.aem.instance.local
 
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
 @Suppress("LongMethod", "MaxLineLength")
@@ -29,18 +31,16 @@ class LocalInstancePluginTest : AemBuildTest() {
 
     @Test
     fun `should resolve instance files properly`() {
-        val aemSDKFile = System.getProperty("localInstance.quickstart.jarUrl") ?: "src/aem/files/cq-quickstart-6.5.0.jar"
-        val licenseFile = System.getProperty("localInstance.quickstart.licenseUrl") ?: "src/aem/files/license.properties"
         val projectDir = prepareProject("instance-resolve") {
             settingsGradle("")
 
-            file(aemSDKFile, "")
-            file(licenseFile, "")
+            file("src/aem/files/cq-quickstart-6.5.0.jar", "")
+            file("src/aem/files/license.properties", "")
 
             gradleProperties(
                 """
-                localInstance.quickstart.jarUrl=$aemSDKFile
-                localInstance.quickstart.licenseUrl=$licenseFile
+                localInstance.quickstart.jarUrl=src/aem/files/cq-quickstart-6.5.0.jar
+                localInstance.quickstart.licenseUrl=src/aem/files/license.properties
             """
             )
 
@@ -67,13 +67,53 @@ class LocalInstancePluginTest : AemBuildTest() {
         runBuild(projectDir, "instanceResolve", "-Poffline") {
             assertTask(":instanceResolve")
 
-            assertFileExists("build/localInstance/quickstart/${aemSDKFile.substringAfterLast('/')}")
-            assertFileExists("build/localInstance/quickstart/${licenseFile.substringAfterLast('/')}")
+            assertFileExists("build/localInstance/quickstart/cq-quickstart-6.5.0.jar")
+            assertFileExists("build/localInstance/quickstart/license.properties")
 
             assertFileExists("build/instance/provision/files/4f135495/aem-groovy-console-14.0.0.zip")
             assertFileExists("build/instance/provision/files/6182d096/accesscontroltool-oakindex-package-2.3.2.zip")
             assertFileExists("build/instance/provision/files/f30506c4/accesscontroltool-package-2.3.2.zip")
             // assertPackage("build/package/wrapper/search-webconsole-plugin-1.3.0.zip")
+        }
+    }
+
+    @Test
+    fun `should throw exception when jarUrl is not jar file`() {
+        val projectDir = prepareProject("instance-resolve") {
+            settingsGradle("")
+
+            file("src/aem/files/cq-quickstart-6.5.0.txt", "")
+            file("src/aem/files/license.properties", "")
+
+            gradleProperties(
+                """
+                localInstance.quickstart.jarUrl=src/aem/files/cq-quickstart-6.5.0.txt
+                localInstance.quickstart.licenseUrl=src/aem/files/license.properties
+            """
+            )
+
+            buildGradle(
+                """
+                plugins {
+                    id("com.cognifide.aem.instance.local")
+                }
+                
+                aem {
+                    instance {
+                        provisioner {
+                            deployPackage("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip")
+                            deployPackage("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip")
+                            // deployPackage("com.neva.felix:search-webconsole-plugin:1.3.0")
+                            deployPackage("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
+                        }
+                    }
+                }
+                """
+            )
+        }
+
+        assertThrows<UnexpectedBuildFailure> {
+            runBuild(projectDir, "instanceResolve", "-Poffline") {}
         }
     }
 

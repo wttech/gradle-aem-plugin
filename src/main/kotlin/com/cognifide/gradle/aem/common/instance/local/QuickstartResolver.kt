@@ -36,11 +36,16 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
      */
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     val jarUrl = aem.obj.string {
-        convention(distUrl.map { it.takeIf { it.endsWith(".jar") } })
+        convention(distUrl.map { it })
         aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
     }
 
-    val jar: File? get() = jarUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
+    val jar: File?
+        get() = if (jarUrl.orNull == null || jarUrl.orNull?.endsWith(".jar") == true)
+            jarUrl.orNull?.let { common.fileTransfer.downloadTo(it, downloadDir.get().asFile) }
+        else throw LocalInstanceException(
+            "The file extension of JAR url should be '.jar'. Ensure having specified AEM SDK or Quickstart JAR url"
+        )
 
     /**
      * URI pointing to AEM quickstart license file.
