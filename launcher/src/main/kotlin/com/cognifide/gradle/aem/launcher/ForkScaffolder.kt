@@ -18,7 +18,7 @@ class ForkScaffolder(private val launcher: Launcher) {
             package.manager.workflowToggle=[dam_asset=false]
             {% endif %}
             
-            localInstance.quickstart.jarUrl={{ localInstanceQuickstartJarUri }}
+            localInstance.quickstart.distUrl={{ localInstanceQuickstartDistUri }}
             localInstance.quickstart.licenseUrl={{ localInstanceQuickstartLicenseUri }}
             localInstance.openMode={{ localInstanceOpenMode }}
             
@@ -108,9 +108,9 @@ class ForkScaffolder(private val launcher: Launcher) {
                             label = "Run Modes"
                             optional()
                         }
-                        define("localInstanceQuickstartJarUri") {
-                            label = "Quickstart URI"
-                            description = "Typically file named 'cq-quickstart-*.jar' or 'aem-sdk-quickstart-*.jar'"
+                        define("localInstanceQuickstartDistUri") {
+                            label = "AEM distribution URI"
+                            description = "Typically AEM SDK zip file or AEM jar file"
                         }
                         define("localInstanceQuickstartLicenseUri") {
                             label = "Quickstart License URI"
