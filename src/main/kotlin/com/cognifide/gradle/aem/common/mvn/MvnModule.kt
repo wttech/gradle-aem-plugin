@@ -59,8 +59,6 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         set(descriptor.dir.resolve("target"))
     }
 
-    val skipTests = aem.obj.boolean { convention(aem.prop.flag("mvnBuild.skipTests")) }
-
     fun targetFileLocator(locator: MvnModule.(extension: String) -> Provider<RegularFile>) {
         this.targetFileLocator = locator
     }
@@ -71,9 +69,12 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
 
     fun targetFile(extension: String) = targetFileLocator(extension)
 
+    val skipTests = aem.obj.boolean {
+        set(build.skipTests)
+    }
+
     val profiles = aem.obj.strings {
-        set(listOf())
-        aem.prop.list("mvnBuild.profiles")?.let { addAll(it) }
+        set(build.profiles)
     }
 
     private val profileArgs = profiles.map { ps ->

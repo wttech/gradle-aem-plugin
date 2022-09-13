@@ -18,12 +18,17 @@ class DependencyGraph(val build: MvnBuild) {
     }
 
     val generateCommand = aem.obj.string {
-        convention(build.groupId.map { "com.github.ferstl:depgraph-maven-plugin:aggregate -Dincludes=${build.groupId.get()} -Dscope=compile" })
+        convention(build.groupId.map { g -> "com.github.ferstl:depgraph-maven-plugin:aggregate -Dincludes=$g -Dscope=compile" })
         aem.prop.string("mvnBuild.depGraph.generateCommand")?.let { set(it) }
     }
 
     val buildCommand = aem.obj.string {
-        convention("clean install -DskipTests")
+        convention(build.profiles.map { p ->
+            mutableListOf("clean", "install").apply {
+                addAll(p.map { "-P$it" })
+                if (build.skipTests.get()) add("-DskipTests")
+            }.joinToString(" ")
+        })
         aem.prop.string("mvnBuild.depGraph.buildCommand")?.let { set(it) }
     }
 
