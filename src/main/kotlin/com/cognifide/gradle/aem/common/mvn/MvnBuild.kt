@@ -75,6 +75,15 @@ class MvnBuild(val aem: AemExtension) {
         get() = MvnGav.readFile(rootPom.get().asFile).version
             ?: throw MvnException("Cannot determine Maven build version at path '${rootDir.get().asFile}'!")
 
+    val profiles = aem.obj.strings {
+        set(listOf())
+        aem.prop.list("mvnBuild.profiles")?.let { addAll(it) }
+    }
+
+    val skipTests = aem.obj.boolean {
+        convention(aem.prop.flag("mvnBuild.skipTests"))
+    }
+
     val contentPath = aem.obj.string {
         convention("src/main/content")
         aem.prop.string("mvnBuild.contentPath")?.let { set(it) }
