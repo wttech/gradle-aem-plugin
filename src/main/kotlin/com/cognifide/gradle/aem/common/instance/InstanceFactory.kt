@@ -26,7 +26,7 @@ class InstanceFactory(val aem: AemExtension) {
         }.apply(options)
     }
 
-    fun createByUrl(httpUrl: String, options: Instance.() -> Unit = {}) : Instance {
+    fun createByUrl(httpUrl: String, options: Instance.() -> Unit = {}): Instance {
         val parsed = InstanceUrl.parse(httpUrl)
         return create(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
     }
@@ -36,7 +36,7 @@ class InstanceFactory(val aem: AemExtension) {
         validate()
     }
 
-    fun remoteByUrl(httpUrl: String, options: Instance.() -> Unit = {}) : Instance {
+    fun remoteByUrl(httpUrl: String, options: Instance.() -> Unit = {}): Instance {
         val parsed = InstanceUrl.parse(httpUrl)
         return remote(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
     }
@@ -46,7 +46,7 @@ class InstanceFactory(val aem: AemExtension) {
         validate()
     }
 
-    fun localByUrl(httpUrl: String, options: LocalInstance.() -> Unit = {}) : LocalInstance {
+    fun localByUrl(httpUrl: String, options: LocalInstance.() -> Unit = {}): LocalInstance {
         val parsed = InstanceUrl.parse(httpUrl)
         return local(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
     }
