@@ -26,9 +26,9 @@ class InstanceFactory(val aem: AemExtension) {
         }.apply(options)
     }
 
-    fun createByUrl(httpUrl: String, options: Instance.() -> Unit = {}) {
+    fun createByUrl(httpUrl: String, options: Instance.() -> Unit = {}) : Instance {
         val parsed = InstanceUrl.parse(httpUrl)
-        create(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
+        return create(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
     }
 
     fun remote(name: String, options: Instance.() -> Unit = {}) = Instance(aem, name).apply {
@@ -36,9 +36,9 @@ class InstanceFactory(val aem: AemExtension) {
         validate()
     }
 
-    fun remoteByUrl(httpUrl: String, options: Instance.() -> Unit = {}) {
+    fun remoteByUrl(httpUrl: String, options: Instance.() -> Unit = {}) : Instance {
         val parsed = InstanceUrl.parse(httpUrl)
-        remote(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
+        return remote(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
     }
 
     fun local(name: String, options: LocalInstance.() -> Unit = {}) = LocalInstance(aem, name).apply {
@@ -46,9 +46,9 @@ class InstanceFactory(val aem: AemExtension) {
         validate()
     }
 
-    fun localByUrl(httpUrl: String, options: LocalInstance.() -> Unit = {}) {
+    fun localByUrl(httpUrl: String, options: LocalInstance.() -> Unit = {}) : LocalInstance {
         val parsed = InstanceUrl.parse(httpUrl)
-        local(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
+        return local(parsed.name, options).apply { this.httpUrl.set(parsed.httpUrl) }
     }
 
     fun parseProperties() = parseProperties(aem.project.rootProject.properties)
