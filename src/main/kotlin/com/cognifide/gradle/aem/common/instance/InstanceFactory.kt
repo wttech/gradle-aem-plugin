@@ -27,6 +27,7 @@ class InstanceFactory(val aem: AemExtension) {
     }
 
     fun createByUrl(httpUrl: String, options: Instance.() -> Unit = {}) = create(InstanceUrl.parse(httpUrl).name, options)
+        .apply { this.httpUrl.set(InstanceUrl.parse(httpUrl).httpUrl) }
 
     fun remote(name: String, options: Instance.() -> Unit = {}) = Instance(aem, name).apply {
         options()
@@ -34,6 +35,7 @@ class InstanceFactory(val aem: AemExtension) {
     }
 
     fun remoteByUrl(httpUrl: String, options: Instance.() -> Unit = {}) = remote(InstanceUrl.parse(httpUrl).name, options)
+        .apply { this.httpUrl.set(InstanceUrl.parse(httpUrl).httpUrl) }
 
     fun local(name: String, options: LocalInstance.() -> Unit = {}) = LocalInstance(aem, name).apply {
         options()
@@ -41,6 +43,7 @@ class InstanceFactory(val aem: AemExtension) {
     }
 
     fun localByUrl(httpUrl: String, options: LocalInstance.() -> Unit = {}) = local(InstanceUrl.parse(httpUrl).name, options)
+        .apply { this.httpUrl.set(InstanceUrl.parse(httpUrl).httpUrl) }
 
     fun parseProperties() = parseProperties(aem.project.rootProject.properties)
 
