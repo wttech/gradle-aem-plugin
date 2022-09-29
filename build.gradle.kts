@@ -4,11 +4,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.5.31"
-    id("com.gradle.plugin-publish") version "0.20.0"
-    id("io.gitlab.arturbosch.detekt") version "1.20.0-RC1"
-    id("net.researchgate.release") version "2.8.1"
-    id("com.github.breadmoirai.github-release") version "2.2.12"
+    id("org.jetbrains.kotlin.jvm") version "1.6.21"
+    id("com.gradle.plugin-publish") version "1.0.0"
+    id("io.gitlab.arturbosch.detekt") version "1.21.0"
+    id("net.researchgate.release") version "3.0.2"
+    id("com.github.breadmoirai.github-release") version "2.4.1"
     id("com.neva.fork") version "5.0.0"
 }
 
