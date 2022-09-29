@@ -44,7 +44,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             val coreComponentsUrl = common.prop.string("localInstance.coreComponentsUrl")
 
             aem {
-                instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/master/docs/instance-plugin.md
+                instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/main/docs/instance-plugin.md
                     provisioner {
                         enableCrxDe()
                         servicePackUrl?.let { deployPackage(it) }

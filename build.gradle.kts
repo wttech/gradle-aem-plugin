@@ -198,12 +198,6 @@ pluginBundle {
     tags = listOf("aem", "cq", "vault", "scr")
 }
 
-release {
-    git {
-        requireBranch.set("master")
-    }
-}
-
 githubRelease {
     owner("wttech")
     repo("gradle-aem-plugin")
