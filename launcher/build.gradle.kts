@@ -3,7 +3,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 plugins {
     kotlin("jvm")
     `maven-publish`
-    id("io.gitlab.arturbosch.detekt") version "1.20.0-RC1"
+    id("io.gitlab.arturbosch.detekt") version "1.21.0"
 }
 
 group = "com.cognifide.gradle"
@@ -27,7 +27,7 @@ dependencies {
     implementation("org.gradle:gradle-tooling-api:7.4-rc-1")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
 
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.20.0-RC1")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
 
     "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.3.2")
     "functionalTestImplementation"("org.junit.jupiter:junit-jupiter-api:5.3.2")

@@ -57,7 +57,7 @@ dependencies {
     // Build environment
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.20.0")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
     implementation("com.cognifide.gradle:common-plugin:1.1.9")
