@@ -430,7 +430,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                         }
                         controlTrigger.trigger(
                             action = { triggerUp() },
-                            verify = { this@sync.status.reachable },
+                            verify = { this@sync.status.checkReachable() },
                             fail = {
                                 val message = listOf(
                                     "Instance cannot be triggered up: $instance!",
