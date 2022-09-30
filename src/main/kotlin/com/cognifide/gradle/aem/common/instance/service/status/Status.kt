@@ -5,10 +5,13 @@ import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.http.HttpException as CommonHttpException
+import org.apache.http.HttpException as ApacheHttpException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.http.HttpStatus
+import java.net.ConnectException
 import java.util.*
 
 /**
@@ -47,12 +50,23 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     fun checkReachableStatus(): Int = try {
         instance.sync {
             http.basicCredentials = null
+            http.bearerToken.set(null as String?)
             http.authorizationPreemptive.set(false)
             http.get(reachablePath.get()) { it.statusLine.statusCode }
         }
-    } catch (e: CommonException) {
-        logger.debug("Cannot check reachable status of $instance!", e)
-        -1
+    } catch (e: CommonHttpException) {
+        catchReachableStatus(e)
+    } catch (e: ApacheHttpException) {
+        catchReachableStatus(e)
+    } catch (e: ConnectException) {
+        catchReachableStatus(e)
+    }
+
+    private fun catchReachableStatus(e: Exception): Int {
+        val message = "Cannot check reachable status of $instance!"
+        logger.info("$message Cause: $e}")
+        logger.debug(message, e)
+        return -1
     }
 
     /**
