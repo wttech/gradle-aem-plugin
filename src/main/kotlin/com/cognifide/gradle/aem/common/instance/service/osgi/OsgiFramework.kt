@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.build.Retry
+import com.cognifide.gradle.common.http.HttpException
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.utils.Formats
 import org.apache.http.HttpStatus
@@ -33,7 +34,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
         return try {
             sync.http.get(BUNDLES_LIST_JSON) { asObjectFromJson(it, BundleState::class.java) }
-        } catch (e: CommonException) {
+        } catch (e: HttpException) {
             logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }.apply {
@@ -190,7 +191,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
         return try {
             sync.http.get(COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
-        } catch (e: CommonException) {
+        } catch (e: HttpException) {
             logger.debug("Cannot determine OSGi components state on $instance. Cause: ${e.message}", e)
             ComponentState.unknown()
         }.apply {
@@ -291,9 +292,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 val html = asString(response)
                 val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value
                     ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
-                Formats.toObjectFromJson<ConfigurationState>(configJson)
+                Formats.toObjectFromJson(configJson)
             }
-        } catch (e: CommonException) {
+        } catch (e: HttpException) {
             logger.debug("Cannot determine OSGi configuration state on $instance. Cause: ${e.message}", e)
             ConfigurationState.unknown()
         }.apply {
@@ -415,7 +416,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
         return try {
             sync.http.get(EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
-        } catch (e: CommonException) {
+        } catch (e: HttpException) {
             logger.debug("Cannot determine OSGi events state on $instance. Cause: ${e.message}", e)
             EventState.unknown()
         }.apply {

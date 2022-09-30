@@ -32,13 +32,17 @@ class Ims(private val aem: AemExtension) {
 
     @Suppress("TooGenericExceptionCaught")
     fun generateToken(serviceCredentials: File): String {
+        if (!serviceCredentials.exists()) {
+            throw ImsException("Adobe IMS service credentials file does not exist '$serviceCredentials'!")
+        }
+
         try {
             val secret = readCredentialsFile(serviceCredentials)
             val jwtToken = generateJWTToken(secret)
             val accessObject = fetchAccessObject(jwtToken, secret)
             return accessObject.accessToken
         } catch (e: Exception) {
-            throw ImsException("Could not generate the access token, consider checking the provided secret file", e)
+            throw ImsException("Adobe IMS token could not be generated using provided file '$serviceCredentials'!", e)
         }
     }
 

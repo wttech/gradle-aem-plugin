@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.pkg.PackageException
-import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.http.HttpException
 
 class CndSync(private val aem: AemExtension) {
 
@@ -49,7 +49,7 @@ class CndSync(private val aem: AemExtension) {
                     parentFile.mkdirs()
                     writeText(crx.nodeTypes)
                 }
-            } catch (e: CommonException) {
+            } catch (e: HttpException) {
                 aem.logger.debug("Cannot synchronize CND file using $instance! Cause: ${e.message}", e)
                 action()
             }

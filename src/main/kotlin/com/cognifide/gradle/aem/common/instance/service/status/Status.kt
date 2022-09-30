@@ -5,13 +5,11 @@ import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.common.CommonException
-import com.cognifide.gradle.common.http.HttpException as CommonHttpException
-import org.apache.http.HttpException as ApacheHttpException
+import com.cognifide.gradle.common.http.HttpException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.http.HttpStatus
-import java.net.ConnectException
 import java.util.*
 
 /**
@@ -54,19 +52,9 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             http.authorizationPreemptive.set(false)
             http.get(reachablePath.get()) { it.statusLine.statusCode }
         }
-    } catch (e: CommonHttpException) {
-        catchReachableStatus(e, true)
-    } catch (e: ApacheHttpException) {
-        catchReachableStatus(e, true)
-    } catch (e: ConnectException) {
-        catchReachableStatus(e, false)
-    }
-
-    private fun catchReachableStatus(e: Exception, info: Boolean): Int {
-        val message = "Cannot check reachable status of $instance!"
-        if (info) logger.info("$message Cause: $e}")
-        logger.debug(message, e)
-        return -1
+    } catch (e: HttpException) {
+        logger.debug("Cannot check reachable status of $instance!", e)
+        -1
     }
 
     /**
@@ -87,7 +75,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                 http.basicCredentials = Instance.CREDENTIALS_DEFAULT
                 http.get(authorizablePath.get()) { it.statusLine.statusCode } == HttpStatus.SC_UNAUTHORIZED
             }
-        } catch (e: CommonException) {
+        } catch (e: HttpException) {
             logger.debug("Cannot check for unauthorized on $instance!", e)
             false
         }
@@ -111,7 +99,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      */
     fun checkAvailable(): Boolean = try {
         !sync.osgiFramework.determineBundleState().unknown
-    } catch (e: CommonException) {
+    } catch (e: HttpException) {
         logger.debug("Cannot check availability of $instance!")
         false
     }
@@ -205,7 +193,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                     readProductVersion().apply {
                         aem.logger.info("Successfully read product version '$this' of $instance")
                     }
-                } catch (e: CommonException) {
+                } catch (e: HttpException) {
                     aem.logger.debug("Cannot read product info of $instance")
                     null
                 }
