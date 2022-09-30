@@ -193,7 +193,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                     readProductVersion().apply {
                         aem.logger.info("Successfully read product version '$this' of $instance")
                     }
-                } catch (e: HttpException) {
+                } catch (e: StatusException) {
                     aem.logger.debug("Cannot read product info of $instance")
                     null
                 }
