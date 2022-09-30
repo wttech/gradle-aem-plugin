@@ -55,16 +55,16 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             http.get(reachablePath.get()) { it.statusLine.statusCode }
         }
     } catch (e: CommonHttpException) {
-        catchReachableStatus(e)
+        catchReachableStatus(e, true)
     } catch (e: ApacheHttpException) {
-        catchReachableStatus(e)
+        catchReachableStatus(e, true)
     } catch (e: ConnectException) {
-        catchReachableStatus(e)
+        catchReachableStatus(e, false)
     }
 
-    private fun catchReachableStatus(e: Exception): Int {
+    private fun catchReachableStatus(e: Exception, info: Boolean): Int {
         val message = "Cannot check reachable status of $instance!"
-        logger.info("$message Cause: $e}")
+        if (info) logger.info("$message Cause: $e}")
         logger.debug(message, e)
         return -1
     }
