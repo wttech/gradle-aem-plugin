@@ -80,6 +80,26 @@ open class Instance(val aem: AemExtension, val name: String) {
         else -> user.get() to password.get()
     }
 
+    val token = common.obj.string {
+        convention("")
+    }
+
+    val tokenExpirationTime = common.obj.long {
+        convention(0)
+    }
+
+    fun getToken(): String {
+        if (shouldGenerateToken()) {
+            token.set(aem.ims.generateToken(serviceCredentials.asFile.get()))
+            tokenExpirationTime.set(aem.ims.lastExpirationTimeUsed)
+        }
+        return token.get()
+    }
+
+    @Suppress("MagicNumber")
+    private fun shouldGenerateToken() = token.get().isEmpty() ||
+        tokenExpirationTime.get() < System.currentTimeMillis() / 1000
+
     val credentialsString get() = "${user.get()}:${password.get()}"
 
     val local get() = location == Location.LOCAL

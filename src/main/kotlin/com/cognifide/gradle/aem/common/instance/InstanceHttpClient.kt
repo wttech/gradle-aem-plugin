@@ -17,7 +17,7 @@ open class InstanceHttpClient(private val aem: AemExtension, val instance: Insta
         escapeUrl.set(true)
 
         if (instance.serviceCredentials.isPresent) {
-            val token = aem.obj.provider { aem.ims.generateToken(instance.serviceCredentials.asFile.get()) }
+            val token = aem.obj.provider { instance.getToken() }
             bearerToken.set(token)
         } else {
             authorizationPreemptive.set(true)

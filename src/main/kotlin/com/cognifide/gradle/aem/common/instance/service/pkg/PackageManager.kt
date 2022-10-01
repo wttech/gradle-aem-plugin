@@ -9,7 +9,6 @@ import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.HttpClient
 import com.cognifide.gradle.common.http.HttpException
 import com.cognifide.gradle.common.http.RequestException

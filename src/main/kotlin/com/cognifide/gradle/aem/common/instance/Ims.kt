@@ -30,6 +30,10 @@ class Ims(private val aem: AemExtension) {
      */
     private val expirationTimeNormalized get() = System.currentTimeMillis() / 1000 + expirationTime.get()
 
+    val lastExpirationTimeUsed = aem.obj.long {
+        convention(0)
+    }
+
     @Suppress("TooGenericExceptionCaught")
     fun generateToken(serviceCredentials: File): String {
         if (!serviceCredentials.exists()) {
@@ -62,10 +66,12 @@ class Ims(private val aem: AemExtension) {
         val imsHost = secret.integration.imsHost
         val metaScopes = secret.integration.metascopes.split(",")
 
+        lastExpirationTimeUsed.set(expirationTimeNormalized)
+
         val jwtClaims = mapOf<String, Any>(
             "iss" to secret.integration.orgId,
             "sub" to secret.integration.technicalAccountId,
-            "exp" to expirationTimeNormalized,
+            "exp" to lastExpirationTimeUsed.get(),
             "aud" to "https://$imsHost/c/${secret.integration.technicalAccount.clientId}",
         ) + metaScopes.associate {
             "https://$imsHost/s/$it" to true
