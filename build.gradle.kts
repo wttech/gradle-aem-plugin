@@ -61,7 +61,7 @@ dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
-    implementation("com.cognifide.gradle:common-plugin:1.1.10")
+    implementation("com.cognifide.gradle:common-plugin:1.1.11")
 
     // External dependencies
     implementation("org.jsoup:jsoup:1.14.3")

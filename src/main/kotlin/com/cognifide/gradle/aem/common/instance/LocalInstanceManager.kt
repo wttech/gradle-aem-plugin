@@ -425,9 +425,7 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
                     }
 
                     sync {
-                        if (!initialized) {
-                            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
-                        }
+                        controlTriggerOptions()
                         controlTrigger.trigger(
                             action = { triggerUp() },
                             verify = { this@sync.status.checkReachable() },
@@ -494,6 +492,8 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
             upInstances.onEachApply {
                 increment("Stopping instance '$name'") {
                     sync {
+                        controlTriggerOptions()
+
                         val initReachableStatus = status.checkReachableStatus()
                         controlTrigger.trigger(
                             action = { triggerDown() },
@@ -522,6 +522,15 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         } else if (available) {
             sync.osgi.stop()
             logger.warn("Instance not created, but available. Stopping OSGi on: $this")
+        }
+    }
+
+    private fun InstanceSync.controlTriggerOptions() {
+        http.connectionRetries.set(false)
+        http.connectionTimeout.set((controlTrigger.verifyTimeout.get().toDouble() * 0.9).toInt())
+
+        if (instance.local { !initialized }) {
+            http.basicCredentials = Instance.CREDENTIALS_DEFAULT
         }
     }
 

@@ -49,7 +49,10 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         instance.sync {
             http.basicCredentials = null
             http.bearerToken.set(null as String?)
+
             http.authorizationPreemptive.set(false)
+            http.connectionRetries.set(false)
+
             http.get(reachablePath.get()) { it.statusLine.statusCode }
         }
     } catch (e: HttpException) {
