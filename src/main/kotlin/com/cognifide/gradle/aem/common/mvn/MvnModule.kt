@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.PackageConfig
+import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.mvn.MvnExec
@@ -81,52 +82,52 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         ps.filter { descriptor.hasProfile(it) }.map { "-P$it" }
     }
 
-    fun buildPom() = exec(Artifact.POM) {
+    fun buildPom() = exec(ArtifactType.POM.task) {
         description = "Installs POM to local repository"
         invoker.args("clean", "install")
         inputs.file(descriptor.pom)
         outputs.file(repositoryPom)
     }
 
-    fun buildJar(options: MvnExec.() -> Unit = {}) = buildArtifact(Artifact.JAR) {
+    fun buildJar(options: MvnExec.() -> Unit = {}) = buildArtifact(ArtifactType.JAR) {
         description = "Builds JAR file"
         options()
     }
 
-    fun buildZip(options: MvnExec.() -> Unit = {}) = buildArtifact(Artifact.ZIP) {
+    fun buildZip(options: MvnExec.() -> Unit = {}) = buildArtifact(ArtifactType.ZIP) {
         description = "Builds ZIP archive"
         options()
     }
 
-    fun buildArtifact(extension: String, options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(extension) {
-        description = "Builds artifact '$extension'"
+    fun buildArtifact(type: ArtifactType, options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(type.task) {
+        description = "Builds artifact '${type.extension}'"
         invoker.args("clean", "install")
         inputs.files(inputFiles)
-        outputs.file(targetFile(extension))
+        outputs.file(targetFile(type.extension))
         outputs.file(repositoryPom)
         options()
     }
 
-    fun buildFrontend(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
+    fun buildFrontend(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(ArtifactType.ZIP.task) {
         description = "Builds AEM frontend"
         invoker.args("clean", "install")
         inputs.files(inputFiles)
-        outputs.file(targetFile(Artifact.ZIP))
+        outputs.file(targetFile(ArtifactType.ZIP.extension))
         outputs.file(repositoryPom)
         options()
     }
 
     fun configurePackage() {
         val buildPackage = buildPackage()
-        deployPackage(targetFile(Artifact.ZIP)) { dependsOn(buildPackage) }
+        deployPackage(targetFile(ArtifactType.ZIP.extension)) { dependsOn(buildPackage) }
         syncPackage()
         syncConfig()
     }
 
-    fun buildPackage(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(Artifact.ZIP) {
+    fun buildPackage(options: MvnExec.() -> Unit = {}): TaskProvider<MvnExec> = exec(ArtifactType.ZIP.task) {
         description = "Builds CRX package"
         invoker.args("clean", "install")
-        val outputFile = targetFile(Artifact.ZIP)
+        val outputFile = targetFile(ArtifactType.ZIP.extension)
         inputs.files(inputFiles)
         outputs.file(outputFile)
         outputs.file(repositoryPom)
@@ -174,7 +175,7 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
         options()
     }
 
-    fun runModule(options: MvnExec.() -> Unit = {}) = exec(Artifact.RUN) {
+    fun runModule(options: MvnExec.() -> Unit = {}) = exec(ArtifactType.RUN.task) {
         description = "Run module"
         invoker.args("clean", "install")
         inputs.files(inputFiles)
@@ -215,10 +216,10 @@ class MvnModule(val build: MvnBuild, val descriptor: ModuleDescriptor, val proje
     override fun toString() = "MvnModule(projectPath='${project.path}' descriptor=$descriptor)"
 
     companion object {
-        const val TASK_PACKAGE_DEPLOY = "deploy"
+        const val TASK_PACKAGE_DEPLOY = PackageDeploy.NAME
 
-        const val TASK_PACKAGE_SYNC = "sync"
+        const val TASK_PACKAGE_SYNC = PackageSync.NAME
 
-        const val TASK_PACKAGE_CONFIG = "config"
+        const val TASK_PACKAGE_CONFIG = PackageConfig.NAME
     }
 }

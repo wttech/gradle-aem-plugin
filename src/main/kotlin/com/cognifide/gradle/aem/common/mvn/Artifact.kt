@@ -17,17 +17,6 @@ class Artifact(val notation: String) {
     }
 
     override fun hashCode() = notation.hashCode()
-
-    companion object {
-
-        const val POM = "pom"
-
-        const val ZIP = "zip"
-
-        const val JAR = "jar"
-
-        const val RUN = "run"
-    }
 }
 
 fun String.toArtifact() = Artifact(this)
