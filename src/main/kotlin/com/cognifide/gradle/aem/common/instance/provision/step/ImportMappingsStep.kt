@@ -3,8 +3,9 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.provision.Step
 
-class ImportMappingsStep(provisioner: Provisioner, val fileName: String) : AbstractStep(provisioner) {
+class ImportMappingsStep(provisioner: Provisioner, val fileName: String) : Step(provisioner) {
 
     val jsonFile get() = provisioner.manager.configDir.get().asFile.resolve("mapping/$fileName")
 

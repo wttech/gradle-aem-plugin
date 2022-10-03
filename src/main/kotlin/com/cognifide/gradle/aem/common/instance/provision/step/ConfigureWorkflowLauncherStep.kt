@@ -3,9 +3,10 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.provision.Step
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowLauncher
 
-class ConfigureWorkflowLauncherStep(provisioner: Provisioner, val wid: String) : AbstractStep(provisioner) {
+class ConfigureWorkflowLauncherStep(provisioner: Provisioner, val wid: String) : Step(provisioner) {
 
     lateinit var workflowAction: WorkflowLauncher.() -> Unit
 

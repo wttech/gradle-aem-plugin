@@ -3,8 +3,9 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.provision.Step
 
-class ConfigureCryptoStep(provisioner: Provisioner) : AbstractStep(provisioner) {
+class ConfigureCryptoStep(provisioner: Provisioner) : Step(provisioner) {
 
     val fileSymbolicName = aem.obj.string {
         convention("com.adobe.granite.crypto.file")

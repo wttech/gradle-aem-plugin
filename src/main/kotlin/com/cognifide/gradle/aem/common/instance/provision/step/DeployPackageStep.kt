@@ -3,9 +3,10 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.provision.Step
 import com.cognifide.gradle.common.utils.toLowerCamelCase
 
-class DeployPackageStep(provisioner: Provisioner) : AbstractStep(provisioner) {
+class DeployPackageStep(provisioner: Provisioner) : Step(provisioner) {
 
     val source = aem.obj.typed<Any>()
 

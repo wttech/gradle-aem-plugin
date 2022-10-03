@@ -4,8 +4,9 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.provision.Step
 
-class CustomStep(provisioner: Provisioner) : AbstractStep(provisioner) {
+class CustomStep(provisioner: Provisioner) : Step(provisioner) {
 
     fun validate(callback: () -> Unit) {
         this.validateCallback = callback
