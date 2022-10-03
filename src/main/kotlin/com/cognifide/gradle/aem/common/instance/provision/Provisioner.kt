@@ -163,11 +163,20 @@ class Provisioner(val manager: InstanceManager) {
         steps.forEach { (definition, instanceSteps) ->
             message = definition.label
 
-            common.parallel.each(instanceSteps) { instanceStep ->
-                increment("${definition.label} on '${instanceStep.instance.name}'") {
-                    actions.add(instanceStep.perform())
+            if (definition.runInParallel.get()) {
+                common.parallel.each(instanceSteps) { instanceStep ->
+                    increment("${definition.label} on '${instanceStep.instance.name}'") {
+                        actions.add(instanceStep.perform())
+                    }
+                }
+            } else {
+                instanceSteps.forEach { instanceStep ->
+                    increment("${definition.label} on '${instanceStep.instance.name}'") {
+                        actions.add(instanceStep.perform())
+                    }
                 }
             }
+
             val instancesStepsPerformed = instanceSteps.filter { it.performable }.map { it.instance }
             if (instancesStepsPerformed.isNotEmpty()) {
                 definition.awaitUp(instancesStepsPerformed)

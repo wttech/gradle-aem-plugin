@@ -36,6 +36,11 @@ interface Step {
     fun version(vararg dependencies: Any?)
 
     /**
+     * Controls if step should be performed in parallel on multiple instances at once.
+     */
+    val runInParallel: Property<Boolean>
+
+    /**
      * Controls logging error to console instead of breaking build with exception so that next step might be performed.
      */
     val continueOnFail: Property<Boolean>

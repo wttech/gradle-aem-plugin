@@ -48,6 +48,11 @@ abstract class AbstractStep(final override val provisioner: Provisioner) : Step 
         return conditionRetry.withCountdown<Boolean, Exception>(operation) { conditionCallback(condition) }
     }
 
+    override val runInParallel = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.provision.step.runInParallel")?.let { set(it) }
+    }
+
     override fun condition(callback: Condition.() -> Boolean) {
         this.conditionCallback = callback
     }
