@@ -4,9 +4,9 @@ class Artifact(val notation: String) {
 
     val id get() = notation.substringBeforeLast(":")
 
-    val extension get() = notation.substringAfterLast(":")
+    val type get() = ArtifactType.byExtension(notation.substringAfterLast(":"))
 
-    override fun toString() = "Artifact(id='$id', extension='$extension')"
+    override fun toString() = "Artifact(id='$id', type='$type')"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

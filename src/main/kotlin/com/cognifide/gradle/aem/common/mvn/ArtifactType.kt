@@ -10,5 +10,10 @@ enum class ArtifactType {
 
     val extension get() = name.lowercase()
 
-    val task get() = "mvn${name.capitalizeChar()}"
+    val task get() = "mvn${extension.capitalizeChar()}"
+
+    companion object {
+        fun byExtension(value: String) = values().firstOrNull { it.extension == value }
+            ?: error("Artifact type cannot be determined by extension '$value'!")
+    }
 }
