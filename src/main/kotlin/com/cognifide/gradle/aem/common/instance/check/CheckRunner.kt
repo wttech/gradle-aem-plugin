@@ -115,8 +115,7 @@ class CheckRunner(internal val aem: AemExtension) {
                         val future = executors.submit(Callable { doChecking(progress) })
                         future.get(timeout.get(), TimeUnit.MILLISECONDS)
                     } catch (e: Exception) {
-                        logger.error("Checking failed for $instance! Cause: '${e.message}'")
-                        logger.debug("Checking error of $instance!", e)
+                        logger.error("Checking failed for $instance!", e)
                         null
                     }
                     if (checks != null && checks.done) {

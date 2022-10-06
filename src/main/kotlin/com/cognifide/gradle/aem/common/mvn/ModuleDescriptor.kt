@@ -23,9 +23,9 @@ class ModuleDescriptor(val resolver: ModuleResolver, val type: ModuleType, val p
 
     val artifactId: String get() = gav.artifactId
 
-    val artifactTaskPath get() = taskPath(artifact.extension)
+    val artifactTaskPath get() = taskPath(artifact.type.task)
 
-    val artifact get() = Artifact("$artifactId:${type.extension}")
+    val artifact get() = Artifact("$artifactId:${type.artifact.extension}")
 
     val version: String get() = gav.version ?: build.version
 

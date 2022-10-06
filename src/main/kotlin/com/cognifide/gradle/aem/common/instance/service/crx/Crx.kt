@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.crx
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.http.HttpException
 import com.cognifide.gradle.common.http.RequestException
 
 /**
@@ -26,7 +26,7 @@ class Crx(sync: InstanceSync) : InstanceService(sync) {
                     readNodeTypes().apply {
                         aem.logger.info("Successfully read CRX node types of $instance")
                     }
-                } catch (e: CommonException) {
+                } catch (e: HttpException) {
                     aem.logger.debug("Cannot read CRX node types of $instance")
                     null
                 }

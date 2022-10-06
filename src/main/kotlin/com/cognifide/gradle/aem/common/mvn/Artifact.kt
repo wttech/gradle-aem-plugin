@@ -4,9 +4,9 @@ class Artifact(val notation: String) {
 
     val id get() = notation.substringBeforeLast(":")
 
-    val extension get() = notation.substringAfterLast(":")
+    val type get() = ArtifactType.byExtension(notation.substringAfterLast(":"))
 
-    override fun toString() = "Artifact(id='$id', extension='$extension')"
+    override fun toString() = "Artifact(id='$id', type='$type')"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -17,17 +17,6 @@ class Artifact(val notation: String) {
     }
 
     override fun hashCode() = notation.hashCode()
-
-    companion object {
-
-        const val POM = "pom"
-
-        const val ZIP = "zip"
-
-        const val JAR = "jar"
-
-        const val RUN = "run"
-    }
 }
 
 fun String.toArtifact() = Artifact(this)

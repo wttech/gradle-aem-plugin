@@ -89,6 +89,11 @@ open class Instance(val aem: AemExtension, val name: String) {
         else -> throw InstanceException("Instance '$name' is not defined as local!")
     }
 
+    fun <T> ifLocal(action: LocalInstance.() -> T?): T? = when (this) {
+        is LocalInstance -> this.run(action)
+        else -> null
+    }
+
     fun <T> whenLocal(action: LocalInstance.() -> T) {
         if (local) {
             local(action)

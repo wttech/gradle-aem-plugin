@@ -4,12 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureCryptoStep
-import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureReplicationAgentStep
-import com.cognifide.gradle.aem.common.instance.provision.step.ConfigureWorkflowLauncherStep
-import com.cognifide.gradle.aem.common.instance.provision.step.CustomStep
-import com.cognifide.gradle.aem.common.instance.provision.step.DeployPackageStep
-import com.cognifide.gradle.aem.common.instance.provision.step.ImportMappingsStep
+import com.cognifide.gradle.aem.common.instance.provision.step.*
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 import com.cognifide.gradle.common.build.ProgressIndicator
 import com.cognifide.gradle.common.file.resolver.FileResolver
@@ -163,11 +158,20 @@ class Provisioner(val manager: InstanceManager) {
         steps.forEach { (definition, instanceSteps) ->
             message = definition.label
 
-            common.parallel.each(instanceSteps) { instanceStep ->
-                increment("${definition.label} on '${instanceStep.instance.name}'") {
-                    actions.add(instanceStep.perform())
+            if (definition.runInParallel.get()) {
+                common.parallel.each(instanceSteps) { instanceStep ->
+                    increment("${definition.label} on '${instanceStep.instance.name}'") {
+                        actions.add(instanceStep.perform())
+                    }
+                }
+            } else {
+                instanceSteps.forEach { instanceStep ->
+                    increment("${definition.label} on '${instanceStep.instance.name}'") {
+                        actions.add(instanceStep.perform())
+                    }
                 }
             }
+
             val instancesStepsPerformed = instanceSteps.filter { it.performable }.map { it.instance }
             if (instancesStepsPerformed.isNotEmpty()) {
                 definition.awaitUp(instancesStepsPerformed)

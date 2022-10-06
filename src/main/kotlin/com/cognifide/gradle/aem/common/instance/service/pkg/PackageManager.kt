@@ -9,8 +9,8 @@ import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.HttpClient
+import com.cognifide.gradle.common.http.HttpException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.pluginProject
@@ -40,7 +40,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     val available: Boolean get() = try {
         http.head(INDEX_PATH) { it.statusLine.statusCode == HttpStatus.SC_OK }
-    } catch (e: CommonException) {
+    } catch (e: HttpException) {
         logger.debug("Seems that package manager is not available: $instance", e)
         false
     }

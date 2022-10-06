@@ -370,9 +370,9 @@ class MvnBuild(val aem: AemExtension) {
     override fun toString() = "MvnBuild(rootDir=${rootDir.get().asFile}, appId=${appId.orNull}, groupId=${groupId.orNull})"
 
     companion object {
-        const val TASK_DEPLOY_ALL = "deployAll"
+        const val TASK_DEPLOY_ALL = "packageDeployAll"
 
-        const val TASK_CLEAN_ALL = "cleanAll"
+        const val TASK_CLEAN_ALL = "packageCleanAll"
 
         private const val MODULE_ALL = "*"
     }

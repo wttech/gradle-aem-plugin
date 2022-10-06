@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.http.HttpException
 import java.util.concurrent.TimeUnit
 
 class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
@@ -86,7 +87,7 @@ class HelpCheck(group: CheckGroup) : DefaultCheck(group) {
 
     private fun InstanceSync.startBundle(bundle: Bundle) = try {
         osgi.startBundle(bundle.symbolicName)
-    } catch (e: CommonException) {
+    } catch (e: HttpException) {
         logger.debug("Cannot start bundle on $instance!", e)
     }
 

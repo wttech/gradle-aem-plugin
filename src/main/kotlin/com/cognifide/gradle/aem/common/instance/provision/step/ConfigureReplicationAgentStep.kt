@@ -3,9 +3,10 @@ package com.cognifide.gradle.aem.common.instance.provision.step
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.provision.ProvisionException
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.provision.Step
 import com.cognifide.gradle.aem.common.instance.service.repository.ReplicationAgent
 
-class ConfigureReplicationAgentStep(provisioner: Provisioner, val location: String, val name: String) : AbstractStep(provisioner) {
+class ConfigureReplicationAgentStep(provisioner: Provisioner, val location: String, val name: String) : Step(provisioner) {
 
     lateinit var agentAction: ReplicationAgent.() -> Unit
 

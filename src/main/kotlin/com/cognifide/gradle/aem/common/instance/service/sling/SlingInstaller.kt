@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
 import com.cognifide.gradle.aem.common.instance.service.repository.RepositoryException
 import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.http.HttpException
 
 /**
  * Monitors the Sling Installer state.
@@ -14,7 +15,7 @@ class SlingInstaller(sync: InstanceSync) : InstanceService(sync) {
     val paused: Boolean
         get() = try {
             checkPause()
-        } catch (e: CommonException) {
+        } catch (e: RepositoryException) {
             logger.debug("Repository error", e)
             false
         }
@@ -29,7 +30,7 @@ class SlingInstaller(sync: InstanceSync) : InstanceService(sync) {
         get() = try {
             logger.debug("Determining Sling OSGi Installer state on $instance")
             readState()
-        } catch (e: CommonException) {
+        } catch (e: HttpException) {
             logger.debug("Cannot request Sling OSGi Installer state on $instance", e)
             SlingInstallerState.unknown(instance)
         }
