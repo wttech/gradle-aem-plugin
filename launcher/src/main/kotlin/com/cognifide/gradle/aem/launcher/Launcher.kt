@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.launcher
 import org.gradle.tooling.GradleConnector
 import java.io.File
 import java.util.*
+import kotlin.io.path.moveTo
 import kotlin.system.exitProcess
 
 class Launcher(val args: Array<String>) {
@@ -41,22 +42,27 @@ class Launcher(val args: Array<String>) {
     val miscScaffolder by lazy { MiscScaffolder(this) }
 
     fun launch() {
-        handleAppDir()
+        nestWorkDirAsAppDir()
         scaffold()
         awaitFileSystem()
         runBuildWrapperOnce()
         runBuildAndExit()
     }
 
-    private fun handleAppDir() {
+    private fun nestWorkDirAsAppDir() {
         if (!workDir.canonicalPath.contains(appDir.canonicalPath)) {
-            println("App dir must be a child dir of work dir!")
+            println("Work dir must nest an app dir!")
             exitProcess(1)
         }
-
-        println("Moving down all files and dirs from work dir '$workDir' to app dir '$appDir'")
-        appDir.mkdirs()
-        workDir.listFiles()?.forEach { it.renameTo(appDir.resolve(it.name)) }
+        if (appDir.exists()) {
+            println("Skipping nesting a work dir '$workDir' inside app dir '$appDir' as it already exists!")
+        } else {
+            println("Nesting a work dir '$workDir' inside an app dir '$appDir'")
+            val workDirBak = workDir.parentFile.resolve("${workDir.name}.bak")
+            workDir.renameTo(workDirBak)
+            appDir.parentFile.mkdirs()
+            workDirBak.toPath().moveTo(appDir.toPath())
+        }
     }
 
     private fun scaffold() {
