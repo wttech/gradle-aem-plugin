@@ -13,6 +13,8 @@ class Launcher(val args: Array<String>) {
 
     val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
 
+    val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=")
+
     val gradleArgs get() = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
 
     val buildConfig get() = Properties().apply {
@@ -28,6 +30,8 @@ class Launcher(val args: Array<String>) {
 
     val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
 
+    val appDir get() = appDirPath?.let { workDir.resolve(it) }
+
     val eol get() = System.lineSeparator()
 
     val buildScaffolder by lazy { BuildScaffolder(this) }
@@ -37,10 +41,19 @@ class Launcher(val args: Array<String>) {
     val miscScaffolder by lazy { MiscScaffolder(this) }
 
     fun launch() {
+        handleAppDir()
         scaffold()
         awaitFileSystem()
         runBuildWrapperOnce()
         runBuildAndExit()
+    }
+
+    private fun handleAppDir() {
+        appDir?.let { dir ->
+            println("Moving all files and dirs from '$workDir' to '$appDir'")
+            dir.mkdirs()
+            workDir.listFiles()?.forEach { it.renameTo(dir.resolve(it.name)) }
+        }
     }
 
     private fun scaffold() {
@@ -133,6 +146,8 @@ class Launcher(val args: Array<String>) {
     companion object {
 
         const val ARG_WORK_DIR = "--work-dir"
+
+        const val ARG_APP_DIR = "--app-dir"
 
         const val ARG_PRINT_STACKTRACE = "--print-stacktrace"
 

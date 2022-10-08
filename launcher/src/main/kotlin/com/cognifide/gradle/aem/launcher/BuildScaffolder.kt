@@ -56,6 +56,12 @@ class BuildScaffolder(private val launcher: Launcher) {
 
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
         println("Saving root Gradle build script file '$this'")
+
+        val mavenRootDir = when {
+            launcher.appDirPath.isNullOrBlank() -> ""
+            else -> """rootDir("${launcher.appDirPath}")"""
+        }
+
         writeText(
             """
             plugins {
@@ -77,6 +83,7 @@ class BuildScaffolder(private val launcher: Launcher) {
             
             aem {
                 mvnBuild {
+                    $mavenRootDir
                     depGraph {
                         // softRedundantModule("ui.content" to "ui.apps")
                     }
