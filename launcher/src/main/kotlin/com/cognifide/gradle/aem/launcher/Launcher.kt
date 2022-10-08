@@ -13,7 +13,7 @@ class Launcher(val args: Array<String>) {
 
     val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
 
-    val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=")
+    val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=") ?: "maven"
 
     val gradleArgs get() = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
 
@@ -30,7 +30,7 @@ class Launcher(val args: Array<String>) {
 
     val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
 
-    val appDir get() = appDirPath?.let { workDir.resolve(it) }
+    val appDir get() = appDirPath.let { workDir.resolve(it) }
 
     val eol get() = System.lineSeparator()
 

@@ -67,7 +67,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                             load("dispatcherImage") { aem.localInstanceManager.dispatcherImage }
                             resolve { listOf("cache", "logs").forEach { ensureDir(aem.localInstanceManager.dispatcherDir.resolve(it)) } }
                             reload { cleanDir("/mnt/var/www/html") }
-                            dev { watchRootDir("app/aem/maven/dispatcher/src") }
+                            dev { watchRootDir("${launcher.appDirPath}/dispatcher/src") }
                         }
                     }
                 }
@@ -137,7 +137,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                       - COMMERCE_ENDPOINT=http://localhost/graphql  
                     volumes:
                       # Use project-specific dispatcher config
-                      - {{ rootPath }}/dispatcher/src:/mnt/dev/src:ro
+                      - {{ rootPath }}/${launcher.appDirPath}/dispatcher/src:/mnt/dev/src:ro
                       - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib:/usr/lib/dispatcher-sdk:ro
                       - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/import_sdk_config.sh:/docker_entrypoint.d/zzz-import-sdk-config.sh:ro
                       # Enable invalidation by any client
