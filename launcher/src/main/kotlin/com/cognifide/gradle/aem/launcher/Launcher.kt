@@ -49,11 +49,14 @@ class Launcher(val args: Array<String>) {
     }
 
     private fun handleAppDir() {
-        appDir?.let { dir ->
-            println("Moving all files and dirs from '$workDir' to '$appDir'")
-            dir.mkdirs()
-            workDir.listFiles()?.forEach { it.renameTo(dir.resolve(it.name)) }
+        if (!workDir.canonicalPath.contains(appDir.canonicalPath)) {
+            println("App dir must be a child dir of work dir!")
+            exitProcess(1)
         }
+
+        println("Moving down all files and dirs from work dir '$workDir' to app dir '$appDir'")
+        appDir.mkdirs()
+        workDir.listFiles()?.forEach { it.renameTo(appDir.resolve(it.name)) }
     }
 
     private fun scaffold() {
