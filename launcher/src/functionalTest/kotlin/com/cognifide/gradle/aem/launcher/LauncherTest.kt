@@ -1,4 +1,5 @@
 package com.cognifide.gradle.aem.launcher
+
 import org.buildobjects.process.ProcBuilder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -9,7 +10,13 @@ import java.util.concurrent.TimeUnit
 class LauncherTest {
 
     @Test
-    fun shouldRunProperly() = makeTestProject("tasks", null) { launch("tasks") }
+    fun shouldRunProperly() = makeTestProject("tasks", null) {
+        launch("tasks")
+        assertEquals(
+            "https://services.gradle.org/distributions/gradle-7.5.1-bin.zip",
+            resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
+        )
+    }
 
     @Test
     fun shouldDisplayInstanceStatus() = makeTestProject("instance-status", "6.5.10") {
@@ -41,6 +48,28 @@ class LauncherTest {
         }
     }
 
+    @Test
+    fun shouldRespectGradleWrapperProperties() {
+        makeTestProject("custom-gradle-version", null) {
+            launch("--gradle-version=7.4.2", "--distribution-type=all")
+            assertEquals(
+                "https://services.gradle.org/distributions/gradle-7.4.2-all.zip",
+                resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
+            )
+        }
+    }
+
+    @Test
+    fun shouldRespectGradleWrapperDistribution() {
+        makeTestProject("custom-gradle-distribution", null) {
+            launch("--gradle-distribution-url=http://my-custom-gradle.distribution/dist.zip")
+            assertEquals(
+                "http://my-custom-gradle.distribution/dist.zip",
+                resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
+            )
+        }
+    }
+
     private fun makeTestProject(name: String, aemVersion: String?, callback: File.() -> Unit) {
         File("build/functionalTest/$name").apply {
             deleteRecursively()
@@ -60,6 +89,12 @@ class LauncherTest {
                     store(out, null)
                 }
             }
+        }
+    }
+
+    private fun File.readAsProperties(): Properties {
+        return Properties().apply {
+            load(this@readAsProperties.inputStream())
         }
     }
 
