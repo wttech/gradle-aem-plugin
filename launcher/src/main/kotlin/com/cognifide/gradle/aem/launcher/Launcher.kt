@@ -98,6 +98,7 @@ class Launcher(val args: Array<String>) {
         }
     }
 
+    @Suppress("SpreadOperator")
     fun runBuildWrapperOnce() = workFile("gradle/wrapper/gradle-wrapper.properties") {
         if (!exists()) {
             println("Generating Gradle wrapper files")
