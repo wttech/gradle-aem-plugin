@@ -13,7 +13,7 @@ class Launcher(val args: Array<String>) {
 
     val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
 
-    val gradleArgs get() = args.filterNot { WRAPPER_ARGS.containsArg(it) || ARGS.containsArg(it) }
+    val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
 
     val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
 
