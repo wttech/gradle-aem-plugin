@@ -98,10 +98,9 @@ class Launcher(val args: Array<String>) {
         }
     }
 
-    @Suppress("SpreadOperator")
     fun runBuildWrapperOnce() = workFileOnce("gradle/wrapper/gradle-wrapper.properties") {
         println("Generating Gradle wrapper files")
-        runBuild(listOf("wrapper", "-Plauncher.wrapper=true", *wrapperArgs.toTypedArray()))
+        runBuild(listOf(listOf("wrapper", "-Plauncher.wrapper=true"), wrapperArgs).flatten())
     }
 
     @Suppress("TooGenericExceptionCaught", "PrintStackTrace")
