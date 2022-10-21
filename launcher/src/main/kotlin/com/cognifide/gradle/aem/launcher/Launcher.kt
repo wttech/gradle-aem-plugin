@@ -133,9 +133,7 @@ class Launcher(val args: Array<String>) {
             }
     }
 
-    private fun Set<String>.containsArg(arg: String): Boolean {
-        return contains(arg) || any { arg.startsWith("$it=") }
-    }
+    private fun Set<String>.containsArg(arg: String) = contains(arg) || any { arg.startsWith("$it=") }
 
     companion object {
 
