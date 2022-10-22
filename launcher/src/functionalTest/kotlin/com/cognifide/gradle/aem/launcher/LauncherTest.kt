@@ -27,7 +27,7 @@ class LauncherTest {
     fun shouldGenerateCloudEnvProperly() = makeTestProject("cloud-env", "cloud") {
         launch() // no environmentResolve as sdk zip is required for it to work
         assertTrue(
-            File("build/functionalTest/cloud-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
+            resolve("env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("COMMERCE_ENDPOINT")
         )
     }
@@ -36,7 +36,7 @@ class LauncherTest {
     fun shouldGenerateOnPremEnvProperly() = makeTestProject("on-prem-env", "6.5.10") {
         launch("env:environmentResolve")
         assertTrue(
-            File("build/functionalTest/on-prem-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
+            resolve("env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("AUTHOR_DEFAULT_HOSTNAME")
         )
     }
@@ -44,7 +44,7 @@ class LauncherTest {
     @Test
     fun shouldNotGenerateEnvironmentWithoutArchetypePropertiesFile() {
         makeTestProject("no-env", null) {
-            assertFalse(File("build/functionalTest/no-env/env/src").exists())
+            assertFalse(resolve("env/src").exists())
         }
     }
 
