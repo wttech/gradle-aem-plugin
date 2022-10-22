@@ -13,7 +13,7 @@ class LauncherTest {
     fun shouldRunProperly() = makeTestProject("tasks", null) {
         launch("tasks")
         assertEquals(
-            "https://services.gradle.org/distributions/gradle-7.5.1-bin.zip",
+            File("../gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"],
             resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
         )
     }
