@@ -30,7 +30,7 @@ class SlingInstaller(sync: InstanceSync) : InstanceService(sync) {
         get() = try {
             logger.debug("Determining Sling OSGi Installer state on $instance")
             readState()
-        } catch (e: HttpException) {
+        } catch (e: SlingException) {
             logger.debug("Cannot request Sling OSGi Installer state on $instance", e)
             SlingInstallerState.unknown(instance)
         }
