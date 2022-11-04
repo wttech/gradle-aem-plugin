@@ -7,6 +7,8 @@ import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.asset.AssetManager
 import com.cognifide.gradle.aem.common.instance.*
+import com.cognifide.gradle.aem.common.instance.provision.Action
+import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
@@ -36,7 +38,6 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 import java.io.Serializable
-import java.time.format.DateTimeFormatter
 
 /**
  * Core of library, facade for implementing tasks.
@@ -383,6 +384,23 @@ class AemExtension(val project: Project) : Serializable {
     }
 
     /**
+     * Configure instances to desired state (idempotently if possible)
+     */
+    fun provision(options: Provisioner.() -> Unit) = provision(instances, options)
+
+    /**
+     * Configure instance to desired state (idempotently if possible)
+     */
+    fun provision(instance: Instance, options: Provisioner.() -> Unit) = provision(listOf(instance), options)
+
+    /**
+     * Configure instances to desired state (idempotently if possible)
+     */
+    fun provision(instances: Collection<Instance>, options: Provisioner.() -> Unit): Collection<Action> {
+        return Provisioner(instanceManager).apply(options).provision(instances)
+    }
+
+    /**
      * Build minimal CRX package in-place / only via code.
      * All details like Vault properties, archive destination directory, file name are customizable.
      */
@@ -447,12 +465,6 @@ class AemExtension(val project: Project) : Serializable {
      * Configure wrapped Maven build with added capability to execute it incrementally.
      */
     fun mvnBuild(options: MvnBuild.() -> Unit) = mvnBuild.using(options)
-
-    /* log options */
-    val datePattern = obj.typed<DateTimeFormatter> {
-        convention(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS"))
-        prop.string("instance.tail.datePattern")?.let { set(DateTimeFormatter.ofPattern(it)) }
-    }
 
     companion object {
         const val NAME = "aem"

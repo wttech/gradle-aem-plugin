@@ -56,6 +56,8 @@ open class Instance(val aem: AemExtension, val name: String) {
 
     val httpUrlBasicAuth get() = httpUrlDetails.basicAuth(user.get(), password.get())
 
+    val cloudService get() = common.patterns.wildcard(httpUrl.get(), manager.cloudServicePattern.get())
+
     val enabled = common.obj.boolean {
         convention(true)
         prop.boolean("enabled")?.let { set(it) }

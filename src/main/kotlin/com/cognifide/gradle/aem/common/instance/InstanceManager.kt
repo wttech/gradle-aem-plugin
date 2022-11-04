@@ -54,6 +54,14 @@ open class InstanceManager(val aem: AemExtension) {
         aem.prop.file("instance.buildDir")?.let { set(it) }
     }
 
+    /**
+     * Pattern to detect AEMaaCS instance
+     */
+    val cloudServicePattern = aem.obj.string {
+        convention("*.adobeaemcloud.com")
+        aem.prop.string("instance.cloudServicePattern")?.let { set(it) }
+    }
+
     val provisioner by lazy { Provisioner(this) }
 
     fun provisioner(options: Provisioner.() -> Unit) = provisioner.using(options)
@@ -213,13 +221,26 @@ open class InstanceManager(val aem: AemExtension) {
             return
         }
 
+        val cloudService = instances.filter { it.cloudService }
+        if (cloudService.isNotEmpty()) {
+            throw InstanceException(listOf(
+                "Some instances (${cloudService.size}) are running as cloud services which makes it impossible to check their availability:",
+                cloudService.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl.get()}'" },
+                "",
+                "AEM tasks use specific AEM endpoints that may be not available on AEMaaCS.",
+                "The only way to use such instances is an implementation of custom tasks leveraging AEM DSL provided by the plugin.",
+                "See: https://github.com/wttech/gradle-aem-plugin/blob/main/docs/common-plugin.md#implementing-tasks"
+            ).joinToString("\n"))
+        }
+
         val unavailable = instances.filter { !it.available }
         if (unavailable.isNotEmpty()) {
-            throw InstanceException(
-                "Some instances (${unavailable.size}) are unavailable:\n" +
-                    unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl.get()}'" } + "\n\n" +
-                    "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
-            )
+            throw InstanceException(listOf(
+                "Some instances (${unavailable.size}) are unavailable:",
+                unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl.get()}'" },
+                "",
+                "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
+            ).joinToString("\n"))
         }
     }
 
