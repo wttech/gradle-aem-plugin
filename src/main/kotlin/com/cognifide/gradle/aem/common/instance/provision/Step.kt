@@ -68,7 +68,7 @@ abstract class Step(val provisioner: Provisioner) {
      * Controls if step should be performed in parallel on multiple instances at once.
      */
     val runInParallel = aem.obj.boolean {
-        convention(true)
+        convention(false)
         aem.prop.boolean("instance.provision.step.runInParallel")?.let { set(it) }
     }
 
