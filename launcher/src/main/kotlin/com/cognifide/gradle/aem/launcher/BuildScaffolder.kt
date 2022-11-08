@@ -43,6 +43,7 @@ class BuildScaffolder(private val launcher: Launcher) {
         .map { it.removePrefix(Launcher.ARG_SAVE_PREFIX) }
         .associate { it.substringBefore("=") to it.substringAfter("=") }
 
+    @Suppress("LongMethod")
     private fun saveRootBuildScript() = launcher.workFileOnce("build.gradle.kts") {
         println("Saving root Gradle build script file '$this'")
         writeText(

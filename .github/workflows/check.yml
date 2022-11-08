@@ -23,9 +23,7 @@ jobs:
           distribution: adopt
 
       - name: Build & run functional tests
-        run: ./gradlew -i -S :build :functionalTest
-        # TODO fork dependency breaks launcher test (skipping it for now)
-        #run: ./gradlew -i -S build functionalTest
+        run: ./gradlew -i -S build functionalTest
 
       - name: Publish unit test results
         uses: mikepenz/action-junit-report@v2
