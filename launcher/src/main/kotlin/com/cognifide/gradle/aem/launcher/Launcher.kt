@@ -34,8 +34,6 @@ class Launcher(val args: Array<String>) {
 
     val buildScaffolder by lazy { BuildScaffolder(this) }
 
-    val forkScaffolder by lazy { ForkScaffolder(this) }
-
     val miscScaffolder by lazy { MiscScaffolder(this) }
 
     fun launch() {
@@ -47,7 +45,6 @@ class Launcher(val args: Array<String>) {
 
     private fun scaffold() {
         buildScaffolder.scaffold()
-        forkScaffolder.scaffold()
         miscScaffolder.scaffold()
     }
 

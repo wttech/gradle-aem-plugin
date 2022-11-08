@@ -11,6 +11,7 @@ class MiscScaffolder(private val launcher: Launcher) {
             ### Gradle/GAP ###
             .gradle/
             build/
+            /gradle.properties
             /gap.jar
         """.trimIndent()
 
