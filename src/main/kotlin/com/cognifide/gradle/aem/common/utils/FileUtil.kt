@@ -4,6 +4,7 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.input.ReversedLinesFileReader
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.*
 
 object FileUtil {
 
@@ -21,5 +22,10 @@ object FileUtil {
 
     fun readLastLines(file: File, count: Int): List<String> {
         return ReversedLinesFileReader(file, StandardCharsets.UTF_8).readLines(count)
+    }
+
+    fun readProperties(file: File) = when {
+        file.exists() -> Properties().apply { file.bufferedReader().use { load(it) } }.toMap().entries.associate { it.key.toString() to it.value.toString() }
+        else -> mapOf()
     }
 }
