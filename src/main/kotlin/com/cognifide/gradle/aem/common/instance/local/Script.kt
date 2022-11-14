@@ -31,6 +31,7 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
 
             ProcBuilder(command, *args.toTypedArray())
                 .withWorkingDirectory(instance.dir)
+                .withVars(instance.envVars.get())
                 .withExpectedExitStatuses(0)
                 .withInputStream(SafeStreams.emptyInput())
                 .withOutputStream(SafeStreams.systemOut())
