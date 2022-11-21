@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
 import com.cognifide.gradle.aem.common.instance.service.repository.RepositoryException
 import com.cognifide.gradle.common.CommonException
-import com.cognifide.gradle.common.http.HttpException
 
 /**
  * Monitors the Sling Installer state.

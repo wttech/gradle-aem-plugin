@@ -1,4 +1,5 @@
 package com.cognifide.gradle.aem.launcher
+
 import org.buildobjects.process.ProcBuilder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -9,7 +10,13 @@ import java.util.concurrent.TimeUnit
 class LauncherTest {
 
     @Test
-    fun shouldRunProperly() = makeTestProject("tasks", null) { launch("tasks") }
+    fun shouldRunProperly() = makeTestProject("tasks", null) {
+        launch("tasks")
+        assertEquals(
+            File("../gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"],
+            resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
+        )
+    }
 
     @Test
     fun shouldDisplayInstanceStatus() = makeTestProject("instance-status", "6.5.10") {
@@ -20,7 +27,7 @@ class LauncherTest {
     fun shouldGenerateCloudEnvProperly() = makeTestProject("cloud-env", "cloud") {
         launch() // no environmentResolve as sdk zip is required for it to work
         assertTrue(
-            File("build/functionalTest/cloud-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
+            resolve("env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("COMMERCE_ENDPOINT")
         )
     }
@@ -29,7 +36,7 @@ class LauncherTest {
     fun shouldGenerateOnPremEnvProperly() = makeTestProject("on-prem-env", "6.5.10") {
         launch("env:environmentResolve")
         assertTrue(
-            File("build/functionalTest/on-prem-env/env/src/environment/httpd/conf.d/variables/default.vars").readText()
+            resolve("env/src/environment/httpd/conf.d/variables/default.vars").readText()
                 .contains("AUTHOR_DEFAULT_HOSTNAME")
         )
     }
@@ -37,7 +44,29 @@ class LauncherTest {
     @Test
     fun shouldNotGenerateEnvironmentWithoutArchetypePropertiesFile() {
         makeTestProject("no-env", null) {
-            assertFalse(File("build/functionalTest/no-env/env/src").exists())
+            assertFalse(resolve("env/src").exists())
+        }
+    }
+
+    @Test
+    fun shouldRespectGradleWrapperProperties() {
+        makeTestProject("custom-gradle-version", null) {
+            launch("--gradle-version=7.4.2", "--distribution-type=all")
+            assertEquals(
+                "https://services.gradle.org/distributions/gradle-7.4.2-all.zip",
+                resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
+            )
+        }
+    }
+
+    @Test
+    fun shouldRespectGradleWrapperDistribution() {
+        makeTestProject("custom-gradle-distribution", null) {
+            launch("--gradle-distribution-url=http://my-custom-gradle.distribution/dist.zip")
+            assertEquals(
+                "http://my-custom-gradle.distribution/dist.zip",
+                resolve("gradle/wrapper/gradle-wrapper.properties").readAsProperties()["distributionUrl"]
+            )
         }
     }
 
@@ -60,6 +89,12 @@ class LauncherTest {
                     store(out, null)
                 }
             }
+        }
+    }
+
+    private fun File.readAsProperties(): Properties {
+        return Properties().apply {
+            load(this@readAsProperties.inputStream())
         }
     }
 

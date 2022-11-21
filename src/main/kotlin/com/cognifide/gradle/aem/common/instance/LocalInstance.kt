@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.oak.OakRun
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
+import com.cognifide.gradle.aem.common.utils.FileUtil
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.using
 import org.apache.commons.io.FileUtils
@@ -91,11 +92,24 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
     val runModesString: String get() = (runModes.get() + listOf(purpose.name.lowercase()))
         .filter { it.isNotBlank() }.joinToString(",")
 
+    val envFile get() = dir.resolve("env.properties")
+
+    val envVars = aem.obj.map<String, String> {
+        set(aem.obj.provider { FileUtil.readProperties(envFile) })
+        prop.map("envVars")?.let { putAll(it) }
+    }
+
+    fun envPass(vararg patterns: String) = envPass(patterns.asIterable())
+
+    fun envPass(patterns: Iterable<String>) {
+        envVars.putAll(aem.obj.provider { System.getenv().filterKeys { common.patterns.wildcard(it, patterns) } })
+    }
+
     val dir: File get() = aem.localInstanceManager.instanceDir.get().asFile.resolve(purposeId)
 
     val controlDir: File get() = dir.resolve("control")
 
-    val overridesDirs: List<File> get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(purposeId)) }
+    val overridesDirs: List<File> get() = localManager.overrideDirs.get().flatMap { listOf(it.resolve("common"), it.resolve(purposeId)) }
 
     val jar: File? get() = quickstartDir.resolve("app").takeIf { it.exists() }?.listFiles(FileFilter { it.extension == "jar" })?.firstOrNull()
 
@@ -304,6 +318,7 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
 
     private fun copyOverrideFiles() {
         overridesDirs.filter { it.exists() }.forEach {
+            logger.info("Copying override files from '$it' to '$dir'")
             FileUtils.copyDirectory(it, dir)
         }
     }

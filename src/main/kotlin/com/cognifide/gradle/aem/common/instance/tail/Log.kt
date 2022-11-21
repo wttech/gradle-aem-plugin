@@ -77,7 +77,8 @@ class Log(
             val message = result["message"]?.value ?: throw TailerException("Cannot get 'message' value from log")
             val followingMessageLines = logLines.slice(1 until logLines.size)
 
-            return Log(info, fullLog, parseTimestamp(timestamp, aem.datePattern.get(), info), level, source, listOf(message) + followingMessageLines)
+            return Log(info, fullLog, parseTimestamp(timestamp, aem.instanceManager.tailer.datePattern.get(), info),
+                level, source, listOf(message) + followingMessageLines)
         }
 
         fun isFirstLineOfLog(text: String) = matchLogLine(text) != null

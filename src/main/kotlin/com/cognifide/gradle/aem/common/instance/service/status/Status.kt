@@ -4,9 +4,7 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
-import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.HttpException
-import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.http.HttpStatus
@@ -128,7 +126,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     fun readProductVersion(): String {
         val text = try {
             sync.http.get(PRODUCT_INFO_PATH) { asString(it) }
-        } catch (e: RequestException) {
+        } catch (e: HttpException) {
             throw StatusException("Cannot request product version of $instance. Cause: ${e.message}", e)
         }
 
@@ -164,7 +162,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
         sync.http.get(path) {
             Properties().apply { load(statusPropertiesAsIni(asString(it))) } as Map<String, String>
         }
-    } catch (e: CommonException) {
+    } catch (e: HttpException) {
         throw StatusException("Cannot read status properties for path '$path' on $instance! Cause: ${e.message}", e)
     }
 

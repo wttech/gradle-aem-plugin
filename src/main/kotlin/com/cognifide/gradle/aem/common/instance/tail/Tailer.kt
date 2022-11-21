@@ -12,6 +12,7 @@ import com.cognifide.gradle.common.utils.using
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.nio.file.Paths
+import java.time.format.DateTimeFormatter
 import kotlin.math.max
 
 class Tailer(val manager: InstanceManager) {
@@ -19,6 +20,14 @@ class Tailer(val manager: InstanceManager) {
     internal val aem = manager.aem
 
     private val common = aem.common
+
+    /**
+     * Pattern used to parse logs.
+     */
+    val datePattern = aem.obj.typed<DateTimeFormatter> {
+        convention(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS"))
+        aem.prop.string("instance.tail.datePattern")?.let { set(DateTimeFormatter.ofPattern(it)) }
+    }
 
     /**
      * Directory where log files will be stored.

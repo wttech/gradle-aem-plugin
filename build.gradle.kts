@@ -9,7 +9,6 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.21.0"
     id("net.researchgate.release") version "3.0.2"
     id("com.github.breadmoirai.github-release") version "2.4.1"
-    id("com.neva.fork") version "5.0.0"
 }
 
 group = "com.cognifide.gradle"
@@ -61,7 +60,7 @@ dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
-    implementation("com.cognifide.gradle:common-plugin:1.1.11")
+    implementation("com.cognifide.gradle:common-plugin:1.1.14")
 
     // External dependencies
     implementation("org.jsoup:jsoup:1.14.3")
@@ -231,38 +230,3 @@ githubRelease {
         }
     }
 }
-
-fork {
-    properties {
-        define("Local instance", mapOf(
-                "localInstanceQuickstartJarUri" to {
-                    label = "Quickstart URI"
-                    description = "For file named 'cq-quickstart-x.x.x.jar'"
-                },
-                "localInstanceQuickstartLicenseUri" to {
-                    label = "Quickstart License URI"
-                    description = "For file named 'license.properties'"
-                }
-        ))
-        define("File transfer", mapOf(
-                "companyUser" to {
-                    label = "User"
-                    description = "Authorized to access AEM files"
-                    defaultValue = System.getProperty("user.name").orEmpty()
-                    optional()
-                },
-                "companyPassword" to {
-                    label = "Password"
-                    description = "For above user"
-                    optional()
-                },
-                "companyDomain" to {
-                    label = "Domain"
-                    description = "Needed only when accessing AEM files over SMB"
-                    defaultValue = System.getenv("USERDOMAIN").orEmpty()
-                    optional()
-                }
-        ))
-    }
-}
-

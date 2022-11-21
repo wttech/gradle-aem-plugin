@@ -218,3 +218,8 @@ and specify all required properties there before running the launcher.
 ### Console output
 
 Gradle rich console output may not work properly on all environments. To disable rich color output, add parameters `--no-color -i` to enforce plain text output.
+
+### Gradle installation options
+
+Customizing [gradle wrapper properties](https://docs.gradle.org/7.5.1/userguide/gradle_wrapper.html#sec:adding_wrapper) is possible by passing in `--gradle-version`, `--distribution-type`, `--gradle-distribution-url`, or `--gradle-distribution-sha256-sum` arguments to `java -jar gap.jar`.
+Note that these are only applied the first time `gap.jar` is run in a directory and ignored on subsequent invocations.

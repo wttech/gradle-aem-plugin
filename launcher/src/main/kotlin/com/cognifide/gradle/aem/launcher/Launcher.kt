@@ -16,7 +16,9 @@ class Launcher(val args: Array<String>) {
 
     val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=") ?: "maven"
 
-    val gradleArgs get() = args.filterNot { ARGS.contains(it) || ARGS.any { arg -> it.startsWith("$arg=") } }
+    val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
+
+    val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
 
     val buildConfig get() = Properties().apply {
         load(Launcher::class.java.getResourceAsStream("/build.properties"))
@@ -36,8 +38,6 @@ class Launcher(val args: Array<String>) {
     val eol get() = System.lineSeparator()
 
     val buildScaffolder by lazy { BuildScaffolder(this) }
-
-    val forkScaffolder by lazy { ForkScaffolder(this) }
 
     val miscScaffolder by lazy { MiscScaffolder(this) }
 
@@ -67,7 +67,6 @@ class Launcher(val args: Array<String>) {
 
     private fun scaffold() {
         buildScaffolder.scaffold()
-        forkScaffolder.scaffold()
         miscScaffolder.scaffold()
     }
 
@@ -118,11 +117,9 @@ class Launcher(val args: Array<String>) {
         }
     }
 
-    fun runBuildWrapperOnce() = workFile("gradle/wrapper/gradle-wrapper.properties") {
-        if (!exists()) {
-            println("Generating Gradle wrapper files")
-            runBuild(listOf("wrapper", "-Plauncher.wrapper=true"))
-        }
+    fun runBuildWrapperOnce() = workFileOnce("gradle/wrapper/gradle-wrapper.properties") {
+        println("Generating Gradle wrapper files")
+        runBuild(listOf("wrapper", "-Plauncher.wrapper=true") + wrapperArgs)
     }
 
     @Suppress("TooGenericExceptionCaught", "PrintStackTrace")
@@ -152,6 +149,8 @@ class Launcher(val args: Array<String>) {
             }
     }
 
+    private fun Set<String>.containsArg(arg: String) = contains(arg) || any { arg.startsWith("$it=") }
+
     companion object {
 
         const val ARG_WORK_DIR = "--work-dir"
@@ -166,7 +165,9 @@ class Launcher(val args: Array<String>) {
 
         const val ARG_SAVE_PREFIX = "-P"
 
-        val ARGS = listOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
+        val ARGS = setOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
+
+        val WRAPPER_ARGS = setOf("--gradle-version", "--distribution-type", "--gradle-distribution-url", "--gradle-distribution-sha256-sum")
 
         @JvmStatic
         fun main(args: Array<String>) = Launcher(args).launch()
