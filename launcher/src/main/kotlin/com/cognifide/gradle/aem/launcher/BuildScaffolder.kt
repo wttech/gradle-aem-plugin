@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.launcher
 
-import java.io.File
 import java.util.Properties
 
 class BuildScaffolder(private val launcher: Launcher) {
@@ -23,7 +22,7 @@ class BuildScaffolder(private val launcher: Launcher) {
         archetypePropertiesFile.inputStream().buffered().use { load(it) }
     } else null
 
-    private val archetypePropertiesFile get() = File("archetype.properties")
+    private val archetypePropertiesFile get() = launcher.appDir.resolve("archetype.properties")
 
     private fun saveProperties() = launcher.workFileOnce("gradle.properties") {
         println("Saving Gradle properties file '$this'")
@@ -166,11 +165,6 @@ class BuildScaffolder(private val launcher: Launcher) {
                 }
             }
             
-            if (config.captured) {
-                if (aem.mvnBuild.available) defaultTasks(":env:setup")
-                else defaultTasks(":env:instanceSetup")
-            }
-            
             allprojects {
                 repositories {
                     mavenCentral()
@@ -185,6 +179,11 @@ class BuildScaffolder(private val launcher: Launcher) {
                     }
                     discover()
                 }
+            }
+            
+            if (config.captured) {
+                if (aem.mvnBuild.available) defaultTasks(":env:setup")
+                else defaultTasks(":env:instanceSetup")
             }
             """.trimIndent()
         )

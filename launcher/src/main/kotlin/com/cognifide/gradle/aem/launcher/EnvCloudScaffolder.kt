@@ -19,8 +19,8 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             dependencies {
                 implementation("io.wttech.gradle.config:plugin:1.0.10")
                 implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
-                implementation("com.cognifide.gradle:common-plugin:1.0.41")
-                implementation("com.cognifide.gradle:environment-plugin:2.2.3")
+                implementation("com.cognifide.gradle:common-plugin:1.1.15")
+                implementation("com.cognifide.gradle:environment-plugin:2.2.5")
             }
             """.trimIndent()
         )
@@ -31,6 +31,8 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
         println("Saving environment Gradle build script file '$this'")
         writeText(
             """
+            import io.wttech.gradle.config.dsl.*    
+                
             plugins {
                 id("com.cognifide.aem.instance.local")
                 id("com.cognifide.environment")
@@ -76,17 +78,17 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                 }
                 healthChecks {
                     aem.findInstance("local-author")?.let { instance ->
-                        http("Author Sites Editor", "${'$'}{instance.httpUrl}/sites.html") {
+                        http("Author Sites Editor", "${'$'}{instance.httpUrl.get()}/sites.html") {
                             containsText("Sites")
                             options { basicCredentials = instance.credentials }
                         }
-                        http("Author Replication Agent - Publish", "${'$'}{instance.httpUrl}/etc/replication/agents.author/publish.test.html") {
+                        http("Author Replication Agent - Publish", "${'$'}{instance.httpUrl.get()}/etc/replication/agents.author/publish.test.html") {
                             containsText("succeeded")
                             options { basicCredentials = instance.credentials }
                         }
                     }
                     aem.findInstance("local-publish")?.let { instance ->
-                        http("Publish Replication Agent - Flush", "${'$'}{instance.httpUrl}/etc/replication/agents.publish/flush.test.html") {
+                        http("Publish Replication Agent - Flush", "${'$'}{instance.httpUrl.get()}/etc/replication/agents.publish/flush.test.html") {
                             containsText("succeeded")
                             options { basicCredentials = instance.credentials }
                         }
@@ -100,9 +102,9 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             }
 
             tasks {
-                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":all:deploy") }
-                instanceResolve { dependsOn(":requireProps") }
-                instanceCreate { dependsOn(":requireProps") }
+                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":all:packageDeploy") }
+                instanceResolve { requiresConfig() }
+                instanceCreate { requiresConfig() }
                 environmentUp { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
                 environmentAwait { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
             }
@@ -138,16 +140,16 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                     volumes:
                       # Use project-specific dispatcher config
                       - {{ rootPath }}/${launcher.appDirPath}/dispatcher/src:/mnt/dev/src:ro
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib:/usr/lib/dispatcher-sdk:ro
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/import_sdk_config.sh:/docker_entrypoint.d/zzz-import-sdk-config.sh:ro
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/lib:/usr/lib/dispatcher-sdk:ro
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/lib/import_sdk_config.sh:/docker_entrypoint.d/zzz-import-sdk-config.sh:ro
                       # Enable invalidation by any client
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/overwrite_cache_invalidation.sh:/docker_entrypoint.d/zzz-overwrite_cache_invalidation.sh:ro
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/lib/overwrite_cache_invalidation.sh:/docker_entrypoint.d/zzz-overwrite_cache_invalidation.sh:ro
                       # Enable hot reload
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/lib/httpd-reload-monitor:/usr/sbin/httpd-reload-monitor:ro
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/bin/validator-linux-amd64:/usr/sbin/validator:ro
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/lib/httpd-reload-monitor:/usr/sbin/httpd-reload-monitor:ro
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/bin/validator-linux-amd64:/usr/sbin/validator:ro
                       # Enable previewing logs and caches directly on host
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/logs:/var/log/apache2
-                      - {{ rootPath }}/.gradle/aem/localInstance/sdk/dispatcher/cache:/mnt/var/www
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/logs:/var/log/apache2
+                      - {{ rootPath }}/env/.gradle/aem/localInstance/sdk/dispatcher/cache:/mnt/var/www
                     {% if docker.runtime.hostInternalIpMissing %}
                     extra_hosts:
                       - "host.docker.internal:{{ docker.runtime.hostInternalIp }}"

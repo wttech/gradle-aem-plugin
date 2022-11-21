@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.launcher
 import org.gradle.tooling.GradleConnector
 import java.io.File
 import java.util.*
-import kotlin.io.path.moveTo
 import kotlin.system.exitProcess
 
 class Launcher(val args: Array<String>) {
@@ -29,9 +28,9 @@ class Launcher(val args: Array<String>) {
     val pluginVersion get() = buildConfig["pluginVersion"]?.toString()
         ?: throw LauncherException("AEM Plugin version info not available!")
 
-    val currentDir get() = File(".")
+    val currentDir get() = File(".").canonicalFile
 
-    val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
+    val workDir get() = (if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir).canonicalFile
 
     val appDir get() = appDirPath.let { workDir.resolve(it) }
 
@@ -50,18 +49,18 @@ class Launcher(val args: Array<String>) {
     }
 
     private fun nestWorkDirAsAppDir() {
-        if (!workDir.canonicalPath.contains(appDir.canonicalPath)) {
+        if (!appDir.canonicalPath.contains(workDir.canonicalPath)) {
             println("Work dir must nest an app dir!")
             exitProcess(1)
         }
-        if (appDir.exists()) {
+        if (workDir.listFiles()?.isEmpty() == true) {
+            println("Skipping nesting a work dir '$workDir' as it has no files and directories!")
+        } else if (appDir.exists()) {
             println("Skipping nesting a work dir '$workDir' inside app dir '$appDir' as it already exists!")
         } else {
             println("Nesting a work dir '$workDir' inside an app dir '$appDir'")
-            val workDirBak = workDir.parentFile.resolve("${workDir.name}.bak")
-            workDir.renameTo(workDirBak)
-            appDir.parentFile.mkdirs()
-            workDirBak.toPath().moveTo(appDir.toPath())
+            appDir.mkdirs()
+            workDir.listFiles()?.forEach { it.renameTo(appDir.resolve(it.name)) }
         }
     }
 

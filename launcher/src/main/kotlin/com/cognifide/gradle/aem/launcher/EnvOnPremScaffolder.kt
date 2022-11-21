@@ -31,6 +31,8 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
         println("Saving environment Gradle build script file '$this'")
         writeText(
             """
+            import io.wttech.gradle.config.dsl.*    
+                
             plugins {
                 id("com.cognifide.aem.instance.local")
                 id("com.cognifide.environment")
@@ -117,13 +119,13 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                             containsText("Sites")
                             options { basicCredentials = instance.credentials }
                         }
-                        http("Author Replication Agent - Publish", "${'$'}{instance.httpUrl}/etc/replication/agents.author/publish.test.html") {
+                        http("Author Replication Agent - Publish", "${'$'}{instance.httpUrl.get()}/etc/replication/agents.author/publish.test.html") {
                             containsText("succeeded")
                             options { basicCredentials = instance.credentials }
                         }
                     }
                     aem.findInstance("local-publish")?.let { instance ->
-                        http("Publish Replication Agent - Flush", "${'$'}{instance.httpUrl}/etc/replication/agents.publish/flush.test.html") {
+                        http("Publish Replication Agent - Flush", "${'$'}{instance.httpUrl.get()}/etc/replication/agents.publish/flush.test.html") {
                             containsText("succeeded")
                             options { basicCredentials = instance.credentials }
                         }
@@ -137,9 +139,9 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             }
 
             tasks {
-                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":all:deploy") }
-                instanceResolve { dependsOn(":requireProps") }
-                instanceCreate { dependsOn(":requireProps") }
+                instanceSetup { if (rootProject.aem.mvnBuild.available) dependsOn(":all:packageDeploy") }
+                instanceResolve { requiresConfig() }
+                instanceCreate { requiresConfig() }
                 environmentUp { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
                 environmentAwait { mustRunAfter(instanceAwait, instanceUp, instanceProvision, instanceSetup) }
             }
