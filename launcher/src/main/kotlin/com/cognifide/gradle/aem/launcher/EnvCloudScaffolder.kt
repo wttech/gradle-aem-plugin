@@ -96,7 +96,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                             visible { stringValue("aemInstanceType") == "local" }
                             description("Open web browser when instances are up")
                             options(OpenMode.values().map { it.name.toLowerCase() })
-                            default(OpenMode.NEVER.name.toLowerCase())
+                            default(OpenMode.ALWAYS.name.toLowerCase())
                         }
                         
                         // ---
