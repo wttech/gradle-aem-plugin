@@ -26,6 +26,21 @@ Moreover, to run GAP, it is needed to have a project which has at least Gradle W
 To eliminate such ceremony, GAP standalone launcher could be used to be able to use its features with minimal effort, anywhere.
 Simply, using e.g bash script - download the GAP launcher run it with regular GAP arguments - all tasks and properties are available to be used.
 
+## Compatibility
+
+| GAP Launcher | AEM Project Archetype |
+|--------------|-----------------------|
+| 16.0.1       | 39                    | 
+
+See also [plugin compatibility](../README.MD#compatibility).
+
+Note that GAP launcher is trying to scaffold AEM configuration that will work with both versions of AEM (OnPrem & Cloud).
+However, the changes made in the AEM archetype are being done independently by Adobe team. This requires that from time to time GAP Launcher need to be aligned to the changes made by Adobe. 
+
+**Contributions in this area are highly welcomed! :)**
+
+Simply saying - don't hesitate to make pull requests to make GAP Launcher compatible again when a new version of Adobe AEM Archetype is available or at least report an issue!
+
 ## Downloads
 
 Grab most recent version of launcher from GitHub [releases](https://github.com/Cognifide/gradle-aem-plugin/releases) section.

@@ -122,10 +122,8 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                 services:
                   dispatcher:
                     image: {{ dispatcherImage }}
-                    deploy:
-                      replicas: 1
                     ports:
-                      - 8080:80
+                      - 80:80
                     environment:
                       - AEM_HOST=host.docker.internal
                       - AEM_IP=*.*.*.*
@@ -171,15 +169,15 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             println("Saving environment variables file '$this'")
             writeText(
                 """
-                      Define DOCROOT /var/www/localhost/cache
-                      Define AEM_HOST host.docker.internal
-                      Define AEM_IP *.*.*.*
-                      Define AEM_PORT 4503
-                      Define DISP_LOG_LEVEL Warn
-                      Define REWRITE_LOG_LEVEL Warn
-                      Define EXPIRATION_TIME A2592000
-                      Define FORWARDED_HOST_SETTING Off
-                      Define COMMERCE_ENDPOINT https://publish.aem.local/api/graphql
+                Define DOCROOT /var/www/localhost/cache
+                Define AEM_HOST host.docker.internal
+                Define AEM_IP *.*.*.*
+                Define AEM_PORT 4503
+                Define DISP_LOG_LEVEL Warn
+                Define REWRITE_LOG_LEVEL Warn
+                Define EXPIRATION_TIME A2592000
+                Define FORWARDED_HOST_SETTING Off
+                Define COMMERCE_ENDPOINT https://publish.aem.local/api/graphql
                 """.trimIndent()
             )
         }

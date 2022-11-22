@@ -159,10 +159,8 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                   httpd:
                     image: centos/httpd:latest
                     command: ["tail", "-f", "--retry", "/usr/local/apache2/logs/error.log"]
-                    deploy:
-                      replicas: 1
                     ports:
-                      - "80:80"
+                      - 80:80
                     volumes:
                       - "{{ rootPath }}/${launcher.appDirPath}/dispatcher/src/conf.d:/etc/httpd/conf.d"
                       - "{{ rootPath }}/${launcher.appDirPath}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
@@ -187,19 +185,19 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             println("Saving environment variables file '$this'")
             writeText(
                 """
-                      Define DISP_LOG_LEVEL Warn
-                      Define REWRITE_LOG_LEVEL Warn
-                      Define EXPIRATION_TIME A2592000
-                      Define CRX_FILTER deny
-                      Define FORWARDED_HOST_SETTING Off
-                      Define AUTHOR_DOCROOT /var/www/localhost/author/cache
-                      Define AUTHOR_DEFAULT_HOSTNAME author.aem.local
-                      Define AUTHOR_IP host.docker.internal
-                      Define AUTHOR_PORT 4502
-                      Define PUBLISH_DOCROOT /var/www/localhost/publish/cache
-                      Define PUBLISH_DEFAULT_HOSTNAME publish.aem.local
-                      Define PUBLISH_IP host.docker.internal
-                      Define PUBLISH_PORT 4503
+                Define DISP_LOG_LEVEL Warn
+                Define REWRITE_LOG_LEVEL Warn
+                Define EXPIRATION_TIME A2592000
+                Define CRX_FILTER deny
+                Define FORWARDED_HOST_SETTING Off
+                Define AUTHOR_DOCROOT /var/www/localhost/author/cache
+                Define AUTHOR_DEFAULT_HOSTNAME author.aem.local
+                Define AUTHOR_IP host.docker.internal
+                Define AUTHOR_PORT 4502
+                Define PUBLISH_DOCROOT /var/www/localhost/publish/cache
+                Define PUBLISH_DEFAULT_HOSTNAME publish.aem.local
+                Define PUBLISH_IP host.docker.internal
+                Define PUBLISH_PORT 4503
                 """.trimIndent()
             )
         }
