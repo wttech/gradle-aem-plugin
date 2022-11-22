@@ -4,6 +4,8 @@ package com.cognifide.gradle.aem.launcher
 class EnvOnPremScaffolder(private val launcher: Launcher) {
     fun scaffold() {
         saveBuildSrc()
+        saveRootBuildScript()
+        savePropertiesTemplate()
         saveEnvBuildScript()
         saveEnvSrcFiles()
     }
@@ -27,6 +29,58 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
         )
     }
 
+    @Suppress("LongMethod")
+    private fun saveRootBuildScript() = EnvCommonScaffolder.saveRootBuildScript(launcher)
+
+    private fun savePropertiesTemplate() = launcher.workFileOnce("gradle.properties.peb") {
+        println("Saving user-specific properties template '$this'")
+        writeText(
+            """
+            # === Gradle    
+            
+            org.gradle.logging.level=info
+            org.gradle.daemon=true
+            org.gradle.parallel=true
+            org.gradle.caching=true
+            org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 
+                
+            # === Gradle AEM Plugin ===
+            
+            package.manager.deployAvoidance={{ config.aemPackageDeployAvoidance }}
+            {% if aemPackageDamAssetToggle == 'true' %}
+            package.manager.workflowToggle=[dam_asset=false]
+            {% endif %}
+            
+            localInstance.quickstart.distUrl={{ config.aemQuickstartDistUrl }}
+            localInstance.quickstart.licenseUrl={{ config.aemQuickstartLicenseUrl }}
+            localInstance.openMode={{ config.aemInstanceOpenMode }}
+            
+            instance.default.runModes={{ config.aemInstanceRunModes }}
+            instance.default.password={{ config.aemInstancePassword }}
+            
+            instance.{{ config.aemInstanceType }}-author.serviceCredentialsUrl={{ config.aemInstanceServiceCredentialsUrl }}
+            instance.{{ config.aemInstanceType }}-author.enabled={{ config.aemAuthorEnabled }}
+            instance.{{ config.aemInstanceType }}-author.httpUrl={{ config.aemAuthorHttpUrl }}
+            instance.{{ config.aemInstanceType }}-author.openPath=/aem/start.html
+            instance.{{ config.aemInstanceType }}-publish.enabled={{ config.aemPublishEnabled }}
+            instance.{{ config.aemInstanceType }}-publish.httpUrl={{ config.aemPublishHttpUrl }}
+            instance.{{ config.aemInstanceType }}-publish.openPath=/crx/packmgr
+
+            mvnBuild.args={{ config.mvnBuildArgs }}
+
+            # === Gradle Common Plugin ===
+            
+            javaSupport.version=11
+            
+            notifier.enabled=true
+            
+            fileTransfer.user={{ config.companyUser }}
+            fileTransfer.password={{ config.companyPassword }}
+            fileTransfer.domain={{ config.companyDomain }}
+            """.trimIndent()
+        )
+    }
+
     private fun saveEnvBuildScript() = launcher.workFileOnce("env/build.gradle.kts") {
         println("Saving environment Gradle build script file '$this'")
         writeText(
@@ -38,12 +92,13 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                 id("com.cognifide.environment")
             }
             
-            val instancePassword = common.prop.string("instance.default.password")
-            val publishHttpUrl = common.prop.string("publish.httpUrl") ?: aem.findInstance("local-publish")?.httpUrl?.orNull ?: "http://127.0.0.1:4503"
-            val dispatcherHttpUrl = common.prop.string("dispatcher.httpUrl") ?: "http://127.0.0.1:80"
-            val dispatcherTarUrl = common.prop.string("dispatcher.tarUrl") ?: "https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.5.tar.gz"
-            val servicePackUrl = common.prop.string("localInstance.spUrl")
-            val coreComponentsUrl = common.prop.string("localInstance.coreComponentsUrl")
+            val instancePassword = config.stringValue("aemInstancePassword")
+            val publishHttpUrl = config.stringValue("aemPublishHttpUrl")
+            val dispatcherTarUrl = config.stringValue("aemDispatcherTarUrl") // "https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.5.tar.gz"
+            val flushHttpUrl = config.stringValue("aemFlushHttpUrl")
+            
+            val servicePackUrl = config.stringValue("aemServicePackUrl").ifBlank { null }
+            val coreComponentsUrl = config.stringValue("aemCoreComponentsUrl").ifBlank { null }
 
             aem {
                 instance { // https://github.com/Cognifide/gradle-aem-plugin/blob/main/docs/instance-plugin.md
@@ -52,14 +107,19 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                         servicePackUrl?.let { deployPackage(it) }
                         coreComponentsUrl?.let { deployPackage(it) }
                         configureReplicationAgentAuthor("publish") {
-                            agent { configure(transportUri = "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1", transportUser = "admin", transportPassword = instancePassword, userId = "admin") }
-                            version.set(publishHttpUrl)
+                           agent(mapOf(
+                                "enabled" to true,
+                                "transportUri" to "${'$'}publishHttpUrl/bin/receive?sling:authRequestLogin=1",
+                                "transportUser" to "admin",
+                                "transportPassword" to instancePassword,
+                                "userId" to "admin"
+                            ))
                         }
                         configureReplicationAgentPublish("flush") {
-                            agent(mapOf(
+                           agent(mapOf(
                                 "enabled" to true,
-                                "transportUri" to "${'$'}dispatcherHttpUrl/dispatcher/invalidate.cache",
-                                "protocolHTTPHeaders" to listOf("CQ-Action:{action}", "CQ-Handle:{path}", "CQ-Path: {path}", "Host: dispflush")
+                                "transportUri" to "${'$'}flushHttpUrl/dispatcher/invalidate.cache",
+                                "protocolHTTPHeaders" to listOf("CQ-Action:{action}", "CQ-Handle:{path}", "CQ-Path: {path}", "Host: publish")
                             ))
                         }
                     }
