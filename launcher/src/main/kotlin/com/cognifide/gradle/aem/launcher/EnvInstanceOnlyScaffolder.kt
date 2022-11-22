@@ -101,11 +101,9 @@ class EnvInstanceOnlyScaffolder(private val launcher: Launcher) {
                             // ---
                             
                             prop("aemQuickstartDistUrl") {
-                                label("AEM distribution URL")
                                 description("Typically AEM SDK zip file or AEM jar file")
                             }
                             prop("aemQuickstartLicenseUrl") {
-                                label("Quickstart License URL")
                                 description("Typically file named 'license.properties'")
                             }
                             prop("aemServicePackUrl") {
@@ -203,14 +201,14 @@ class EnvInstanceOnlyScaffolder(private val launcher: Launcher) {
             package.manager.workflowToggle=[dam_asset=false]
             {% endif %}
             
-            localInstance.quickstart.distUrl={{ config.aemQuickstartDistUri }}
-            localInstance.quickstart.licenseUrl={{ config.aemQuickstartLicenseUri }}
+            localInstance.quickstart.distUrl={{ config.aemQuickstartDistUrl }}
+            localInstance.quickstart.licenseUrl={{ config.aemQuickstartLicenseUrl }}
             localInstance.openMode={{ config.aemInstanceOpenMode }}
             
             instance.default.runModes={{ config.aemInstanceRunModes }}
             instance.default.password={{ config.aemInstancePassword }}
             
-            instance.{{ config.aemInstanceType }}-author.serviceCredentialsUrl={{ config.aemInstanceServiceCredentialsUri }}
+            instance.{{ config.aemInstanceType }}-author.serviceCredentialsUrl={{ config.aemInstanceServiceCredentialsUrl }}
             instance.{{ config.aemInstanceType }}-author.enabled={{ config.aemAuthorEnabled }}
             instance.{{ config.aemInstanceType }}-author.httpUrl={{ config.aemAuthorHttpUrl }}
             instance.{{ config.aemInstanceType }}-author.openPath=/aem/start.html
@@ -237,6 +235,8 @@ class EnvInstanceOnlyScaffolder(private val launcher: Launcher) {
         println("Saving environment Gradle build script file '$this'")
         writeText(
             """
+            import io.wttech.gradle.config.dsl.*    
+                
             plugins {
                 id("com.cognifide.aem.instance.local")
                 id("com.cognifide.aem.common")

@@ -102,11 +102,9 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
                         // ---
                         
                         prop("aemQuickstartDistUrl") {
-                            label("AEM distribution URL")
                             description("Typically file named 'aem-sdk-yyyy.mm.nnnn*.zip'")
                         }
                         prop("aemQuickstartLicenseUrl") {
-                            label("Quickstart License URL")
                             description("Typically file named 'license.properties'")
                         }
                     }
@@ -203,7 +201,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             instance.default.runModes={{ config.aemInstanceRunModes }}
             instance.default.password={{ config.aemInstancePassword }}
             
-            instance.{{ config.aemInstanceType }}-author.serviceCredentialsUrl={{ config.aemInstanceServiceCredentialsUri }}
+            instance.{{ config.aemInstanceType }}-author.serviceCredentialsUrl={{ config.aemInstanceServiceCredentialsUrl }}
             instance.{{ config.aemInstanceType }}-author.enabled={{ config.aemAuthorEnabled }}
             instance.{{ config.aemInstanceType }}-author.httpUrl={{ config.aemAuthorHttpUrl }}
             instance.{{ config.aemInstanceType }}-author.openPath=/aem/start.html
