@@ -110,12 +110,11 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                     }
                 }
                 hosts {
-                    "http://author.aem.local" { tag("author") }
                     "http://publish.aem.local" { tag("publish") }
                 }
                 healthChecks {
                     aem.findInstance("local-author")?.let { instance ->
-                        http("Author Sites Editor", "${'$'}{instance.httpUrl}/sites.html") {
+                        http("Author Sites Editor", "${'$'}{instance.httpUrl.get()}/sites.html") {
                             containsText("Sites")
                             options { basicCredentials = instance.credentials }
                         }
