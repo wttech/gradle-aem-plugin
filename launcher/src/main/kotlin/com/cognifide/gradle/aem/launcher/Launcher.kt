@@ -13,6 +13,8 @@ class Launcher(val args: Array<String>) {
 
     val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
 
+    val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=") ?: "maven"
+
     val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
 
     val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
@@ -26,9 +28,11 @@ class Launcher(val args: Array<String>) {
     val pluginVersion get() = buildConfig["pluginVersion"]?.toString()
         ?: throw LauncherException("AEM Plugin version info not available!")
 
-    val currentDir get() = File(".")
+    val currentDir get() = File(".").canonicalFile
 
-    val workDir get() = if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir
+    val workDir get() = (if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir).canonicalFile
+
+    val appDir get() = appDirPath.let { workDir.resolve(it) }
 
     val eol get() = System.lineSeparator()
 
@@ -37,10 +41,27 @@ class Launcher(val args: Array<String>) {
     val miscScaffolder by lazy { MiscScaffolder(this) }
 
     fun launch() {
+        nestWorkDirAsAppDir()
         scaffold()
         awaitFileSystem()
         runBuildWrapperOnce()
         runBuildAndExit()
+    }
+
+    private fun nestWorkDirAsAppDir() {
+        if (!appDir.canonicalPath.contains(workDir.canonicalPath)) {
+            println("Work dir must nest an app dir!")
+            exitProcess(1)
+        }
+        if (workDir.listFiles()?.isEmpty() == true) {
+            println("Skipping nesting a work dir '$workDir' as it has no files and directories!")
+        } else if (appDir.exists()) {
+            println("Skipping nesting a work dir '$workDir' inside app dir '$appDir' as it already exists!")
+        } else {
+            println("Nesting a work dir '$workDir' inside an app dir '$appDir'")
+            appDir.mkdirs()
+            workDir.listFiles()?.forEach { it.renameTo(appDir.resolve(it.name)) }
+        }
     }
 
     private fun scaffold() {
@@ -132,6 +153,8 @@ class Launcher(val args: Array<String>) {
     companion object {
 
         const val ARG_WORK_DIR = "--work-dir"
+
+        const val ARG_APP_DIR = "--app-dir"
 
         const val ARG_PRINT_STACKTRACE = "--print-stacktrace"
 

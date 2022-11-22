@@ -13,6 +13,7 @@ class MiscScaffolder(private val launcher: Launcher) {
             build/
             /gradle.properties
             /gap.jar
+            /${launcher.appDirPath}
         """.trimIndent()
 
         if (!exists()) {
