@@ -437,9 +437,9 @@ gradlew instanceWorkflow \
 Scheduling workflows for multiple resources of specified type under root(s):
 
 ```shell
-% gw instanceWorkflow \
+gradlew instanceWorkflow \
   -Pinstance.workflow.model=dam/asset_processing_on_sdk \
-  -Pinstance.workflow.resourcePath=/content/dam/wknd-shared/en/adventures 
+  -Pinstance.workflow.resourcePath=/content/dam/wknd-shared/en/adventures \
   -Pinstance.workflow.resourceType=dam:Asset
 
 ```
