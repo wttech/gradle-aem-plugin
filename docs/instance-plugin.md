@@ -423,7 +423,7 @@ Scheduling workflows for a single resource:
 ```shell
 gradlew instanceWorkflow \
   -Pinstance.workflow.model=dam/asset_processing_on_sdk \
-  -Pinstance.workflow.resourcePath=/content/dam/wknd/en/adventures/beervana-portland/AdobeStock_239751461.jpeg
+  -Pinstance.workflow.resourcePath=/content/dam/wknd-shared/en/adventures/beervana-portland/adobestock-200192344.jpeg
 ```
 
 Scheduling workflows for multiple resources:
@@ -431,14 +431,15 @@ Scheduling workflows for multiple resources:
 ```shell
 gradlew instanceWorkflow \
   -Pinstance.workflow.model=dam/asset_processing_on_sdk \
-  -Pinstance.workflow.resourcePath=[/content/dam/wknd/en/adventures/beervana-portland/AdobeStock_239751461.jpeg,/content/dam/wknd/en/adventures/climbing-new-zealand/AdobeStock_277948178.jpeg]
+  -Pinstance.workflow.resourcePath=[/content/dam/wknd-shared/en/adventures/beervana-portland/adobestock-209250305.jpeg,/content/dam/wknd-shared/en/adventures/beervana-portland/adobestock-239751461.jpeg]
 ```
 
 Scheduling workflows for multiple resources of specified type under root(s):
 
 ```shell
-gradlew instanceWorkflow \
+% gw instanceWorkflow \
   -Pinstance.workflow.model=dam/asset_processing_on_sdk \
-  -Pinstance.workflow.resourcePath=[/content/dam/wknd] \
+  -Pinstance.workflow.resourcePath=/content/dam/wknd-shared/en/adventures 
   -Pinstance.workflow.resourceType=dam:Asset
+
 ```
