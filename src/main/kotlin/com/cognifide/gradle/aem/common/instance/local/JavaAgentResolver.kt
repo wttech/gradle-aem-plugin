@@ -1,15 +1,18 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.LocalInstanceManager
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.using
 
-class JavaAgentResolver(private val aem: AemExtension) {
+class JavaAgentResolver(private val manager: LocalInstanceManager) {
 
-    private val common = aem.common
+    private val aem = manager.aem
+
+    private val common = manager.aem.common
 
     private val fileResolver = FileResolver(common).apply {
-        downloadDir.convention(aem.obj.buildDir("localInstance/javaAgent"))
+        downloadDir.convention(manager.rootDir.dir("javaAgent"))
         aem.prop.file("localInstance.javaAgent.downloadDir")?.let { downloadDir.set(it) }
         aem.prop.list("localInstance.javaAgent.urls")?.forEachIndexed { index, url ->
             val no = index + 1
