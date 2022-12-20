@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance.local
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.LocalInstanceManager
 import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.cognifide.gradle.common.utils.using
