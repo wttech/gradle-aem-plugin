@@ -739,13 +739,6 @@ class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
         }
     }
 
-    val javaAgent by lazy { JavaAgentResolver(this) }
-
-    /**
-     * Configure Java agents for instrumenting AEM instances.
-     */
-    fun javaAgent(options: JavaAgentResolver.() -> Unit) = javaAgent.using(options)
-
     /**
      * Hook for additional configuration for defined instances.
      */

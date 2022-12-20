@@ -45,7 +45,7 @@ class LocalInstance(aem: AemExtension, name: String) : Instance(aem, name) {
         prop.strings("jvmOpts")?.let { set(it) }
     }
 
-    val jvmAgents = JavaAgentResolver(aem).apply {
+    val jvmAgents = JavaAgentResolver(localManager).apply {
         prop.strings("jvmAgents")?.let { files(it) }
     }
 
