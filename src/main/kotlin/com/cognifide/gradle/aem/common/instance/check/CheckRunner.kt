@@ -88,7 +88,7 @@ class CheckRunner(internal val aem: AemExtension) {
         }
     }
 
-    @Suppress("LoopWithTooManyJumpStatements", "TooGenericExceptionCaught")
+    @Suppress("LoopWithTooManyJumpStatements", "TooGenericExceptionCaught", "LongMethod")
     private fun ProgressIndicator.doChecking(instances: Collection<Instance>) {
         step = "Checking"
 
@@ -129,14 +129,14 @@ class CheckRunner(internal val aem: AemExtension) {
                         logger.error("Checking failed for $instance!", e)
                         null
                     }
-                    if (checks != null ) {
+                    if (checks != null) {
                         if (checks.done) {
                             if (doneTimes.get() <= 1) {
                                 logger.info("Checking done for $instance")
                                 break
                             } else {
                                 doneTime++
-                                logger.info("Checking done (${doneTime}/${doneTimes.get()}) for $instance")
+                                logger.info("Checking done ($doneTime/${doneTimes.get()}) for $instance")
                                 if (doneTime == doneTimes.get()) {
                                     break
                                 }
