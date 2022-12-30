@@ -8,9 +8,7 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceUp : LocalInstance() {
 
-    private var awaitOptions: AwaitUpAction.() -> Unit = {
-        unchanged { enabled.set(false) }
-    }
+    private var awaitOptions = AwaitUpAction.quickOptions()
 
     /**
      * Controls instance awaiting.

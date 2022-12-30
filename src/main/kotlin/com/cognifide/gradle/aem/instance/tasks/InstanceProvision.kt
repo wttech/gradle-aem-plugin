@@ -17,9 +17,7 @@ open class InstanceProvision : Instance() {
         }
     }
 
-    private var awaitUpOptions: AwaitUpAction.() -> Unit = {
-        unchanged { enabled.set(false) }
-    }
+    private var awaitUpOptions = AwaitUpAction.quickOptions()
 
     fun awaitUp(options: AwaitUpAction.() -> Unit) {
         this.awaitUpOptions = options
