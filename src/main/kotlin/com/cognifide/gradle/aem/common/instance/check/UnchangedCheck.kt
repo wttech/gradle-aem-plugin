@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
  */
 class UnchangedCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    val awaitTime = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(3)) }
+    val awaitTime = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
 
     override fun check() {
         if (progress.stateChanges <= 1 && progress.stateTime < awaitTime.get()) {

@@ -112,7 +112,7 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var unchangedOptions: UnchangedCheck.() -> Unit = {
         awaitTime.apply {
-            convention(TimeUnit.SECONDS.toMillis(3))
+            convention(TimeUnit.SECONDS.toMillis(5))
             aem.prop.long("instance.awaitUp.unchanged.awaitTime")?.let { set(it) }
         }
     }

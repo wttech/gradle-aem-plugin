@@ -10,6 +10,7 @@ import org.apache.commons.lang3.time.StopWatch
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class CheckRunner(internal val aem: AemExtension) {
 
@@ -110,10 +111,12 @@ class CheckRunner(internal val aem: AemExtension) {
                         logger.info("Checking aborted for $instance!")
                         break
                     }
-
                     val checks = try {
                         val future = executors.submit(Callable { doChecking(progress) })
                         future.get(timeout.get(), TimeUnit.MILLISECONDS)
+                    } catch (e: TimeoutException) {
+                        logger.info("Checking timed out for $instance")
+                        null
                     } catch (e: Exception) {
                         logger.error("Checking failed for $instance!", e)
                         null
@@ -122,7 +125,6 @@ class CheckRunner(internal val aem: AemExtension) {
                         logger.info("Checking done for $instance")
                         break
                     }
-
                     Behaviors.waitFor(delay.get())
                 } while (isActive)
 
