@@ -38,7 +38,7 @@ class CheckRunner(internal val aem: AemExtension) {
     }
 
     /**
-     * How long to wait after failed checking before checking again.
+     * How long to wait before checking instances again.
      */
     val delay = aem.obj.long { convention(0L) }
 
@@ -46,6 +46,11 @@ class CheckRunner(internal val aem: AemExtension) {
      * Definitive timeout for single check group execution.
      */
     val timeout = aem.obj.long { convention(10_000L) }
+
+    /**
+     * How many times repeat checking to be sure if the done state is not only temporary.
+     */
+    val doneTimes = aem.obj.long { convention(1) }
 
     /**
      * Controls if aborted running should fail build.
@@ -106,6 +111,7 @@ class CheckRunner(internal val aem: AemExtension) {
 
                 logger.info("Checking started for $instance")
 
+                var doneTime = 0L
                 do {
                     if (aborted) {
                         logger.info("Checking aborted for $instance!")
@@ -115,15 +121,29 @@ class CheckRunner(internal val aem: AemExtension) {
                         val future = executors.submit(Callable { doChecking(progress) })
                         future.get(timeout.get(), TimeUnit.MILLISECONDS)
                     } catch (e: TimeoutException) {
+                        doneTime = 0
                         logger.info("Checking timed out for $instance")
                         null
                     } catch (e: Exception) {
+                        doneTime = 0
                         logger.error("Checking failed for $instance!", e)
                         null
                     }
-                    if (checks != null && checks.done) {
-                        logger.info("Checking done for $instance")
-                        break
+                    if (checks != null ) {
+                        if (checks.done) {
+                            if (doneTimes.get() <= 1) {
+                                logger.info("Checking done for $instance")
+                                break
+                            } else {
+                                doneTime++
+                                logger.info("Checking done (${doneTime}/${doneTimes.get()}) for $instance")
+                                if (doneTime == doneTimes.get()) {
+                                    break
+                                }
+                            }
+                        } else {
+                            doneTime = 0
+                        }
                     }
                     Behaviors.waitFor(delay.get())
                 } while (isActive)

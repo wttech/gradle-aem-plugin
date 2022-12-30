@@ -112,7 +112,7 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var unchangedOptions: UnchangedCheck.() -> Unit = {
         awaitTime.apply {
-            convention(TimeUnit.SECONDS.toMillis(5))
+            convention(TimeUnit.SECONDS.toMillis(3))
             aem.prop.long("instance.awaitUp.unchanged.awaitTime")?.let { set(it) }
         }
     }
@@ -121,10 +121,18 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         unchangedOptions = options
     }
 
+    fun runner(options: CheckRunner.() -> Unit) {
+        runner.apply(options)
+    }
+
     private val runner = CheckRunner(aem).apply {
         delay.apply {
-            convention(TimeUnit.SECONDS.toMillis(1))
+            convention(TimeUnit.SECONDS.toMillis(3))
             aem.prop.long("instance.awaitUp.delay")?.let { set(it) }
+        }
+        doneTimes.apply {
+            convention(5)
+            aem.prop.long("instance.awaitUp.doneTimes")?.let { set(it) }
         }
         verbose.apply {
             aem.prop.boolean("instance.awaitUp.verbose")?.let { set(it) }
@@ -155,5 +163,12 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
         logger.info("Awaiting instance(s) up: ${instances.names}")
 
         runner.check(instances)
+    }
+
+    companion object {
+        fun quickOptions(): AwaitUpAction.() -> Unit = {
+            runner { doneTimes.set(1) }
+            unchanged { enabled.set(false) }
+        }
     }
 }

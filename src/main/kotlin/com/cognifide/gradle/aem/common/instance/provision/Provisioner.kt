@@ -69,6 +69,7 @@ class Provisioner(val manager: InstanceManager) {
     private val steps = mutableListOf<Step>()
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {
+        runner { doneTimes.set(1) }
         unchanged { enabled.set(false) }
     }
 

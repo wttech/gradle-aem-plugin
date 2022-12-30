@@ -31,9 +31,7 @@ open class InstanceDeploy : Instance() {
         }
     }
 
-    private var awaitUpOptions: AwaitUpAction.() -> Unit = {
-        unchanged { enabled.set(false) }
-    }
+    private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
     fun awaitUp(options: AwaitUpAction.() -> Unit) {
         this.awaitUpOptions = options
