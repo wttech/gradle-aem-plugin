@@ -104,7 +104,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                             // ---
                             
                             prop("aemQuickstartDistUrl") {
-                                description("Typically AEM SDK zip file or AEM jar file")
+                                description("Typically file named 'cq-quickstart-*.jar' AEM jar file")
                             }
                             prop("aemQuickstartLicenseUrl") {
                                 description("Typically file named 'license.properties'")

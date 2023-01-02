@@ -24,6 +24,11 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
 
     val distJar: File? get() = sdkJar ?: jar
 
+    val distType: DistType get() = when {
+        sdkJar != null -> DistType.SDK
+        else -> DistType.ON_PREM
+    }
+
     /**
      * URI pointing to AEM distribution (AEM SDK zip or AEM jar)
      */
@@ -75,12 +80,17 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         ?.also { unpackSdkZip(it) }
         ?.let { sdkWorkDir.listFiles { name -> Patterns.wildcard(name, "*.jar") }?.firstOrNull() }
 
-    val sdkDispatcherDir: File? get() = sdkWorkDir.resolve("dispatcher")
+    val sdkDispatcherDir: File get() = sdkWorkDir.resolve("dispatcher")
+
+    val sdkDispatcherArch = aem.obj.string {
+        convention(aem.obj.provider { OSUtil.archOfHost() })
+        aem.prop.string("localInstance.quickstart.sdkDispatcherArch")?.let { set(it) }
+    }
 
     val sdkDispatcherImage: File? get() = sdk
         ?.also { unpackSdkZip(it) }
         ?.also { unpackSdkDispatcher() }
-        ?.let { sdkDispatcherDir?.resolve("lib/dispatcher-publish-${OSUtil.archOfHost()}.tar.gz")?.takeIf { it.exists() } }
+        ?.let { sdkDispatcherDir.resolve("lib/dispatcher-publish-${sdkDispatcherArch.get()}.tar.gz").takeIf { it.exists() } }
 
     private fun unpackSdkZip(zip: File) {
         val versionCurrent = Formats.toChecksum(zip)
@@ -108,7 +118,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-unix.sh") }
             ?.firstOrNull()
             ?.let { script ->
-                sdkDispatcherDir?.takeIf { !it.exists() }?.let { dir ->
+                sdkDispatcherDir.takeIf { !it.exists() }?.let { dir ->
                     common.progress {
                         step = "Unpacking AEM SDK Dispatcher Tools: ${script.name} (${Formats.fileSize(script)})"
                         try {
@@ -128,7 +138,7 @@ class QuickstartResolver(private val manager: LocalInstanceManager) {
         sdkWorkDir.listFiles { _, name -> Patterns.wildcard(name, "*-dispatcher-*-windows.zip") }
             ?.firstOrNull()
             ?.let { zip ->
-                sdkDispatcherDir?.takeIf { !it.exists() }?.let { dir ->
+                sdkDispatcherDir.takeIf { !it.exists() }?.let { dir ->
                     common.progress {
                         step = "Unpacking AEM SDK Dispatcher Tools: ${zip.name} (${Formats.fileSize(zip)})"
                         common.zip(zip).unpackAll(dir)
