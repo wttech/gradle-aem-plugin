@@ -7,6 +7,10 @@ import kotlin.system.exitProcess
 
 class Launcher(val args: Array<String>) {
 
+    val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
+
+    val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
+
     val printStackTrace get() = args.contains(ARG_PRINT_STACKTRACE)
 
     val colorOutput get() = !args.contains(ARG_NO_COLOR_OUTPUT)
@@ -16,10 +20,6 @@ class Launcher(val args: Array<String>) {
     val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=") ?: ""
 
     fun appDirPath(subPath: String) = if (appDirPath.isNotBlank()) "$appDirPath/$subPath" else subPath
-
-    val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
-
-    val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
 
     val buildConfig get() = Properties().apply {
         load(Launcher::class.java.getResourceAsStream("/build.properties"))
@@ -35,6 +35,8 @@ class Launcher(val args: Array<String>) {
     val workDir get() = (if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir).canonicalFile
 
     val appDir get() = appDirPath.takeIf { it.isNotBlank() }?.let { workDir.resolve(it) } ?: workDir
+
+    val appDirNested get() = appDir != workDir
 
     val eol get() = System.lineSeparator()
 
@@ -53,7 +55,7 @@ class Launcher(val args: Array<String>) {
     }
 
     private fun nestWorkDirAsAppDir() {
-        if (appDir == workDir) {
+        if (!appDirNested) {
             return
         }
         if (!appDir.canonicalPath.contains(workDir.canonicalPath)) {
@@ -171,7 +173,7 @@ class Launcher(val args: Array<String>) {
 
         const val ARG_SAVE_PREFIX = "-P"
 
-        val ARGS = setOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
+        val ARGS = setOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_APP_DIR, ARG_WORK_DIR)
 
         val WRAPPER_ARGS = setOf("--gradle-version", "--distribution-type", "--gradle-distribution-url", "--gradle-distribution-sha256-sum")
 

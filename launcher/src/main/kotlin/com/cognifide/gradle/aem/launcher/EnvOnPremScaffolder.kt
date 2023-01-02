@@ -35,8 +35,8 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             println("Saving root Gradle build script file '$this'")
 
             val mavenRootDir = when {
-                launcher.appDirPath.isBlank() -> ""
-                else -> """rootDir("${launcher.appDirPath}")"""
+                launcher.appDirNested -> """rootDir("${launcher.appDirPath}")"""
+                else -> ""
             }
 
             writeText(

@@ -17,7 +17,7 @@ open class InstanceProvision : Instance() {
         }
     }
 
-    private var awaitUpOptions = AwaitUpAction.quickOptions()
+    private var awaitUpOptions = AwaitUpAction.noPackageDeployOptions()
 
     fun awaitUp(options: AwaitUpAction.() -> Unit) {
         this.awaitUpOptions = options

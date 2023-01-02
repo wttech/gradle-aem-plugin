@@ -7,7 +7,7 @@ class MiscScaffolder(private val launcher: Launcher) {
     }
 
     private fun appendGitIgnore() = launcher.workFile(".gitignore") {
-        val content = if (launcher.appDirPath.isNotBlank()) {
+        val content = if (launcher.appDirNested) {
             """
             ### Gradle/GAP ###
             .gradle/
