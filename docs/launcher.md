@@ -103,23 +103,18 @@ To review available tasks, run command below and review tasks under 'AEM' group:
 gradlew tasks --all 
 ```
 
-Sample output (for [AEM Guides WKND](https://github.com/adobe/aem-guides-wknd)):
+Sample output for project based on [AEM Project Archetype](https://github.com/adobe/aem-project-archetype)):
 
 ```
+
+> Task :tasks
+
+------------------------------------------------------------
+Tasks runnable from root project 'mysite'
+------------------------------------------------------------
+
 AEM tasks
 ---------
-all:config - Check out OSGi configuration then save as JCR content.
-ui.apps:config - Check out OSGi configuration then save as JCR content.
-ui.apps.structure:config - Check out OSGi configuration then save as JCR content.
-ui.config:config - Check out OSGi configuration then save as JCR content.
-ui.content:config - Check out OSGi configuration then save as JCR content.
-ui.content.sample:config - Check out OSGi configuration then save as JCR content.
-all:deploy - Deploys AEM package to instance
-ui.apps:deploy - Deploys AEM package to instance
-ui.apps.structure:deploy - Deploys AEM package to instance
-ui.config:deploy - Deploys AEM package to instance
-ui.content:deploy - Deploys AEM package to instance
-ui.content.sample:deploy - Deploys AEM package to instance
 env:instanceAwait - Await for healthy condition of all AEM instances.
 env:instanceBackup - Turns off local instance(s), archives to ZIP file, then turns on again.
 env:instanceCreate - Creates local AEM instance(s).
@@ -138,24 +133,94 @@ env:instanceSetup - Creates and turns on local AEM instance(s) with satisfied de
 env:instanceStatus - Prints status of AEM instances and installed packages.
 env:instanceTail - Tails logs from all configured instances (local & remote) and notifies about unknown errors.
 env:instanceUp - Turns on local AEM instance(s).
-core:jar - Builds JAR file
-it.tests:jar - Builds JAR file
-ui.tests:module - Builds module
-root:pom - Installs POM to local repository
-all:sync - Check out then clean JCR content.
-ui.apps:sync - Check out then clean JCR content.
-ui.apps.structure:sync - Check out then clean JCR content.
-ui.config:sync - Check out then clean JCR content.
-ui.content:sync - Check out then clean JCR content.
-ui.content.sample:sync - Check out then clean JCR content.
-all:zip - Builds AEM package
-dispatcher.cloud:zip - Builds ZIP archive
-ui.apps:zip - Builds AEM package
-ui.apps.structure:zip - Builds AEM package
-ui.config:zip - Builds AEM package
-ui.content:zip - Builds AEM package
-ui.content.sample:zip - Builds AEM package
-ui.frontend:zip - Builds AEM frontend
+env:instanceWorkflow - Schedules workflow model on resources under the specified path
+core:mvnJar - Builds JAR file
+root:mvnPom - Installs POM to local repository
+all:mvnZip - Builds CRX package
+dispatcher:mvnZip - Builds ZIP archive
+ui.apps:mvnZip - Builds CRX package
+ui.apps.structure:mvnZip - Builds CRX package
+ui.config:mvnZip - Builds CRX package
+ui.content:mvnZip - Builds CRX package
+ui.frontend:mvnZip - Builds AEM frontend
+packageCleanAll - Cleans AEM modules built
+all:packageConfig - Check out OSGi configuration then save as JCR content.
+ui.apps:packageConfig - Check out OSGi configuration then save as JCR content.
+ui.apps.structure:packageConfig - Check out OSGi configuration then save as JCR content.
+ui.config:packageConfig - Check out OSGi configuration then save as JCR content.
+ui.content:packageConfig - Check out OSGi configuration then save as JCR content.
+all:packageDeploy - Deploys CRX package to instance
+ui.apps:packageDeploy - Deploys CRX package to instance
+ui.apps.structure:packageDeploy - Deploys CRX package to instance
+ui.config:packageDeploy - Deploys CRX package to instance
+ui.content:packageDeploy - Deploys CRX package to instance
+packageDeployAll - Deploys CRX packages to instance
+all:packageSync - Check out then clean JCR content.
+ui.apps:packageSync - Check out then clean JCR content.
+ui.apps.structure:packageSync - Check out then clean JCR content.
+ui.config:packageSync - Check out then clean JCR content.
+ui.content:packageSync - Check out then clean JCR content.
+
+Build tasks
+-----------
+assemble - Assembles the outputs of this project.
+all:assemble - Assembles the outputs of this project.
+core:assemble - Assembles the outputs of this project.
+dispatcher:assemble - Assembles the outputs of this project.
+env:assemble - Assembles the outputs of this project.
+root:assemble - Assembles the outputs of this project.
+ui.apps:assemble - Assembles the outputs of this project.
+ui.apps.structure:assemble - Assembles the outputs of this project.
+ui.config:assemble - Assembles the outputs of this project.
+ui.content:assemble - Assembles the outputs of this project.
+ui.frontend:assemble - Assembles the outputs of this project.
+build - Assembles and tests this project.
+all:build - Assembles and tests this project.
+core:build - Assembles and tests this project.
+dispatcher:build - Assembles and tests this project.
+env:build - Assembles and tests this project.
+root:build - Assembles and tests this project.
+ui.apps:build - Assembles and tests this project.
+ui.apps.structure:build - Assembles and tests this project.
+ui.config:build - Assembles and tests this project.
+ui.content:build - Assembles and tests this project.
+ui.frontend:build - Assembles and tests this project.
+clean - Deletes the build directory.
+all:clean - Deletes the build directory.
+core:clean - Deletes the build directory.
+dispatcher:clean - Deletes the build directory.
+env:clean - Deletes the build directory.
+root:clean - Deletes the build directory.
+ui.apps:clean - Deletes the build directory.
+ui.apps.structure:clean - Deletes the build directory.
+ui.config:clean - Deletes the build directory.
+ui.content:clean - Deletes the build directory.
+ui.frontend:clean - Deletes the build directory.
+
+Environment tasks
+-----------------
+env:environmentAwait - Await for healthy condition of environment.
+env:environmentDestroy - Destroys virtualized environment.
+env:environmentDev - Turns on environment development mode (interactive e.g HTTPD configuration reloading on file changes)
+env:environmentDown - Turns off virtualized environment
+env:environmentHosts - Updates environment hosts entries.
+env:environmentReload - Reloads virtualized environment (e.g reloads HTTPD configuration and cleans cache files)
+env:environmentResetup - Destroys then sets up virtualized development environment.
+env:environmentResolve - Resolves environment files from remote sources before running other tasks
+env:environmentRestart - Restart virtualized development environment.
+env:environmentSetup - Sets up virtualized development environment.
+env:environmentUp - Turns on virtualized environment
+
+Runtime tasks
+-------------
+env:await - Await for healthy condition of all runtimes.
+env:destroy - Destroys all runtimes.
+env:down - Turns off all runtimes.
+env:resetup - Destroys then sets up all runtimes.
+env:resolve - Resolves all resources needed by all runtimes.
+env:restart - Turns off then on all runtimes.
+env:setup - Sets up all runtimes.
+env:up - Turns on all runtimes.
 ```
 
 Next steps to do after creating Gradle/GAP configuration i.e steps just done:
