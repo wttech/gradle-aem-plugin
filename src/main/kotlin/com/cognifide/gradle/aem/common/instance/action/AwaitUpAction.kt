@@ -166,7 +166,11 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     companion object {
-        fun quickOptions(): AwaitUpAction.() -> Unit = {
+        /**
+         * Simplified options to more quickly check condition of AEM instances
+         * assuming that no package deployment was performed before running checks.
+         */
+        fun noPackageDeployOptions(): AwaitUpAction.() -> Unit = {
             runner { doneTimes.set(1) }
             unchanged { enabled.set(false) }
         }

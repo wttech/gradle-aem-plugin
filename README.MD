@@ -7,6 +7,15 @@
   <img src="docs/logo.png" alt="Gradle AEM Plugin"/>
 </p>
 
+
+---
+
+TL;DR
+
+To add an automated AEM environment setup to the AEM Maven project [click here](https://github.com/wttech/gradle-aem-plugin/blob/main/docs/launcher.md).
+
+---
+
 ## Table of contents
 
   * [About](#about)

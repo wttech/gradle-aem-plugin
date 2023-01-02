@@ -7,17 +7,19 @@ import kotlin.system.exitProcess
 
 class Launcher(val args: Array<String>) {
 
+    val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
+
+    val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
+
     val printStackTrace get() = args.contains(ARG_PRINT_STACKTRACE)
 
     val colorOutput get() = !args.contains(ARG_NO_COLOR_OUTPUT)
 
     val workDirPath get() = args.firstOrNull { it.startsWith("$ARG_WORK_DIR=") }?.substringAfter("=")
 
-    val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=") ?: "maven"
+    val appDirPath get() = args.firstOrNull { it.startsWith("$ARG_APP_DIR=") }?.substringAfter("=") ?: ""
 
-    val gradleArgs get() = args.filterNot { ARGS.containsArg(it) || WRAPPER_ARGS.containsArg(it) }
-
-    val wrapperArgs get() = args.filter { WRAPPER_ARGS.containsArg(it) }
+    fun appDirPath(subPath: String) = if (appDirPath.isNotBlank()) "$appDirPath/$subPath" else subPath
 
     val buildConfig get() = Properties().apply {
         load(Launcher::class.java.getResourceAsStream("/build.properties"))
@@ -32,13 +34,17 @@ class Launcher(val args: Array<String>) {
 
     val workDir get() = (if (workDirPath != null) currentDir.resolve(workDirPath!!) else currentDir).canonicalFile
 
-    val appDir get() = appDirPath.let { workDir.resolve(it) }
+    val appDir get() = appDirPath.takeIf { it.isNotBlank() }?.let { workDir.resolve(it) } ?: workDir
+
+    val appDirNested get() = appDir != workDir
 
     val eol get() = System.lineSeparator()
 
     val buildScaffolder by lazy { BuildScaffolder(this) }
 
     val miscScaffolder by lazy { MiscScaffolder(this) }
+
+    val selfJar get() = File(javaClass.protectionDomain.codeSource.location.toURI())
 
     fun launch() {
         nestWorkDirAsAppDir()
@@ -49,6 +55,9 @@ class Launcher(val args: Array<String>) {
     }
 
     private fun nestWorkDirAsAppDir() {
+        if (!appDirNested) {
+            return
+        }
         if (!appDir.canonicalPath.contains(workDir.canonicalPath)) {
             println("Work dir must nest an app dir!")
             exitProcess(1)
@@ -60,7 +69,7 @@ class Launcher(val args: Array<String>) {
         } else {
             println("Nesting a work dir '$workDir' inside an app dir '$appDir'")
             appDir.mkdirs()
-            workDir.listFiles()?.forEach { it.renameTo(appDir.resolve(it.name)) }
+            workDir.listFiles()?.filter { it != selfJar }?.forEach { it.renameTo(appDir.resolve(it.name)) }
         }
     }
 
@@ -164,7 +173,7 @@ class Launcher(val args: Array<String>) {
 
         const val ARG_SAVE_PREFIX = "-P"
 
-        val ARGS = setOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_WORK_DIR)
+        val ARGS = setOf(ARG_SAVE_PROPS, ARG_PRINT_STACKTRACE, ARG_NO_COLOR_OUTPUT, ARG_APP_DIR, ARG_WORK_DIR)
 
         val WRAPPER_ARGS = setOf("--gradle-version", "--distribution-type", "--gradle-distribution-url", "--gradle-distribution-sha256-sum")
 

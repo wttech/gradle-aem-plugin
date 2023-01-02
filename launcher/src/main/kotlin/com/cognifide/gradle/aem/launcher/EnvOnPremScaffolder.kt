@@ -35,8 +35,8 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             println("Saving root Gradle build script file '$this'")
 
             val mavenRootDir = when {
-                launcher.appDirPath.isBlank() -> ""
-                else -> """rootDir("${launcher.appDirPath}")"""
+                launcher.appDirNested -> """rootDir("${launcher.appDirPath}")"""
+                else -> ""
             }
 
             writeText(
@@ -319,9 +319,10 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                             }
                             dev {
                                 watchRootDir(
-                                    "${launcher.appDirPath}/dispatcher/src/conf.d",
-                                    "${launcher.appDirPath}/dispatcher/src/conf.dispatcher.d",
-                                    "env/src/environment/httpd")
+                                    "${launcher.appDirPath("dispatcher/src/conf.d")}",
+                                    "${launcher.appDirPath("dispatcher/src/conf.dispatcher.d")}",
+                                    "env/src/environment/httpd",
+                                )
                             }
                         }
                     }
@@ -378,8 +379,8 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
                     ports:
                       - 80:80
                     volumes:
-                      - "{{ rootPath }}/${launcher.appDirPath}/dispatcher/src/conf.d:/etc/httpd/conf.d"
-                      - "{{ rootPath }}/${launcher.appDirPath}/dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d"
+                      - "{{ rootPath }}/${launcher.appDirPath("dispatcher/src/conf.d:/etc/httpd/conf.d")}/"
+                      - "{{ rootPath }}/${launcher.appDirPath("dispatcher/src/conf.dispatcher.d:/etc/httpd/conf.dispatcher.d")}"
                       - "{{ sourcePath }}/httpd:/etc/httpd.extra"
                       - "{{ workPath }}/httpd/modules/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
                       - "{{ workPath }}/httpd/logs:/etc/httpd/logs"
@@ -441,7 +442,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             writeText("".trimIndent())
         }
 
-        launcher.workFileBackupOnce("${launcher.appDirPath}/dispatcher/src/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any") {
+        launcher.workFileBackupOnce(launcher.appDirPath("dispatcher/src/conf.dispatcher.d/cache/ams_author_invalidate_allowed.any")) {
             println("Creating author flush config file '$this'")
             writeText(
                 """
@@ -454,7 +455,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             )
         }
 
-        launcher.workFileBackupOnce("${launcher.appDirPath}/dispatcher/src/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any") {
+        launcher.workFileBackupOnce(launcher.appDirPath("dispatcher/src/conf.dispatcher.d/cache/ams_publish_invalidate_allowed.any")) {
             println("Creating publish flush config file '$this'")
             writeText(
                 """
@@ -467,7 +468,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
             )
         }
 
-        launcher.workFileBackupOnce("${launcher.appDirPath}/dispatcher/src/conf.d/rewrites/xforwarded_forcessl_rewrite.rules") {
+        launcher.workFileBackupOnce(launcher.appDirPath("dispatcher/src/conf.d/rewrites/xforwarded_forcessl_rewrite.rules")) {
             println("Creating X-Forwarded-For SSL rewrite config file '$this'")
             writeText(
                 """
@@ -482,7 +483,7 @@ class EnvOnPremScaffolder(private val launcher: Launcher) {
         /**
          * Replacing md5 checksums in dispatcher's pom.xml for the files that are being replaced
          */
-        launcher.workFileBackupAndReplaceStrings("${launcher.appDirPath}/dispatcher/pom.xml",
+        launcher.workFileBackupAndReplaceStrings(launcher.appDirPath("dispatcher/pom.xml"),
             // Replacing md5 checksum for xforwarded_forcessl_rewrite.rules file
             "cd1373a055f245de6e9ed78f74f974a6" to "3f6158d0fd659071fa29c50c9a509804",
             // Replacing md5 checksum for ams_author_invalidate_allowed.any and ams_publish_invalidate_allowed.any files
