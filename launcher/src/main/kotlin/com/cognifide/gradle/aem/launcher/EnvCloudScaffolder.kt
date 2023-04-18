@@ -19,7 +19,7 @@ class EnvCloudScaffolder(private val launcher: Launcher) {
             }
             
             dependencies {
-                implementation("io.wttech.gradle.config:plugin:1.0.12")
+                implementation("io.wttech.gradle.config:plugin:1.0.13")
                 implementation("com.cognifide.gradle:aem-plugin:${launcher.pluginVersion}")
                 implementation("com.cognifide.gradle:common-plugin:1.1.15")
                 implementation("com.cognifide.gradle:environment-plugin:2.2.5")
