@@ -101,7 +101,7 @@ class ModuleResolver(val build: MvnBuild) {
 
     fun isPackage(pom: File) = pom.parentFile.resolve(build.contentPath.get()).exists() || pom.readText().let { text ->
         text.contains("<packaging>content-package</packaging>") || packagePlugins.get().any {
-            text.substringBetweenTag("build").substringBetweenTag("plugins").contains("<artifactId>$it</artifactId>")
+            text.substringBetweenTag("build").ignoreTag("pluginManagement").substringBetweenTag("plugins").contains("<artifactId>$it</artifactId>")
         }
     }
 
@@ -115,4 +115,17 @@ class ModuleResolver(val build: MvnBuild) {
     private fun String.containsTag(tag: String) = this.contains("<$tag>") && this.contains("</$tag>")
 
     private fun String.substringBetweenTag(tag: String) = this.substringAfter("<$tag>").substringBefore("</$tag>")
+
+    private fun String.ignoreTag(tag: String): String {
+        val startTag = "<$tag>"
+        val endTag = "</$tag>"
+
+        val startIndex = indexOf(startTag)
+        val endIndex = indexOf(endTag, startIndex + startTag.length)
+
+        if (startIndex != -1 && endIndex != -1)
+            return substring(0, startIndex) + substring(endIndex + endTag.length)
+
+        return this
+    }
 }
