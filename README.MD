@@ -6,6 +6,14 @@
   <img src="docs/logo.png" alt="Gradle AEM Plugin"/>
 </p>
 
+---
+
+:construction: **Maintenance Mode**: Limited to Bugfixes :construction:
+
+We'd like to inform you that the Gradle AEM Plugin is now in maintenance mode.
+While we will continue to provide bugfixes and support for existing features, no new features or major enhancements will be added to this project.
+
+As a better alternative we recommend checking out [AEM Compose](https://github.com/wttech/aemc).
 
 ---
 
